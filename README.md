@@ -30,7 +30,18 @@ enter key を押すと､dind の中でうごくコンテナのログが表示�
 
 ## How do I install
 
-`go install で入れる方法をここに案内`
+```bash
+go install github.com/tokuhirom/dcv@latest
+```
+
+または､リポジトリをクローンしてビルド:
+
+```bash
+git clone https://github.com/tokuhirom/dcv.git
+cd dcv
+go build -o dcv
+./dcv
+```
 
 ## 内部実装
 
