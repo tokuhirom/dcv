@@ -3,6 +3,7 @@ package docker
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -21,17 +22,40 @@ func NewComposeClient(workDir string) *ComposeClient {
 }
 
 func (c *ComposeClient) ListContainers() ([]models.Process, error) {
-	cmd := exec.Command("docker", "compose", "ps", "--format", "table")
+	// Try docker compose v2 format first
+	cmd := exec.Command("docker", "compose", "ps", "--format", "json")
 	if c.workDir != "" {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute docker compose ps: %w", err)
+		// If JSON format fails, try table format
+		cmd = exec.Command("docker", "compose", "ps", "--format", "table")
+		if c.workDir != "" {
+			cmd.Dir = c.workDir
+		}
+		
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			// Check if docker compose is available
+			if execErr, ok := err.(*exec.ExitError); ok {
+				if string(execErr.Stderr) != "" {
+					return nil, fmt.Errorf("docker compose error: %s", execErr.Stderr)
+				}
+			}
+			return nil, fmt.Errorf("failed to execute docker compose ps: %w\nOutput: %s", err, string(output))
+		}
+		return c.parseComposePS(output)
 	}
 
-	return c.parseComposePS(output)
+	// Try to parse JSON format
+	processes, err := c.parseComposePSJSON(output)
+	if err != nil {
+		// Fallback to table parsing
+		return c.parseComposePS(output)
+	}
+	return processes, nil
 }
 
 func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) {
@@ -72,6 +96,45 @@ func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) 
 	}
 
 	return processes, scanner.Err()
+}
+
+func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Process, error) {
+	var containers []struct {
+		Name    string `json:"Name"`
+		Image   string `json:"Image"`
+		Status  string `json:"Status"`
+		State   string `json:"State"`
+		Service string `json:"Service"`
+		ID      string `json:"ID"`
+	}
+
+	if err := json.Unmarshal(output, &containers); err != nil {
+		return nil, err
+	}
+
+	var processes []models.Process
+	for _, container := range containers {
+		process := models.Process{
+			Container: models.Container{
+				Name:    container.Name,
+				Image:   container.Image,
+				Status:  container.Status,
+				State:   container.State,
+				Service: container.Service,
+				ID:      container.ID,
+			},
+		}
+
+		// Detect dind containers by image name
+		imageLower := strings.ToLower(process.Image)
+		if strings.Contains(imageLower, "dind") || strings.Contains(imageLower, "docker:dind") {
+			process.IsDind = true
+		}
+
+		processes = append(processes, process)
+	}
+
+	return processes, nil
 }
 
 func (c *ComposeClient) GetContainerLogs(containerName string, follow bool) (*exec.Cmd, error) {

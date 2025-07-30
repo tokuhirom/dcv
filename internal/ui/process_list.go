@@ -10,24 +10,35 @@ import (
 
 type ProcessListView struct {
 	app       *App
-	view      *tview.Table
+	view      *tview.Flex
+	table     *tview.Table
 	processes []models.Process
 }
 
 func NewProcessListView(app *App) *ProcessListView {
 	v := &ProcessListView{
-		app:  app,
-		view: tview.NewTable(),
+		app:   app,
+		table: tview.NewTable(),
 	}
 
 	v.setupTable()
 	v.setupKeyBindings()
+	
+	// Create help text
+	helpText := "Enter: View logs | d: View dind containers | r: Refresh | q: Quit"
+	helpView := tview.NewTextView().SetText(helpText).SetTextAlign(tview.AlignCenter)
+	
+	// Create flex layout
+	v.view = tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(v.table, 0, 1, true).
+		AddItem(helpView, 1, 0, false)
 
 	return v
 }
 
 func (v *ProcessListView) setupTable() {
-	v.view.SetBorders(true).
+	v.table.SetBorders(true).
 		SetSelectable(true, false).
 		SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorDarkCyan).Foreground(tcell.ColorWhite))
 
@@ -38,15 +49,15 @@ func (v *ProcessListView) setupTable() {
 			SetTextColor(tcell.ColorYellow).
 			SetAlign(tview.AlignLeft).
 			SetSelectable(false)
-		v.view.SetCell(0, i, cell)
+		v.table.SetCell(0, i, cell)
 	}
 }
 
 func (v *ProcessListView) setupKeyBindings() {
-	v.view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	v.table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEnter:
-			row, _ := v.view.GetSelection()
+			row, _ := v.table.GetSelection()
 			if row > 0 && row <= len(v.processes) {
 				process := v.processes[row-1]
 				v.app.ShowLogs(process.Name, false)
@@ -55,7 +66,7 @@ func (v *ProcessListView) setupKeyBindings() {
 		case tcell.KeyRune:
 			switch event.Rune() {
 			case 'd', 'D':
-				row, _ := v.view.GetSelection()
+				row, _ := v.table.GetSelection()
 				if row > 0 && row <= len(v.processes) {
 					process := v.processes[row-1]
 					if process.IsDind {
@@ -78,6 +89,7 @@ func (v *ProcessListView) setupKeyBindings() {
 func (v *ProcessListView) Refresh() error {
 	processes, err := v.app.dockerClient.ListContainers()
 	if err != nil {
+		v.showError(err)
 		return err
 	}
 
@@ -86,10 +98,25 @@ func (v *ProcessListView) Refresh() error {
 	return nil
 }
 
+func (v *ProcessListView) showError(err error) {
+	v.app.app.QueueUpdateDraw(func() {
+		// Clear table and show error
+		v.table.Clear()
+		v.table.SetCell(0, 0, tview.NewTableCell("Error").
+			SetTextColor(tcell.ColorRed).
+			SetAlign(tview.AlignCenter).
+			SetExpansion(3))
+		v.table.SetCell(1, 0, tview.NewTableCell(err.Error()).
+			SetTextColor(tcell.ColorWhite).
+			SetAlign(tview.AlignLeft).
+			SetExpansion(3))
+	})
+}
+
 func (v *ProcessListView) updateTable() {
 	// Clear existing rows (except header)
-	for row := 1; row < v.view.GetRowCount(); row++ {
-		v.view.RemoveRow(row)
+	for row := 1; row < v.table.GetRowCount(); row++ {
+		v.table.RemoveRow(row)
 	}
 
 	// Add process rows
@@ -100,9 +127,9 @@ func (v *ProcessListView) updateTable() {
 		if process.IsDind {
 			nameCell.SetTextColor(tcell.ColorGreen)
 		}
-		v.view.SetCell(row, 0, nameCell)
+		v.table.SetCell(row, 0, nameCell)
 
-		v.view.SetCell(row, 1, tview.NewTableCell(process.Image))
+		v.table.SetCell(row, 1, tview.NewTableCell(process.Image))
 		
 		statusCell := tview.NewTableCell(process.Status)
 		if process.Status == "running" || process.Status == "Up" {
@@ -110,26 +137,16 @@ func (v *ProcessListView) updateTable() {
 		} else {
 			statusCell.SetTextColor(tcell.ColorRed)
 		}
-		v.view.SetCell(row, 2, statusCell)
+		v.table.SetCell(row, 2, statusCell)
 	}
 
-	// Add help text
-	helpText := "Enter: View logs | d: View dind containers | r: Refresh | q: Quit"
-	v.view.SetTitle(fmt.Sprintf(" Docker Compose Processes (%d) ", len(v.processes))).
+	// Update title
+	v.table.SetTitle(fmt.Sprintf(" Docker Compose Processes (%d) ", len(v.processes))).
 		SetTitleAlign(tview.AlignLeft).
 		SetBorder(true).
 		SetBorderPadding(0, 0, 1, 1)
 	
-	if v.view.GetRowCount() > 1 {
-		v.view.Select(1, 0)
+	if v.table.GetRowCount() > 1 {
+		v.table.Select(1, 0)
 	}
-	
-	// Create a flex layout to add help text at the bottom
-	flex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(v.view, 0, 1, true).
-		AddItem(tview.NewTextView().SetText(helpText).SetTextAlign(tview.AlignCenter), 1, 0, false)
-	
-	v.app.pages.RemovePage("processes")
-	v.app.pages.AddPage("processes", flex, true, true)
 }

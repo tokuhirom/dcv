@@ -179,7 +179,7 @@ func (v *LogView) findNext() {
 	}
 	
 	text := v.view.GetText(true)
-	currentPos := v.view.GetScrollOffset()
+	currentPos, _ := v.view.GetScrollOffset()
 	
 	// Search from current position
 	index := strings.Index(text[currentPos:], v.searchText)
@@ -195,7 +195,7 @@ func (v *LogView) findPrevious() {
 	}
 	
 	text := v.view.GetText(true)
-	currentPos := v.view.GetScrollOffset()
+	currentPos, _ := v.view.GetScrollOffset()
 	
 	// Search backward from current position
 	if currentPos > 0 {
