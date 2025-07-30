@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -38,18 +40,22 @@ func NewApp() (*App, error) {
 }
 
 func (a *App) Run() error {
-	// Set up initial refresh after draw
-	a.app.SetAfterDrawFunc(func(screen tcell.Screen) {
-		// Only run once
-		a.app.SetAfterDrawFunc(nil)
-		
-		// Load initial data
-		go func() {
-			if err := a.processView.Refresh(); err != nil {
-				// Show error
-				a.processView.showError(err)
-			}
-		}()
+	// Set up initial refresh before running
+	initialized := false
+	a.app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		if !initialized {
+			initialized = true
+			// Load initial data in background
+			go func() {
+				// Small delay to ensure UI is ready
+				time.Sleep(50 * time.Millisecond)
+				if err := a.processView.Refresh(); err != nil {
+					// Show error
+					a.processView.showError(err)
+				}
+			}()
+		}
+		return false
 	})
 
 	return a.app.Run()

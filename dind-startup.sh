@@ -32,13 +32,13 @@ docker run -d \
 
 # 2. Test database
 docker run -d \
-    --name test-mysql \
+    --name test-db \
     --restart unless-stopped \
-    -e MYSQL_ROOT_PASSWORD=rootpass \
-    -e MYSQL_DATABASE=testdb \
-    -e MYSQL_USER=testuser \
-    -e MYSQL_PASSWORD=testpass \
-    mysql:5.7
+    -e MARIADB_ROOT_PASSWORD=rootpass \
+    -e MARIADB_DATABASE=testdb \
+    -e MARIADB_USER=testuser \
+    -e MARIADB_PASSWORD=testpass \
+    mariadb:10.11
 
 # 3. Background worker
 docker run -d \

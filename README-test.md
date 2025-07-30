@@ -22,12 +22,12 @@ make run
 ## Test Environment
 
 The docker-compose.yml sets up:
-- **web**: Nginx serving a test page on port 8080
+- **web**: Nginx serving a test page on port 8090
 - **db**: PostgreSQL database
 - **redis**: Redis cache server
 - **dind**: Docker-in-Docker container running:
   - echo-server: Simple HTTP echo server
-  - test-mysql: MySQL database
+  - test-db: MariaDB database
   - worker-1: Background worker with job logs
   - worker-2: Another worker with different logs
 

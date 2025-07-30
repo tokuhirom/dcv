@@ -30,8 +30,8 @@ func (c *ComposeClient) ListContainers() ([]models.Process, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		// If JSON format fails, try table format
-		cmd = exec.Command("docker", "compose", "ps", "--format", "table")
+		// If JSON format fails, try without format option
+		cmd = exec.Command("docker", "compose", "ps")
 		if c.workDir != "" {
 			cmd.Dir = c.workDir
 		}
@@ -73,16 +73,42 @@ func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) 
 			continue
 		}
 
+		// Split by multiple spaces to handle columns properly
+		// Expected format: NAME IMAGE COMMAND SERVICE CREATED STATUS PORTS
 		fields := strings.Fields(line)
-		if len(fields) < 4 {
+		if len(fields) < 6 {
 			continue
+		}
+
+		// Find STATUS field - it starts with "Up" or "Exited"
+		statusIndex := -1
+		for i := 4; i < len(fields); i++ {
+			if strings.HasPrefix(fields[i], "Up") || strings.HasPrefix(fields[i], "Exited") || strings.HasPrefix(fields[i], "Created") {
+				statusIndex = i
+				break
+			}
+		}
+
+		if statusIndex == -1 {
+			continue
+		}
+
+		// Extract status (from statusIndex to the end or before PORTS)
+		statusEnd := len(fields)
+		for i := statusIndex + 1; i < len(fields); i++ {
+			// Check if this might be a port (contains : or /)
+			if strings.Contains(fields[i], ":") || strings.Contains(fields[i], "/") {
+				statusEnd = i
+				break
+			}
 		}
 
 		process := models.Process{
 			Container: models.Container{
-				Name:   fields[0],
-				Image:  fields[1],
-				Status: strings.Join(fields[3:], " "),
+				Name:    fields[0],
+				Image:   fields[1],
+				Service: fields[3],
+				Status:  strings.Join(fields[statusIndex:statusEnd], " "),
 			},
 		}
 
