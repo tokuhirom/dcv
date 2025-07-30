@@ -79,25 +79,9 @@ func TestComposeClient_parseComposePSJSON(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "parse docker compose ps JSON output",
-			input: []byte(`[
-				{
-					"Name": "web-1",
-					"Image": "nginx:latest",
-					"Status": "Up 5 minutes",
-					"State": "running",
-					"Service": "web",
-					"ID": "abc123"
-				},
-				{
-					"Name": "dind-1",
-					"Image": "docker:dind",
-					"Status": "Up 5 minutes",
-					"State": "running",
-					"Service": "dind",
-					"ID": "def456"
-				}
-			]`),
+			name: "parse docker compose ps JSON output (line-delimited)",
+			input: []byte(`{"Name": "web-1", "Image": "nginx:latest", "Status": "Up 5 minutes", "State": "running", "Service": "web", "ID": "abc123"}
+{"Name": "dind-1", "Image": "docker:dind", "Status": "Up 5 minutes", "State": "running", "Service": "dind", "ID": "def456"}`),
 			want: []models.Process{
 				{
 					Container: models.Container{

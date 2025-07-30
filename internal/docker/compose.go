@@ -22,7 +22,7 @@ func NewComposeClient(workDir string) *ComposeClient {
 }
 
 func (c *ComposeClient) ListContainers() ([]models.Process, error) {
-	// Try docker compose v2 format first
+	// Always use JSON format for reliable parsing
 	cmd := exec.Command("docker", "compose", "ps", "--format", "json")
 	if c.workDir != "" {
 		cmd.Dir = c.workDir
@@ -30,32 +30,26 @@ func (c *ComposeClient) ListContainers() ([]models.Process, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		// If JSON format fails, try without format option
-		cmd = exec.Command("docker", "compose", "ps")
-		if c.workDir != "" {
-			cmd.Dir = c.workDir
-		}
-		
-		output, err = cmd.CombinedOutput()
-		if err != nil {
-			// Check if docker compose is available
-			if execErr, ok := err.(*exec.ExitError); ok {
-				if string(execErr.Stderr) != "" {
-					return nil, fmt.Errorf("docker compose error: %s", execErr.Stderr)
-				}
+		// Check if docker compose is available
+		if execErr, ok := err.(*exec.ExitError); ok {
+			if string(execErr.Stderr) != "" {
+				return nil, fmt.Errorf("docker compose error: %s", execErr.Stderr)
 			}
-			return nil, fmt.Errorf("failed to execute docker compose ps: %w\nOutput: %s", err, string(output))
 		}
-		return c.parseComposePS(output)
+		// Check if it's just empty (no containers)
+		if len(output) == 0 || string(output) == "" {
+			return []models.Process{}, nil
+		}
+		return nil, fmt.Errorf("failed to execute docker compose ps: %w\nOutput: %s", err, string(output))
 	}
 
-	// Try to parse JSON format
-	processes, err := c.parseComposePSJSON(output)
-	if err != nil {
-		// Fallback to table parsing
-		return c.parseComposePS(output)
+	// Handle empty output (no containers running)
+	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
+		return []models.Process{}, nil
 	}
-	return processes, nil
+
+	// Parse JSON format
+	return c.parseComposePSJSON(output)
 }
 
 func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) {
@@ -125,21 +119,30 @@ func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) 
 }
 
 func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Process, error) {
-	var containers []struct {
-		Name    string `json:"Name"`
-		Image   string `json:"Image"`
-		Status  string `json:"Status"`
-		State   string `json:"State"`
-		Service string `json:"Service"`
-		ID      string `json:"ID"`
-	}
+	processes := []models.Process{}
+	
+	// Docker compose outputs each container as a separate JSON object on its own line
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
 
-	if err := json.Unmarshal(output, &containers); err != nil {
-		return nil, err
-	}
+		var container struct {
+			Name    string `json:"Name"`
+			Image   string `json:"Image"`
+			Status  string `json:"Status"`
+			State   string `json:"State"`
+			Service string `json:"Service"`
+			ID      string `json:"ID"`
+		}
 
-	var processes []models.Process
-	for _, container := range containers {
+		if err := json.Unmarshal(line, &container); err != nil {
+			// Skip invalid lines
+			continue
+		}
+
 		process := models.Process{
 			Container: models.Container{
 				Name:    container.Name,
@@ -158,6 +161,10 @@ func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Process, err
 		}
 
 		processes = append(processes, process)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 
 	return processes, nil
@@ -191,7 +198,7 @@ func (c *ComposeClient) ExecInContainer(containerName string, command []string) 
 }
 
 func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Container, error) {
-	cmd, err := c.ExecInContainer(containerName, []string{"docker", "ps", "--format", "table"})
+	cmd, err := c.ExecInContainer(containerName, []string{"docker", "ps", "--format", "json"})
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +208,7 @@ func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Conta
 		return nil, fmt.Errorf("failed to execute docker ps in dind: %w", err)
 	}
 
-	return c.parseDindPS(output)
+	return c.parseDindPSJSON(output)
 }
 
 func (c *ComposeClient) parseDindPS(output []byte) ([]models.Container, error) {
@@ -272,4 +279,46 @@ func (c *ComposeClient) GetDindContainerLogs(hostContainer, targetContainer stri
 	args = append(args, targetContainer)
 
 	return c.ExecInContainer(hostContainer, args)
+}
+
+func (c *ComposeClient) parseDindPSJSON(output []byte) ([]models.Container, error) {
+	containers := []models.Container{}
+	
+	// Docker ps outputs each container as a separate JSON object on its own line
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var container struct {
+			ID        string   `json:"ID"`
+			Image     string   `json:"Image"`
+			Names     string   `json:"Names"`
+			Status    string   `json:"Status"`
+			CreatedAt string   `json:"CreatedAt"`
+			Ports     string   `json:"Ports"`
+		}
+
+		if err := json.Unmarshal(line, &container); err != nil {
+			// Skip invalid lines
+			continue
+		}
+
+		containers = append(containers, models.Container{
+			ID:        container.ID,
+			Image:     container.Image,
+			Name:      container.Names,
+			Status:    container.Status,
+			CreatedAt: container.CreatedAt,
+			Ports:     container.Ports,
+		})
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return containers, nil
 }
