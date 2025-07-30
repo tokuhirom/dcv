@@ -59,7 +59,7 @@ func (c *ComposeClient) ListContainers() ([]models.Process, error) {
 }
 
 func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) {
-	var processes []models.Process
+	processes := []models.Process{}
 	scanner := bufio.NewScanner(bytes.NewReader(output))
 
 	// Skip header
@@ -179,7 +179,7 @@ func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Conta
 }
 
 func (c *ComposeClient) parseDindPS(output []byte) ([]models.Container, error) {
-	var containers []models.Container
+	containers := []models.Container{}
 	scanner := bufio.NewScanner(bytes.NewReader(output))
 
 	// Skip header
@@ -198,12 +198,38 @@ func (c *ComposeClient) parseDindPS(output []byte) ([]models.Container, error) {
 			continue
 		}
 
+		// Parse the fields carefully
+		// CONTAINER ID   IMAGE          COMMAND    CREATED         STATUS         PORTS     NAMES
+		// a1b2c3d4e5f6   alpine:latest  "/bin/sh"  2 minutes ago   Up 2 minutes             test-container
+		
 		container := models.Container{
-			ID:        fields[0],
-			Image:     fields[1],
-			CreatedAt: fields[3] + " " + fields[4],
-			Status:    fields[5] + " " + fields[6],
-			Name:      fields[len(fields)-1],
+			ID:    fields[0],
+			Image: fields[1],
+			Name:  fields[len(fields)-1],
+		}
+		
+		// Find CREATED and STATUS fields
+		// They are usually "X time ago" and "Up X time" format
+		createdIdx := -1
+		statusIdx := -1
+		
+		for i := 3; i < len(fields); i++ {
+			if fields[i] == "ago" && createdIdx == -1 {
+				// Found end of CREATED field
+				createdIdx = i
+				container.CreatedAt = strings.Join(fields[3:i+1], " ")
+			} else if strings.HasPrefix(fields[i], "Up") && statusIdx == -1 {
+				// Found start of STATUS field
+				statusIdx = i
+				// Find the end of status (before PORTS or NAME)
+				statusEnd := i + 2 // Usually "Up X minutes"
+				if statusEnd < len(fields)-1 {
+					container.Status = strings.Join(fields[i:statusEnd+1], " ")
+				} else {
+					container.Status = strings.Join(fields[i:len(fields)-1], " ")
+				}
+				break
+			}
 		}
 
 		containers = append(containers, container)
