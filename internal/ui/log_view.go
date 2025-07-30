@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os/exec"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -15,6 +16,7 @@ type LogView struct {
 	view          *tview.TextView
 	containerName string
 	isDind        bool
+	hostContainer string // For dind logs
 	searchMode    bool
 	searchText    string
 }
@@ -89,14 +91,35 @@ func (v *LogView) setupKeyBindings() {
 func (v *LogView) SetContainer(containerName string, isDind bool) {
 	v.containerName = containerName
 	v.isDind = isDind
+	v.hostContainer = ""
 	v.view.Clear()
 	v.view.SetTitle(fmt.Sprintf(" Logs: %s ", containerName))
 	
 	go v.streamLogs()
 }
 
+func (v *LogView) SetDindContainer(hostContainer, targetContainer string) {
+	v.hostContainer = hostContainer
+	v.containerName = targetContainer
+	v.isDind = true
+	v.view.Clear()
+	v.view.SetTitle(fmt.Sprintf(" Logs: %s (in %s) ", targetContainer, hostContainer))
+	
+	go v.streamLogs()
+}
+
 func (v *LogView) streamLogs() {
-	cmd, err := v.app.dockerClient.GetContainerLogs(v.containerName, true)
+	var cmd *exec.Cmd
+	var err error
+	
+	if v.isDind && v.hostContainer != "" {
+		// Get logs from container inside dind
+		cmd, err = v.app.dockerClient.GetDindContainerLogs(v.hostContainer, v.containerName, true)
+	} else {
+		// Get regular container logs
+		cmd, err = v.app.dockerClient.GetContainerLogs(v.containerName, true)
+	}
+	
 	if err != nil {
 		v.view.SetText(fmt.Sprintf("Error: %v", err))
 		return

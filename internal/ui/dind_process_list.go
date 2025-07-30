@@ -64,9 +64,8 @@ func (v *DindProcessListView) setupKeyBindings() {
 			row, _ := v.table.GetSelection()
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
-				v.app.logView.SetContainer(container.Name, true)
-				v.app.logView.view.SetTitle(fmt.Sprintf(" Logs: %s (in %s) ", container.Name, v.containerName))
-				v.app.pages.SwitchToPage("logs")
+				// For dind logs, we need to pass both the host container and target container
+				v.app.ShowDindLogs(v.containerName, container.Name)
 			}
 			return nil
 		case tcell.KeyRune:

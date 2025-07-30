@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tokuhirom/dcv/internal/docker"
 )
@@ -37,10 +38,19 @@ func NewApp() (*App, error) {
 }
 
 func (a *App) Run() error {
-	// Load initial data
-	if err := a.processView.Refresh(); err != nil {
-		return err
-	}
+	// Set up initial refresh after draw
+	a.app.SetAfterDrawFunc(func(screen tcell.Screen) {
+		// Only run once
+		a.app.SetAfterDrawFunc(nil)
+		
+		// Load initial data
+		go func() {
+			if err := a.processView.Refresh(); err != nil {
+				// Show error
+				a.processView.showError(err)
+			}
+		}()
+	})
 
 	return a.app.Run()
 }
@@ -57,4 +67,10 @@ func (a *App) ShowLogs(containerName string, isDind bool) {
 func (a *App) ShowDindProcessList(containerName string) {
 	a.dindView.SetContainer(containerName)
 	a.pages.SwitchToPage("dind")
+}
+
+func (a *App) ShowDindLogs(hostContainer, targetContainer string) {
+	// Create a special log view for dind container logs
+	a.logView.SetDindContainer(hostContainer, targetContainer)
+	a.pages.SwitchToPage("logs")
 }

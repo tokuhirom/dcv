@@ -105,11 +105,26 @@ func (v *ProcessListView) showError(err error) {
 		v.table.SetCell(0, 0, tview.NewTableCell("Error").
 			SetTextColor(tcell.ColorRed).
 			SetAlign(tview.AlignCenter).
-			SetExpansion(3))
-		v.table.SetCell(1, 0, tview.NewTableCell(err.Error()).
+			SetExpansion(3).
+			SetSelectable(false))
+		
+		errorMsg := err.Error()
+		if strings.Contains(errorMsg, "no configuration file provided") {
+			errorMsg = "No docker-compose.yml found in current directory. Please run from a directory with docker-compose.yml"
+		}
+		
+		v.table.SetCell(1, 0, tview.NewTableCell(errorMsg).
 			SetTextColor(tcell.ColorWhite).
 			SetAlign(tview.AlignLeft).
-			SetExpansion(3))
+			SetExpansion(3).
+			SetSelectable(false))
+		
+		// Add help text
+		v.table.SetCell(3, 0, tview.NewTableCell("Press 'q' to quit or navigate to a directory with docker-compose.yml").
+			SetTextColor(tcell.ColorYellow).
+			SetAlign(tview.AlignCenter).
+			SetExpansion(3).
+			SetSelectable(false))
 	})
 }
 
