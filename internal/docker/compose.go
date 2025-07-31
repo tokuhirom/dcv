@@ -98,6 +98,44 @@ func (c *ComposeClient) GetCommandLogs() []CommandLog {
 	return *c.commandLogs
 }
 
+// LogCommand manually logs a command execution (for streaming commands)
+func (c *ComposeClient) LogCommand(cmd *exec.Cmd, startTime time.Time, err error) {
+	if c.commandLogs == nil || cmd == nil {
+		return
+	}
+	
+	duration := time.Since(startTime)
+	cmdStr := strings.Join(cmd.Args, " ")
+	
+	exitCode := 0
+	errorStr := ""
+	
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		} else {
+			exitCode = -1
+		}
+		errorStr = err.Error()
+	}
+	
+	log := CommandLog{
+		Timestamp: startTime,
+		Command:   cmdStr,
+		ExitCode:  exitCode,
+		Output:    "", // Streaming commands don't capture output
+		Error:     errorStr,
+		Duration:  duration,
+	}
+	
+	*c.commandLogs = append(*c.commandLogs, log)
+	
+	// Keep only last 100 commands
+	if len(*c.commandLogs) > 100 {
+		*c.commandLogs = (*c.commandLogs)[len(*c.commandLogs)-100:]
+	}
+}
+
 // executeAndLog executes a command and logs the result
 func (c *ComposeClient) executeAndLog(cmd *exec.Cmd) ([]byte, error) {
 	startTime := time.Now()
