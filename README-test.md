@@ -43,7 +43,21 @@ The docker-compose.yml sets up:
 ## Testing DCV Features
 
 1. **View all containers**: The main screen shows all docker-compose services
-2. **View logs**: Press Enter on any container to see its logs
-3. **Dind support**: Press 'd' on the dind container to see containers running inside it
-4. **Vim navigation**: Use j/k to navigate, G to go to end, / to search in logs
-5. **Exit**: Press 'q' or Esc to go back/quit
+2. **View logs**: Press Enter on any container to see its logs (initial 1000 lines + real-time streaming)
+3. **Process info**: Press 't' to view process information (docker compose top)
+4. **Container management**: 
+   - Press 'K' (capital K) to kill a service
+   - Press 'S' (capital S) to stop a service
+5. **Dind support**: Press 'd' on the dind container to see containers running inside it
+6. **Vim navigation**: 
+   - Use j/k or ↑/↓ to navigate
+   - In logs: G to go to end, g to go to start
+   - / to search in logs
+7. **Refresh**: Press 'r' to refresh the current view
+8. **Exit**: Press 'q' to quit, or Esc to go back to previous view
+
+## Debug Features
+
+- The last executed docker command is displayed at the bottom of the screen
+- Error messages include detailed command output for troubleshooting
+- STDERR output is prefixed with `[STDERR]` in log views

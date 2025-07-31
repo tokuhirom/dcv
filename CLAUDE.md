@@ -12,22 +12,41 @@ DCV (Docker Compose Viewer) is a TUI tool for monitoring Docker Compose applicat
 ## Technical Architecture
 
 - **Language**: Go (Golang)
-- **TUI Framework**: tview
+- **TUI Framework**: Bubble Tea (with Lipgloss for styling)
+- **Architecture**: Model-View-Update (MVU) pattern
 - **Core Functionality**: Wraps docker-compose commands to provide an interactive interface
 
 ## Key Views
 
 1. **Process List View**: Shows `docker compose ps` results
-   - Enter: View container logs
-   - d: Treat as dind container and navigate to dind process list
+   - `↑`/`k`: Move up
+   - `↓`/`j`: Move down
+   - `Enter`: View container logs
+   - `d`: Navigate to dind process list (for dind containers)
+   - `t`: Show process info (docker compose top)
+   - `K`: Kill service (docker compose kill)
+   - `S`: Stop service (docker compose stop)
+   - `r`: Refresh list
+   - `q`: Quit
 
 2. **Dind Process List View**: Executes `docker ps` inside selected dind containers
-   - Enter: View logs of containers running inside dind
+   - `↑`/`k`: Move up
+   - `↓`/`j`: Move down
+   - `Enter`: View logs of containers running inside dind
+   - `r`: Refresh list
+   - `Esc`/`q`: Back to process list
 
 3. **Log View**: Displays container logs with vim-like navigation
-   - `/`: Search functionality
+   - `↑`/`k`: Scroll up
+   - `↓`/`j`: Scroll down
    - `G`: Jump to end
-   - Standard vim navigation keys
+   - `g`: Jump to start
+   - `/`: Search functionality
+   - `Esc`/`q`: Back to previous view
+
+4. **Top View**: Shows process information (docker compose top)
+   - `r`: Refresh
+   - `Esc`/`q`: Back to process list
 
 ## Development Guidelines
 
@@ -37,7 +56,15 @@ DCV (Docker Compose Viewer) is a TUI tool for monitoring Docker Compose applicat
 
 ## Build and Installation
 
-The project is intended to be installed via `go install` (implementation pending).
+```bash
+# Install via go install
+go install github.com/tokuhirom/dcv@latest
+
+# Or build from source
+git clone https://github.com/tokuhirom/dcv.git
+cd dcv
+go build -o dcv
+```
 
 ## License
 
