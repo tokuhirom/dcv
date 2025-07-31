@@ -32,7 +32,7 @@ services:
 
   # Docker in Docker for CI/CD simulation
   dind:
-    image: docker:24-dind
+    image: docker:28-dind
     privileged: true
     environment:
       DOCKER_TLS_CERTDIR: ""
