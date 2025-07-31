@@ -1,4 +1,7 @@
-.PHONY: up down logs test-dind clean
+.PHONY: all up down logs test-dind clean
+
+all:
+	go build -o dcv
 
 # Start all services
 up:
@@ -25,7 +28,3 @@ clean:
 	docker compose down -v
 	rm -f dcv
 
-# Build and run dcv
-run: up
-	go build -o dcv
-	./dcv
