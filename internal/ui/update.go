@@ -63,6 +63,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case logLineMsg:
 		m.logs = append(m.logs, msg.line)
+		// Keep only last 10000 lines to prevent unbounded memory growth
+		if len(m.logs) > 10000 {
+			m.logs = m.logs[len(m.logs)-10000:]
+		}
+		// Auto-scroll to bottom
+		maxScroll := len(m.logs) - (m.height - 4)
+		if maxScroll > 0 {
+			m.logScrollY = maxScroll
+		}
+		// Continue polling for more logs
+		return m, pollForLogs()
+
+	case logLinesMsg:
+		m.logs = append(m.logs, msg.lines...)
+		// Keep only last 10000 lines to prevent unbounded memory growth
+		if len(m.logs) > 10000 {
+			m.logs = m.logs[len(m.logs)-10000:]
+		}
 		// Auto-scroll to bottom
 		maxScroll := len(m.logs) - (m.height - 4)
 		if maxScroll > 0 {
