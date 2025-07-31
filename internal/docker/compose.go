@@ -67,42 +67,49 @@ func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) 
 			continue
 		}
 
-		// Split by multiple spaces to handle columns properly
-		// Expected format: NAME IMAGE COMMAND SERVICE CREATED STATUS PORTS
-		fields := strings.Fields(line)
-		if len(fields) < 6 {
+		// Use a more robust parsing approach - split by multiple spaces
+		// Expected format: NAME IMAGE SERVICE STATUS PORTS
+		// Split preserving the column alignment
+		parts := strings.Fields(line)
+		if len(parts) < 4 {
 			continue
 		}
 
-		// Find STATUS field - it starts with "Up" or "Exited"
-		statusIndex := -1
-		for i := 4; i < len(fields); i++ {
-			if strings.HasPrefix(fields[i], "Up") || strings.HasPrefix(fields[i], "Exited") || strings.HasPrefix(fields[i], "Created") {
-				statusIndex = i
+		// Find where STATUS starts (contains "Up", "Exited", etc.)
+		statusStartIdx := -1
+		for i := 2; i < len(parts); i++ {
+			if strings.HasPrefix(parts[i], "Up") || strings.HasPrefix(parts[i], "Exited") || strings.HasPrefix(parts[i], "Created") {
+				statusStartIdx = i
 				break
 			}
 		}
 
-		if statusIndex == -1 {
+		if statusStartIdx == -1 || statusStartIdx < 3 {
 			continue
 		}
 
-		// Extract status (from statusIndex to the end or before PORTS)
-		statusEnd := len(fields)
-		for i := statusIndex + 1; i < len(fields); i++ {
-			// Check if this might be a port (contains : or /)
-			if strings.Contains(fields[i], ":") || strings.Contains(fields[i], "/") {
-				statusEnd = i
+		// Extract fields based on position
+		name := parts[0]
+		image := parts[1]
+		service := parts[statusStartIdx-1]
+		
+		// Build status from statusStartIdx onward, stopping at ports
+		statusParts := []string{}
+		for i := statusStartIdx; i < len(parts); i++ {
+			// Stop if we hit a port (contains "/" for tcp/udp or ":" for port mapping)
+			if strings.Contains(parts[i], "/") || strings.Contains(parts[i], ":") {
 				break
 			}
+			statusParts = append(statusParts, parts[i])
 		}
+		status := strings.Join(statusParts, " ")
 
 		process := models.Process{
 			Container: models.Container{
-				Name:    fields[0],
-				Image:   fields[1],
-				Service: fields[3],
-				Status:  strings.Join(fields[statusIndex:statusEnd], " "),
+				Name:    name,
+				Image:   image,
+				Service: service,
+				Status:  status,
 			},
 		}
 
@@ -123,6 +130,7 @@ func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Process, err
 	
 	// Docker compose outputs each container as a separate JSON object on its own line
 	scanner := bufio.NewScanner(bytes.NewReader(output))
+	hasValidJSON := false
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) == 0 {
@@ -139,9 +147,13 @@ func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Process, err
 		}
 
 		if err := json.Unmarshal(line, &container); err != nil {
-			// Skip invalid lines
+			// If we have content that's not valid JSON, return error
+			if len(line) > 0 && !hasValidJSON {
+				return nil, fmt.Errorf("invalid JSON: %v", err)
+			}
 			continue
 		}
+		hasValidJSON = true
 
 		process := models.Process{
 			Container: models.Container{

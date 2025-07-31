@@ -23,25 +23,28 @@ dind-1              docker:dind         dind                Up 5 minutes        
 			want: []models.Process{
 				{
 					Container: models.Container{
-						Name:   "web-1",
-						Image:  "nginx:latest",
-						Status: "Up 5 minutes 80/tcp",
+						Name:    "web-1",
+						Image:   "nginx:latest",
+						Service: "web",
+						Status:  "Up 5 minutes",
 					},
 					IsDind: false,
 				},
 				{
 					Container: models.Container{
-						Name:   "db-1",
-						Image:  "postgres:13",
-						Status: "Up 5 minutes 5432/tcp",
+						Name:    "db-1",
+						Image:   "postgres:13",
+						Service: "db",
+						Status:  "Up 5 minutes",
 					},
 					IsDind: false,
 				},
 				{
 					Container: models.Container{
-						Name:   "dind-1",
-						Image:  "docker:dind",
-						Status: "Up 5 minutes 2375/tcp, 2376/tcp",
+						Name:    "dind-1",
+						Image:   "docker:dind",
+						Service: "dind",
+						Status:  "Up 5 minutes",
 					},
 					IsDind: true,
 				},
