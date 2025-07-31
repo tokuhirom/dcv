@@ -65,6 +65,8 @@ func (m Model) View() string {
 		return m.renderStatsView()
 	case ProjectListView:
 		return m.renderProjectList()
+	case DebugLogView:
+		return m.renderDebugLog()
 	default:
 		return "Unknown view"
 	}
@@ -161,7 +163,7 @@ func (m Model) renderProcessList() string {
 
 	// Help text
 	help := []string{
-		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • a: toggle all • p: projects",
+		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • a: toggle all • p: projects • l: debug log",
 		"K: kill • S: stop • U: start • R: restart • D: remove (stopped) • P: deploy • r: refresh • q: quit",
 	}
 	s.WriteString(helpStyle.Render(strings.Join(help, "\n")))
@@ -459,6 +461,102 @@ func (m Model) renderProjectList() string {
 
 	// Help text
 	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • r: refresh • q: quit")
+	s.WriteString(help)
+
+	// Show last command if available
+	if m.lastCommand != "" {
+		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
+	}
+
+	return s.String()
+}
+
+func (m Model) renderDebugLog() string {
+	var s strings.Builder
+
+	title := titleStyle.Render("Debug Log - Command History")
+	s.WriteString(title + "\n\n")
+
+	if m.loading {
+		s.WriteString("Loading command logs...")
+		return s.String()
+	}
+
+	if len(m.commandLogs) == 0 {
+		s.WriteString("No commands executed yet\n")
+		s.WriteString("\n" + helpStyle.Render("Press 'Esc' to go back"))
+		return s.String()
+	}
+
+	// Calculate view height
+	viewHeight := m.height - 4
+	if m.lastCommand != "" {
+		viewHeight--
+	}
+
+	// Show logs from scroll position
+	startIdx := m.debugLogScrollY
+	endIdx := startIdx + viewHeight
+
+	if endIdx > len(m.commandLogs) {
+		endIdx = len(m.commandLogs)
+	}
+
+	// Format and display logs
+	for i := startIdx; i < endIdx && i < len(m.commandLogs); i++ {
+		log := m.commandLogs[i]
+		
+		// Format timestamp
+		timestamp := log.Timestamp.Format("15:04:05")
+		
+		// Format exit code with color
+		var exitCodeStr string
+		if log.ExitCode == 0 {
+			exitCodeStr = statusUpStyle.Render(fmt.Sprintf("[%d]", log.ExitCode))
+		} else {
+			exitCodeStr = statusDownStyle.Render(fmt.Sprintf("[%d]", log.ExitCode))
+		}
+		
+		// Format duration
+		duration := fmt.Sprintf("(%.2fs)", log.Duration.Seconds())
+		
+		// Command line
+		cmdLine := fmt.Sprintf("%s %s %s %s",
+			headerStyle.Render(timestamp),
+			exitCodeStr,
+			helpStyle.Render(duration),
+			log.Command,
+		)
+		s.WriteString(cmdLine + "\n")
+		
+		// Show error if any
+		if log.Error != "" && log.ExitCode != 0 {
+			s.WriteString(errorStyle.Render("  Error: ") + log.Error + "\n")
+		}
+		
+		// Show truncated output if error
+		if log.ExitCode != 0 && log.Output != "" {
+			lines := strings.Split(strings.TrimSpace(log.Output), "\n")
+			maxLines := 3
+			for j := 0; j < len(lines) && j < maxLines; j++ {
+				s.WriteString(helpStyle.Render("  | ") + lines[j] + "\n")
+			}
+			if len(lines) > maxLines {
+				s.WriteString(helpStyle.Render(fmt.Sprintf("  | ... (%d more lines)\n", len(lines)-maxLines)))
+			}
+		}
+		
+		s.WriteString("\n")
+	}
+
+	// Fill remaining space
+	linesShown := endIdx - startIdx
+	for i := linesShown; i < viewHeight; i++ {
+		s.WriteString("\n")
+	}
+
+	// Help text
+	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • Esc/q: back")
 	s.WriteString(help)
 
 	// Show last command if available

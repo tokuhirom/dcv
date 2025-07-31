@@ -60,9 +60,15 @@ func newLogReader(client *docker.ComposeClient, serviceName string, isDind bool,
 		return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
 	}
 
+	// Log the command execution
+	startTime := time.Now()
 	if err := lr.cmd.Start(); err != nil {
+		client.LogCommand(lr.cmd, startTime, err)
 		return nil, fmt.Errorf("failed to start log command '%s': %w", strings.Join(lr.cmd.Args, " "), err)
 	}
+	
+	// Log successful start
+	client.LogCommand(lr.cmd, startTime, nil)
 
 	// Start reading logs in background
 	go lr.readLogs()

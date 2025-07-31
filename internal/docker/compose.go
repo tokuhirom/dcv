@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -15,20 +16,40 @@ type ComposeClient struct {
 	workDir     string
 	projectName string
 	composeFile string
+	commandLogs *[]CommandLog // Pointer to shared command logs
+}
+
+// CommandLog represents a command execution log entry
+type CommandLog struct {
+	Timestamp time.Time
+	Command   string
+	ExitCode  int
+	Output    string
+	Error     string
+	Duration  time.Duration
 }
 
 func NewComposeClient(workDir string) *ComposeClient {
+	logs := make([]CommandLog, 0)
 	return &ComposeClient{
-		workDir: workDir,
+		workDir:     workDir,
+		commandLogs: &logs,
 	}
 }
 
 func NewComposeClientWithOptions(workDir, projectName, composeFile string) *ComposeClient {
+	logs := make([]CommandLog, 0)
 	return &ComposeClient{
 		workDir:     workDir,
 		projectName: projectName,
 		composeFile: composeFile,
+		commandLogs: &logs,
 	}
+}
+
+// SetCommandLogs sets the shared command logs
+func (c *ComposeClient) SetCommandLogs(logs *[]CommandLog) {
+	c.commandLogs = logs
 }
 
 // ListProjects lists all Docker Compose projects
@@ -38,7 +59,7 @@ func (c *ComposeClient) ListProjects() ([]models.ComposeProject, error) {
 		cmd.Dir = c.workDir
 	}
 	
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute docker compose ls: %w\nOutput: %s", err, string(output))
 	}
@@ -67,6 +88,94 @@ func (c *ComposeClient) ListProjects() ([]models.ComposeProject, error) {
 	}
 	
 	return projects, nil
+}
+
+// GetCommandLogs returns the command execution logs
+func (c *ComposeClient) GetCommandLogs() []CommandLog {
+	if c.commandLogs == nil {
+		return []CommandLog{}
+	}
+	return *c.commandLogs
+}
+
+// LogCommand manually logs a command execution (for streaming commands)
+func (c *ComposeClient) LogCommand(cmd *exec.Cmd, startTime time.Time, err error) {
+	if c.commandLogs == nil || cmd == nil {
+		return
+	}
+	
+	duration := time.Since(startTime)
+	cmdStr := strings.Join(cmd.Args, " ")
+	
+	exitCode := 0
+	errorStr := ""
+	
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		} else {
+			exitCode = -1
+		}
+		errorStr = err.Error()
+	}
+	
+	log := CommandLog{
+		Timestamp: startTime,
+		Command:   cmdStr,
+		ExitCode:  exitCode,
+		Output:    "", // Streaming commands don't capture output
+		Error:     errorStr,
+		Duration:  duration,
+	}
+	
+	*c.commandLogs = append(*c.commandLogs, log)
+	
+	// Keep only last 100 commands
+	if len(*c.commandLogs) > 100 {
+		*c.commandLogs = (*c.commandLogs)[len(*c.commandLogs)-100:]
+	}
+}
+
+// executeAndLog executes a command and logs the result
+func (c *ComposeClient) executeAndLog(cmd *exec.Cmd) ([]byte, error) {
+	startTime := time.Now()
+	cmdStr := strings.Join(cmd.Args, " ")
+	
+	output, err := cmd.CombinedOutput()
+	duration := time.Since(startTime)
+	
+	exitCode := 0
+	errorStr := ""
+	
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		} else {
+			exitCode = -1
+		}
+		errorStr = err.Error()
+	}
+	
+	// Add to command logs if available
+	if c.commandLogs != nil {
+		log := CommandLog{
+			Timestamp: startTime,
+			Command:   cmdStr,
+			ExitCode:  exitCode,
+			Output:    string(output),
+			Error:     errorStr,
+			Duration:  duration,
+		}
+		
+		*c.commandLogs = append(*c.commandLogs, log)
+		
+		// Keep only last 100 commands
+		if len(*c.commandLogs) > 100 {
+			*c.commandLogs = (*c.commandLogs)[len(*c.commandLogs)-100:]
+		}
+	}
+	
+	return output, err
 }
 
 // buildComposeArgs builds the docker compose command arguments with project and file options
@@ -98,7 +207,7 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.Process, error) {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		// Check if docker compose is available
 		if execErr, ok := err.(*exec.ExitError); ok {
@@ -302,7 +411,7 @@ func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Conta
 		return nil, err
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		// If JSON format fails, try table format
 		cmd, err = c.ExecInContainer(containerName, []string{"docker", "ps"})
@@ -310,7 +419,7 @@ func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Conta
 			return nil, err
 		}
 		
-		output, err = cmd.CombinedOutput()
+		output, err = c.executeAndLog(cmd)
 		if err != nil {
 			// Include the command and output in error message for debugging
 			cmdStr := strings.Join(cmd.Args, " ")
@@ -450,7 +559,7 @@ func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute docker compose top: %w\nOutput: %s", err, string(output))
 	}
@@ -465,7 +574,7 @@ func (c *ComposeClient) KillService(serviceName string) error {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to execute docker compose kill: %w\nOutput: %s", err, string(output))
 	}
@@ -480,7 +589,7 @@ func (c *ComposeClient) StopService(serviceName string) error {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to execute docker compose stop: %w\nOutput: %s", err, string(output))
 	}
@@ -495,7 +604,7 @@ func (c *ComposeClient) StartService(serviceName string) error {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to execute docker compose start: %w\nOutput: %s", err, string(output))
 	}
@@ -510,7 +619,7 @@ func (c *ComposeClient) RestartService(serviceName string) error {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to execute docker compose restart: %w\nOutput: %s", err, string(output))
 	}
@@ -525,7 +634,7 @@ func (c *ComposeClient) RemoveService(serviceName string) error {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to execute docker compose rm: %w\nOutput: %s", err, string(output))
 	}
@@ -540,7 +649,7 @@ func (c *ComposeClient) UpService(serviceName string) error {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to execute docker compose up: %w\nOutput: %s", err, string(output))
 	}
@@ -554,7 +663,7 @@ func (c *ComposeClient) GetStats() (string, error) {
 		cmd.Dir = c.workDir
 	}
 
-	output, err := cmd.CombinedOutput()
+	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute docker compose stats: %w\nOutput: %s", err, string(output))
 	}

@@ -33,6 +33,7 @@ const (
 	TopView
 	StatsView
 	ProjectListView
+	DebugLogView
 )
 
 // Model represents the application state
@@ -73,6 +74,11 @@ type Model struct {
 	// Stats view state
 	stats []ContainerStats
 
+	// Debug log view state
+	commandLogs       []docker.CommandLog  // For display
+	sharedCommandLogs *[]docker.CommandLog // Shared across all docker clients (pointer)
+	debugLogScrollY   int
+
 	// Search state
 	searchMode bool
 	searchText string
@@ -97,16 +103,23 @@ type Model struct {
 
 // NewModel creates a new model with initial state
 func NewModel() Model {
+	sharedLogs := make([]docker.CommandLog, 0)
+	client := docker.NewComposeClient("")
+	client.SetCommandLogs(&sharedLogs)
+	
 	return Model{
-		currentView:  ProcessListView,
-		dockerClient: docker.NewComposeClient(""),
-		loading:      true,
+		currentView:       ProcessListView,
+		dockerClient:      client,
+		loading:           true,
+		sharedCommandLogs: &sharedLogs,
 	}
 }
 
 // NewModelWithOptions creates a new model with command line options
 func NewModelWithOptions(projectName, composeFile string, showProjects bool) Model {
+	sharedLogs := make([]docker.CommandLog, 0)
 	client := docker.NewComposeClientWithOptions("", projectName, composeFile)
+	client.SetCommandLogs(&sharedLogs)
 	
 	// Determine initial view
 	initialView := ProcessListView
@@ -115,12 +128,13 @@ func NewModelWithOptions(projectName, composeFile string, showProjects bool) Mod
 	}
 	
 	return Model{
-		currentView:     initialView,
-		dockerClient:    client,
-		loading:         true,
-		projectName:     projectName,
-		composeFile:     composeFile,
-		showProjectList: showProjects,
+		currentView:       initialView,
+		dockerClient:      client,
+		loading:           true,
+		projectName:       projectName,
+		composeFile:       composeFile,
+		showProjectList:   showProjects,
+		sharedCommandLogs: &sharedLogs,
 	}
 }
 
@@ -185,6 +199,10 @@ type statsLoadedMsg struct {
 type projectsLoadedMsg struct {
 	projects []models.ComposeProject
 	err      error
+}
+
+type commandLogsMsg struct {
+	logs []docker.CommandLog
 }
 
 // Commands
@@ -330,5 +348,13 @@ func loadProjects(client *docker.ComposeClient) tea.Cmd {
 			projects: projects,
 			err:      err,
 		}
+	}
+}
+
+func loadCommandLogs(client *docker.ComposeClient) tea.Cmd {
+	return func() tea.Msg {
+		// Just return a signal to refresh the view
+		// The actual logs are in m.sharedCommandLogs
+		return commandLogsMsg{logs: nil}
 	}
 }
