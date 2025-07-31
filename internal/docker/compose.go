@@ -16,7 +16,7 @@ type ComposeClient struct {
 	workDir     string
 	projectName string
 	composeFile string
-	commandLogs []CommandLog
+	commandLogs *[]CommandLog // Pointer to shared command logs
 }
 
 // CommandLog represents a command execution log entry
@@ -30,17 +30,26 @@ type CommandLog struct {
 }
 
 func NewComposeClient(workDir string) *ComposeClient {
+	logs := make([]CommandLog, 0)
 	return &ComposeClient{
-		workDir: workDir,
+		workDir:     workDir,
+		commandLogs: &logs,
 	}
 }
 
 func NewComposeClientWithOptions(workDir, projectName, composeFile string) *ComposeClient {
+	logs := make([]CommandLog, 0)
 	return &ComposeClient{
 		workDir:     workDir,
 		projectName: projectName,
 		composeFile: composeFile,
+		commandLogs: &logs,
 	}
+}
+
+// SetCommandLogs sets the shared command logs
+func (c *ComposeClient) SetCommandLogs(logs *[]CommandLog) {
+	c.commandLogs = logs
 }
 
 // ListProjects lists all Docker Compose projects
@@ -83,7 +92,10 @@ func (c *ComposeClient) ListProjects() ([]models.ComposeProject, error) {
 
 // GetCommandLogs returns the command execution logs
 func (c *ComposeClient) GetCommandLogs() []CommandLog {
-	return c.commandLogs
+	if c.commandLogs == nil {
+		return []CommandLog{}
+	}
+	return *c.commandLogs
 }
 
 // executeAndLog executes a command and logs the result
@@ -106,21 +118,23 @@ func (c *ComposeClient) executeAndLog(cmd *exec.Cmd) ([]byte, error) {
 		errorStr = err.Error()
 	}
 	
-	// Add to command logs
-	log := CommandLog{
-		Timestamp: startTime,
-		Command:   cmdStr,
-		ExitCode:  exitCode,
-		Output:    string(output),
-		Error:     errorStr,
-		Duration:  duration,
-	}
-	
-	c.commandLogs = append(c.commandLogs, log)
-	
-	// Keep only last 100 commands
-	if len(c.commandLogs) > 100 {
-		c.commandLogs = c.commandLogs[len(c.commandLogs)-100:]
+	// Add to command logs if available
+	if c.commandLogs != nil {
+		log := CommandLog{
+			Timestamp: startTime,
+			Command:   cmdStr,
+			ExitCode:  exitCode,
+			Output:    string(output),
+			Error:     errorStr,
+			Duration:  duration,
+		}
+		
+		*c.commandLogs = append(*c.commandLogs, log)
+		
+		// Keep only last 100 commands
+		if len(*c.commandLogs) > 100 {
+			*c.commandLogs = (*c.commandLogs)[len(*c.commandLogs)-100:]
+		}
 	}
 	
 	return output, err

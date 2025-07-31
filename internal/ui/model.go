@@ -87,6 +87,7 @@ type Model struct {
 
 	// Debug log view state
 	commandLogs       []CommandLog
+	sharedCommandLogs []docker.CommandLog // Shared across all docker clients
 	debugLogScrollY   int
 
 	// Search state
@@ -113,16 +114,23 @@ type Model struct {
 
 // NewModel creates a new model with initial state
 func NewModel() Model {
+	sharedLogs := make([]docker.CommandLog, 0)
+	client := docker.NewComposeClient("")
+	client.SetCommandLogs(&sharedLogs)
+	
 	return Model{
-		currentView:  ProcessListView,
-		dockerClient: docker.NewComposeClient(""),
-		loading:      true,
+		currentView:       ProcessListView,
+		dockerClient:      client,
+		loading:           true,
+		sharedCommandLogs: sharedLogs,
 	}
 }
 
 // NewModelWithOptions creates a new model with command line options
 func NewModelWithOptions(projectName, composeFile string, showProjects bool) Model {
+	sharedLogs := make([]docker.CommandLog, 0)
 	client := docker.NewComposeClientWithOptions("", projectName, composeFile)
+	client.SetCommandLogs(&sharedLogs)
 	
 	// Determine initial view
 	initialView := ProcessListView
@@ -131,12 +139,13 @@ func NewModelWithOptions(projectName, composeFile string, showProjects bool) Mod
 	}
 	
 	return Model{
-		currentView:     initialView,
-		dockerClient:    client,
-		loading:         true,
-		projectName:     projectName,
-		composeFile:     composeFile,
-		showProjectList: showProjects,
+		currentView:       initialView,
+		dockerClient:      client,
+		loading:           true,
+		projectName:       projectName,
+		composeFile:       composeFile,
+		showProjectList:   showProjects,
+		sharedCommandLogs: sharedLogs,
 	}
 }
 

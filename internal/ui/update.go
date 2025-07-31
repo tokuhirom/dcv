@@ -476,6 +476,8 @@ func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			project := m.projects[m.selectedProject]
 			// Create a new compose client with the selected project
 			m.dockerClient = docker.NewComposeClientWithOptions("", project.Name, "")
+			// Share the command logs with the new client
+			m.dockerClient.SetCommandLogs(&m.sharedCommandLogs)
 			m.projectName = project.Name
 			m.currentView = ProcessListView
 			m.showProjectList = false
