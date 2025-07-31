@@ -128,7 +128,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case commandLogsMsg:
 		m.loading = false
 		// Use shared logs directly
-		m.commandLogs = m.sharedCommandLogs
+		if m.sharedCommandLogs != nil {
+			m.commandLogs = *m.sharedCommandLogs
+		} else {
+			m.commandLogs = []docker.CommandLog{}
+		}
 		// Auto-scroll to bottom to show latest commands
 		maxScroll := len(m.commandLogs) - (m.height - 4)
 		if maxScroll > 0 {
@@ -478,7 +482,7 @@ func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			// Create a new compose client with the selected project
 			m.dockerClient = docker.NewComposeClientWithOptions("", project.Name, "")
 			// Share the command logs with the new client
-			m.dockerClient.SetCommandLogs(&m.sharedCommandLogs)
+			m.dockerClient.SetCommandLogs(m.sharedCommandLogs)
 			m.projectName = project.Name
 			m.currentView = ProcessListView
 			m.showProjectList = false

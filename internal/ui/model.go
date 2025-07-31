@@ -75,8 +75,8 @@ type Model struct {
 	stats []ContainerStats
 
 	// Debug log view state
-	commandLogs       []docker.CommandLog // For display
-	sharedCommandLogs []docker.CommandLog // Shared across all docker clients
+	commandLogs       []docker.CommandLog  // For display
+	sharedCommandLogs *[]docker.CommandLog // Shared across all docker clients (pointer)
 	debugLogScrollY   int
 
 	// Search state
@@ -111,7 +111,7 @@ func NewModel() Model {
 		currentView:       ProcessListView,
 		dockerClient:      client,
 		loading:           true,
-		sharedCommandLogs: sharedLogs,
+		sharedCommandLogs: &sharedLogs,
 	}
 }
 
@@ -134,7 +134,7 @@ func NewModelWithOptions(projectName, composeFile string, showProjects bool) Mod
 		projectName:       projectName,
 		composeFile:       composeFile,
 		showProjectList:   showProjects,
-		sharedCommandLogs: sharedLogs,
+		sharedCommandLogs: &sharedLogs,
 	}
 }
 
