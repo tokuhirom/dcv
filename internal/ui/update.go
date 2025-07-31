@@ -266,6 +266,25 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case "D": // Capital D for remove (delete)
+		if m.selectedProcess < len(m.processes) {
+			process := m.processes[m.selectedProcess]
+			// Only allow removing stopped containers
+			if !strings.Contains(process.Status, "Up") && !strings.Contains(process.State, "running") {
+				m.loading = true
+				return m, removeService(m.dockerClient, process.Service)
+			}
+		}
+		return m, nil
+
+	case "P": // Capital P for deploy/up
+		if m.selectedProcess < len(m.processes) {
+			process := m.processes[m.selectedProcess]
+			m.loading = true
+			return m, upService(m.dockerClient, process.Service)
+		}
+		return m, nil
+
 	case "p": // Show project list
 		m.currentView = ProjectListView
 		m.showProjectList = true

@@ -266,6 +266,28 @@ func restartService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 		}
 	}
 }
+
+func removeService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.RemoveService(serviceName)
+		return serviceActionCompleteMsg{
+			action: "rm",
+			service: serviceName,
+			err:    err,
+		}
+	}
+}
+
+func upService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.UpService(serviceName)
+		return serviceActionCompleteMsg{
+			action: "up -d",
+			service: serviceName,
+			err:    err,
+		}
+	}
+}
 func loadStats(client *docker.ComposeClient) tea.Cmd {
 	return func() tea.Msg {
 		output, err := client.GetStats()

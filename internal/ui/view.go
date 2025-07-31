@@ -162,7 +162,7 @@ func (m Model) renderProcessList() string {
 	// Help text
 	help := []string{
 		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • a: toggle all • p: projects",
-		"K: kill • S: stop • U: start • R: restart • r: refresh • q: quit",
+		"K: kill • S: stop • U: start • R: restart • D: remove (stopped) • P: deploy • r: refresh • q: quit",
 	}
 	s.WriteString(helpStyle.Render(strings.Join(help, "\n")))
 

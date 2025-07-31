@@ -517,6 +517,36 @@ func (c *ComposeClient) RestartService(serviceName string) error {
 
 	return nil
 }
+
+func (c *ComposeClient) RemoveService(serviceName string) error {
+	args := c.buildComposeArgs("rm", "-f", serviceName)
+	cmd := exec.Command("docker", args...)
+	if c.workDir != "" {
+		cmd.Dir = c.workDir
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute docker compose rm: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
+
+func (c *ComposeClient) UpService(serviceName string) error {
+	args := c.buildComposeArgs("up", "-d", serviceName)
+	cmd := exec.Command("docker", args...)
+	if c.workDir != "" {
+		cmd.Dir = c.workDir
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute docker compose up: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
 func (c *ComposeClient) GetStats() (string, error) {
 	args := c.buildComposeArgs("stats", "--format", "json", "--no-stream", "--all")
 	cmd := exec.Command("docker", args...)
