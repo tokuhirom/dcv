@@ -28,20 +28,22 @@ type logReader struct {
 }
 
 // newLogReader creates a new log reader
-func newLogReader(client *docker.ComposeClient, containerName string, isDind bool, hostContainer string) (*logReader, error) {
+func newLogReader(client *docker.ComposeClient, serviceName string, isDind bool, hostService string) (*logReader, error) {
 	lr := &logReader{
 		client:        client,
-		containerName: containerName,
+		containerName: serviceName, // Keep field name for compatibility but it's actually service name
 		isDind:        isDind,
-		hostContainer: hostContainer,
+		hostContainer: hostService, // Keep field name for compatibility but it's actually service name
 		lines:         make([]string, 0),
 	}
 
 	var err error
-	if isDind && hostContainer != "" {
-		lr.cmd, err = client.GetDindContainerLogs(hostContainer, containerName, true)
+	if isDind && hostService != "" {
+		// For dind, serviceName is the container name inside dind
+		lr.cmd, err = client.GetDindContainerLogs(hostService, serviceName, true)
 	} else {
-		lr.cmd, err = client.GetContainerLogs(containerName, true)
+		// For regular logs, use service name
+		lr.cmd, err = client.GetContainerLogs(serviceName, true)
 	}
 
 	if err != nil {
@@ -136,7 +138,7 @@ var logReaderMu sync.Mutex
 var lastLogIndex int
 
 // streamLogsReal creates a command that starts log streaming
-func streamLogsReal(client *docker.ComposeClient, containerName string, isDind bool, hostContainer string) tea.Cmd {
+func streamLogsReal(client *docker.ComposeClient, serviceName string, isDind bool, hostService string) tea.Cmd {
 	return func() tea.Msg {
 		logReaderMu.Lock()
 		defer logReaderMu.Unlock()
@@ -147,7 +149,7 @@ func streamLogsReal(client *docker.ComposeClient, containerName string, isDind b
 		}
 
 		// Create new log reader
-		lr, err := newLogReader(client, containerName, isDind, hostContainer)
+		lr, err := newLogReader(client, serviceName, isDind, hostService)
 		if err != nil {
 			return errorMsg{err: err}
 		}

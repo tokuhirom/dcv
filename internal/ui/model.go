@@ -209,8 +209,8 @@ func loadDindContainers(client *docker.ComposeClient, containerName string) tea.
 	}
 }
 
-func streamLogs(client *docker.ComposeClient, containerName string, isDind bool, hostContainer string) tea.Cmd {
-	return streamLogsReal(client, containerName, isDind, hostContainer)
+func streamLogs(client *docker.ComposeClient, serviceName string, isDind bool, hostService string) tea.Cmd {
+	return streamLogsReal(client, serviceName, isDind, hostService)
 }
 
 func loadTop(client *docker.ComposeClient, serviceName string) tea.Cmd {
