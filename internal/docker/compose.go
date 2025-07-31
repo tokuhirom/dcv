@@ -183,7 +183,7 @@ func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Process, err
 }
 
 func (c *ComposeClient) GetContainerLogs(containerName string, follow bool) (*exec.Cmd, error) {
-	args := []string{"compose", "logs", "--tail", "1000"}
+	args := []string{"compose", "logs", "--tail", "1000", "--timestamps"}
 	if follow {
 		args = append(args, "-f")
 	}
@@ -320,7 +320,7 @@ func (c *ComposeClient) parseDindPS(output []byte) ([]models.Container, error) {
 }
 
 func (c *ComposeClient) GetDindContainerLogs(hostContainer, targetContainer string, follow bool) (*exec.Cmd, error) {
-	args := []string{"docker", "logs", "--tail", "1000"}
+	args := []string{"docker", "logs", "--tail", "1000", "--timestamps"}
 	if follow {
 		args = append(args, "-f")
 	}
