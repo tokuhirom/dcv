@@ -78,6 +78,7 @@ type Model struct {
 	commandLogs       []docker.CommandLog  // For display
 	sharedCommandLogs *[]docker.CommandLog // Shared across all docker clients (pointer)
 	debugLogScrollY   int
+	previousView      ViewType // View to return to when exiting debug log
 
 	// Search state
 	searchMode bool

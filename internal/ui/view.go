@@ -219,7 +219,7 @@ func (m Model) renderLogView() string {
 	}
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • /: search • Esc/q: back")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • /: search • l: debug log • Esc/q: back")
 	s.WriteString(help)
 
 	// Show last command if available
@@ -285,7 +285,7 @@ func (m Model) renderDindList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • r: refresh • Esc: back • q: quit")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • l: debug log • r: refresh • Esc: back • q: quit")
 	s.WriteString(help)
 
 	// Show last command if available
@@ -461,7 +461,7 @@ func (m Model) renderProjectList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • r: refresh • q: quit")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • l: debug log • r: refresh • q: quit")
 	s.WriteString(help)
 
 	// Show last command if available

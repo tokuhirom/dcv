@@ -311,6 +311,7 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, loadProjects(m.dockerClient)
 
 	case "l": // Show debug log
+		m.previousView = m.currentView
 		m.currentView = DebugLogView
 		m.loading = true
 		return m, loadCommandLogs(m.dockerClient)
@@ -359,6 +360,12 @@ func (m Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.searchText = ""
 		return m, nil
 
+	case "l": // Show debug log
+		m.previousView = m.currentView
+		m.currentView = DebugLogView
+		m.loading = true
+		return m, loadCommandLogs(m.dockerClient)
+
 	default:
 		return m, nil
 	}
@@ -398,6 +405,12 @@ func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "r":
 		m.loading = true
 		return m, loadDindContainers(m.dockerClient, m.currentDindService)
+
+	case "l": // Show debug log
+		m.previousView = m.currentView
+		m.currentView = DebugLogView
+		m.loading = true
+		return m, loadCommandLogs(m.dockerClient)
 
 	default:
 		return m, nil
@@ -497,6 +510,12 @@ func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.loading = true
 		return m, loadProjects(m.dockerClient)
 
+	case "l": // Show debug log
+		m.previousView = m.currentView
+		m.currentView = DebugLogView
+		m.loading = true
+		return m, loadCommandLogs(m.dockerClient)
+
 	default:
 		return m, nil
 	}
@@ -505,9 +524,23 @@ func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m Model) handleDebugLogKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc", "q":
-		// Go back to process list
-		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.showAll)
+		// Go back to previous view
+		m.currentView = m.previousView
+		switch m.previousView {
+		case ProcessListView:
+			return m, loadProcesses(m.dockerClient, m.showAll)
+		case LogView:
+			// Return to log view without restarting logs
+			return m, nil
+		case DindProcessListView:
+			return m, loadDindContainers(m.dockerClient, m.currentDindService)
+		case ProjectListView:
+			return m, loadProjects(m.dockerClient)
+		default:
+			// Fallback to process list
+			m.currentView = ProcessListView
+			return m, loadProcesses(m.dockerClient, m.showAll)
+		}
 
 	case "up", "k":
 		if m.debugLogScrollY > 0 {
