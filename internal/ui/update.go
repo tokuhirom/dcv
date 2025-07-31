@@ -277,6 +277,14 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case "P": // Capital P for deploy/up
+		if m.selectedProcess < len(m.processes) {
+			process := m.processes[m.selectedProcess]
+			m.loading = true
+			return m, upService(m.dockerClient, process.Service)
+		}
+		return m, nil
+
 	case "p": // Show project list
 		m.currentView = ProjectListView
 		m.showProjectList = true
