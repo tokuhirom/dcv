@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -23,6 +24,16 @@ type ContainerStats struct {
 	PIDs        string  `json:"PIDs"`
 }
 
+// CommandLog represents a command execution log entry
+type CommandLog struct {
+	Timestamp time.Time
+	Command   string
+	ExitCode  int
+	Output    string
+	Error     string
+	Duration  time.Duration
+}
+
 // ViewType represents the current view
 type ViewType int
 
@@ -33,6 +44,7 @@ const (
 	TopView
 	StatsView
 	ProjectListView
+	DebugLogView
 )
 
 // Model represents the application state
@@ -72,6 +84,10 @@ type Model struct {
 
 	// Stats view state
 	stats []ContainerStats
+
+	// Debug log view state
+	commandLogs       []CommandLog
+	debugLogScrollY   int
 
 	// Search state
 	searchMode bool
@@ -185,6 +201,10 @@ type statsLoadedMsg struct {
 type projectsLoadedMsg struct {
 	projects []models.ComposeProject
 	err      error
+}
+
+type commandLogsMsg struct {
+	logs []CommandLog
 }
 
 // Commands
@@ -330,5 +350,24 @@ func loadProjects(client *docker.ComposeClient) tea.Cmd {
 			projects: projects,
 			err:      err,
 		}
+	}
+}
+
+func loadCommandLogs(client *docker.ComposeClient) tea.Cmd {
+	return func() tea.Msg {
+		// Convert docker.CommandLog to ui.CommandLog
+		dockerLogs := client.GetCommandLogs()
+		uiLogs := make([]CommandLog, len(dockerLogs))
+		for i, log := range dockerLogs {
+			uiLogs[i] = CommandLog{
+				Timestamp: log.Timestamp,
+				Command:   log.Command,
+				ExitCode:  log.ExitCode,
+				Output:    log.Output,
+				Error:     log.Error,
+				Duration:  log.Duration,
+			}
+		}
+		return commandLogsMsg{logs: uiLogs}
 	}
 }

@@ -125,6 +125,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case commandLogsMsg:
+		m.loading = false
+		m.commandLogs = msg.logs
+		// Auto-scroll to bottom to show latest commands
+		maxScroll := len(m.commandLogs) - (m.height - 4)
+		if maxScroll > 0 {
+			m.debugLogScrollY = maxScroll
+		}
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -164,6 +174,8 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleStatsViewKeys(msg)
 	case ProjectListView:
 		return m.handleProjectListKeys(msg)
+	case DebugLogView:
+		return m.handleDebugLogKeys(msg)
 	default:
 		return m, nil
 	}
@@ -290,6 +302,11 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.showProjectList = true
 		m.loading = true
 		return m, loadProjects(m.dockerClient)
+
+	case "l": // Show debug log
+		m.currentView = DebugLogView
+		m.loading = true
+		return m, loadCommandLogs(m.dockerClient)
 
 	default:
 		return m, nil
@@ -470,6 +487,47 @@ func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "r":
 		m.loading = true
 		return m, loadProjects(m.dockerClient)
+
+	default:
+		return m, nil
+	}
+}
+
+func (m Model) handleDebugLogKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc", "q":
+		// Go back to process list
+		m.currentView = ProcessListView
+		return m, loadProcesses(m.dockerClient, m.showAll)
+
+	case "up", "k":
+		if m.debugLogScrollY > 0 {
+			m.debugLogScrollY--
+		}
+		return m, nil
+
+	case "down", "j":
+		maxScroll := len(m.commandLogs) - (m.height - 4)
+		if m.debugLogScrollY < maxScroll && maxScroll > 0 {
+			m.debugLogScrollY++
+		}
+		return m, nil
+
+	case "G":
+		maxScroll := len(m.commandLogs) - (m.height - 4)
+		if maxScroll > 0 {
+			m.debugLogScrollY = maxScroll
+		}
+		return m, nil
+
+	case "g":
+		m.debugLogScrollY = 0
+		return m, nil
+
+	case "r":
+		// Refresh command logs
+		m.loading = true
+		return m, loadCommandLogs(m.dockerClient)
 
 	default:
 		return m, nil
