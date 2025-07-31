@@ -56,7 +56,8 @@ type Model struct {
 	// Dind state
 	dindContainers       []models.Container
 	selectedDindContainer int
-	currentDindHost      string
+	currentDindHost      string  // Container name (for display)
+	currentDindService   string  // Service name (for docker compose exec)
 
 	// Log view state
 	logs           []string

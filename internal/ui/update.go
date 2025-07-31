@@ -47,7 +47,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case dindContainersLoadedMsg:
 		m.loading = false
-		m.lastCommand = fmt.Sprintf("docker compose exec -T %s docker ps --format json", m.currentDindHost)
+		m.lastCommand = fmt.Sprintf("docker compose exec -T %s docker ps --format json", m.currentDindService)
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
@@ -201,9 +201,10 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			process := m.processes[m.selectedProcess]
 			if process.IsDind {
 				m.currentDindHost = process.Name
+				m.currentDindService = process.Service
 				m.currentView = DindProcessListView
 				m.loading = true
-				return m, loadDindContainers(m.dockerClient, process.Name)
+				return m, loadDindContainers(m.dockerClient, process.Service)
 			}
 		}
 		return m, nil
@@ -275,7 +276,7 @@ func (m Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "esc":
 		if m.isDindLog {
 			m.currentView = DindProcessListView
-			return m, loadDindContainers(m.dockerClient, m.currentDindHost)
+			return m, loadDindContainers(m.dockerClient, m.currentDindService)
 		}
 		m.currentView = ProcessListView
 		return m, loadProcesses(m.dockerClient, m.showAll)
@@ -337,7 +338,7 @@ func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.currentView = LogView
 			m.logs = []string{}
 			m.logScrollY = 0
-			return m, streamLogs(m.dockerClient, container.Name, true, m.currentDindHost)
+			return m, streamLogs(m.dockerClient, container.Name, true, m.currentDindService)
 		}
 		return m, nil
 
@@ -347,7 +348,7 @@ func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "r":
 		m.loading = true
-		return m, loadDindContainers(m.dockerClient, m.currentDindHost)
+		return m, loadDindContainers(m.dockerClient, m.currentDindService)
 
 	default:
 		return m, nil
