@@ -172,12 +172,12 @@ func (m Model) renderLogView() string {
 		endIdx = len(m.logs)
 	}
 
-	if startIdx < len(m.logs) {
+	if len(m.logs) == 0 {
+		s.WriteString("Loading logs... (fetching last 1000 lines)\n")
+	} else if startIdx < len(m.logs) {
 		for i := startIdx; i < endIdx; i++ {
 			s.WriteString(m.logs[i] + "\n")
 		}
-	} else {
-		s.WriteString("Waiting for logs...\n")
 	}
 
 	// Fill remaining space
