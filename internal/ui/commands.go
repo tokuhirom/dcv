@@ -2,8 +2,10 @@ package ui
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -52,21 +54,21 @@ func newLogReader(client *docker.ComposeClient, containerName string, isDind boo
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create log command: %w", err)
 	}
 
 	lr.stdout, err = lr.cmd.StdoutPipe()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
 	}
 
 	lr.stderr, err = lr.cmd.StderrPipe()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
 	}
 
 	if err := lr.cmd.Start(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to start log command '%s': %w", strings.Join(lr.cmd.Args, " "), err)
 	}
 
 	// Start reading logs in background
@@ -89,6 +91,11 @@ func (lr *logReader) readLogs() {
 			lr.lines = append(lr.lines, scanner.Text())
 			lr.mu.Unlock()
 		}
+		if err := scanner.Err(); err != nil {
+			lr.mu.Lock()
+			lr.lines = append(lr.lines, fmt.Sprintf("[ERROR reading stdout: %v]", err))
+			lr.mu.Unlock()
+		}
 	}()
 
 	// Read stderr
@@ -97,13 +104,22 @@ func (lr *logReader) readLogs() {
 		scanner := bufio.NewScanner(lr.stderr)
 		for scanner.Scan() {
 			lr.mu.Lock()
-			lr.lines = append(lr.lines, scanner.Text())
+			lr.lines = append(lr.lines, fmt.Sprintf("[STDERR] %s", scanner.Text()))
+			lr.mu.Unlock()
+		}
+		if err := scanner.Err(); err != nil {
+			lr.mu.Lock()
+			lr.lines = append(lr.lines, fmt.Sprintf("[ERROR reading stderr: %v]", err))
 			lr.mu.Unlock()
 		}
 	}()
 
 	wg.Wait()
-	lr.cmd.Wait()
+	if err := lr.cmd.Wait(); err != nil {
+		lr.mu.Lock()
+		lr.lines = append(lr.lines, fmt.Sprintf("[ERROR: Command failed: %v]", err))
+		lr.mu.Unlock()
+	}
 
 	lr.mu.Lock()
 	lr.done = true
@@ -148,19 +164,26 @@ func streamLogsReal(client *docker.ComposeClient, containerName string, isDind b
 		activeLogReader = lr
 		lastLogIndex = 0
 
-		// Start polling for logs
-		return pollForLogs()()
+		// Send initial message showing the command
+		cmdStr := strings.Join(lr.cmd.Args, " ")
+		if isDind {
+			return logLineMsg{line: fmt.Sprintf("[Executing in %s: %s]", hostContainer, cmdStr)}
+		}
+		return logLineMsg{line: fmt.Sprintf("[Executing: %s]", cmdStr)}
 	}
 }
 
 // pollForLogs polls for new log lines
 func pollForLogs() tea.Cmd {
 	return func() tea.Msg {
+		// Give initial logs time to load
+		time.Sleep(200 * time.Millisecond)
+		
 		logReaderMu.Lock()
 		defer logReaderMu.Unlock()
 
 		if activeLogReader == nil {
-			return nil
+			return logLineMsg{line: "[Log reader stopped]"}
 		}
 
 		newLines, newIndex, done := activeLogReader.getNewLines(lastLogIndex)
@@ -173,6 +196,10 @@ func pollForLogs() tea.Cmd {
 
 		if done {
 			// Log streaming finished
+			if lastLogIndex == 0 {
+				activeLogReader = nil
+				return logLineMsg{line: "[No logs available for this container]"}
+			}
 			activeLogReader = nil
 			return nil
 		}
