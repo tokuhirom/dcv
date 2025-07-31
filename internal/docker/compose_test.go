@@ -245,6 +245,19 @@ func TestRestartService(t *testing.T) {
 	}
 }
 
+func TestRemoveService(t *testing.T) {
+	// This is a basic test that just checks the method exists
+	// In a real test environment, you would mock the exec.Command
+	client := NewComposeClient("")
+	
+	// We can't actually test removing a service without a stopped container
+	// So we just verify the method exists and returns an error for non-existent service
+	err := client.RemoveService("non-existent-service")
+	if err == nil {
+		t.Error("Expected error for non-existent service, got nil")
+	}
+}
+
 func TestListContainersWithShowAll(t *testing.T) {
 	// This is a basic test that just checks the method with showAll parameter
 	client := NewComposeClient("")
