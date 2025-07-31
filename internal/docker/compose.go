@@ -252,12 +252,12 @@ func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Process, err
 	return processes, nil
 }
 
-func (c *ComposeClient) GetContainerLogs(containerName string, follow bool) (*exec.Cmd, error) {
+func (c *ComposeClient) GetContainerLogs(serviceName string, follow bool) (*exec.Cmd, error) {
 	baseArgs := []string{"logs", "--tail", "1000", "--timestamps"}
 	if follow {
 		baseArgs = append(baseArgs, "-f")
 	}
-	baseArgs = append(baseArgs, containerName)
+	baseArgs = append(baseArgs, serviceName)
 
 	args := c.buildComposeArgs(baseArgs...)
 	cmd := exec.Command("docker", args...)
