@@ -206,3 +206,15 @@ func TestStopService(t *testing.T) {
 		t.Error("Expected error for non-existent service, got nil")
 	}
 }
+
+func TestGetStats(t *testing.T) {
+	// This is a basic test that just checks the method exists
+	// In a real test environment, you would mock the exec.Command
+	client := NewComposeClient("")
+	
+	// We can't actually test getting stats without running containers
+	// The method should return an error or empty result
+	_, err := client.GetStats()
+	// Either error or empty result is acceptable
+	_ = err
+}
