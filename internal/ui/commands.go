@@ -13,8 +13,6 @@ import (
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
-// Removed unused tickCmd and tickMsg
-
 // logReader manages log streaming from a container
 type logReader struct {
 	client        *docker.ComposeClient
