@@ -19,7 +19,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case processesLoadedMsg:
 		m.loading = false
-		m.lastCommand = "docker compose ps --format json"
+		if m.showAll {
+			m.lastCommand = "docker compose ps --format json --all"
+		} else {
+			m.lastCommand = "docker compose ps --format json"
+		}
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
@@ -84,7 +88,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		// Reload the process list after action completes
-		return m, loadProcesses(m.dockerClient)
+		return m, loadProcesses(m.dockerClient, m.showAll)
 
 	case statsLoadedMsg:
 		m.loading = false
@@ -114,7 +118,7 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			// Go back to process list
 			m.currentView = ProcessListView
 			m.err = nil
-			return m, loadProcesses(m.dockerClient)
+			return m, loadProcesses(m.dockerClient, m.showAll)
 		}
 		return m, tea.Quit
 	}
@@ -177,7 +181,13 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "r":
 		m.loading = true
-		return m, loadProcesses(m.dockerClient)
+		return m, loadProcesses(m.dockerClient, m.showAll)
+
+	case "a":
+		// Toggle show all containers
+		m.showAll = !m.showAll
+		m.loading = true
+		return m, loadProcesses(m.dockerClient, m.showAll)
 
 	case "s":
 		m.currentView = StatsView
@@ -239,7 +249,7 @@ func (m Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, loadDindContainers(m.dockerClient, m.currentDindHost)
 		}
 		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient)
+		return m, loadProcesses(m.dockerClient, m.showAll)
 
 	case "up", "k":
 		if m.logScrollY > 0 {
@@ -304,7 +314,7 @@ func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "esc":
 		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient)
+		return m, loadProcesses(m.dockerClient, m.showAll)
 
 	case "r":
 		m.loading = true
@@ -346,7 +356,7 @@ func (m Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "esc", "q":
 		// Go back to process list
 		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient)
+		return m, loadProcesses(m.dockerClient, m.showAll)
 		
 	case "r":
 		// Manual refresh
@@ -363,7 +373,7 @@ func (m Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "esc", "q":
 		// Go back to process list
 		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient)
+		return m, loadProcesses(m.dockerClient, m.showAll)
 		
 	case "r":
 		// Refresh stats

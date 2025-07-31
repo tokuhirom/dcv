@@ -71,8 +71,11 @@ func (m Model) View() string {
 func (m Model) renderProcessList() string {
 	var s strings.Builder
 
-	title := titleStyle.Render("Docker Compose Processes")
-	s.WriteString(title + "\n\n")
+	title := "Docker Compose Processes"
+	if m.showAll {
+		title += " (All)"
+	}
+	s.WriteString(titleStyle.Render(title) + "\n\n")
 
 	if m.err != nil {
 		if strings.Contains(m.err.Error(), "no configuration file provided") {
@@ -127,7 +130,7 @@ func (m Model) renderProcessList() string {
 		var statusStyle lipgloss.Style
 		if i == m.selectedProcess {
 			statusStyle = selectedStyle
-		} else if strings.Contains(process.Status, "Up") {
+		} else if strings.Contains(process.Status, "Up") || strings.Contains(process.State, "running") {
 			statusStyle = statusUpStyle
 		} else {
 			statusStyle = statusDownStyle
@@ -150,7 +153,7 @@ func (m Model) renderProcessList() string {
 
 	// Help text
 	help := []string{
-		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top",
+		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • a: toggle all",
 		"K: kill • S: stop • U: start • R: restart • r: refresh • q: quit",
 	}
 	s.WriteString(helpStyle.Render(strings.Join(help, "\n")))

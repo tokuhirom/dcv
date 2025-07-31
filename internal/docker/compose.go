@@ -21,9 +21,13 @@ func NewComposeClient(workDir string) *ComposeClient {
 	}
 }
 
-func (c *ComposeClient) ListContainers() ([]models.Process, error) {
+func (c *ComposeClient) ListContainers(showAll bool) ([]models.Process, error) {
 	// Always use JSON format for reliable parsing
-	cmd := exec.Command("docker", "compose", "ps", "--format", "json")
+	args := []string{"compose", "ps", "--format", "json"}
+	if showAll {
+		args = append(args, "--all")
+	}
+	cmd := exec.Command("docker", args...)
 	if c.workDir != "" {
 		cmd.Dir = c.workDir
 	}
@@ -440,7 +444,6 @@ func (c *ComposeClient) RestartService(serviceName string) error {
 
 	return nil
 }
-
 func (c *ComposeClient) GetStats() (string, error) {
 	cmd := exec.Command("docker", "compose", "stats", "--format", "json", "--no-stream", "--all")
 	if c.workDir != "" {
