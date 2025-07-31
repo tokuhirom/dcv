@@ -115,7 +115,8 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.currentView = LogView
 			m.logs = []string{}
 			m.logScrollY = 0
-			return m, streamLogs(m.dockerClient, process.Name, false, "")
+			// Use service name for docker compose logs
+			return m, streamLogs(m.dockerClient, process.Service, false, "")
 		}
 		return m, nil
 
