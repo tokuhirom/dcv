@@ -86,6 +86,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Reload the process list after action completes
 		return m, loadProcesses(m.dockerClient)
 
+	case statsLoadedMsg:
+		m.loading = false
+		m.lastCommand = "docker compose stats --format json --no-stream --all"
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.stats = msg.stats
+		m.err = nil
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -118,6 +129,8 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleDindListKeys(msg)
 	case TopView:
 		return m.handleTopViewKeys(msg)
+	case StatsView:
+		return m.handleStatsViewKeys(msg)
 	default:
 		return m, nil
 	}
@@ -165,6 +178,11 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "r":
 		m.loading = true
 		return m, loadProcesses(m.dockerClient)
+
+	case "s":
+		m.currentView = StatsView
+		m.loading = true
+		return m, loadStats(m.dockerClient)
 
 	case "t":
 		if m.selectedProcess < len(m.processes) {
@@ -318,6 +336,23 @@ func (m Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Manual refresh
 		m.loading = true
 		return m, loadTop(m.dockerClient, m.topService)
+		
+	default:
+		return m, nil
+	}
+}
+
+func (m Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc", "q":
+		// Go back to process list
+		m.currentView = ProcessListView
+		return m, loadProcesses(m.dockerClient)
+		
+	case "r":
+		// Refresh stats
+		m.loading = true
+		return m, loadStats(m.dockerClient)
 		
 	default:
 		return m, nil

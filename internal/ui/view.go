@@ -61,6 +61,8 @@ func (m Model) View() string {
 		return m.renderDindList()
 	case TopView:
 		return m.renderTopView()
+	case StatsView:
+		return m.renderStatsView()
 	default:
 		return "Unknown view"
 	}
@@ -147,7 +149,7 @@ func (m Model) renderProcessList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • d: dind • t: top • K: kill • S: stop • r: refresh • q: quit")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • K: kill • S: stop • r: refresh • q: quit")
 	s.WriteString(help)
 
 	// Show last command if available
@@ -310,6 +312,70 @@ func (m Model) renderTopView() string {
 	for i := outputLines; i < viewHeight; i++ {
 		s.WriteString("\n")
 	}
+
+	// Help text
+	help := helpStyle.Render("r: refresh • Esc/q: back")
+	s.WriteString(help)
+
+	// Show last command if available
+	if m.lastCommand != "" {
+		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Command: %s", m.lastCommand)))
+	}
+
+	return s.String()
+}
+
+func (m Model) renderStatsView() string {
+	var s strings.Builder
+
+	title := titleStyle.Render("Container Resource Usage")
+	s.WriteString(title + "\n\n")
+
+	if m.err != nil {
+		s.WriteString(errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
+		s.WriteString("\n" + helpStyle.Render("Press 'Esc' to go back, 'q' to quit"))
+		return s.String()
+	}
+
+	if m.loading {
+		s.WriteString("Loading stats...")
+		return s.String()
+	}
+
+	if len(m.stats) == 0 {
+		s.WriteString("No stats available\n")
+		s.WriteString("\n" + helpStyle.Render("Press 'r' to refresh, 'Esc' to go back"))
+		return s.String()
+	}
+
+	// Create table
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
+		Headers("SERVICE", "CPU %", "MEM USAGE", "MEM %", "NET I/O", "BLOCK I/O", "PIDS")
+
+	// Style headers
+	t.StyleFunc(func(row, col int) lipgloss.Style {
+		if row == 0 {
+			return headerStyle
+		}
+		return normalStyle
+	})
+
+	// Add rows
+	for _, stat := range m.stats {
+		t.Row(
+			stat.Service,
+			stat.CPUPerc,
+			stat.MemUsage,
+			stat.MemPerc,
+			stat.NetIO,
+			stat.BlockIO,
+			stat.PIDs,
+		)
+	}
+
+	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
 	help := helpStyle.Render("r: refresh • Esc/q: back")

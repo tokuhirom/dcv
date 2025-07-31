@@ -1,10 +1,27 @@
 package ui
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
+
+// ContainerStats holds resource usage statistics for a container
+type ContainerStats struct {
+	Container   string  `json:"Container"`
+	Name        string  `json:"Name"`
+	Service     string  `json:"Service"`
+	CPUPerc     string  `json:"CPUPerc"`
+	MemUsage    string  `json:"MemUsage"`
+	MemPerc     string  `json:"MemPerc"`
+	NetIO       string  `json:"NetIO"`
+	BlockIO     string  `json:"BlockIO"`
+	PIDs        string  `json:"PIDs"`
+}
 
 // ViewType represents the current view
 type ViewType int
@@ -14,6 +31,7 @@ const (
 	LogView
 	DindProcessListView
 	TopView
+	StatsView
 )
 
 // Model represents the application state
@@ -43,6 +61,9 @@ type Model struct {
 	// Top view state
 	topOutput    string
 	topService   string
+
+	// Stats view state
+	stats []ContainerStats
 
 	// Search state
 	searchMode bool
@@ -114,6 +135,11 @@ type serviceActionCompleteMsg struct {
 	err    error
 }
 
+type statsLoadedMsg struct {
+	stats []ContainerStats
+	err   error
+}
+
 // Commands
 
 func loadProcesses(client *docker.ComposeClient) tea.Cmd {
@@ -168,6 +194,41 @@ func stopService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 			action: "stop",
 			service: serviceName,
 			err:    err,
+		}
+	}
+}
+
+func loadStats(client *docker.ComposeClient) tea.Cmd {
+	return func() tea.Msg {
+		output, err := client.GetStats()
+		if err != nil {
+			return statsLoadedMsg{
+				stats: nil,
+				err:   err,
+			}
+		}
+
+		// Parse JSON lines format
+		var stats []ContainerStats
+		lines := strings.Split(strings.TrimSpace(output), "\n")
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+			
+			var stat ContainerStats
+			if err := json.Unmarshal([]byte(line), &stat); err != nil {
+				return statsLoadedMsg{
+					stats: nil,
+					err:   fmt.Errorf("failed to parse stats JSON: %w", err),
+				}
+			}
+			stats = append(stats, stat)
+		}
+
+		return statsLoadedMsg{
+			stats: stats,
+			err:   nil,
 		}
 	}
 }
