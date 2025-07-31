@@ -210,17 +210,53 @@ func (c *ComposeClient) ExecInContainer(containerName string, command []string) 
 }
 
 func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Container, error) {
+	// First check if docker daemon is ready
+	checkCmd, err := c.ExecInContainer(containerName, []string{"docker", "info"})
+	if err != nil {
+		return nil, err
+	}
+	
+	checkOutput, checkErr := checkCmd.CombinedOutput()
+	if checkErr != nil {
+		// Docker daemon not ready
+		cmdStr := strings.Join(checkCmd.Args, " ")
+		return nil, fmt.Errorf("docker daemon not ready in container %s\nCommand: %s\nOutput: %s\nError: %w", 
+			containerName, cmdStr, string(checkOutput), checkErr)
+	}
+
+	// First try JSON format
 	cmd, err := c.ExecInContainer(containerName, []string{"docker", "ps", "--format", "json"})
 	if err != nil {
 		return nil, err
 	}
 
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute docker ps in dind: %w", err)
+		// If JSON format fails, try table format
+		cmd, err = c.ExecInContainer(containerName, []string{"docker", "ps"})
+		if err != nil {
+			return nil, err
+		}
+		
+		output, err = cmd.CombinedOutput()
+		if err != nil {
+			// Include the command and output in error message for debugging
+			cmdStr := strings.Join(cmd.Args, " ")
+			return nil, fmt.Errorf("failed to execute docker ps in dind\nCommand: %s\nOutput: %s\nError: %w", cmdStr, string(output), err)
+		}
+		
+		// Parse table format
+		return c.parseDindPS(output)
 	}
 
-	return c.parseDindPSJSON(output)
+	// Try to parse as JSON first
+	containers, err := c.parseDindPSJSON(output)
+	if err != nil {
+		// If JSON parsing fails, try table format
+		return c.parseDindPS(output)
+	}
+	
+	return containers, nil
 }
 
 func (c *ComposeClient) parseDindPS(output []byte) ([]models.Container, error) {
