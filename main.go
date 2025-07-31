@@ -22,6 +22,9 @@ func main() {
 	// Create the initial model with options
 	m := ui.NewModelWithOptions(projectName, composeFile, showProjects)
 
+	// Example: Log debug message (can be called from anywhere that has access to dockerClient)
+	// m.dockerClient.LogDebug(fmt.Sprintf("Application started with project=%s, file=%s", projectName, composeFile))
+
 	// Create the program
 	p := tea.NewProgram(m, tea.WithAltScreen())
 

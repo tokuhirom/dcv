@@ -19,10 +19,20 @@ type ComposeClient struct {
 	commandLogs *[]CommandLog // Pointer to shared command logs
 }
 
-// CommandLog represents a command execution log entry
+// LogType represents the type of log entry
+type LogType int
+
+const (
+	LogTypeCommand LogType = iota
+	LogTypeDebug
+)
+
+// CommandLog represents a log entry (command execution or debug message)
 type CommandLog struct {
+	Type      LogType
 	Timestamp time.Time
-	Command   string
+	Command   string // For command logs
+	Message   string // For debug logs
 	ExitCode  int
 	Output    string
 	Error     string
@@ -50,6 +60,26 @@ func NewComposeClientWithOptions(workDir, projectName, composeFile string) *Comp
 // SetCommandLogs sets the shared command logs
 func (c *ComposeClient) SetCommandLogs(logs *[]CommandLog) {
 	c.commandLogs = logs
+}
+
+// LogDebug adds a debug message to the command logs
+func (c *ComposeClient) LogDebug(message string) {
+	if c.commandLogs == nil {
+		return
+	}
+	
+	log := CommandLog{
+		Type:      LogTypeDebug,
+		Timestamp: time.Now(),
+		Message:   message,
+	}
+	
+	*c.commandLogs = append(*c.commandLogs, log)
+	
+	// Keep only last 100 logs
+	if len(*c.commandLogs) > 100 {
+		*c.commandLogs = (*c.commandLogs)[len(*c.commandLogs)-100:]
+	}
 }
 
 // ListProjects lists all Docker Compose projects

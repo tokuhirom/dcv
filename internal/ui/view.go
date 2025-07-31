@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // Styles
@@ -218,7 +219,7 @@ func (m Model) renderLogView() string {
 	}
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • /: search • Esc/q: back")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • /: search • l: debug log • Esc/q: back")
 	s.WriteString(help)
 
 	// Show last command if available
@@ -284,7 +285,7 @@ func (m Model) renderDindList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • r: refresh • Esc: back • q: quit")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • l: debug log • r: refresh • Esc: back • q: quit")
 	s.WriteString(help)
 
 	// Show last command if available
@@ -460,7 +461,7 @@ func (m Model) renderProjectList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • r: refresh • q: quit")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • l: debug log • r: refresh • q: quit")
 	s.WriteString(help)
 
 	// Show last command if available
@@ -509,40 +510,52 @@ func (m Model) renderDebugLog() string {
 		// Format timestamp
 		timestamp := log.Timestamp.Format("15:04:05")
 		
-		// Format exit code with color
-		var exitCodeStr string
-		if log.ExitCode == 0 {
-			exitCodeStr = statusUpStyle.Render(fmt.Sprintf("[%d]", log.ExitCode))
+		// Handle different log types
+		if log.Type == docker.LogTypeDebug {
+			// Debug message log
+			debugLine := fmt.Sprintf("%s %s %s",
+				headerStyle.Render(timestamp),
+				statusUpStyle.Render("[DEBUG]"),
+				log.Message,
+			)
+			s.WriteString(debugLine + "\n")
 		} else {
-			exitCodeStr = statusDownStyle.Render(fmt.Sprintf("[%d]", log.ExitCode))
-		}
-		
-		// Format duration
-		duration := fmt.Sprintf("(%.2fs)", log.Duration.Seconds())
-		
-		// Command line
-		cmdLine := fmt.Sprintf("%s %s %s %s",
-			headerStyle.Render(timestamp),
-			exitCodeStr,
-			helpStyle.Render(duration),
-			log.Command,
-		)
-		s.WriteString(cmdLine + "\n")
-		
-		// Show error if any
-		if log.Error != "" && log.ExitCode != 0 {
-			s.WriteString(errorStyle.Render("  Error: ") + log.Error + "\n")
-		}
-		
-		// Show truncated output if error
-		if log.ExitCode != 0 && log.Output != "" {
-			lines := strings.Split(strings.TrimSpace(log.Output), "\n")
-			maxLines := 3
-			for j := 0; j < len(lines) && j < maxLines; j++ {
-				s.WriteString(helpStyle.Render("  | ") + lines[j] + "\n")
+			// Command execution log
+			// Format exit code with color
+			var exitCodeStr string
+			if log.ExitCode == 0 {
+				exitCodeStr = statusUpStyle.Render(fmt.Sprintf("[%d]", log.ExitCode))
+			} else {
+				exitCodeStr = statusDownStyle.Render(fmt.Sprintf("[%d]", log.ExitCode))
 			}
-			if len(lines) > maxLines {
-				s.WriteString(helpStyle.Render(fmt.Sprintf("  | ... (%d more lines)\n", len(lines)-maxLines)))
+			
+			// Format duration
+			duration := fmt.Sprintf("(%.2fs)", log.Duration.Seconds())
+			
+			// Command line
+			cmdLine := fmt.Sprintf("%s %s %s %s",
+				headerStyle.Render(timestamp),
+				exitCodeStr,
+				helpStyle.Render(duration),
+				log.Command,
+			)
+			s.WriteString(cmdLine + "\n")
+			
+			// Show error if any
+			if log.Error != "" && log.ExitCode != 0 {
+				s.WriteString(errorStyle.Render("  Error: ") + log.Error + "\n")
+			}
+			
+			// Show truncated output if error
+			if log.ExitCode != 0 && log.Output != "" {
+				lines := strings.Split(strings.TrimSpace(log.Output), "\n")
+				maxLines := 3
+				for j := 0; j < len(lines) && j < maxLines; j++ {
+					s.WriteString(helpStyle.Render("  | ") + lines[j] + "\n")
+				}
+				if len(lines) > maxLines {
+					s.WriteString(helpStyle.Render(fmt.Sprintf("  | ... (%d more lines)\n", len(lines)-maxLines)))
+				}
 			}
 		}
 		
