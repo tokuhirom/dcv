@@ -13,14 +13,7 @@ import (
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
-// tickCmd sends periodic ticks for updates
-func tickCmd() tea.Cmd {
-	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
-		return tickMsg(t)
-	})
-}
-
-type tickMsg time.Time
+// Removed unused tickCmd and tickMsg
 
 // logReader manages log streaming from a container
 type logReader struct {

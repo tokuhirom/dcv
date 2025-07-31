@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -259,8 +258,3 @@ func (m Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-// Helper function to check if a process is dind
-func isDind(imageName string) bool {
-	lower := strings.ToLower(imageName)
-	return strings.Contains(lower, "dind") || strings.Contains(lower, "docker:dind")
-}

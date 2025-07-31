@@ -116,14 +116,13 @@ func (m Model) renderProcessList() string {
 			nameStyle = selectedStyle
 		}
 
-		statusStyle := normalStyle
-		if strings.Contains(process.Status, "Up") {
+		var statusStyle lipgloss.Style
+		if i == m.selectedProcess {
+			statusStyle = selectedStyle
+		} else if strings.Contains(process.Status, "Up") {
 			statusStyle = statusUpStyle
 		} else {
 			statusStyle = statusDownStyle
-		}
-		if i == m.selectedProcess {
-			statusStyle = selectedStyle
 		}
 
 		name := nameStyle.Render(process.Name)

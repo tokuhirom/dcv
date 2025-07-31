@@ -1,4 +1,4 @@
-.PHONY: all up down logs test-dind clean
+.PHONY: all up down logs test-dind clean staticcheck
 
 all:
 	go build -o dcv
@@ -27,4 +27,9 @@ test-dind:
 clean:
 	docker compose down -v
 	rm -f dcv
+
+# Run staticcheck
+staticcheck:
+	@which staticcheck > /dev/null || go install honnef.co/go/tools/cmd/staticcheck@latest
+	staticcheck ./...
 
