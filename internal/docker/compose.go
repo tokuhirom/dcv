@@ -370,3 +370,17 @@ func (c *ComposeClient) parseDindPSJSON(output []byte) ([]models.Container, erro
 
 	return containers, nil
 }
+
+func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
+	cmd := exec.Command("docker", "compose", "top", serviceName)
+	if c.workDir != "" {
+		cmd.Dir = c.workDir
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to execute docker compose top: %w\nOutput: %s", err, string(output))
+	}
+
+	return string(output), nil
+}

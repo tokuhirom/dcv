@@ -11,39 +11,39 @@ import (
 // Styles
 var (
 	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("86")).
-			MarginBottom(1)
+		Bold(true).
+		Foreground(lipgloss.Color("86")).
+		MarginBottom(1)
 
 	selectedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("235"))
+		Foreground(lipgloss.Color("86")).
+		Background(lipgloss.Color("235"))
 
 	normalStyle = lipgloss.NewStyle()
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
-			Bold(true)
+		Foreground(lipgloss.Color("196")).
+		Bold(true)
 
 	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+		Foreground(lipgloss.Color("241"))
 
 	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("226"))
+		Bold(true).
+		Foreground(lipgloss.Color("226"))
 
 	dindStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusDownStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196"))
+		Foreground(lipgloss.Color("196"))
 
 	searchStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("226")).
-			Bold(true)
+		Foreground(lipgloss.Color("226")).
+		Bold(true)
 )
 
 // View returns the view for the current model
@@ -59,6 +59,8 @@ func (m Model) View() string {
 		return m.renderLogView()
 	case DindProcessListView:
 		return m.renderDindList()
+	case TopView:
+		return m.renderTopView()
 	default:
 		return "Unknown view"
 	}
@@ -266,6 +268,52 @@ func (m Model) renderDindList() string {
 	// Show last command if available
 	if m.lastCommand != "" {
 		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
+	}
+
+	return s.String()
+}
+
+func (m Model) renderTopView() string {
+	var s strings.Builder
+
+	title := titleStyle.Render(fmt.Sprintf("Process Info: %s", m.topService))
+	s.WriteString(title + "\n\n")
+
+	if m.err != nil {
+		s.WriteString(errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
+		s.WriteString("\n" + helpStyle.Render("Press 'Esc' to go back, 'q' to quit"))
+		return s.String()
+	}
+
+	if m.loading {
+		s.WriteString("Loading process information...")
+		return s.String()
+	}
+
+	// Display the top output
+	if m.topOutput != "" {
+		s.WriteString(m.topOutput)
+	} else {
+		s.WriteString("No process information available\n")
+	}
+
+	// Fill remaining space
+	outputLines := strings.Count(m.topOutput, "\n")
+	viewHeight := m.height - 5
+	if m.lastCommand != "" {
+		viewHeight--
+	}
+	for i := outputLines; i < viewHeight; i++ {
+		s.WriteString("\n")
+	}
+
+	// Help text
+	help := helpStyle.Render("r: refresh • Esc/q: back")
+	s.WriteString(help)
+
+	// Show last command if available
+	if m.lastCommand != "" {
+		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Command: %s", m.lastCommand)))
 	}
 
 	return s.String()

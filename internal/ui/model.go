@@ -13,6 +13,7 @@ const (
 	ProcessListView ViewType = iota
 	LogView
 	DindProcessListView
+	TopView
 )
 
 // Model represents the application state
@@ -38,6 +39,10 @@ type Model struct {
 	containerName  string
 	isDindLog      bool
 	hostContainer  string
+
+	// Top view state
+	topOutput    string
+	topService   string
 
 	// Search state
 	searchMode bool
@@ -98,6 +103,11 @@ type commandExecutedMsg struct {
 	command string
 }
 
+type topLoadedMsg struct {
+	output string
+	err    error
+}
+
 // Commands
 
 func loadProcesses(client *docker.ComposeClient) tea.Cmd {
@@ -122,4 +132,14 @@ func loadDindContainers(client *docker.ComposeClient, containerName string) tea.
 
 func streamLogs(client *docker.ComposeClient, containerName string, isDind bool, hostContainer string) tea.Cmd {
 	return streamLogsReal(client, containerName, isDind, hostContainer)
+}
+
+func loadTop(client *docker.ComposeClient, serviceName string) tea.Cmd {
+	return func() tea.Msg {
+		output, err := client.GetContainerTop(serviceName)
+		return topLoadedMsg{
+			output: output,
+			err:    err,
+		}
+	}
 }

@@ -65,6 +65,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Start polling for logs after command is set
 		return m, pollForLogs()
 
+	case topLoadedMsg:
+		m.loading = false
+		m.lastCommand = fmt.Sprintf("docker compose top %s", m.topService)
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.topOutput = msg.output
+		m.err = nil
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -95,6 +106,8 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleLogViewKeys(msg)
 	case DindProcessListView:
 		return m.handleDindListKeys(msg)
+	case TopView:
+		return m.handleTopViewKeys(msg)
 	default:
 		return m, nil
 	}
@@ -142,6 +155,16 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "r":
 		m.loading = true
 		return m, loadProcesses(m.dockerClient)
+
+	case "t":
+		if m.selectedProcess < len(m.processes) {
+			process := m.processes[m.selectedProcess]
+			m.topService = process.Service
+			m.currentView = TopView
+			m.loading = true
+			return m, loadTop(m.dockerClient, process.Service)
+		}
+		return m, nil
 
 	default:
 		return m, nil
@@ -254,6 +277,23 @@ func (m Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if msg.Type == tea.KeyRunes {
 			m.searchText += msg.String()
 		}
+		return m, nil
+	}
+}
+
+func (m Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc", "q":
+		// Go back to process list
+		m.currentView = ProcessListView
+		return m, loadProcesses(m.dockerClient)
+		
+	case "r":
+		// Manual refresh
+		m.loading = true
+		return m, loadTop(m.dockerClient, m.topService)
+		
+	default:
 		return m, nil
 	}
 }
