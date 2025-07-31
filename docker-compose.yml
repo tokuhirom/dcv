@@ -1,0 +1,55 @@
+services:
+  # Web application
+  web:
+    image: nginx:alpine
+    ports:
+      - "8090:80"
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+    networks:
+      - dcv-network
+
+  # Database
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: dcvuser
+      POSTGRES_PASSWORD: dcvpass
+      POSTGRES_DB: dcvdb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dcv-network
+
+  # Redis cache
+  redis:
+    image: redis:6-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - dcv-network
+
+  # Docker in Docker for CI/CD simulation
+  dind:
+    image: docker:24-dind
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    volumes:
+      - dind-storage:/var/lib/docker
+      - ./dind-startup.sh:/startup.sh:ro
+      - ./dind-entrypoint.sh:/entrypoint.sh:ro
+    networks:
+      - dcv-network
+    entrypoint: ["/entrypoint.sh"]
+    command: ["dockerd", "--host=unix:///var/run/docker.sock", "--host=tcp://0.0.0.0:2375"]
+
+volumes:
+  postgres-data:
+  redis-data:
+  dind-storage:
+
+networks:
+  dcv-network:
+    driver: bridge

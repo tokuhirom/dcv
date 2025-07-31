@@ -1,0 +1,72 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: dcv
+    main: ./main.go
+    binary: dcv
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: arm
+
+archives:
+  - id: dcv
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: 'checksums.txt'
+
+release:
+  github:
+    owner: tokuhirom
+    name: dcv
+  draft: false
+  prerelease: auto
+  mode: replace
+  name_template: "{{.ProjectName}} v{{.Version}}"
+
+brews:
+  - repository:
+      owner: tokuhirom
+      name: homebrew-tap
+    name: dcv
+    homepage: "https://github.com/tokuhirom/dcv"
+    description: "Docker Compose Viewer - A TUI tool for monitoring Docker Compose applications"
+    license: "MIT"
+    test: |
+      system "#{bin}/dcv", "--version"
+    install: |
+      bin.install "dcv"
+
+dockers:
+  - image_templates:
+      - "ghcr.io/tokuhirom/dcv:{{ .Tag }}"
+      - "ghcr.io/tokuhirom/dcv:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
