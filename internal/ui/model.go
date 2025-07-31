@@ -52,6 +52,9 @@ type Model struct {
 
 	// Loading state
 	loading bool
+
+	// Last executed command
+	lastCommand string
 }
 
 // NewModel creates a new model with initial state
@@ -89,6 +92,10 @@ type logLineMsg struct {
 
 type errorMsg struct {
 	err error
+}
+
+type commandExecutedMsg struct {
+	command string
 }
 
 // Commands

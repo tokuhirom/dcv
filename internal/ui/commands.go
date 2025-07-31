@@ -164,12 +164,9 @@ func streamLogsReal(client *docker.ComposeClient, containerName string, isDind b
 		activeLogReader = lr
 		lastLogIndex = 0
 
-		// Send initial message showing the command
+		// Send command info message
 		cmdStr := strings.Join(lr.cmd.Args, " ")
-		if isDind {
-			return logLineMsg{line: fmt.Sprintf("[Executing in %s: %s]", hostContainer, cmdStr)}
-		}
-		return logLineMsg{line: fmt.Sprintf("[Executing: %s]", cmdStr)}
+		return commandExecutedMsg{command: cmdStr}
 	}
 }
 

@@ -145,6 +145,11 @@ func (m Model) renderProcessList() string {
 	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • d: dind • r: refresh • q: quit")
 	s.WriteString(help)
 
+	// Show last command if available
+	if m.lastCommand != "" {
+		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
+	}
+
 	return s.String()
 }
 
@@ -165,6 +170,9 @@ func (m Model) renderLogView() string {
 
 	// Log content
 	viewHeight := m.height - 4
+	if m.lastCommand != "" {
+		viewHeight-- // Account for command line
+	}
 	startIdx := m.logScrollY
 	endIdx := startIdx + viewHeight
 
@@ -189,6 +197,11 @@ func (m Model) renderLogView() string {
 	// Help text
 	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • /: search • Esc/q: back")
 	s.WriteString(help)
+
+	// Show last command if available
+	if m.lastCommand != "" {
+		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Command: %s", m.lastCommand)))
+	}
 
 	return s.String()
 }
@@ -250,6 +263,11 @@ func (m Model) renderDindList() string {
 	// Help text
 	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • r: refresh • Esc: back • q: quit")
 	s.WriteString(help)
+
+	// Show last command if available
+	if m.lastCommand != "" {
+		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
+	}
 
 	return s.String()
 }

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,6 +20,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case processesLoadedMsg:
 		m.loading = false
+		m.lastCommand = "docker compose ps --format json"
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
@@ -32,6 +34,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case dindContainersLoadedMsg:
 		m.loading = false
+		m.lastCommand = fmt.Sprintf("docker compose exec -T %s docker ps --format json", m.currentDindHost)
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
@@ -57,6 +60,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg.err
 		m.loading = false
 		return m, nil
+
+	case commandExecutedMsg:
+		m.lastCommand = msg.command
+		// Start polling for logs after command is set
+		return m, pollForLogs()
 
 	default:
 		return m, nil
