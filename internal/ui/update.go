@@ -210,6 +210,22 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case "U": // Capital U for start (up)
+		if m.selectedProcess < len(m.processes) {
+			process := m.processes[m.selectedProcess]
+			m.loading = true
+			return m, startService(m.dockerClient, process.Service)
+		}
+		return m, nil
+
+	case "R": // Capital R for restart
+		if m.selectedProcess < len(m.processes) {
+			process := m.processes[m.selectedProcess]
+			m.loading = true
+			return m, restartService(m.dockerClient, process.Service)
+		}
+		return m, nil
+
 	default:
 		return m, nil
 	}

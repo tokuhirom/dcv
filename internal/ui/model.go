@@ -198,6 +198,28 @@ func stopService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	}
 }
 
+func startService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.StartService(serviceName)
+		return serviceActionCompleteMsg{
+			action: "start",
+			service: serviceName,
+			err:    err,
+		}
+	}
+}
+
+func restartService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.RestartService(serviceName)
+		return serviceActionCompleteMsg{
+			action: "restart",
+			service: serviceName,
+			err:    err,
+		}
+	}
+}
+
 func loadStats(client *docker.ComposeClient) tea.Cmd {
 	return func() tea.Msg {
 		output, err := client.GetStats()

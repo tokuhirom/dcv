@@ -149,8 +149,11 @@ func (m Model) renderProcessList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • K: kill • S: stop • r: refresh • q: quit")
-	s.WriteString(help)
+	help := []string{
+		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top",
+		"K: kill • S: stop • U: start • R: restart • r: refresh • q: quit",
+	}
+	s.WriteString(helpStyle.Render(strings.Join(help, "\n")))
 
 	// Show last command if available
 	if m.lastCommand != "" {
