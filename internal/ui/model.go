@@ -108,6 +108,12 @@ type topLoadedMsg struct {
 	err    error
 }
 
+type serviceActionCompleteMsg struct {
+	action string
+	service string
+	err    error
+}
+
 // Commands
 
 func loadProcesses(client *docker.ComposeClient) tea.Cmd {
@@ -139,6 +145,28 @@ func loadTop(client *docker.ComposeClient, serviceName string) tea.Cmd {
 		output, err := client.GetContainerTop(serviceName)
 		return topLoadedMsg{
 			output: output,
+			err:    err,
+		}
+	}
+}
+
+func killService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.KillService(serviceName)
+		return serviceActionCompleteMsg{
+			action: "kill",
+			service: serviceName,
+			err:    err,
+		}
+	}
+}
+
+func stopService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.StopService(serviceName)
+		return serviceActionCompleteMsg{
+			action: "stop",
+			service: serviceName,
 			err:    err,
 		}
 	}
