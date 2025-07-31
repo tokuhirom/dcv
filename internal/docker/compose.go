@@ -413,6 +413,34 @@ func (c *ComposeClient) StopService(serviceName string) error {
 	return nil
 }
 
+func (c *ComposeClient) StartService(serviceName string) error {
+	cmd := exec.Command("docker", "compose", "start", serviceName)
+	if c.workDir != "" {
+		cmd.Dir = c.workDir
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute docker compose start: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
+
+func (c *ComposeClient) RestartService(serviceName string) error {
+	cmd := exec.Command("docker", "compose", "restart", serviceName)
+	if c.workDir != "" {
+		cmd.Dir = c.workDir
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute docker compose restart: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
+
 func (c *ComposeClient) GetStats() (string, error) {
 	cmd := exec.Command("docker", "compose", "stats", "--format", "json", "--no-stream", "--all")
 	if c.workDir != "" {

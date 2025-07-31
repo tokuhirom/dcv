@@ -218,3 +218,29 @@ func TestGetStats(t *testing.T) {
 	// Either error or empty result is acceptable
 	_ = err
 }
+
+func TestStartService(t *testing.T) {
+	// This is a basic test that just checks the method exists
+	// In a real test environment, you would mock the exec.Command
+	client := NewComposeClient("")
+	
+	// We can't actually test starting a service without a stopped container
+	// So we just verify the method exists and returns an error for non-existent service
+	err := client.StartService("non-existent-service")
+	if err == nil {
+		t.Error("Expected error for non-existent service, got nil")
+	}
+}
+
+func TestRestartService(t *testing.T) {
+	// This is a basic test that just checks the method exists
+	// In a real test environment, you would mock the exec.Command
+	client := NewComposeClient("")
+	
+	// We can't actually test restarting a service without a running container
+	// So we just verify the method exists and returns an error for non-existent service
+	err := client.RestartService("non-existent-service")
+	if err == nil {
+		t.Error("Expected error for non-existent service, got nil")
+	}
+}
