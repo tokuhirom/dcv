@@ -1,40 +1,82 @@
-# dcv
+# dcv - Docker Compose Viewer
 
-DCV は docker-compose の状況を確認できるツールです｡
+DCV は docker-compose の状況を確認できる TUI (Terminal User Interface) ツールです｡
 
-- docker-compose で起動しているアプリの一覧を表示します｡
-    - ログを表示することができます.
-- docker-compose で起動しているアプリのうち､dind っぽい image 名のものについては､さらにその中のイメージの一覧を見ることができます｡
-- dind の中のログも見ることが出来ます｡
-- 内部的には docker-compose コマンドを実行します｡
+## 主な機能
+
+- docker-compose で起動しているコンテナの一覧を表示
+- コンテナのログをリアルタイムで確認（最新1000行を初期表示､その後リアルタイム追従）
+- Docker-in-Docker (dind) コンテナの中で動作するコンテナの管理
+- vim 風のキーバインディング
+- 実行コマンドの表示（デバッグに便利）
 
 ## Views
 
-原則としてショートカットは vim 風に実装すること｡
+### Process List View
 
-### process list
+`docker compose ps` の結果を見やすくテーブル形式で表示します。
 
-`docker compose ps` の結果が一覧表示される｡
-enter key を押すと､その container の一覧が見れる｡
+**キーバインド:**
+- `↑`/`k`: 上へ移動
+- `↓`/`j`: 下へ移動  
+- `Enter`: 選択したコンテナのログを表示
+- `d`: dind コンテナの中身を表示（dind コンテナ選択時のみ）
+- `r`: リストを更新
+- `q`: 終了
 
-d キーを押すと､dind として扱われ dind process list view に移動する｡
+### Log View
 
-### dind process list view
+コンテナのログを表示します。初期表示で最新1000行を取得し、その後新しいログをリアルタイムで追加表示します。
 
-dind process list view では､docker compose 上で稼働している dind のコンテナのうち一つを対象に､さらに docker ps を実行し､その結果を表示する｡
-enter key を押すと､dind の中でうごくコンテナのログが表示可能｡
+**キーバインド:**
+- `↑`/`k`: 上スクロール
+- `↓`/`j`: 下スクロール
+- `G`: 最下部へジャンプ
+- `g`: 最上部へジャンプ
+- `/`: 検索モード（未実装）
+- `Esc`/`q`: Process List View へ戻る
 
-### log view
+### Docker-in-Docker Process List View
 
-ログの表示時､`/` による検索や `G` による末尾への移動など､基本的な vim like なコマンドが実行可能｡
+dind コンテナ内で動作しているコンテナの一覧を表示します。
 
-## How do I install
+**キーバインド:**
+- `↑`/`k`: 上へ移動
+- `↓`/`j`: 下へ移動
+- `Enter`: 選択したコンテナのログを表示
+- `r`: リストを更新
+- `Esc`: Process List View へ戻る
+- `q`: Process List View へ戻る
+
+## 使い方
+
+### オプション
+
+```bash
+dcv [-C <path>] [-d <path>]
+```
+
+- `-C <path>`, `-d <path>`: 指定したディレクトリで docker-compose を実行（`docker-compose -C` と同じ）
+
+### 例
+
+```bash
+# 現在のディレクトリで実行
+dcv
+
+# 特定のディレクトリで実行
+dcv -C /path/to/project
+```
+
+## インストール
+
+### Go install を使う場合
 
 ```bash
 go install github.com/tokuhirom/dcv@latest
 ```
 
-または､リポジトリをクローンしてビルド:
+### ソースからビルドする場合
 
 ```bash
 git clone https://github.com/tokuhirom/dcv.git
@@ -43,10 +85,66 @@ go build -o dcv
 ./dcv
 ```
 
+## 要件
+
+- Go 1.24.3 以上
+- Docker および Docker Compose がインストールされていること
+- ターミナルが TUI をサポートしていること
+
 ## 内部実装
 
-実装は golang を使用｡
-TUI framework として tview を利用｡
+- 言語: Go
+- TUI フレームワーク: [Bubble Tea](https://github.com/charmbracelet/bubbletea)
+- スタイリング: [Lipgloss](https://github.com/charmbracelet/lipgloss)
+- テスト: testify
+
+### 特徴
+
+- Model-View-Update (MVU) アーキテクチャを採用
+- 非同期でログをストリーミング
+- エラー時に実行したコマンドを表示してデバッグを容易に
+- 包括的なユニットテスト
+
+## デバッグ機能
+
+- 実行されたコマンドがフッターに常時表示される
+- エラー発生時は詳細なエラーメッセージとコマンドが表示される
+- stderr 出力は `[STDERR]` プレフィックス付きで表示
+
+## 開発
+
+### テストの実行
+
+```bash
+go test ./...
+```
+
+### ビルド
+
+```bash
+go build -o dcv
+```
+
+### サンプル環境の起動
+
+リポジトリには Docker Compose のサンプル環境が含まれています：
+
+```bash
+# サンプル環境を起動
+docker compose up -d
+
+# dcv でモニタリング
+./dcv
+
+# サンプル環境を停止
+docker compose down
+```
+
+サンプル環境には以下が含まれます：
+- `web`: Nginx サーバー
+- `db`: PostgreSQL データベース
+- `redis`: Redis キャッシュ
+- `dind`: Docker-in-Docker（内部でテストコンテナが自動起動）
 
 ## License
 
