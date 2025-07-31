@@ -180,3 +180,29 @@ b2c3d4e5f6g7   nginx:latest   nginx      5 minutes ago   Up 5 minutes   80/tcp  
 		})
 	}
 }
+
+func TestKillService(t *testing.T) {
+	// This is a basic test that just checks the method exists
+	// In a real test environment, you would mock the exec.Command
+	client := NewComposeClient("")
+	
+	// We can't actually test killing a service without a running container
+	// So we just verify the method exists and returns an error for non-existent service
+	err := client.KillService("non-existent-service")
+	if err == nil {
+		t.Error("Expected error for non-existent service, got nil")
+	}
+}
+
+func TestStopService(t *testing.T) {
+	// This is a basic test that just checks the method exists
+	// In a real test environment, you would mock the exec.Command
+	client := NewComposeClient("")
+	
+	// We can't actually test stopping a service without a running container
+	// So we just verify the method exists and returns an error for non-existent service
+	err := client.StopService("non-existent-service")
+	if err == nil {
+		t.Error("Expected error for non-existent service, got nil")
+	}
+}

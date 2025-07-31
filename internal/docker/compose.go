@@ -384,3 +384,31 @@ func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
 
 	return string(output), nil
 }
+
+func (c *ComposeClient) KillService(serviceName string) error {
+	cmd := exec.Command("docker", "compose", "kill", serviceName)
+	if c.workDir != "" {
+		cmd.Dir = c.workDir
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute docker compose kill: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
+
+func (c *ComposeClient) StopService(serviceName string) error {
+	cmd := exec.Command("docker", "compose", "stop", serviceName)
+	if c.workDir != "" {
+		cmd.Dir = c.workDir
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute docker compose stop: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}

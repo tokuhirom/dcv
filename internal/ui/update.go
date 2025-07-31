@@ -76,6 +76,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = nil
 		return m, nil
 
+	case serviceActionCompleteMsg:
+		m.loading = false
+		m.lastCommand = fmt.Sprintf("docker compose %s %s", msg.action, msg.service)
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		// Reload the process list after action completes
+		return m, loadProcesses(m.dockerClient)
+
 	default:
 		return m, nil
 	}
@@ -163,6 +173,22 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.currentView = TopView
 			m.loading = true
 			return m, loadTop(m.dockerClient, process.Service)
+		}
+		return m, nil
+
+	case "K": // Capital K for kill
+		if m.selectedProcess < len(m.processes) {
+			process := m.processes[m.selectedProcess]
+			m.loading = true
+			return m, killService(m.dockerClient, process.Service)
+		}
+		return m, nil
+
+	case "S": // Capital S for stop
+		if m.selectedProcess < len(m.processes) {
+			process := m.processes[m.selectedProcess]
+			m.loading = true
+			return m, stopService(m.dockerClient, process.Service)
 		}
 		return m, nil
 

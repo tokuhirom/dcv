@@ -84,7 +84,11 @@ func (m Model) renderProcessList() string {
 	}
 
 	if m.loading {
-		s.WriteString("Loading containers...")
+		if m.lastCommand != "" && (strings.Contains(m.lastCommand, "kill") || strings.Contains(m.lastCommand, "stop")) {
+			s.WriteString(fmt.Sprintf("Executing: %s...", m.lastCommand))
+		} else {
+			s.WriteString("Loading containers...")
+		}
 		return s.String()
 	}
 
@@ -143,7 +147,7 @@ func (m Model) renderProcessList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • d: dind • r: refresh • q: quit")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • d: dind • t: top • K: kill • S: stop • r: refresh • q: quit")
 	s.WriteString(help)
 
 	// Show last command if available
