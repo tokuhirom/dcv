@@ -48,19 +48,22 @@ func (c *ComposeClient) ListProjects() ([]models.ComposeProject, error) {
 		return []models.ComposeProject{}, nil
 	}
 	
-	// Parse JSON output
+	// Parse JSON output - docker compose ls returns an array
 	var projects []models.ComposeProject
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	for _, line := range lines {
-		if line == "" {
-			continue
+	if err := json.Unmarshal(output, &projects); err != nil {
+		// Fallback to line-delimited JSON parsing for older versions
+		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+			
+			var project models.ComposeProject
+			if err := json.Unmarshal([]byte(line), &project); err != nil {
+				return nil, fmt.Errorf("failed to parse project JSON: %w", err)
+			}
+			projects = append(projects, project)
 		}
-		
-		var project models.ComposeProject
-		if err := json.Unmarshal([]byte(line), &project); err != nil {
-			return nil, fmt.Errorf("failed to parse project JSON: %w", err)
-		}
-		projects = append(projects, project)
 	}
 	
 	return projects, nil
