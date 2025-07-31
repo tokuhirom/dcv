@@ -39,8 +39,10 @@ services:
     volumes:
       - dind-storage:/var/lib/docker
       - ./dind-startup.sh:/startup.sh:ro
+      - ./dind-entrypoint.sh:/entrypoint.sh:ro
     networks:
       - dcv-network
+    entrypoint: ["/entrypoint.sh"]
     command: ["dockerd", "--host=unix:///var/run/docker.sock", "--host=tcp://0.0.0.0:2375"]
 
 volumes:
