@@ -87,10 +87,13 @@ func (lr *logReader) readLogs() {
 		lr.client.LogDebug("Log reader started for stdout.")
 		scanner := bufio.NewScanner(lr.stdout)
 		for scanner.Scan() {
+			got := scanner.Text()
+			lr.client.LogDebug(fmt.Sprintf("Reading stdout line: %s", got))
 			lr.mu.Lock()
-			lr.lines = append(lr.lines, scanner.Text())
+			lr.lines = append(lr.lines, got)
 			lr.mu.Unlock()
 		}
+		lr.client.LogDebug("Log reader finished(stdout).")
 		if err := scanner.Err(); err != nil {
 			lr.mu.Lock()
 			lr.lines = append(lr.lines, fmt.Sprintf("[ERROR reading stdout: %v]", err))
@@ -104,10 +107,12 @@ func (lr *logReader) readLogs() {
 		lr.client.LogDebug("Log reader started for stderr.")
 		scanner := bufio.NewScanner(lr.stderr)
 		for scanner.Scan() {
+			lr.client.LogDebug("Reading stderr line.")
 			lr.mu.Lock()
 			lr.lines = append(lr.lines, fmt.Sprintf("[STDERR] %s", scanner.Text()))
 			lr.mu.Unlock()
 		}
+		lr.client.LogDebug("Log reader finished(stderr).")
 		if err := scanner.Err(); err != nil {
 			lr.mu.Lock()
 			lr.lines = append(lr.lines, fmt.Sprintf("[ERROR reading stderr: %v]", err))
