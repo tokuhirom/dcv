@@ -45,6 +45,25 @@ services:
     entrypoint: ["/entrypoint.sh"]
     command: ["dockerd", "--host=unix:///var/run/docker.sock", "--host=tcp://0.0.0.0:2375"]
 
+  # Verbose logger container that outputs messages periodically
+  logger:
+    image: alpine:latest
+    command: |
+      sh -c "
+        counter=1
+        while true; do
+          echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Logger message #$$counter: Hello from verbose container!\"
+          echo \"[$(date '+%Y-%m-%d %H:%M:%S')] System info: $(uname -a)\"
+          echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Memory usage: $(free -h | grep Mem | awk '{print $$3 \"/\" $$2}')\"
+          echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Random data: $(head -c 32 /dev/urandom | base64)\"
+          echo \"----------------------------------------\"
+          counter=$$((counter + 1))
+          sleep 2
+        done
+      "
+    networks:
+      - dcv-network
+
 volumes:
   postgres-data:
   redis-data:
