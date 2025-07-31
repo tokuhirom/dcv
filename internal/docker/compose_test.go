@@ -244,3 +244,18 @@ func TestRestartService(t *testing.T) {
 		t.Error("Expected error for non-existent service, got nil")
 	}
 }
+
+func TestListContainersWithShowAll(t *testing.T) {
+	// This is a basic test that just checks the method with showAll parameter
+	client := NewComposeClient("")
+	
+	// Test with showAll = false
+	_, err := client.ListContainers(false)
+	// Either error or empty result is acceptable
+	_ = err
+	
+	// Test with showAll = true
+	_, err = client.ListContainers(true)
+	// Either error or empty result is acceptable
+	_ = err
+}

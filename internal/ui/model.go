@@ -45,6 +45,7 @@ type Model struct {
 	// Process list state
 	processes       []models.Process
 	selectedProcess int
+	showAll         bool // Toggle to show all containers including stopped ones
 
 	// Dind state
 	dindContainers       []models.Container
@@ -95,7 +96,7 @@ func NewModel() Model {
 // Init returns an initial command for the application
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		loadProcesses(m.dockerClient),
+		loadProcesses(m.dockerClient, m.showAll),
 		tea.WindowSize(),
 	)
 }
@@ -142,9 +143,9 @@ type statsLoadedMsg struct {
 
 // Commands
 
-func loadProcesses(client *docker.ComposeClient) tea.Cmd {
+func loadProcesses(client *docker.ComposeClient, showAll bool) tea.Cmd {
 	return func() tea.Msg {
-		processes, err := client.ListContainers()
+		processes, err := client.ListContainers(showAll)
 		return processesLoadedMsg{
 			processes: processes,
 			err:       err,
@@ -219,7 +220,6 @@ func restartService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 		}
 	}
 }
-
 func loadStats(client *docker.ComposeClient) tea.Cmd {
 	return func() tea.Msg {
 		output, err := client.GetStats()
