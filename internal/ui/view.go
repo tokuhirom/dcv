@@ -63,6 +63,8 @@ func (m Model) View() string {
 		return m.renderTopView()
 	case StatsView:
 		return m.renderStatsView()
+	case ProjectListView:
+		return m.renderProjectList()
 	default:
 		return "Unknown view"
 	}
@@ -74,6 +76,12 @@ func (m Model) renderProcessList() string {
 	title := "Docker Compose Processes"
 	if m.showAll {
 		title += " (All)"
+	}
+	if m.projectName != "" {
+		title += fmt.Sprintf(" [Project: %s]", m.projectName)
+	}
+	if m.composeFile != "" {
+		title += fmt.Sprintf(" [File: %s]", m.composeFile)
 	}
 	s.WriteString(titleStyle.Render(title) + "\n\n")
 
@@ -390,6 +398,72 @@ func (m Model) renderStatsView() string {
 	// Show last command if available
 	if m.lastCommand != "" {
 		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Command: %s", m.lastCommand)))
+	}
+
+	return s.String()
+}
+
+func (m Model) renderProjectList() string {
+	var s strings.Builder
+
+	title := titleStyle.Render("Docker Compose Projects")
+	s.WriteString(title + "\n\n")
+
+	if m.err != nil {
+		s.WriteString(errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
+		s.WriteString("\n" + helpStyle.Render("Press 'q' to quit"))
+		return s.String()
+	}
+
+	if m.loading {
+		s.WriteString("Loading projects...")
+		return s.String()
+	}
+
+	if len(m.projects) == 0 {
+		s.WriteString("No Docker Compose projects found\n")
+		s.WriteString("\nStart a compose project or specify a compose file with -f flag\n")
+		s.WriteString("\n" + helpStyle.Render("Press 'r' to refresh, 'q' to quit"))
+		return s.String()
+	}
+
+	// Create table
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
+		Headers("NAME", "STATUS", "CONFIG FILES")
+
+	// Style headers
+	t.StyleFunc(func(row, col int) lipgloss.Style {
+		if row == 0 {
+			return headerStyle
+		}
+		return normalStyle
+	})
+
+	// Add rows
+	for i, project := range m.projects {
+		style := normalStyle
+		if i == m.selectedProject {
+			style = selectedStyle
+		}
+
+		name := style.Render(project.Name)
+		status := style.Render(project.Status)
+		configFiles := style.Render(project.ConfigFiles)
+
+		t.Row(name, status, configFiles)
+	}
+
+	s.WriteString(t.Render() + "\n\n")
+
+	// Help text
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • r: refresh • q: quit")
+	s.WriteString(help)
+
+	// Show last command if available
+	if m.lastCommand != "" {
+		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
 	}
 
 	return s.String()
