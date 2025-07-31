@@ -266,6 +266,12 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case "p": // Show project list
+		m.currentView = ProjectListView
+		m.showProjectList = true
+		m.loading = true
+		return m, loadProjects(m.dockerClient)
+
 	default:
 		return m, nil
 	}
