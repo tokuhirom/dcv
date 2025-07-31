@@ -2,8 +2,10 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // Update handles messages and updates the model
@@ -25,6 +27,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.lastCommand = "docker compose ps --format json"
 		}
 		if msg.err != nil {
+			// Check if error is due to missing compose file
+			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) && m.composeFile == "" {
+				// Switch to project list view
+				m.currentView = ProjectListView
+				m.showProjectList = true
+				m.loading = true
+				return m, loadProjects(m.dockerClient)
+			}
 			m.err = msg.err
 			return m, nil
 		}
@@ -101,6 +111,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = nil
 		return m, nil
 
+	case projectsLoadedMsg:
+		m.loading = false
+		m.lastCommand = "docker compose ls --format json"
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.projects = msg.projects
+		m.err = nil
+		if len(m.projects) > 0 && m.selectedProject >= len(m.projects) {
+			m.selectedProject = 0
+		}
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -114,6 +138,9 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	// Handle quit globally
 	if msg.String() == "q" || msg.String() == "ctrl+c" {
+		if m.currentView == ProjectListView {
+			return m, tea.Quit
+		}
 		if m.currentView != ProcessListView {
 			// Go back to process list
 			m.currentView = ProcessListView
@@ -135,6 +162,8 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleTopViewKeys(msg)
 	case StatsView:
 		return m.handleStatsViewKeys(msg)
+	case ProjectListView:
+		return m.handleProjectListKeys(msg)
 	default:
 		return m, nil
 	}
@@ -383,5 +412,51 @@ func (m Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	default:
 		return m, nil
 	}
+}
+
+func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "up", "k":
+		if m.selectedProject > 0 {
+			m.selectedProject--
+		}
+		return m, nil
+
+	case "down", "j":
+		if m.selectedProject < len(m.projects)-1 {
+			m.selectedProject++
+		}
+		return m, nil
+
+	case "enter":
+		if m.selectedProject < len(m.projects) {
+			project := m.projects[m.selectedProject]
+			// Create a new compose client with the selected project
+			m.dockerClient = docker.NewComposeClientWithOptions("", project.Name, "")
+			m.projectName = project.Name
+			m.currentView = ProcessListView
+			m.showProjectList = false
+			m.loading = true
+			return m, loadProcesses(m.dockerClient, m.showAll)
+		}
+		return m, nil
+
+	case "r":
+		m.loading = true
+		return m, loadProjects(m.dockerClient)
+
+	default:
+		return m, nil
+	}
+}
+
+// containsAny checks if the string contains any of the substrings
+func containsAny(s string, substrs []string) bool {
+	for _, substr := range substrs {
+		if strings.Contains(s, substr) {
+			return true
+		}
+	}
+	return false
 }
 

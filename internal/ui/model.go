@@ -32,6 +32,7 @@ const (
 	DindProcessListView
 	TopView
 	StatsView
+	ProjectListView
 )
 
 // Model represents the application state
@@ -46,6 +47,11 @@ type Model struct {
 	processes       []models.Process
 	selectedProcess int
 	showAll         bool // Toggle to show all containers including stopped ones
+
+	// Project list state
+	projects         []models.ComposeProject
+	selectedProject  int
+	showProjectList  bool // Show project list when no compose file
 
 	// Dind state
 	dindContainers       []models.Container
@@ -82,6 +88,10 @@ type Model struct {
 
 	// Last executed command
 	lastCommand string
+
+	// Command line options
+	projectName string
+	composeFile string
 }
 
 // NewModel creates a new model with initial state
@@ -93,8 +103,22 @@ func NewModel() Model {
 	}
 }
 
+// NewModelWithOptions creates a new model with command line options
+func NewModelWithOptions(projectName, composeFile string) Model {
+	client := docker.NewComposeClientWithOptions("", projectName, composeFile)
+	return Model{
+		currentView:  ProcessListView,
+		dockerClient: client,
+		loading:      true,
+		projectName:  projectName,
+		composeFile:  composeFile,
+	}
+}
+
 // Init returns an initial command for the application
 func (m Model) Init() tea.Cmd {
+	// Try to load processes first - if it fails due to missing compose file,
+	// we'll switch to project list view in the update
 	return tea.Batch(
 		loadProcesses(m.dockerClient, m.showAll),
 		tea.WindowSize(),
@@ -139,6 +163,11 @@ type serviceActionCompleteMsg struct {
 type statsLoadedMsg struct {
 	stats []ContainerStats
 	err   error
+}
+
+type projectsLoadedMsg struct {
+	projects []models.ComposeProject
+	err      error
 }
 
 // Commands
@@ -251,6 +280,16 @@ func loadStats(client *docker.ComposeClient) tea.Cmd {
 		return statsLoadedMsg{
 			stats: stats,
 			err:   nil,
+		}
+	}
+}
+
+func loadProjects(client *docker.ComposeClient) tea.Cmd {
+	return func() tea.Msg {
+		projects, err := client.ListProjects()
+		return projectsLoadedMsg{
+			projects: projects,
+			err:      err,
 		}
 	}
 }
