@@ -66,7 +66,7 @@ func newLogReader(client *docker.ComposeClient, serviceName string, isDind bool,
 		client.LogCommand(lr.cmd, startTime, err)
 		return nil, fmt.Errorf("failed to start log command '%s': %w", strings.Join(lr.cmd.Args, " "), err)
 	}
-	
+
 	// Log successful start
 	client.LogCommand(lr.cmd, startTime, nil)
 
@@ -84,6 +84,7 @@ func (lr *logReader) readLogs() {
 	// Read stdout
 	go func() {
 		defer wg.Done()
+		lr.client.LogDebug("Log reader started for stdout.")
 		scanner := bufio.NewScanner(lr.stdout)
 		for scanner.Scan() {
 			lr.mu.Lock()
@@ -100,6 +101,7 @@ func (lr *logReader) readLogs() {
 	// Read stderr
 	go func() {
 		defer wg.Done()
+		lr.client.LogDebug("Log reader started for stderr.")
 		scanner := bufio.NewScanner(lr.stderr)
 		for scanner.Scan() {
 			lr.mu.Lock()
@@ -120,6 +122,7 @@ func (lr *logReader) readLogs() {
 		lr.mu.Unlock()
 	}
 
+	lr.client.LogDebug("Log reader finished.")
 	lr.mu.Lock()
 	lr.done = true
 	lr.mu.Unlock()
@@ -174,7 +177,7 @@ func pollForLogs() tea.Cmd {
 	return func() tea.Msg {
 		// Give initial logs time to load
 		time.Sleep(200 * time.Millisecond)
-		
+
 		logReaderMu.Lock()
 		defer logReaderMu.Unlock()
 

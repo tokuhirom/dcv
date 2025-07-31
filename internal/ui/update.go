@@ -26,6 +26,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.lastCommand = "docker compose ps --format json"
 		}
+		// Example debug logging
+		m.dockerClient.LogDebug(fmt.Sprintf("Loaded %d processes", len(msg.processes)))
 		if msg.err != nil {
 			// Check if error is due to missing compose file
 			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) && m.composeFile == "" {
