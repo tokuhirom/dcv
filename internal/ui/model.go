@@ -105,20 +105,36 @@ func NewModel() Model {
 }
 
 // NewModelWithOptions creates a new model with command line options
-func NewModelWithOptions(projectName, composeFile string) Model {
+func NewModelWithOptions(projectName, composeFile string, showProjects bool) Model {
 	client := docker.NewComposeClientWithOptions("", projectName, composeFile)
+	
+	// Determine initial view
+	initialView := ProcessListView
+	if showProjects {
+		initialView = ProjectListView
+	}
+	
 	return Model{
-		currentView:  ProcessListView,
-		dockerClient: client,
-		loading:      true,
-		projectName:  projectName,
-		composeFile:  composeFile,
+		currentView:     initialView,
+		dockerClient:    client,
+		loading:         true,
+		projectName:     projectName,
+		composeFile:     composeFile,
+		showProjectList: showProjects,
 	}
 }
 
 // Init returns an initial command for the application
 func (m Model) Init() tea.Cmd {
-	// Try to load processes first - if it fails due to missing compose file,
+	// If showProjectList is true, start with project list
+	if m.showProjectList {
+		return tea.Batch(
+			loadProjects(m.dockerClient),
+			tea.WindowSize(),
+		)
+	}
+	
+	// Otherwise, try to load processes first - if it fails due to missing compose file,
 	// we'll switch to project list view in the update
 	return tea.Batch(
 		loadProcesses(m.dockerClient, m.showAll),
