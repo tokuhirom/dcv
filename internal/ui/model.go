@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -22,16 +21,6 @@ type ContainerStats struct {
 	NetIO       string  `json:"NetIO"`
 	BlockIO     string  `json:"BlockIO"`
 	PIDs        string  `json:"PIDs"`
-}
-
-// CommandLog represents a command execution log entry
-type CommandLog struct {
-	Timestamp time.Time
-	Command   string
-	ExitCode  int
-	Output    string
-	Error     string
-	Duration  time.Duration
 }
 
 // ViewType represents the current view
@@ -86,7 +75,7 @@ type Model struct {
 	stats []ContainerStats
 
 	// Debug log view state
-	commandLogs       []CommandLog
+	commandLogs       []docker.CommandLog // For display
 	sharedCommandLogs []docker.CommandLog // Shared across all docker clients
 	debugLogScrollY   int
 
@@ -213,7 +202,7 @@ type projectsLoadedMsg struct {
 }
 
 type commandLogsMsg struct {
-	logs []CommandLog
+	logs []docker.CommandLog
 }
 
 // Commands
@@ -364,19 +353,8 @@ func loadProjects(client *docker.ComposeClient) tea.Cmd {
 
 func loadCommandLogs(client *docker.ComposeClient) tea.Cmd {
 	return func() tea.Msg {
-		// Convert docker.CommandLog to ui.CommandLog
-		dockerLogs := client.GetCommandLogs()
-		uiLogs := make([]CommandLog, len(dockerLogs))
-		for i, log := range dockerLogs {
-			uiLogs[i] = CommandLog{
-				Timestamp: log.Timestamp,
-				Command:   log.Command,
-				ExitCode:  log.ExitCode,
-				Output:    log.Output,
-				Error:     log.Error,
-				Duration:  log.Duration,
-			}
-		}
-		return commandLogsMsg{logs: uiLogs}
+		// Just return a signal to refresh the view
+		// The actual logs are in m.sharedCommandLogs
+		return commandLogsMsg{logs: nil}
 	}
 }

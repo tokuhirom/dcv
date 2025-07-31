@@ -127,7 +127,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case commandLogsMsg:
 		m.loading = false
-		m.commandLogs = msg.logs
+		// Use shared logs directly
+		m.commandLogs = m.sharedCommandLogs
 		// Auto-scroll to bottom to show latest commands
 		maxScroll := len(m.commandLogs) - (m.height - 4)
 		if maxScroll > 0 {
