@@ -173,6 +173,10 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	// Handle quit globally
 	if msg.String() == "q" || msg.String() == "ctrl+c" {
+		// Stop log reader if in log view
+		if m.currentView == LogView {
+			stopLogReader()
+		}
 		if m.currentView == ProjectListView {
 			return m, tea.Quit
 		}
@@ -342,6 +346,8 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
+		// Stop the log reader before switching views
+		stopLogReader()
 		if m.isDindLog {
 			m.currentView = DindProcessListView
 			return m, loadDindContainers(m.dockerClient, m.currentDindService)

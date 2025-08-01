@@ -159,21 +159,43 @@ func streamLogsReal(client *docker.ComposeClient, serviceName string, isDind boo
 
 		// Stop any existing log reader
 		if activeLogReader != nil && activeLogReader.cmd != nil {
-			activeLogReader.cmd.Process.Kill()
+			client.LogDebug("Stopping existing log reader")
+			if activeLogReader.cmd.Process != nil {
+				activeLogReader.cmd.Process.Kill()
+				activeLogReader.cmd.Wait() // Wait for process to terminate
+			}
 		}
 
 		// Create new log reader
+		client.LogDebug(fmt.Sprintf("Creating new log reader for service: %s", serviceName))
 		lr, err := newLogReader(client, serviceName, isDind, hostService)
 		if err != nil {
+			client.LogDebug(fmt.Sprintf("Failed to create log reader: %v", err))
 			return errorMsg{err: err}
 		}
 
 		activeLogReader = lr
 		lastLogIndex = 0
+		client.LogDebug(fmt.Sprintf("Log reader created, lastLogIndex reset to 0"))
 
 		// Send command info message
 		cmdStr := strings.Join(lr.cmd.Args, " ")
 		return commandExecutedMsg{command: cmdStr}
+	}
+}
+
+// stopLogReader stops the active log reader
+func stopLogReader() {
+	logReaderMu.Lock()
+	defer logReaderMu.Unlock()
+	
+	if activeLogReader != nil {
+		if activeLogReader.cmd != nil && activeLogReader.cmd.Process != nil {
+			activeLogReader.cmd.Process.Kill()
+			// Don't wait here as it might block
+		}
+		activeLogReader = nil
+		lastLogIndex = 0 // Reset the index too
 	}
 }
 
@@ -187,6 +209,7 @@ func pollForLogs() tea.Cmd {
 		defer logReaderMu.Unlock()
 
 		if activeLogReader == nil {
+			// Don't log here as we don't have access to client
 			return logLineMsg{line: "[Log reader stopped]"}
 		}
 

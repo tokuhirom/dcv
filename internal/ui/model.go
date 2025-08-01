@@ -212,6 +212,13 @@ type commandLogsMsg struct {
 
 // Commands
 
+func stopLogReaderCmd() tea.Cmd {
+	return func() tea.Msg {
+		stopLogReader()
+		return nil
+	}
+}
+
 func loadProcesses(client *docker.ComposeClient, showAll bool) tea.Cmd {
 	return func() tea.Msg {
 		processes, err := client.ListContainers(showAll)
