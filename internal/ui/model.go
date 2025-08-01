@@ -177,6 +177,8 @@ type logLinesMsg struct {
 	lines []string
 }
 
+type pollLogsContinueMsg struct{}
+
 type errorMsg struct {
 	err error
 }
