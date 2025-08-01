@@ -176,7 +176,7 @@ func streamLogsReal(client *docker.ComposeClient, serviceName string, isDind boo
 
 		activeLogReader = lr
 		lastLogIndex = 0
-		client.LogDebug(fmt.Sprintf("Log reader created, lastLogIndex reset to 0"))
+		client.LogDebug("Log reader created, lastLogIndex reset to 0")
 
 		// Send command info message
 		cmdStr := strings.Join(lr.cmd.Args, " ")
