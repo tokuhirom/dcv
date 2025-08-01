@@ -12,7 +12,7 @@ func TestBuildComposeArgs(t *testing.T) {
 		expected []string
 	}{
 		{
-			name:     "no project or file",
+			name:     "no project name",
 			client:   &ComposeClient{},
 			baseArgs: []string{"ps"},
 			expected: []string{"compose", "ps"},
@@ -24,19 +24,10 @@ func TestBuildComposeArgs(t *testing.T) {
 			expected: []string{"compose", "-p", "myproject", "ps"},
 		},
 		{
-			name:     "with compose file",
-			client:   &ComposeClient{composeFile: "docker-compose.prod.yml"},
-			baseArgs: []string{"ps"},
-			expected: []string{"compose", "-f", "docker-compose.prod.yml", "ps"},
-		},
-		{
-			name: "with both project and file",
-			client: &ComposeClient{
-				projectName: "myproject",
-				composeFile: "docker-compose.prod.yml",
-			},
+			name:     "with project name and multiple args",
+			client:   &ComposeClient{projectName: "myproject"},
 			baseArgs: []string{"ps", "--all"},
-			expected: []string{"compose", "-p", "myproject", "-f", "docker-compose.prod.yml", "ps", "--all"},
+			expected: []string{"compose", "-p", "myproject", "ps", "--all"},
 		},
 	}
 
