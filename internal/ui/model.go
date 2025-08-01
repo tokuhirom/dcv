@@ -173,6 +173,10 @@ type logLineMsg struct {
 	line string
 }
 
+type logLinesMsg struct {
+	lines []string
+}
+
 type errorMsg struct {
 	err error
 }

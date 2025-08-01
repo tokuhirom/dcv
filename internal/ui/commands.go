@@ -192,10 +192,11 @@ func pollForLogs() tea.Cmd {
 
 		newLines, newIndex, done := activeLogReader.getNewLines(lastLogIndex)
 		lastLogIndex = newIndex
+		activeLogReader.client.LogDebug(fmt.Sprintf("Got %d new lines.", len(newLines)))
 
 		if len(newLines) > 0 {
-			// Return first new line
-			return logLineMsg{line: newLines[0]}
+			// Return all new lines at once
+			return logLinesMsg{lines: newLines}
 		}
 
 		if done {
@@ -209,7 +210,7 @@ func pollForLogs() tea.Cmd {
 		}
 
 		// No new lines, wait a bit
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 		return pollForLogs()()
 	}
 }
