@@ -90,12 +90,11 @@ type Model struct {
 
 	// Command line options
 	projectName string
-	composeFile string
 }
 
 // NewModel creates a new model with initial state
 func NewModel() Model {
-	client := docker.NewComposeClient("")
+	client := docker.NewComposeClient()
 
 	return Model{
 		currentView:  ProcessListView,
@@ -105,22 +104,14 @@ func NewModel() Model {
 }
 
 // NewModelWithOptions creates a new model with command line options
-func NewModelWithOptions(projectName, composeFile string, showProjects bool) Model {
-	client := docker.NewComposeClientWithOptions("", projectName, composeFile)
-
-	// Determine initial view
-	initialView := ProcessListView
-	if showProjects {
-		initialView = ProjectListView
-	}
+func NewModelWithOptions(initialView ViewType, projectName string) Model {
+	client := docker.NewComposeClientWithOptions(projectName)
 
 	return Model{
-		currentView:     initialView,
-		dockerClient:    client,
-		loading:         true,
-		projectName:     projectName,
-		composeFile:     composeFile,
-		showProjectList: showProjects,
+		currentView:  initialView,
+		dockerClient: client,
+		loading:      true,
+		projectName:  projectName,
 	}
 }
 

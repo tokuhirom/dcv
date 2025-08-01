@@ -6,26 +6,26 @@ import (
 
 func TestBuildComposeArgs(t *testing.T) {
 	tests := []struct {
-		name        string
-		client      *ComposeClient
-		baseArgs    []string
-		expected    []string
+		name     string
+		client   *ComposeClient
+		baseArgs []string
+		expected []string
 	}{
 		{
-			name: "no project or file",
-			client: &ComposeClient{},
+			name:     "no project or file",
+			client:   &ComposeClient{},
 			baseArgs: []string{"ps"},
 			expected: []string{"compose", "ps"},
 		},
 		{
-			name: "with project name",
-			client: &ComposeClient{projectName: "myproject"},
+			name:     "with project name",
+			client:   &ComposeClient{projectName: "myproject"},
 			baseArgs: []string{"ps"},
 			expected: []string{"compose", "-p", "myproject", "ps"},
 		},
 		{
-			name: "with compose file",
-			client: &ComposeClient{composeFile: "docker-compose.prod.yml"},
+			name:     "with compose file",
+			client:   &ComposeClient{composeFile: "docker-compose.prod.yml"},
 			baseArgs: []string{"ps"},
 			expected: []string{"compose", "-f", "docker-compose.prod.yml", "ps"},
 		},
@@ -59,8 +59,8 @@ func TestBuildComposeArgs(t *testing.T) {
 func TestListProjects(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command
-	client := NewComposeClient("")
-	
+	client := NewComposeClient()
+
 	// We can't actually test listing projects without docker compose
 	// The method should return an error or empty result
 	_, err := client.ListProjects()

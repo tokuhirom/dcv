@@ -26,7 +26,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		slog.Debug("Loaded processes", slog.Int("count", len(msg.processes)))
 		if msg.err != nil {
 			// Check if error is due to missing compose file
-			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) && m.composeFile == "" {
+			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
 				// Switch to project list view
 				m.currentView = ProjectListView
 				m.showProjectList = true
@@ -482,7 +482,7 @@ func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.selectedProject < len(m.projects) {
 			project := m.projects[m.selectedProject]
 			// Create a new compose client with the selected project
-			m.dockerClient = docker.NewComposeClientWithOptions("", project.Name, "")
+			m.dockerClient = docker.NewComposeClientWithOptions(project.Name)
 			m.projectName = project.Name
 			m.currentView = ProcessListView
 			m.showProjectList = false

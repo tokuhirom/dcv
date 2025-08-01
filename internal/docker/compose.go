@@ -15,22 +15,16 @@ import (
 )
 
 type ComposeClient struct {
-	workDir     string
 	projectName string
-	composeFile string
 }
 
-func NewComposeClient(workDir string) *ComposeClient {
-	return &ComposeClient{
-		workDir: workDir,
-	}
+func NewComposeClient() *ComposeClient {
+	return &ComposeClient{}
 }
 
-func NewComposeClientWithOptions(workDir, projectName, composeFile string) *ComposeClient {
+func NewComposeClientWithOptions(projectName string) *ComposeClient {
 	return &ComposeClient{
-		workDir:     workDir,
 		projectName: projectName,
-		composeFile: composeFile,
 	}
 }
 
@@ -40,9 +34,6 @@ func (c *ComposeClient) ListProjects() ([]models.ComposeProject, error) {
 	slog.Info("Executing docker command",
 		slog.String("args", strings.Join(args, " ")))
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -138,17 +129,13 @@ func (c *ComposeClient) buildComposeArgs(baseArgs ...string) []string {
 		args = append(args, "-p", c.projectName)
 	}
 
-	if c.composeFile != "" {
-		args = append(args, "-f", c.composeFile)
-	}
-
 	args = append(args, baseArgs...)
 	return args
 }
 
 func (c *ComposeClient) ListContainers(showAll bool) ([]models.Process, error) {
 	// Always use JSON format for reliable parsing
-	baseArgs := []string{"ps", "--format", "json"}
+	baseArgs := []string{"ps", "--format", "json", "--no-trunc"}
 	if showAll {
 		baseArgs = append(baseArgs, "--all")
 	}
@@ -157,9 +144,6 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.Process, error) {
 	slog.Info("Executing docker command",
 		slog.String("args", strings.Join(args, " ")))
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -327,9 +311,6 @@ func (c *ComposeClient) GetContainerLogs(serviceName string, follow bool) (*exec
 
 	args := c.buildComposeArgs(baseArgs...)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	return cmd, nil
 }
@@ -340,9 +321,6 @@ func (c *ComposeClient) ExecInContainer(containerName string, command []string) 
 
 	args := c.buildComposeArgs(baseArgs...)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	return cmd, nil
 }
@@ -512,9 +490,6 @@ func (c *ComposeClient) parseDindPSJSON(output []byte) ([]models.Container, erro
 func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
 	args := c.buildComposeArgs("top", serviceName)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -527,9 +502,6 @@ func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
 func (c *ComposeClient) KillService(serviceName string) error {
 	args := c.buildComposeArgs("kill", serviceName)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -542,9 +514,6 @@ func (c *ComposeClient) KillService(serviceName string) error {
 func (c *ComposeClient) StopService(serviceName string) error {
 	args := c.buildComposeArgs("stop", serviceName)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -557,9 +526,6 @@ func (c *ComposeClient) StopService(serviceName string) error {
 func (c *ComposeClient) StartService(serviceName string) error {
 	args := c.buildComposeArgs("start", serviceName)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -572,9 +538,6 @@ func (c *ComposeClient) StartService(serviceName string) error {
 func (c *ComposeClient) RestartService(serviceName string) error {
 	args := c.buildComposeArgs("restart", serviceName)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -587,9 +550,6 @@ func (c *ComposeClient) RestartService(serviceName string) error {
 func (c *ComposeClient) RemoveService(serviceName string) error {
 	args := c.buildComposeArgs("rm", "-f", serviceName)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -602,9 +562,6 @@ func (c *ComposeClient) RemoveService(serviceName string) error {
 func (c *ComposeClient) UpService(serviceName string) error {
 	args := c.buildComposeArgs("up", "-d", serviceName)
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
@@ -616,9 +573,6 @@ func (c *ComposeClient) UpService(serviceName string) error {
 func (c *ComposeClient) GetStats() (string, error) {
 	args := c.buildComposeArgs("stats", "--format", "json", "--no-stream", "--all")
 	cmd := exec.Command("docker", args...)
-	if c.workDir != "" {
-		cmd.Dir = c.workDir
-	}
 
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
