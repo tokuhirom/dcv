@@ -93,26 +93,30 @@ func detectProject(projectName string, composeFile string, showProjects bool) (u
 			panic(fmt.Sprintf("Failed to get current working directory: %v", err))
 		}
 
-		paths := filepath.SplitList(pwd)
-		for i := len(paths) - 1; i >= 0; i-- {
-			newPath := filepath.Join(paths[0:i]...)
+		// Check current directory and all parent directories
+		currentPath := pwd
+		for {
 			slog.Debug("Checking path",
-				slog.String("basePath", pwd),
-				slog.Any("paths", paths),
-				slog.Int("depth", i),
-				slog.String("path", newPath))
+				slog.String("currentPath", currentPath))
+			
+			// Check if any project's config file is in this directory
 			for _, project := range projects {
-				match, err := filepath.Match(fmt.Sprintf("%s/*", newPath), project.ConfigFiles)
-				if err != nil {
-					panic(fmt.Sprintf("Failed to match path: %v", err))
-				}
-				if match {
+				projectDir := filepath.Dir(project.ConfigFiles)
+				if projectDir == currentPath {
 					slog.Info("Found Docker Compose project with config file",
 						slog.String("composeFile", project.ConfigFiles),
 						slog.String("projectName", project.Name))
 					return ui.ProcessListView, project.Name
 				}
 			}
+			
+			// Move to parent directory
+			parent := filepath.Dir(currentPath)
+			if parent == currentPath {
+				// Reached root directory
+				break
+			}
+			currentPath = parent
 		}
 	}
 	slog.Info("No specific project found, showing project list")
