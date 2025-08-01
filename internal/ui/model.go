@@ -52,7 +52,6 @@ type Model struct {
 	// Project list state
 	projects        []models.ComposeProject
 	selectedProject int
-	showProjectList bool // Show project list when no compose file
 
 	// Dind state
 	dindContainers        []models.Container
@@ -117,8 +116,7 @@ func NewModelWithOptions(initialView ViewType, projectName string) Model {
 
 // Init returns an initial command for the application
 func (m Model) Init() tea.Cmd {
-	// If showProjectList is true, start with a project list
-	if m.showProjectList {
+	if m.currentView == ProjectListView {
 		return tea.Batch(
 			loadProjects(m.dockerClient),
 			tea.WindowSize(),

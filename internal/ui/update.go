@@ -29,7 +29,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
 				// Switch to project list view
 				m.currentView = ProjectListView
-				m.showProjectList = true
 				m.loading = true
 				return m, loadProjects(m.dockerClient)
 			}
@@ -309,7 +308,6 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "p": // Show project list
 		m.currentView = ProjectListView
-		m.showProjectList = true
 		m.loading = true
 		return m, loadProjects(m.dockerClient)
 
@@ -485,7 +483,6 @@ func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.dockerClient = docker.NewComposeClientWithOptions(project.Name)
 			m.projectName = project.Name
 			m.currentView = ProcessListView
-			m.showProjectList = false
 			m.loading = true
 			return m, loadProcesses(m.dockerClient, m.showAll)
 		}
