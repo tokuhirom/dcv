@@ -220,7 +220,7 @@ func pollForLogs() tea.Cmd {
 
 		newLines, newIndex, done := activeLogReader.getNewLines(lastLogIndex)
 		lastLogIndex = newIndex
-		slog.Info("Got new log lines",
+		slog.Debug("Got new log lines",
 			slog.Int("newLinesCount", len(newLines)))
 
 		if len(newLines) > 0 {
