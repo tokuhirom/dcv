@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -72,8 +73,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if maxScroll > 0 {
 			m.logScrollY = maxScroll
 		}
-		// Continue polling for more logs
-		return m, pollForLogs()
+		// Don't continue polling for single lines (e.g., "[Log reader stopped]")
+		return m, nil
 
 	case logLinesMsg:
 		m.logs = append(m.logs, msg.lines...)
@@ -86,8 +87,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if maxScroll > 0 {
 			m.logScrollY = maxScroll
 		}
-		// Continue polling for more logs
-		return m, pollForLogs()
+		// Continue polling for more logs with a small delay
+		return m, tea.Tick(time.Millisecond*50, func(time.Time) tea.Msg {
+			return pollForLogs()()
+		})
+
+	case pollLogsContinueMsg:
+		// Continue polling with a delay
+		return m, tea.Tick(time.Millisecond*50, func(time.Time) tea.Msg {
+			return pollForLogs()()
+		})
 
 	case errorMsg:
 		m.err = msg.err

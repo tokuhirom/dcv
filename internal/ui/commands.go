@@ -202,9 +202,6 @@ func stopLogReader() {
 // pollForLogs polls for new log lines
 func pollForLogs() tea.Cmd {
 	return func() tea.Msg {
-		// Give initial logs time to load
-		time.Sleep(200 * time.Millisecond)
-
 		logReaderMu.Lock()
 		defer logReaderMu.Unlock()
 
@@ -232,8 +229,7 @@ func pollForLogs() tea.Cmd {
 			return nil
 		}
 
-		// No new lines, wait a bit
-		time.Sleep(50 * time.Millisecond)
-		return pollForLogs()()
+		// No new lines, continue polling
+		return pollLogsContinueMsg{}
 	}
 }
