@@ -287,12 +287,20 @@ func TestUpdateMessages(t *testing.T) {
 	assert.Equal(t, testErr, m.err)
 	assert.False(t, m.loading)
 
-	// Test log line message
+	// Test log line message (for status messages like "[Log reader stopped]")
 	m.currentView = LogView
 	m.height = 10
-	newModel, cmd := m.Update(logLineMsg{line: "test log line"})
+	newModel, cmd := m.Update(logLineMsg{line: "[Log reader stopped]"})
 	m = newModel.(Model)
-	assert.Contains(t, m.logs, "test log line")
+	assert.Contains(t, m.logs, "[Log reader stopped]")
+	assert.Nil(t, cmd) // Status messages don't trigger continued polling
+	
+	// Test log lines message (for actual log streaming)
+	m.logs = []string{} // Reset logs
+	newModel, cmd = m.Update(logLinesMsg{lines: []string{"log line 1", "log line 2"}})
+	m = newModel.(Model)
+	assert.Contains(t, m.logs, "log line 1")
+	assert.Contains(t, m.logs, "log line 2")
 	assert.NotNil(t, cmd) // Should continue streaming
 
 	// Test dind containers loaded
