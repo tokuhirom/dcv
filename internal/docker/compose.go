@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"strings"
 	"time"
@@ -16,89 +18,42 @@ type ComposeClient struct {
 	workDir     string
 	projectName string
 	composeFile string
-	commandLogs *[]CommandLog // Pointer to shared command logs
-}
-
-// LogType represents the type of log entry
-type LogType int
-
-const (
-	LogTypeCommand LogType = iota
-	LogTypeDebug
-)
-
-// CommandLog represents a log entry (command execution or debug message)
-type CommandLog struct {
-	Type      LogType
-	Timestamp time.Time
-	Command   string // For command logs
-	Message   string // For debug logs
-	ExitCode  int
-	Output    string
-	Error     string
-	Duration  time.Duration
 }
 
 func NewComposeClient(workDir string) *ComposeClient {
-	logs := make([]CommandLog, 0)
 	return &ComposeClient{
-		workDir:     workDir,
-		commandLogs: &logs,
+		workDir: workDir,
 	}
 }
 
 func NewComposeClientWithOptions(workDir, projectName, composeFile string) *ComposeClient {
-	logs := make([]CommandLog, 0)
 	return &ComposeClient{
 		workDir:     workDir,
 		projectName: projectName,
 		composeFile: composeFile,
-		commandLogs: &logs,
-	}
-}
-
-// SetCommandLogs sets the shared command logs
-func (c *ComposeClient) SetCommandLogs(logs *[]CommandLog) {
-	c.commandLogs = logs
-}
-
-// LogDebug adds a debug message to the command logs
-func (c *ComposeClient) LogDebug(message string) {
-	if c.commandLogs == nil {
-		return
-	}
-	
-	log := CommandLog{
-		Type:      LogTypeDebug,
-		Timestamp: time.Now(),
-		Message:   message,
-	}
-	
-	*c.commandLogs = append(*c.commandLogs, log)
-	
-	// Keep only last 100 logs
-	if len(*c.commandLogs) > 100 {
-		*c.commandLogs = (*c.commandLogs)[len(*c.commandLogs)-100:]
 	}
 }
 
 // ListProjects lists all Docker Compose projects
 func (c *ComposeClient) ListProjects() ([]models.ComposeProject, error) {
-	cmd := exec.Command("docker", "compose", "ls", "--format", "json")
+	args := []string{"compose", "ls", "--format", "json"}
+	slog.Info("Executing docker command",
+		slog.String("args", strings.Join(args, " ")))
+	cmd := exec.Command("docker", args...)
 	if c.workDir != "" {
 		cmd.Dir = c.workDir
 	}
-	
+
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute docker compose ls: %w\nOutput: %s", err, string(output))
 	}
-	
+
 	// Handle empty output
 	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
 		return []models.ComposeProject{}, nil
 	}
-	
+
 	// Parse JSON output - docker compose ls returns an array
 	var projects []models.ComposeProject
 	if err := json.Unmarshal(output, &projects); err != nil {
@@ -108,7 +63,7 @@ func (c *ComposeClient) ListProjects() ([]models.ComposeProject, error) {
 			if line == "" {
 				continue
 			}
-			
+
 			var project models.ComposeProject
 			if err := json.Unmarshal([]byte(line), &project); err != nil {
 				return nil, fmt.Errorf("failed to parse project JSON: %w", err)
@@ -116,30 +71,18 @@ func (c *ComposeClient) ListProjects() ([]models.ComposeProject, error) {
 			projects = append(projects, project)
 		}
 	}
-	
-	return projects, nil
-}
 
-// GetCommandLogs returns the command execution logs
-func (c *ComposeClient) GetCommandLogs() []CommandLog {
-	if c.commandLogs == nil {
-		return []CommandLog{}
-	}
-	return *c.commandLogs
+	return projects, nil
 }
 
 // LogCommand manually logs a command execution (for streaming commands)
 func (c *ComposeClient) LogCommand(cmd *exec.Cmd, startTime time.Time, err error) {
-	if c.commandLogs == nil || cmd == nil {
-		return
-	}
-	
 	duration := time.Since(startTime)
 	cmdStr := strings.Join(cmd.Args, " ")
-	
+
 	exitCode := 0
 	errorStr := ""
-	
+
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			exitCode = exitErr.ExitCode()
@@ -148,78 +91,57 @@ func (c *ComposeClient) LogCommand(cmd *exec.Cmd, startTime time.Time, err error
 		}
 		errorStr = err.Error()
 	}
-	
-	log := CommandLog{
-		Timestamp: startTime,
-		Command:   cmdStr,
-		ExitCode:  exitCode,
-		Output:    "", // Streaming commands don't capture output
-		Error:     errorStr,
-		Duration:  duration,
-	}
-	
-	*c.commandLogs = append(*c.commandLogs, log)
-	
-	// Keep only last 100 commands
-	if len(*c.commandLogs) > 100 {
-		*c.commandLogs = (*c.commandLogs)[len(*c.commandLogs)-100:]
-	}
+
+	slog.Info("Logged command",
+		slog.String("command", cmdStr),
+		slog.Int("exitCode", exitCode),
+		slog.String("error", errorStr),
+		slog.Duration("duration", duration),
+		slog.String("workDir", cmd.Dir),
+	)
 }
 
 // executeAndLog executes a command and logs the result
 func (c *ComposeClient) executeAndLog(cmd *exec.Cmd) ([]byte, error) {
 	startTime := time.Now()
 	cmdStr := strings.Join(cmd.Args, " ")
-	
+
 	output, err := cmd.CombinedOutput()
 	duration := time.Since(startTime)
-	
+
 	exitCode := 0
 	errorStr := ""
-	
+
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
 			exitCode = exitErr.ExitCode()
-		} else {
-			exitCode = -1
 		}
 		errorStr = err.Error()
 	}
-	
-	// Add to command logs if available
-	if c.commandLogs != nil {
-		log := CommandLog{
-			Timestamp: startTime,
-			Command:   cmdStr,
-			ExitCode:  exitCode,
-			Output:    string(output),
-			Error:     errorStr,
-			Duration:  duration,
-		}
-		
-		*c.commandLogs = append(*c.commandLogs, log)
-		
-		// Keep only last 100 commands
-		if len(*c.commandLogs) > 100 {
-			*c.commandLogs = (*c.commandLogs)[len(*c.commandLogs)-100:]
-		}
-	}
-	
+
+	slog.Info("Executed command",
+		slog.String("command", cmdStr),
+		slog.Int("exitCode", exitCode),
+		slog.String("error", errorStr),
+		slog.Duration("duration", duration),
+		slog.String("output", string(output)))
+
 	return output, err
 }
 
 // buildComposeArgs builds the docker compose command arguments with project and file options
 func (c *ComposeClient) buildComposeArgs(baseArgs ...string) []string {
 	args := []string{"compose"}
-	
+
 	if c.projectName != "" {
 		args = append(args, "-p", c.projectName)
 	}
-	
+
 	if c.composeFile != "" {
 		args = append(args, "-f", c.composeFile)
 	}
-	
+
 	args = append(args, baseArgs...)
 	return args
 }
@@ -230,8 +152,10 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.Process, error) {
 	if showAll {
 		baseArgs = append(baseArgs, "--all")
 	}
-	
+
 	args := c.buildComposeArgs(baseArgs...)
+	slog.Info("Executing docker command",
+		slog.String("args", strings.Join(args, " ")))
 	cmd := exec.Command("docker", args...)
 	if c.workDir != "" {
 		cmd.Dir = c.workDir
@@ -240,7 +164,8 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.Process, error) {
 	output, err := c.executeAndLog(cmd)
 	if err != nil {
 		// Check if docker compose is available
-		if execErr, ok := err.(*exec.ExitError); ok {
+		var execErr *exec.ExitError
+		if errors.As(err, &execErr) {
 			if string(execErr.Stderr) != "" {
 				return nil, fmt.Errorf("docker compose error: %s", execErr.Stderr)
 			}
@@ -254,10 +179,12 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.Process, error) {
 
 	// Handle empty output (no containers running)
 	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
+		slog.Info("No containers found")
 		return []models.Process{}, nil
 	}
 
 	// Parse JSON format
+	slog.Info("Parsing docker compose ps output")
 	return c.parseComposePSJSON(output)
 }
 
@@ -301,7 +228,7 @@ func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) 
 		name := parts[0]
 		image := parts[1]
 		service := parts[statusStartIdx-1]
-		
+
 		// Build status from statusStartIdx onward, stopping at ports
 		statusParts := []string{}
 		for i := statusStartIdx; i < len(parts); i++ {
@@ -336,7 +263,7 @@ func (c *ComposeClient) parseComposePS(output []byte) ([]models.Process, error) 
 
 func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Process, error) {
 	processes := []models.Process{}
-	
+
 	// Docker compose outputs each container as a separate JSON object on its own line
 	scanner := bufio.NewScanner(bytes.NewReader(output))
 	hasValidJSON := false
@@ -426,12 +353,12 @@ func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Conta
 	if err != nil {
 		return nil, err
 	}
-	
+
 	checkOutput, checkErr := checkCmd.CombinedOutput()
 	if checkErr != nil {
 		// Docker daemon not ready
 		cmdStr := strings.Join(checkCmd.Args, " ")
-		return nil, fmt.Errorf("docker daemon not ready in container %s\nCommand: %s\nOutput: %s\nError: %w", 
+		return nil, fmt.Errorf("docker daemon not ready in container %s\nCommand: %s\nOutput: %s\nError: %w",
 			containerName, cmdStr, string(checkOutput), checkErr)
 	}
 
@@ -448,14 +375,14 @@ func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Conta
 		if err != nil {
 			return nil, err
 		}
-		
+
 		output, err = c.executeAndLog(cmd)
 		if err != nil {
 			// Include the command and output in error message for debugging
 			cmdStr := strings.Join(cmd.Args, " ")
 			return nil, fmt.Errorf("failed to execute docker ps in dind\nCommand: %s\nOutput: %s\nError: %w", cmdStr, string(output), err)
 		}
-		
+
 		// Parse table format
 		return c.parseDindPS(output)
 	}
@@ -466,7 +393,7 @@ func (c *ComposeClient) ListDindContainers(containerName string) ([]models.Conta
 		// If JSON parsing fails, try table format
 		return c.parseDindPS(output)
 	}
-	
+
 	return containers, nil
 }
 
@@ -493,18 +420,18 @@ func (c *ComposeClient) parseDindPS(output []byte) ([]models.Container, error) {
 		// Parse the fields carefully
 		// CONTAINER ID   IMAGE          COMMAND    CREATED         STATUS         PORTS     NAMES
 		// a1b2c3d4e5f6   alpine:latest  "/bin/sh"  2 minutes ago   Up 2 minutes             test-container
-		
+
 		container := models.Container{
 			ID:    fields[0],
 			Image: fields[1],
 			Name:  fields[len(fields)-1],
 		}
-		
+
 		// Find CREATED and STATUS fields
 		// They are usually "X time ago" and "Up X time" format
 		createdIdx := -1
 		statusIdx := -1
-		
+
 		for i := 3; i < len(fields); i++ {
 			if fields[i] == "ago" && createdIdx == -1 {
 				// Found end of CREATED field
@@ -542,7 +469,7 @@ func (c *ComposeClient) GetDindContainerLogs(hostContainer, targetContainer stri
 
 func (c *ComposeClient) parseDindPSJSON(output []byte) ([]models.Container, error) {
 	containers := []models.Container{}
-	
+
 	// Docker ps outputs each container as a separate JSON object on its own line
 	scanner := bufio.NewScanner(bytes.NewReader(output))
 	for scanner.Scan() {
@@ -552,12 +479,12 @@ func (c *ComposeClient) parseDindPSJSON(output []byte) ([]models.Container, erro
 		}
 
 		var container struct {
-			ID        string   `json:"ID"`
-			Image     string   `json:"Image"`
-			Names     string   `json:"Names"`
-			Status    string   `json:"Status"`
-			CreatedAt string   `json:"CreatedAt"`
-			Ports     string   `json:"Ports"`
+			ID        string `json:"ID"`
+			Image     string `json:"Image"`
+			Names     string `json:"Names"`
+			Status    string `json:"Status"`
+			CreatedAt string `json:"CreatedAt"`
+			Ports     string `json:"Ports"`
 		}
 
 		if err := json.Unmarshal(line, &container); err != nil {

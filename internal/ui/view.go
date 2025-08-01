@@ -2,49 +2,49 @@ package ui
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
-	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // Styles
 var (
 	titleStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("86")).
-		MarginBottom(1)
+			Bold(true).
+			Foreground(lipgloss.Color("86")).
+			MarginBottom(1)
 
 	selectedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("86")).
-		Background(lipgloss.Color("235"))
+			Foreground(lipgloss.Color("86")).
+			Background(lipgloss.Color("235"))
 
 	normalStyle = lipgloss.NewStyle()
 
 	errorStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("196")).
-		Bold(true)
+			Foreground(lipgloss.Color("196")).
+			Bold(true)
 
 	helpStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("241"))
+			Foreground(lipgloss.Color("241"))
 
 	headerStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("226"))
+			Bold(true).
+			Foreground(lipgloss.Color("226"))
 
 	dindStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("42"))
+			Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("42"))
+			Foreground(lipgloss.Color("42"))
 
 	statusDownStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("196"))
+			Foreground(lipgloss.Color("196"))
 
 	searchStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("226")).
-		Bold(true)
+			Foreground(lipgloss.Color("226")).
+			Bold(true)
 )
 
 // View returns the view for the current model
@@ -66,8 +66,6 @@ func (m Model) View() string {
 		return m.renderStatsView()
 	case ProjectListView:
 		return m.renderProjectList()
-	case DebugLogView:
-		return m.renderDebugLog()
 	default:
 		return "Unknown view"
 	}
@@ -75,6 +73,10 @@ func (m Model) View() string {
 
 func (m Model) renderProcessList() string {
 	var s strings.Builder
+
+	slog.Info("Rendering process list",
+		slog.String("projectName", m.projectName),
+		slog.String("composeFile", m.composeFile))
 
 	title := "Docker Compose Processes"
 	if m.showAll {
@@ -100,11 +102,7 @@ func (m Model) renderProcessList() string {
 	}
 
 	if m.loading {
-		if m.lastCommand != "" && (strings.Contains(m.lastCommand, "kill") || strings.Contains(m.lastCommand, "stop")) {
-			s.WriteString(fmt.Sprintf("Executing: %s...", m.lastCommand))
-		} else {
-			s.WriteString("Loading containers...")
-		}
+		s.WriteString("Loading containers...")
 		return s.String()
 	}
 
@@ -164,15 +162,10 @@ func (m Model) renderProcessList() string {
 
 	// Help text
 	help := []string{
-		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • a: toggle all • p: projects • l: debug log",
+		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • a: toggle all • p: projects",
 		"K: kill • S: stop • U: start • R: restart • D: remove (stopped) • P: deploy • r: refresh • q: quit",
 	}
 	s.WriteString(helpStyle.Render(strings.Join(help, "\n")))
-
-	// Show last command if available
-	if m.lastCommand != "" {
-		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
-	}
 
 	return s.String()
 }
@@ -194,9 +187,6 @@ func (m Model) renderLogView() string {
 
 	// Log content
 	viewHeight := m.height - 4
-	if m.lastCommand != "" {
-		viewHeight-- // Account for command line
-	}
 	startIdx := m.logScrollY
 	endIdx := startIdx + viewHeight
 
@@ -219,13 +209,8 @@ func (m Model) renderLogView() string {
 	}
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • /: search • l: debug log • Esc/q: back")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • /: search • Esc/q: back")
 	s.WriteString(help)
-
-	// Show last command if available
-	if m.lastCommand != "" {
-		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Command: %s", m.lastCommand)))
-	}
 
 	return s.String()
 }
@@ -243,7 +228,7 @@ func (m Model) renderDindList() string {
 	}
 
 	if m.loading {
-		s.WriteString("Loading containers...")
+		slog.Info("Loading dind containers...")
 		return s.String()
 	}
 
@@ -285,13 +270,8 @@ func (m Model) renderDindList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • l: debug log • r: refresh • Esc: back • q: quit")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • r: refresh • Esc: back • q: quit")
 	s.WriteString(help)
-
-	// Show last command if available
-	if m.lastCommand != "" {
-		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
-	}
 
 	return s.String()
 }
@@ -323,9 +303,6 @@ func (m Model) renderTopView() string {
 	// Fill remaining space
 	outputLines := strings.Count(m.topOutput, "\n")
 	viewHeight := m.height - 5
-	if m.lastCommand != "" {
-		viewHeight--
-	}
 	for i := outputLines; i < viewHeight; i++ {
 		s.WriteString("\n")
 	}
@@ -333,11 +310,6 @@ func (m Model) renderTopView() string {
 	// Help text
 	help := helpStyle.Render("r: refresh • Esc/q: back")
 	s.WriteString(help)
-
-	// Show last command if available
-	if m.lastCommand != "" {
-		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Command: %s", m.lastCommand)))
-	}
 
 	return s.String()
 }
@@ -398,11 +370,6 @@ func (m Model) renderStatsView() string {
 	help := helpStyle.Render("r: refresh • Esc/q: back")
 	s.WriteString(help)
 
-	// Show last command if available
-	if m.lastCommand != "" {
-		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Command: %s", m.lastCommand)))
-	}
-
 	return s.String()
 }
 
@@ -461,121 +428,8 @@ func (m Model) renderProjectList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • l: debug log • r: refresh • q: quit")
+	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • r: refresh • q: quit")
 	s.WriteString(help)
-
-	// Show last command if available
-	if m.lastCommand != "" {
-		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
-	}
-
-	return s.String()
-}
-
-func (m Model) renderDebugLog() string {
-	var s strings.Builder
-
-	title := titleStyle.Render("Debug Log - Command History")
-	s.WriteString(title + "\n\n")
-
-	if m.loading {
-		s.WriteString("Loading command logs...")
-		return s.String()
-	}
-
-	if len(m.commandLogs) == 0 {
-		s.WriteString("No commands executed yet\n")
-		s.WriteString("\n" + helpStyle.Render("Press 'Esc' to go back"))
-		return s.String()
-	}
-
-	// Calculate view height
-	viewHeight := m.height - 4
-	if m.lastCommand != "" {
-		viewHeight--
-	}
-
-	// Show logs from scroll position
-	startIdx := m.debugLogScrollY
-	endIdx := startIdx + viewHeight
-
-	if endIdx > len(m.commandLogs) {
-		endIdx = len(m.commandLogs)
-	}
-
-	// Format and display logs
-	for i := startIdx; i < endIdx && i < len(m.commandLogs); i++ {
-		log := m.commandLogs[i]
-		
-		// Format timestamp
-		timestamp := log.Timestamp.Format("15:04:05")
-		
-		// Handle different log types
-		if log.Type == docker.LogTypeDebug {
-			// Debug message log
-			debugLine := fmt.Sprintf("%s %s %s",
-				headerStyle.Render(timestamp),
-				statusUpStyle.Render("[DEBUG]"),
-				log.Message,
-			)
-			s.WriteString(debugLine + "\n")
-		} else {
-			// Command execution log
-			// Format exit code with color
-			var exitCodeStr string
-			if log.ExitCode == 0 {
-				exitCodeStr = statusUpStyle.Render(fmt.Sprintf("[%d]", log.ExitCode))
-			} else {
-				exitCodeStr = statusDownStyle.Render(fmt.Sprintf("[%d]", log.ExitCode))
-			}
-			
-			// Format duration
-			duration := fmt.Sprintf("(%.2fs)", log.Duration.Seconds())
-			
-			// Command line
-			cmdLine := fmt.Sprintf("%s %s %s %s",
-				headerStyle.Render(timestamp),
-				exitCodeStr,
-				helpStyle.Render(duration),
-				log.Command,
-			)
-			s.WriteString(cmdLine + "\n")
-			
-			// Show error if any
-			if log.Error != "" && log.ExitCode != 0 {
-				s.WriteString(errorStyle.Render("  Error: ") + log.Error + "\n")
-			}
-			
-			// Show truncated output if error
-			if log.ExitCode != 0 && log.Output != "" {
-				lines := strings.Split(strings.TrimSpace(log.Output), "\n")
-				maxLines := 3
-				for j := 0; j < len(lines) && j < maxLines; j++ {
-					s.WriteString(helpStyle.Render("  | ") + lines[j] + "\n")
-				}
-				if len(lines) > maxLines {
-					s.WriteString(helpStyle.Render(fmt.Sprintf("  | ... (%d more lines)\n", len(lines)-maxLines)))
-				}
-			}
-		}
-		
-		s.WriteString("\n")
-	}
-
-	// Fill remaining space
-	linesShown := endIdx - startIdx
-	for i := linesShown; i < viewHeight; i++ {
-		s.WriteString("\n")
-	}
-
-	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • Esc/q: back")
-	s.WriteString(help)
-
-	// Show last command if available
-	if m.lastCommand != "" {
-		s.WriteString("\n" + helpStyle.Render(fmt.Sprintf("Last command: %s", m.lastCommand)))
-	}
 
 	return s.String()
 }

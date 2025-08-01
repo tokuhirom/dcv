@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log/slog"
 	"os/exec"
 	"strings"
 	"sync"
@@ -84,16 +85,17 @@ func (lr *logReader) readLogs() {
 	// Read stdout
 	go func() {
 		defer wg.Done()
-		lr.client.LogDebug("Log reader started for stdout.")
+		slog.Debug("Log reader started for stdout.")
 		scanner := bufio.NewScanner(lr.stdout)
 		for scanner.Scan() {
 			got := scanner.Text()
-			lr.client.LogDebug(fmt.Sprintf("Reading stdout line: %s", got))
+			slog.Debug("Got stdout line",
+				slog.String("line", got))
 			lr.mu.Lock()
 			lr.lines = append(lr.lines, got)
 			lr.mu.Unlock()
 		}
-		lr.client.LogDebug("Log reader finished(stdout).")
+		slog.Debug("Log reader finished(stdout).")
 		if err := scanner.Err(); err != nil {
 			lr.mu.Lock()
 			lr.lines = append(lr.lines, fmt.Sprintf("[ERROR reading stdout: %v]", err))
@@ -104,15 +106,15 @@ func (lr *logReader) readLogs() {
 	// Read stderr
 	go func() {
 		defer wg.Done()
-		lr.client.LogDebug("Log reader started for stderr.")
+		slog.Debug("Log reader started for stderr.")
 		scanner := bufio.NewScanner(lr.stderr)
 		for scanner.Scan() {
-			lr.client.LogDebug("Reading stderr line.")
+			slog.Debug("Got stderr line")
 			lr.mu.Lock()
 			lr.lines = append(lr.lines, fmt.Sprintf("[STDERR] %s", scanner.Text()))
 			lr.mu.Unlock()
 		}
-		lr.client.LogDebug("Log reader finished(stderr).")
+		slog.Debug("Log reader finished(stderr).")
 		if err := scanner.Err(); err != nil {
 			lr.mu.Lock()
 			lr.lines = append(lr.lines, fmt.Sprintf("[ERROR reading stderr: %v]", err))
@@ -127,7 +129,7 @@ func (lr *logReader) readLogs() {
 		lr.mu.Unlock()
 	}
 
-	lr.client.LogDebug("Log reader finished.")
+	slog.Debug("Log reader finished(wait).")
 	lr.mu.Lock()
 	lr.done = true
 	lr.mu.Unlock()
@@ -159,7 +161,7 @@ func streamLogsReal(client *docker.ComposeClient, serviceName string, isDind boo
 
 		// Stop any existing log reader
 		if activeLogReader != nil && activeLogReader.cmd != nil {
-			client.LogDebug("Stopping existing log reader")
+			slog.Debug("Stopping existing log reader")
 			if activeLogReader.cmd.Process != nil {
 				activeLogReader.cmd.Process.Kill()
 				activeLogReader.cmd.Wait() // Wait for process to terminate
@@ -167,16 +169,22 @@ func streamLogsReal(client *docker.ComposeClient, serviceName string, isDind boo
 		}
 
 		// Create new log reader
-		client.LogDebug(fmt.Sprintf("Creating new log reader for service: %s", serviceName))
+		slog.Debug("Creating new log reader",
+			slog.String("serviceName", serviceName))
 		lr, err := newLogReader(client, serviceName, isDind, hostService)
 		if err != nil {
-			client.LogDebug(fmt.Sprintf("Failed to create log reader: %v", err))
+			slog.Info("Failed to create log reader",
+				slog.String("serviceName", serviceName),
+				slog.Any("error", err))
 			return errorMsg{err: err}
 		}
 
 		activeLogReader = lr
 		lastLogIndex = 0
-		client.LogDebug("Log reader created, lastLogIndex reset to 0")
+		slog.Info("Log reader created",
+			slog.String("serviceName", serviceName),
+			slog.Bool("isDind", isDind),
+			slog.String("hostService", hostService))
 
 		// Send command info message
 		cmdStr := strings.Join(lr.cmd.Args, " ")
@@ -188,7 +196,7 @@ func streamLogsReal(client *docker.ComposeClient, serviceName string, isDind boo
 func stopLogReader() {
 	logReaderMu.Lock()
 	defer logReaderMu.Unlock()
-	
+
 	if activeLogReader != nil {
 		if activeLogReader.cmd != nil && activeLogReader.cmd.Process != nil {
 			activeLogReader.cmd.Process.Kill()
@@ -212,7 +220,8 @@ func pollForLogs() tea.Cmd {
 
 		newLines, newIndex, done := activeLogReader.getNewLines(lastLogIndex)
 		lastLogIndex = newIndex
-		activeLogReader.client.LogDebug(fmt.Sprintf("Got %d new lines.", len(newLines)))
+		slog.Info("Got new log lines",
+			slog.Int("newLinesCount", len(newLines)))
 
 		if len(newLines) > 0 {
 			// Return all new lines at once

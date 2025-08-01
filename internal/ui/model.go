@@ -3,6 +3,7 @@ package ui
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,15 +13,15 @@ import (
 
 // ContainerStats holds resource usage statistics for a container
 type ContainerStats struct {
-	Container   string  `json:"Container"`
-	Name        string  `json:"Name"`
-	Service     string  `json:"Service"`
-	CPUPerc     string  `json:"CPUPerc"`
-	MemUsage    string  `json:"MemUsage"`
-	MemPerc     string  `json:"MemPerc"`
-	NetIO       string  `json:"NetIO"`
-	BlockIO     string  `json:"BlockIO"`
-	PIDs        string  `json:"PIDs"`
+	Container string `json:"Container"`
+	Name      string `json:"Name"`
+	Service   string `json:"Service"`
+	CPUPerc   string `json:"CPUPerc"`
+	MemUsage  string `json:"MemUsage"`
+	MemPerc   string `json:"MemPerc"`
+	NetIO     string `json:"NetIO"`
+	BlockIO   string `json:"BlockIO"`
+	PIDs      string `json:"PIDs"`
 }
 
 // ViewType represents the current view
@@ -33,7 +34,6 @@ const (
 	TopView
 	StatsView
 	ProjectListView
-	DebugLogView
 )
 
 // Model represents the application state
@@ -50,35 +50,29 @@ type Model struct {
 	showAll         bool // Toggle to show all containers including stopped ones
 
 	// Project list state
-	projects         []models.ComposeProject
-	selectedProject  int
-	showProjectList  bool // Show project list when no compose file
+	projects        []models.ComposeProject
+	selectedProject int
+	showProjectList bool // Show project list when no compose file
 
 	// Dind state
-	dindContainers       []models.Container
+	dindContainers        []models.Container
 	selectedDindContainer int
-	currentDindHost      string  // Container name (for display)
-	currentDindService   string  // Service name (for docker compose exec)
+	currentDindHost       string // Container name (for display)
+	currentDindService    string // Service name (for docker compose exec)
 
 	// Log view state
-	logs           []string
-	logScrollY     int
-	containerName  string
-	isDindLog      bool
-	hostContainer  string
+	logs          []string
+	logScrollY    int
+	containerName string
+	isDindLog     bool
+	hostContainer string
 
 	// Top view state
-	topOutput    string
-	topService   string
+	topOutput  string
+	topService string
 
 	// Stats view state
 	stats []ContainerStats
-
-	// Debug log view state
-	commandLogs       []docker.CommandLog  // For display
-	sharedCommandLogs *[]docker.CommandLog // Shared across all docker clients (pointer)
-	debugLogScrollY   int
-	previousView      ViewType // View to return to when exiting debug log
 
 	// Search state
 	searchMode bool
@@ -94,9 +88,6 @@ type Model struct {
 	// Loading state
 	loading bool
 
-	// Last executed command
-	lastCommand string
-
 	// Command line options
 	projectName string
 	composeFile string
@@ -104,53 +95,47 @@ type Model struct {
 
 // NewModel creates a new model with initial state
 func NewModel() Model {
-	sharedLogs := make([]docker.CommandLog, 0)
 	client := docker.NewComposeClient("")
-	client.SetCommandLogs(&sharedLogs)
-	
+
 	return Model{
-		currentView:       ProcessListView,
-		dockerClient:      client,
-		loading:           true,
-		sharedCommandLogs: &sharedLogs,
+		currentView:  ProcessListView,
+		dockerClient: client,
+		loading:      true,
 	}
 }
 
 // NewModelWithOptions creates a new model with command line options
 func NewModelWithOptions(projectName, composeFile string, showProjects bool) Model {
-	sharedLogs := make([]docker.CommandLog, 0)
 	client := docker.NewComposeClientWithOptions("", projectName, composeFile)
-	client.SetCommandLogs(&sharedLogs)
-	
+
 	// Determine initial view
 	initialView := ProcessListView
 	if showProjects {
 		initialView = ProjectListView
 	}
-	
+
 	return Model{
-		currentView:       initialView,
-		dockerClient:      client,
-		loading:           true,
-		projectName:       projectName,
-		composeFile:       composeFile,
-		showProjectList:   showProjects,
-		sharedCommandLogs: &sharedLogs,
+		currentView:     initialView,
+		dockerClient:    client,
+		loading:         true,
+		projectName:     projectName,
+		composeFile:     composeFile,
+		showProjectList: showProjects,
 	}
 }
 
 // Init returns an initial command for the application
 func (m Model) Init() tea.Cmd {
-	// If showProjectList is true, start with project list
+	// If showProjectList is true, start with a project list
 	if m.showProjectList {
 		return tea.Batch(
 			loadProjects(m.dockerClient),
 			tea.WindowSize(),
 		)
 	}
-	
-	// Otherwise, try to load processes first - if it fails due to missing compose file,
-	// we'll switch to project list view in the update
+
+	// Otherwise, try to load processes first - if it fails due to a missing compose file,
+	// we'll switch to the project list view in the update
 	return tea.Batch(
 		loadProcesses(m.dockerClient, m.showAll),
 		tea.WindowSize(),
@@ -193,9 +178,9 @@ type topLoadedMsg struct {
 }
 
 type serviceActionCompleteMsg struct {
-	action string
+	action  string
 	service string
-	err    error
+	err     error
 }
 
 type statsLoadedMsg struct {
@@ -208,14 +193,12 @@ type projectsLoadedMsg struct {
 	err      error
 }
 
-type commandLogsMsg struct {
-	logs []docker.CommandLog
-}
-
 // Commands
 
 func loadProcesses(client *docker.ComposeClient, showAll bool) tea.Cmd {
 	return func() tea.Msg {
+		slog.Info("Loading processes",
+			slog.Bool("showAll", showAll))
 		processes, err := client.ListContainers(showAll)
 		return processesLoadedMsg{
 			processes: processes,
@@ -252,9 +235,9 @@ func killService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.KillService(serviceName)
 		return serviceActionCompleteMsg{
-			action: "kill",
+			action:  "kill",
 			service: serviceName,
-			err:    err,
+			err:     err,
 		}
 	}
 }
@@ -263,9 +246,9 @@ func stopService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.StopService(serviceName)
 		return serviceActionCompleteMsg{
-			action: "stop",
+			action:  "stop",
 			service: serviceName,
-			err:    err,
+			err:     err,
 		}
 	}
 }
@@ -274,9 +257,9 @@ func startService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.StartService(serviceName)
 		return serviceActionCompleteMsg{
-			action: "start",
+			action:  "start",
 			service: serviceName,
-			err:    err,
+			err:     err,
 		}
 	}
 }
@@ -285,9 +268,9 @@ func restartService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.RestartService(serviceName)
 		return serviceActionCompleteMsg{
-			action: "restart",
+			action:  "restart",
 			service: serviceName,
-			err:    err,
+			err:     err,
 		}
 	}
 }
@@ -296,9 +279,9 @@ func removeService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.RemoveService(serviceName)
 		return serviceActionCompleteMsg{
-			action: "rm",
+			action:  "rm",
 			service: serviceName,
-			err:    err,
+			err:     err,
 		}
 	}
 }
@@ -307,9 +290,9 @@ func upService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.UpService(serviceName)
 		return serviceActionCompleteMsg{
-			action: "up -d",
+			action:  "up -d",
 			service: serviceName,
-			err:    err,
+			err:     err,
 		}
 	}
 }
@@ -330,7 +313,7 @@ func loadStats(client *docker.ComposeClient) tea.Cmd {
 			if line == "" {
 				continue
 			}
-			
+
 			var stat ContainerStats
 			if err := json.Unmarshal([]byte(line), &stat); err != nil {
 				return statsLoadedMsg{
@@ -355,13 +338,5 @@ func loadProjects(client *docker.ComposeClient) tea.Cmd {
 			projects: projects,
 			err:      err,
 		}
-	}
-}
-
-func loadCommandLogs(client *docker.ComposeClient) tea.Cmd {
-	return func() tea.Msg {
-		// Just return a signal to refresh the view
-		// The actual logs are in m.sharedCommandLogs
-		return commandLogsMsg{logs: nil}
 	}
 }
