@@ -1,10 +1,12 @@
-# dcv - Docker Compose Viewer
+# dcv - Docker Container Viewer
 
-DCV は docker-compose の状況を確認できる TUI (Terminal User Interface) ツールです｡
+DCV は Docker および Docker Compose で管理されているコンテナの状況を確認できる TUI (Terminal User Interface) ツールです｡
 
 ## 主な機能
 
-- docker-compose で起動しているコンテナの一覧を表示
+- Docker で動作している全てのコンテナの一覧を表示
+- Docker Compose で管理されているコンテナの一覧を表示
+- 複数の Docker Compose プロジェクトの切り替え
 - コンテナのログをリアルタイムで確認（最新1000行を初期表示､その後リアルタイム追従）
 - Docker-in-Docker (dind) コンテナの中で動作するコンテナの管理
 - vim 風のキーバインディング
@@ -12,7 +14,24 @@ DCV は docker-compose の状況を確認できる TUI (Terminal User Interface)
 
 ## Views
 
-### Process List View
+### Docker Container List View
+
+`docker ps` の結果を見やすくテーブル形式で表示します。Docker Compose に限らず、全ての Docker コンテナを表示できます。
+
+**キーバインド:**
+- `↑`/`k`: 上へ移動
+- `↓`/`j`: 下へ移動
+- `Enter`: 選択したコンテナのログを表示
+- `a`: 停止中のコンテナも含めて表示
+- `r`: リストを更新
+- `K`: コンテナを強制終了
+- `S`: コンテナを停止
+- `U`: コンテナを起動
+- `R`: コンテナを再起動
+- `D`: 停止中のコンテナを削除
+- `q`/`Esc`: Docker Compose プロセスリストへ戻る
+
+### Docker Compose Process List View
 
 `docker compose ps` の結果を見やすくテーブル形式で表示します。
 
@@ -21,6 +40,9 @@ DCV は docker-compose の状況を確認できる TUI (Terminal User Interface)
 - `↓`/`j`: 下へ移動  
 - `Enter`: 選択したコンテナのログを表示
 - `d`: dind コンテナの中身を表示（dind コンテナ選択時のみ）
+- `p`: 全ての Docker コンテナ一覧へ切り替え
+- `P`: プロジェクト一覧へ切り替え
+- `a`: 停止中のコンテナも含めて表示
 - `r`: リストを更新
 - `q`: 終了
 
@@ -53,19 +75,26 @@ dind コンテナ内で動作しているコンテナの一覧を表示します
 ### オプション
 
 ```bash
-dcv [-C <path>] [-d <path>]
+dcv [-p <project>] [-f <compose-file>] [--projects]
 ```
 
-- `-C <path>`, `-d <path>`: 指定したディレクトリで docker-compose を実行（`docker-compose -C` と同じ）
+- `-p <project>`: 指定した Docker Compose プロジェクトを表示
+- `-f <compose-file>`: 指定した compose ファイルのプロジェクトを表示
+- `--projects`: 起動時にプロジェクト一覧を表示
 
 ### 例
 
 ```bash
-# 現在のディレクトリで実行
+# 現在のディレクトリの Docker Compose プロジェクトを表示
 dcv
 
-# 特定のディレクトリで実行
-dcv -C /path/to/project
+# 特定のプロジェクトを表示
+dcv -p myproject
+
+# プロジェクト一覧から選択して起動
+dcv --projects
+
+# 全ての Docker コンテナを表示するには、起動後に 'p' キーを押す
 ```
 
 ## インストール
