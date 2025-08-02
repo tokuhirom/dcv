@@ -51,10 +51,7 @@ func (m *Model) renderComposeProcessList() string {
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 {
-				return headerStyle
-			}
-			if row-1 == m.selectedContainer {
+			if row == m.selectedContainer {
 				return selectedStyle
 			}
 			return normalStyle

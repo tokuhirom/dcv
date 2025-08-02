@@ -47,9 +47,7 @@ func (m *Model) renderDockerList() string {
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			baseStyle := normalStyle
-			if row == 0 {
-				baseStyle = headerStyle
-			} else if row-1 == m.selectedDockerContainer {
+			if row == m.selectedDockerContainer {
 				baseStyle = selectedStyle
 			}
 
