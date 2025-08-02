@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -406,4 +407,23 @@ func (c *Client) ReadContainerFile(containerID, path string) (string, error) {
 	}
 
 	return string(output), nil
+}
+
+func (c *Client) ExecuteInteractive(containerID string, command []string) error {
+	// Build docker exec command with -it flags for interactive session
+	args := append([]string{"exec", "-it", containerID}, command...)
+	cmd := exec.Command("docker", args...)
+	
+	// Connect to standard input/output/error
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	
+	// Log the command
+	slog.Info("Executing interactive command",
+		slog.String("containerID", containerID),
+		slog.String("command", strings.Join(command, " ")))
+	
+	// Run the command
+	return cmd.Run()
 }

@@ -258,6 +258,11 @@ type fileContentLoadedMsg struct {
 	err     error
 }
 
+type executeCommandMsg struct {
+	containerID string
+	command     []string
+}
+
 // Commands
 
 func loadProcesses(client *docker.Client, projectName string, showAll bool) tea.Cmd {
@@ -476,6 +481,15 @@ func loadFileContent(client *docker.Client, containerID, path string) tea.Cmd {
 			content: content,
 			path:    path,
 			err:     err,
+		}
+	}
+}
+
+func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
+	return func() tea.Msg {
+		return executeCommandMsg{
+			containerID: containerID,
+			command:     command,
 		}
 	}
 }

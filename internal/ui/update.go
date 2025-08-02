@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"log/slog"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -223,6 +224,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = nil
 		m.currentView = FileContentView
 		return m, nil
+
+	case executeCommandMsg:
+		// Execute the interactive command in a subprocess
+		c := exec.Command("docker", append([]string{"exec", "-it", msg.containerID}, msg.command...)...)
+		return m, tea.ExecProcess(c, func(err error) tea.Msg {
+			// After the command exits, we'll get this message
+			return nil
+		})
 
 	default:
 		return m, nil

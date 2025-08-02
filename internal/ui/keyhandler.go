@@ -728,3 +728,22 @@ func (m *Model) BackFromFileContent(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.fileScrollY = 0
 	return m, nil
 }
+
+// Execute command handlers
+func (m *Model) ExecuteShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		// Default to /bin/sh as it's most commonly available
+		return m, executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+	}
+	return m, nil
+}
+
+func (m *Model) ExecuteDockerShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		// Default to /bin/sh as it's most commonly available
+		return m, executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+	}
+	return m, nil
+}
