@@ -111,6 +111,50 @@ cd dcv
 go build -o dcv
 ```
 
+## Potential Missing Features
+
+### Container Management
+- **Execute command in container** (`docker exec -it`) - Interactive shell access
+- **Copy files to/from containers** (`docker cp`)
+- **Container inspect** - View detailed container configuration
+- **Container pause/unpause** - Temporarily freeze containers
+- **Container rename** - Change container names
+
+### Image Management
+- **Pull images** (`docker pull`) - Download new images
+- **Image inspect** - View detailed image information
+- **Image history** - Show layer history
+- **Search Docker Hub** (`docker search`)
+- **Build images** from Dockerfile
+
+### Docker Compose Operations
+- **Down command** (`docker compose down`) - Stop and remove containers
+- **Build services** (`docker compose build`)
+- **Pull service images** (`docker compose pull`)
+- **Scale services** (`docker compose scale`)
+- **View compose file** - Display the active docker-compose.yml
+
+### Network & Volume Management
+- **Network list/inspect** - View Docker networks
+- **Volume list/inspect** - Manage Docker volumes
+- **Network connections** - Show container network relationships
+
+### UI/UX Enhancements
+- **Search/filter** - Filter containers/images by name, status, etc.
+- **Multiple selections** - Perform batch operations
+- **Color themes** - Customizable color schemes
+- **Export logs** - Save logs to file
+- **Log search** - The `/` search in log view is marked as "not implemented yet"
+
+### Monitoring Improvements
+- **Real-time stats update** - Currently stats view doesn't auto-refresh
+- **Resource usage graphs** - Visual representation of CPU/memory usage
+- **Health check status** - Display container health status
+
+### Configuration
+- **Config file** - Save preferences (default view, filters, etc.)
+- **Custom keybindings** - Allow users to customize shortcuts
+
 ## License
 
 MIT License - Copyright © 2025 Tokuhiro Matsuno
