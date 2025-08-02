@@ -76,6 +76,8 @@ func (m *Model) View() string {
 		return m.renderFileBrowser()
 	case FileContentView:
 		return m.renderFileContent()
+	case InspectView:
+		return m.renderInspectView()
 	default:
 		return "Unknown view"
 	}

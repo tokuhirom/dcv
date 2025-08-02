@@ -39,6 +39,7 @@ const (
 	NetworkListView
 	FileBrowserView
 	FileContentView
+	InspectView
 )
 
 // Model represents the application state
@@ -88,6 +89,11 @@ type Model struct {
 	fileContent     string
 	fileContentPath string
 	fileScrollY     int
+
+	// Inspect view state
+	inspectContent     string
+	inspectScrollY     int
+	inspectContainerID string
 
 	// Log view state
 	logs          []string
@@ -143,6 +149,8 @@ type Model struct {
 	fileBrowserHandlers     []KeyConfig
 	fileContentKeymap       map[string]KeyHandler
 	fileContentHandlers     []KeyConfig
+	inspectViewKeymap       map[string]KeyHandler
+	inspectViewHandlers     []KeyConfig
 }
 
 // NewModel creates a new model with initial state
@@ -261,6 +269,11 @@ type fileContentLoadedMsg struct {
 type executeCommandMsg struct {
 	containerID string
 	command     []string
+}
+
+type inspectLoadedMsg struct {
+	content string
+	err     error
 }
 
 // Commands
@@ -490,6 +503,16 @@ func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
 		return executeCommandMsg{
 			containerID: containerID,
 			command:     command,
+		}
+	}
+}
+
+func loadInspect(client *docker.Client, containerID string) tea.Cmd {
+	return func() tea.Msg {
+		content, err := client.InspectContainer(containerID)
+		return inspectLoadedMsg{
+			content: content,
+			err:     err,
 		}
 	}
 }
