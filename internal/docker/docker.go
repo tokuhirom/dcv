@@ -427,3 +427,25 @@ func (c *Client) ExecuteInteractive(containerID string, command []string) error 
 	// Run the command
 	return cmd.Run()
 }
+
+func (c *Client) InspectContainer(containerID string) (string, error) {
+	output, err := c.executeCaptured("inspect", containerID)
+	if err != nil {
+		return "", fmt.Errorf("failed to inspect container: %w\nOutput: %s", err, string(output))
+	}
+	
+	// Pretty format the JSON output
+	var jsonData interface{}
+	if err := json.Unmarshal(output, &jsonData); err != nil {
+		// If we can't parse it, return raw output
+		return string(output), nil
+	}
+	
+	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
+	if err != nil {
+		// If we can't pretty print, return raw output
+		return string(output), nil
+	}
+	
+	return string(prettyJSON), nil
+}

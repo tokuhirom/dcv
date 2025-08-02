@@ -10,6 +10,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - List and manage Docker networks
 - Browse files inside containers
 - Execute shell commands in containers
+- Inspect container configuration
 - Multiple Docker Compose project management and switching
 - Log viewing capability for any container
 - Special handling for dind (Docker-in-Docker) containers to view nested containers
@@ -30,6 +31,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `Enter`: View container logs
    - `f`: Browse container files
    - `!`: Execute /bin/sh in container
+   - `I`: Inspect container (view full config)
    - `a`: Toggle show all containers (including stopped)
    - `K`: Kill container
    - `S`: Stop container
@@ -46,6 +48,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `d`: Navigate to dind process list (for dind containers)
    - `f`: Browse container files
    - `!`: Execute /bin/sh in container
+   - `I`: Inspect container (view full config)
    - `p`: Switch to Docker container list view
    - `i`: Switch to Docker image list view
    - `n`: Switch to Docker network list view
@@ -122,6 +125,13 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
     - `g`: Jump to start
     - `Esc`/`q`: Back to file browser
 
+12. **Inspect View**: Shows full container configuration in JSON format
+    - `↑`/`k`: Scroll up
+    - `↓`/`j`: Scroll down
+    - `G`: Jump to end
+    - `g`: Jump to start
+    - `Esc`/`q`: Back to container list
+
 ## Development Guidelines
 
 - Follow vim-style keybindings for all shortcuts
@@ -144,7 +154,6 @@ go build -o dcv
 
 ### Container Management
 - **Copy files to/from containers** (`docker cp`)
-- **Container inspect** - View detailed container configuration
 - **Container pause/unpause** - Temporarily freeze containers
 - **Container rename** - Change container names
 - **Download files from container** - Save container files locally

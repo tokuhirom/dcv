@@ -233,6 +233,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return nil
 		})
 
+	case inspectLoadedMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.inspectContent = msg.content
+		m.inspectScrollY = 0
+		m.err = nil
+		m.currentView = InspectView
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -286,6 +298,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleFileBrowserKeys(msg)
 	case FileContentView:
 		return m.handleFileContentKeys(msg)
+	case InspectView:
+		return m.handleInspectKeys(msg)
 	default:
 		return m, nil
 	}
@@ -402,6 +416,14 @@ func (m *Model) handleFileBrowserKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.fileContentKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleInspectKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.inspectViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

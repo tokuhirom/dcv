@@ -468,6 +468,8 @@ func (m *Model) GetHelpText() string {
 		configs = m.fileBrowserHandlers
 	case FileContentView:
 		configs = m.fileContentHandlers
+	case InspectView:
+		configs = m.inspectViewHandlers
 	default:
 		return ""
 	}
@@ -745,5 +747,69 @@ func (m *Model) ExecuteDockerShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Default to /bin/sh as it's most commonly available
 		return m, executeInteractiveCommand(container.ID, []string{"/bin/sh"})
 	}
+	return m, nil
+}
+
+// Inspect handlers
+func (m *Model) ShowInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		m.inspectContainerID = container.ID
+		m.loading = true
+		return m, loadInspect(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) ShowDockerInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		m.inspectContainerID = container.ID
+		m.loading = true
+		return m, loadInspect(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) ScrollInspectUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.inspectScrollY > 0 {
+		m.inspectScrollY--
+	}
+	return m, nil
+}
+
+func (m *Model) ScrollInspectDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	lines := strings.Split(m.inspectContent, "\n")
+	maxScroll := len(lines) - (m.height - 5)
+	if m.inspectScrollY < maxScroll && maxScroll > 0 {
+		m.inspectScrollY++
+	}
+	return m, nil
+}
+
+func (m *Model) GoToInspectEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	lines := strings.Split(m.inspectContent, "\n")
+	maxScroll := len(lines) - (m.height - 5)
+	if maxScroll > 0 {
+		m.inspectScrollY = maxScroll
+	}
+	return m, nil
+}
+
+func (m *Model) GoToInspectStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.inspectScrollY = 0
+	return m, nil
+}
+
+func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Check where we came from based on the container ID
+	for _, container := range m.dockerContainers {
+		if container.ID == m.inspectContainerID {
+			m.currentView = DockerContainerListView
+			return m, nil
+		}
+	}
+	// Default to compose process list
+	m.currentView = ComposeProcessListView
 	return m, nil
 }

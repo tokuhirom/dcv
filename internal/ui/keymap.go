@@ -16,6 +16,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"n"}, "docker networks", m.ShowNetworkList},
 		{[]string{"f"}, "browse files", m.ShowFileBrowser},
 		{[]string{"!"}, "exec /bin/sh", m.ExecuteShell},
+		{[]string{"I"}, "inspect", m.ShowInspect},
 		{[]string{"r"}, "refresh", m.RefreshProcessList},
 		{[]string{"a"}, "toggle all", m.ToggleAllContainers},
 		{[]string{"s"}, "stats", m.ShowStatsView},
@@ -79,6 +80,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.ShowDockerLog},
 		{[]string{"f"}, "browse files", m.ShowDockerFileBrowser},
 		{[]string{"!"}, "exec /bin/sh", m.ExecuteDockerShell},
+		{[]string{"I"}, "inspect", m.ShowDockerInspect},
 		{[]string{"r"}, "refresh", m.RefreshDockerList},
 		{[]string{"a"}, "toggle all", m.ToggleAllDockerContainers},
 		{[]string{"K"}, "kill", m.KillDockerContainer},
@@ -131,6 +133,16 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"esc", "q"}, "back", m.BackFromFileContent},
 	}
 	m.fileContentKeymap = m.createKeymap(m.fileContentHandlers)
+
+	// Inspect View
+	m.inspectViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "scroll up", m.ScrollInspectUp},
+		{[]string{"down", "j"}, "scroll down", m.ScrollInspectDown},
+		{[]string{"G"}, "go to end", m.GoToInspectEnd},
+		{[]string{"g"}, "go to start", m.GoToInspectStart},
+		{[]string{"esc", "q"}, "back", m.BackFromInspect},
+	}
+	m.inspectViewKeymap = m.createKeymap(m.inspectViewHandlers)
 
 	slog.Info("Initialized all view keymaps")
 }
