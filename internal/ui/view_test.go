@@ -181,7 +181,7 @@ func TestRenderProcessList(t *testing.T) {
 		selectedContainer: 0,
 	}
 
-	view := m.renderProcessList()
+	view := m.renderComposeProcessList()
 
 	// Check that the selected row is highlighted
 	assert.Contains(t, view, "web-1")
@@ -265,7 +265,7 @@ func TestViewWithNoContainers(t *testing.T) {
 		containers:  []models.ComposeContainer{},
 	}
 
-	view := m.renderProcessList()
+	view := m.renderComposeProcessList()
 	assert.Contains(t, view, "No containers found")
 	assert.Contains(t, view, "Press 'r' to refresh")
 }
@@ -286,7 +286,7 @@ func TestTableRendering(t *testing.T) {
 		},
 	}
 
-	view := m.renderProcessList()
+	view := m.renderComposeProcessList()
 
 	// Check for table borders
 	lines := strings.Split(view, "\n")

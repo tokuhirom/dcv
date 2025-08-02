@@ -12,39 +12,39 @@ import (
 // Styles
 var (
 	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("86")).
-			MarginBottom(1)
+		Bold(true).
+		Foreground(lipgloss.Color("86")).
+		MarginBottom(1)
 
 	selectedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("235"))
+		Foreground(lipgloss.Color("86")).
+		Background(lipgloss.Color("235"))
 
 	normalStyle = lipgloss.NewStyle()
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
-			Bold(true)
+		Foreground(lipgloss.Color("196")).
+		Bold(true)
 
 	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+		Foreground(lipgloss.Color("241"))
 
 	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("226"))
+		Bold(true).
+		Foreground(lipgloss.Color("226"))
 
 	dindStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusDownStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196"))
+		Foreground(lipgloss.Color("196"))
 
 	searchStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("226")).
-			Bold(true)
+		Foreground(lipgloss.Color("226")).
+		Bold(true)
 )
 
 // View returns the view for the current model
@@ -55,7 +55,7 @@ func (m *Model) View() string {
 
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m.renderProcessList()
+		return m.renderComposeProcessList()
 	case LogView:
 		return m.renderLogView()
 	case DindComposeProcessListView:
@@ -83,7 +83,7 @@ func (m *Model) View() string {
 	}
 }
 
-func (m *Model) renderProcessList() string {
+func (m *Model) renderComposeProcessList() string {
 	var s strings.Builder
 
 	slog.Info("Rendering container list",
