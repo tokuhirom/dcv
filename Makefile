@@ -33,5 +33,5 @@ staticcheck:
 	@which staticcheck > /dev/null || go install honnef.co/go/tools/cmd/staticcheck@latest
 	staticcheck ./...
 
-test
+test:
 	go test -v ./...
