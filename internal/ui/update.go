@@ -150,6 +150,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case dockerContainersLoadedMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.dockerContainers = msg.containers
+		m.err = nil
+		if len(m.dockerContainers) > 0 && m.selectedDockerContainer >= len(m.dockerContainers) {
+			m.selectedDockerContainer = 0
+		}
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -170,9 +183,9 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.currentView == ProjectListView {
 			return m, tea.Quit
 		}
-		if m.currentView != ProcessListView {
+		if m.currentView != ComposeProcessListView {
 			// Go back to process list
-			m.currentView = ProcessListView
+			m.currentView = ComposeProcessListView
 			m.err = nil
 			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 		}
@@ -181,11 +194,11 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	// Handle view-specific keys
 	switch m.currentView {
-	case ProcessListView:
+	case ComposeProcessListView:
 		return m.handleProcessListKeys(msg)
 	case LogView:
 		return m.handleLogViewKeys(msg)
-	case DindProcessListView:
+	case DindComposeProcessListView:
 		return m.handleDindListKeys(msg)
 	case TopView:
 		return m.handleTopViewKeys(msg)
@@ -193,6 +206,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleStatsViewKeys(msg)
 	case ProjectListView:
 		return m.handleProjectListKeys(msg)
+	case DockerContainerListView:
+		return m.handleDockerListKeys(msg)
 	default:
 		return m, nil
 	}
@@ -269,6 +284,14 @@ func (m *Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.projectListViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleDockerListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.dockerListViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

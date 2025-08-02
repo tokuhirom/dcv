@@ -25,22 +25,22 @@ func TestView(t *testing.T) {
 		{
 			name: "process list with containers",
 			model: Model{
-				currentView: ProcessListView,
+				currentView: ComposeProcessListView,
 				width:       80,
 				height:      24,
 				loading:     false,
-				containers: []models.Container{
+				containers: []models.ComposeContainer{
 					{
 						Name:    "web-1",
-						Image:   "nginx:latest",
+						Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
 						Service: "web",
-						Status:  "Up 5 minutes",
+						State:   "running",
 					},
 					{
 						Name:    "dind-1",
-						Image:   "docker:dind",
+						Command: "dockerd",
 						Service: "dind",
-						Status:  "Up 10 minutes",
+						State:   "running",
 					},
 				},
 			},
@@ -51,9 +51,9 @@ func TestView(t *testing.T) {
 				"SERVICE",
 				"STATUS",
 				"web-1",
-				"nginx:latest",
+				"/docker-entrypoint.sh nginx",
 				"dind-1",
-				"docker:dind",
+				"dockerd",
 				"up:move up",
 				"enter:view logs",
 			},
@@ -61,7 +61,7 @@ func TestView(t *testing.T) {
 		{
 			name: "process list with error",
 			model: Model{
-				currentView: ProcessListView,
+				currentView: ComposeProcessListView,
 				width:       80,
 				height:      24,
 				loading:     false,
@@ -75,7 +75,7 @@ func TestView(t *testing.T) {
 		{
 			name: "process list with docker-compose.yml error",
 			model: Model{
-				currentView: ProcessListView,
+				currentView: ComposeProcessListView,
 				width:       80,
 				height:      24,
 				loading:     false,
@@ -124,16 +124,16 @@ func TestView(t *testing.T) {
 		{
 			name: "dind process list",
 			model: Model{
-				currentView:     DindProcessListView,
+				currentView:     DindComposeProcessListView,
 				width:           80,
 				height:          24,
 				loading:         false,
 				currentDindHost: "dind-1",
-				dindContainers: []models.Container{
+				dindContainers: []models.DockerContainer{
 					{
 						ID:     "abc123def456",
 						Image:  "alpine:latest",
-						Name:   "test-container",
+						Names:  "test-container",
 						Status: "Up 2 minutes",
 					},
 				},
@@ -166,16 +166,16 @@ func TestView(t *testing.T) {
 
 func TestRenderProcessList(t *testing.T) {
 	m := Model{
-		currentView: ProcessListView,
+		currentView: ComposeProcessListView,
 		width:       80,
 		height:      24,
 		loading:     false,
-		containers: []models.Container{
+		containers: []models.ComposeContainer{
 			{
 				Name:    "web-1",
-				Image:   "nginx:latest",
+				Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
 				Service: "web",
-				Status:  "Up 5 minutes",
+				State:   "running",
 			},
 		},
 		selectedContainer: 0,
@@ -185,7 +185,7 @@ func TestRenderProcessList(t *testing.T) {
 
 	// Check that the selected row is highlighted
 	assert.Contains(t, view, "web-1")
-	assert.Contains(t, view, "nginx:latest")
+	assert.Contains(t, view, "/docker-entrypoint.sh nginx")
 
 	// Check table structure
 	assert.Contains(t, view, "│")
@@ -222,22 +222,22 @@ func TestRenderLogView(t *testing.T) {
 
 func TestRenderDindList(t *testing.T) {
 	m := Model{
-		currentView:     DindProcessListView,
+		currentView:     DindComposeProcessListView,
 		width:           80,
 		height:          24,
 		loading:         false,
 		currentDindHost: "dind-1",
-		dindContainers: []models.Container{
+		dindContainers: []models.DockerContainer{
 			{
 				ID:     "abc123def456789",
 				Image:  "alpine:latest",
-				Name:   "test-1",
+				Names:  "test-1",
 				Status: "Up 5 minutes",
 			},
 			{
 				ID:     "def456ghi789012",
 				Image:  "nginx:latest",
-				Name:   "test-2",
+				Names:  "test-2",
 				Status: "Up 3 minutes",
 			},
 		},
@@ -258,11 +258,11 @@ func TestRenderDindList(t *testing.T) {
 
 func TestViewWithNoContainers(t *testing.T) {
 	m := Model{
-		currentView: ProcessListView,
+		currentView: ComposeProcessListView,
 		width:       80,
 		height:      24,
 		loading:     false,
-		containers:  []models.Container{},
+		containers:  []models.ComposeContainer{},
 	}
 
 	view := m.renderProcessList()
@@ -272,16 +272,16 @@ func TestViewWithNoContainers(t *testing.T) {
 
 func TestTableRendering(t *testing.T) {
 	m := Model{
-		currentView: ProcessListView,
+		currentView: ComposeProcessListView,
 		width:       80,
 		height:      24,
 		loading:     false,
-		containers: []models.Container{
+		containers: []models.ComposeContainer{
 			{
 				Name:    "web-1",
-				Image:   "nginx:latest",
+				Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
 				Service: "web",
-				Status:  "Up 5 minutes",
+				State:   "running",
 			},
 		},
 	}
@@ -309,6 +309,72 @@ func TestTableRendering(t *testing.T) {
 	assert.True(t, hasTopBorder, "Table should have top border")
 	assert.True(t, hasBottomBorder, "Table should have bottom border")
 	assert.True(t, hasVerticalBorder, "Table should have vertical borders")
+}
+
+func TestDockerContainerListView(t *testing.T) {
+	t.Run("docker_list_with_containers", func(t *testing.T) {
+		m := &Model{
+			width:                  80,
+			height:                 24,
+			currentView:            DockerContainerListView,
+			selectedDockerContainer: 0,
+			dockerContainers: []models.DockerContainer{
+				{ID: "abc123def456", Names: "nginx", Image: "nginx:latest", Status: "Up 2 hours", Ports: "80/tcp"},
+				{ID: "789012345678", Names: "redis", Image: "redis:alpine", Status: "Exited (0) 1 hour ago", Ports: ""},
+			},
+		}
+		m.initializeKeyHandlers()
+
+		view := m.View()
+
+		// Check title
+		assert.Contains(t, view, "Docker Containers")
+
+		// Check for table headers
+		assert.Contains(t, view, "CONTAINER ID")
+		assert.Contains(t, view, "IMAGE")
+		assert.Contains(t, view, "STATUS")
+		assert.Contains(t, view, "PORTS")
+		assert.Contains(t, view, "NAMES")
+
+		// Check for data
+		assert.Contains(t, view, "abc123def456")
+		assert.Contains(t, view, "nginx")
+		assert.Contains(t, view, "nginx:latest")
+		assert.Contains(t, view, "Up 2 hours")
+		assert.Contains(t, view, "80/tcp")
+	})
+
+	t.Run("docker_list_show_all", func(t *testing.T) {
+		m := &Model{
+			width:                  80,
+			height:                 24,
+			currentView:            DockerContainerListView,
+			showAll:                true,
+			dockerContainers:       []models.DockerContainer{},
+		}
+		m.initializeKeyHandlers()
+
+		view := m.View()
+
+		// Check title includes (All)
+		assert.Contains(t, view, "Docker Containers (All)")
+	})
+
+	t.Run("docker_list_empty", func(t *testing.T) {
+		m := &Model{
+			width:            80,
+			height:           24,
+			currentView:      DockerContainerListView,
+			dockerContainers: []models.DockerContainer{},
+		}
+		m.initializeKeyHandlers()
+
+		view := m.View()
+
+		assert.Contains(t, view, "No containers found")
+		assert.Contains(t, view, "Press 'r' to refresh")
+	})
 }
 
 // mockError implements error interface for testing

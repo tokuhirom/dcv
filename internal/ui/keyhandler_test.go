@@ -145,7 +145,7 @@ func TestRenderHelpText(t *testing.T) {
 }
 
 func TestGetHelpText(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.width = 80
 	
@@ -156,7 +156,7 @@ func TestGetHelpText(t *testing.T) {
 	}{
 		{
 			name:    "process list view",
-			view:    ProcessListView,
+			view:    ComposeProcessListView,
 			hasHelp: true,
 		},
 		{
@@ -166,7 +166,7 @@ func TestGetHelpText(t *testing.T) {
 		},
 		{
 			name:    "dind process list view",
-			view:    DindProcessListView,
+			view:    DindComposeProcessListView,
 			hasHelp: true,
 		},
 		{
@@ -207,12 +207,12 @@ func TestGetHelpText(t *testing.T) {
 }
 
 func TestGetStyledHelpText(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 	m.Init()
 	m.width = 80
 	
 	// Test with a view that has help text
-	m.currentView = ProcessListView
+	m.currentView = ComposeProcessListView
 	styledHelp := m.GetStyledHelpText()
 	assert.NotEmpty(t, styledHelp)
 	// The styled help should contain the help text content

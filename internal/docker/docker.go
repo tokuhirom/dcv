@@ -109,7 +109,7 @@ func (c *Client) GetContainerLogs(containerID string, follow bool) (*exec.Cmd, e
 	return cmd, nil
 }
 
-func (c *Client) ListDindContainers(containerID string) ([]models.Container, error) {
+func (c *Client) ListDindContainers(containerID string) ([]models.DockerContainer, error) {
 	output, err := c.executeCaptured("exec", containerID, "docker", "ps", "--format", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to executeCaptured docker ps: %w\nOutput: %s", err, string(output))
@@ -134,8 +134,8 @@ func (c *Client) GetDindContainerLogs(hostContainerID, targetContainerID string,
 	return cmd, nil
 }
 
-func (c *Client) parseDindPSJSON(output []byte) ([]models.Container, error) {
-	containers := make([]models.Container, 0)
+func (c *Client) parseDindPSJSON(output []byte) ([]models.DockerContainer, error) {
+	containers := make([]models.DockerContainer, 0)
 
 	// Docker ps outputs each container as a separate JSON object on its own line
 	scanner := bufio.NewScanner(bytes.NewReader(output))
@@ -145,7 +145,7 @@ func (c *Client) parseDindPSJSON(output []byte) ([]models.Container, error) {
 			continue
 		}
 
-		var container models.Container
+		var container models.DockerContainer
 
 		if err := json.Unmarshal(line, &container); err != nil {
 			// Skip invalid lines
@@ -250,4 +250,40 @@ func (c *Client) GetStats() (string, error) {
 	}
 
 	return string(output), nil
+}
+
+func (c *Client) ListAllContainers(showAll bool) ([]models.DockerContainer, error) {
+	args := []string{"ps", "--format", "json"}
+	if showAll {
+		args = append(args, "--all")
+	}
+	
+	output, err := c.executeCaptured(args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute docker ps: %w\nOutput: %s", err, string(output))
+	}
+
+	// Docker ps outputs each container as a separate JSON object on its own line
+	containers := make([]models.DockerContainer, 0)
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var container models.DockerContainer
+		if err := json.Unmarshal(line, &container); err != nil {
+			// Skip invalid lines
+			continue
+		}
+
+		containers = append(containers, container)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return containers, nil
 }

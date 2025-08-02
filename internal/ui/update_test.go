@@ -21,15 +21,15 @@ func TestHandleKeyPress(t *testing.T) {
 		{
 			name: "navigate down in process list",
 			model: Model{
-				currentView: ProcessListView,
-				containers: []models.Container{
+				currentView: ComposeProcessListView,
+				containers: []models.ComposeContainer{
 					{Name: "web-1"},
 					{Name: "db-1"},
 				},
 				selectedContainer: 0,
 			},
 			key:      tea.KeyMsg{Type: tea.KeyDown},
-			wantView: ProcessListView,
+			wantView: ComposeProcessListView,
 			checkFunc: func(t *testing.T, m Model) {
 				assert.Equal(t, 1, m.selectedContainer)
 			},
@@ -37,15 +37,15 @@ func TestHandleKeyPress(t *testing.T) {
 		{
 			name: "navigate up in process list",
 			model: Model{
-				currentView: ProcessListView,
-				containers: []models.Container{
+				currentView: ComposeProcessListView,
+				containers: []models.ComposeContainer{
 					{Name: "web-1"},
 					{Name: "db-1"},
 				},
 				selectedContainer: 1,
 			},
 			key:      tea.KeyMsg{Type: tea.KeyUp},
-			wantView: ProcessListView,
+			wantView: ComposeProcessListView,
 			checkFunc: func(t *testing.T, m Model) {
 				assert.Equal(t, 0, m.selectedContainer)
 			},
@@ -53,8 +53,8 @@ func TestHandleKeyPress(t *testing.T) {
 		{
 			name: "enter log view",
 			model: Model{
-				currentView: ProcessListView,
-				containers: []models.Container{
+				currentView: ComposeProcessListView,
+				containers: []models.ComposeContainer{
 					{Name: "web-1"},
 				},
 				selectedContainer: 0,
@@ -69,17 +69,17 @@ func TestHandleKeyPress(t *testing.T) {
 		{
 			name: "enter dind view",
 			model: Model{
-				currentView: ProcessListView,
-				containers: []models.Container{
+				currentView: ComposeProcessListView,
+				containers: []models.ComposeContainer{
 					{
-						Name:  "dind-1",
-						Image: "docker:dind",
+						Name:    "dind-1",
+						Command: "dockerd",
 					},
 				},
 				selectedContainer: 0,
 			},
 			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")},
-			wantView:    DindProcessListView,
+			wantView:    DindComposeProcessListView,
 			wantLoading: true,
 			checkFunc: func(t *testing.T, m Model) {
 				assert.Equal(t, "dind-1", m.currentDindHost)
@@ -88,10 +88,10 @@ func TestHandleKeyPress(t *testing.T) {
 		{
 			name: "quit from process list",
 			model: Model{
-				currentView: ProcessListView,
+				currentView: ComposeProcessListView,
 			},
 			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")},
-			wantView: ProcessListView,
+			wantView: ComposeProcessListView,
 		},
 		{
 			name: "escape from log view",
@@ -100,7 +100,7 @@ func TestHandleKeyPress(t *testing.T) {
 				containerName: "web-1",
 			},
 			key:      tea.KeyMsg{Type: tea.KeyEsc},
-			wantView: ProcessListView,
+			wantView: ComposeProcessListView,
 		},
 		{
 			name: "scroll down in log view",
@@ -145,10 +145,10 @@ func TestHandleKeyPress(t *testing.T) {
 		{
 			name: "refresh process list",
 			model: Model{
-				currentView: ProcessListView,
+				currentView: ComposeProcessListView,
 			},
 			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("r")},
-			wantView:    ProcessListView,
+			wantView:    ComposeProcessListView,
 			wantLoading: true,
 		},
 	}
@@ -238,11 +238,11 @@ func TestHandleSearchMode(t *testing.T) {
 
 func TestHandleDindListKeys(t *testing.T) {
 	model := Model{
-		currentView:     DindProcessListView,
+		currentView:     DindComposeProcessListView,
 		currentDindHost: "dind-1",
-		dindContainers: []models.Container{
-			{ID: "abc123", Name: "test-1"},
-			{ID: "def456", Name: "test-2"},
+		dindContainers: []models.DockerContainer{
+			{ID: "abc123", Names: "test-1"},
+			{ID: "def456", Names: "test-2"},
 		},
 		selectedDindContainer: 0,
 	}
@@ -264,14 +264,14 @@ func TestHandleDindListKeys(t *testing.T) {
 	assert.NotNil(t, cmd)
 
 	// Test escape
-	model.currentView = DindProcessListView
+	model.currentView = DindComposeProcessListView
 	newModel, _ = model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEsc})
 	m = *newModel.(*Model)
-	assert.Equal(t, ProcessListView, m.currentView)
+	assert.Equal(t, ComposeProcessListView, m.currentView)
 }
 
 func TestUpdateMessages(t *testing.T) {
-	model := NewModel(ProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
 
 	// Test window size message
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
@@ -280,7 +280,7 @@ func TestUpdateMessages(t *testing.T) {
 	assert.Equal(t, 30, m.height)
 
 	// Test containers loaded message
-	processes := []models.Container{
+	processes := []models.ComposeContainer{
 		{Name: "test-1"},
 	}
 	newModel, _ = m.Update(processesLoadedMsg{processes: processes})
@@ -312,8 +312,8 @@ func TestUpdateMessages(t *testing.T) {
 	assert.NotNil(t, cmd) // Should continue streaming
 
 	// Test dind containers loaded
-	containers := []models.Container{
-		{ID: "abc123", Name: "test-container"},
+	containers := []models.DockerContainer{
+		{ID: "abc123", Names: "test-container"},
 	}
 	newModel, _ = m.Update(dindContainersLoadedMsg{containers: containers})
 	m = *newModel.(*Model)
@@ -324,8 +324,8 @@ func TestUpdateMessages(t *testing.T) {
 func TestBoundaryConditions(t *testing.T) {
 	// Test navigation at boundaries
 	model := Model{
-		currentView: ProcessListView,
-		containers: []models.Container{
+		currentView: ComposeProcessListView,
+		containers: []models.ComposeContainer{
 			{Name: "test-1"},
 		},
 		selectedContainer: 0,
@@ -342,15 +342,15 @@ func TestBoundaryConditions(t *testing.T) {
 	assert.Equal(t, 0, m.selectedContainer) // Should stay at 0 (only one item)
 
 	// Test with empty list
-	model.containers = []models.Container{}
+	model.containers = []models.ComposeContainer{}
 	newModel, _ = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyEnter})
 	m = *newModel.(*Model)
-	assert.Equal(t, ProcessListView, m.currentView) // Should stay in process list
+	assert.Equal(t, ComposeProcessListView, m.currentView) // Should stay in process list
 }
 
 func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	// From process list - should quit
-	model := Model{currentView: ProcessListView}
+	model := Model{currentView: ComposeProcessListView}
 	_, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	assert.NotNil(t, cmd)
 
@@ -358,13 +358,13 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	model = Model{currentView: LogView}
 	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m := *newModel.(*Model)
-	assert.Equal(t, ProcessListView, m.currentView)
+	assert.Equal(t, ComposeProcessListView, m.currentView)
 	assert.NotNil(t, cmd) // Should load containers
 
 	// From dind view - should go back
-	model = Model{currentView: DindProcessListView}
+	model = Model{currentView: DindComposeProcessListView}
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = *newModel.(*Model)
-	assert.Equal(t, ProcessListView, m.currentView)
+	assert.Equal(t, ComposeProcessListView, m.currentView)
 	assert.NotNil(t, cmd) // Should load containers
 }

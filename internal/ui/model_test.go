@@ -9,9 +9,9 @@ import (
 )
 
 func TestNewModel(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 
-	assert.Equal(t, ProcessListView, m.currentView)
+	assert.Equal(t, ComposeProcessListView, m.currentView)
 	assert.NotNil(t, m.dockerClient)
 	assert.True(t, m.loading)
 	assert.Empty(t, m.containers)
@@ -19,7 +19,7 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestModelInit(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 	cmd := m.Init()
 
 	// Init should return a batch command
@@ -27,21 +27,21 @@ func TestModelInit(t *testing.T) {
 }
 
 func TestProcessesLoadedMsg(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 
 	// Test successful load
-	containers := []models.Container{
+	containers := []models.ComposeContainer{
 		{
 			Name:    "web-1",
-			Image:   "nginx:latest",
+			Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
 			Service: "web",
-			Status:  "Up 5 minutes",
+			State:   "running",
 		},
 		{
 			Name:    "dind-1",
-			Image:   "docker:dind",
+			Command: "dockerd",
 			Service: "dind",
-			Status:  "Up 10 minutes",
+			State:   "running",
 		},
 	}
 
@@ -63,7 +63,7 @@ func TestProcessesLoadedMsg(t *testing.T) {
 }
 
 func TestWindowSizeMsg(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 
 	msg := tea.WindowSizeMsg{
 		Width:  80,
@@ -79,10 +79,10 @@ func TestWindowSizeMsg(t *testing.T) {
 }
 
 func TestKeyNavigation(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.loading = false
-	m.containers = []models.Container{
+	m.containers = []models.ComposeContainer{
 		{Name: "web-1"},
 		{Name: "db-1"},
 		{Name: "redis-1"},
@@ -119,16 +119,16 @@ func TestKeyNavigation(t *testing.T) {
 }
 
 func TestViewSwitching(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.loading = false
-	m.containers = []models.Container{
+	m.containers = []models.ComposeContainer{
 		{
 			Name: "web-1",
 		},
 		{
 			Name: "dind-1",
-			Image: "docker:dind",
+			Command: "dockerd",
 		},
 	}
 
@@ -148,7 +148,7 @@ func TestViewSwitching(t *testing.T) {
 	newModel, cmd = m.Update(msg)
 	m = *newModel.(*Model)
 
-	assert.Equal(t, ProcessListView, m.currentView)
+	assert.Equal(t, ComposeProcessListView, m.currentView)
 	assert.NotNil(t, cmd)
 
 	// Test entering dind view
@@ -157,14 +157,14 @@ func TestViewSwitching(t *testing.T) {
 	newModel, cmd = m.Update(msg)
 	m = *newModel.(*Model)
 
-	assert.Equal(t, DindProcessListView, m.currentView)
+	assert.Equal(t, DindComposeProcessListView, m.currentView)
 	assert.Equal(t, "dind-1", m.currentDindHost)
 	assert.True(t, m.loading)
 	assert.NotNil(t, cmd)
 }
 
 func TestSearchMode(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.currentView = LogView
 	m.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
@@ -195,7 +195,7 @@ func TestSearchMode(t *testing.T) {
 }
 
 func TestErrorHandling(t *testing.T) {
-	m := NewModel(ProcessListView, "")
+	m := NewModel(ComposeProcessListView, "")
 
 	// Test error message
 	msg := errorMsg{err: assert.AnError}
@@ -215,27 +215,27 @@ func TestQuitBehavior(t *testing.T) {
 	}{
 		{
 			name:        "quit from process list",
-			currentView: ProcessListView,
+			currentView: ComposeProcessListView,
 			expectQuit:  true,
-			expectView:  ProcessListView,
+			expectView:  ComposeProcessListView,
 		},
 		{
 			name:        "quit from log view returns to process list",
 			currentView: LogView,
 			expectQuit:  false,
-			expectView:  ProcessListView,
+			expectView:  ComposeProcessListView,
 		},
 		{
 			name:        "quit from dind view returns to process list",
-			currentView: DindProcessListView,
+			currentView: DindComposeProcessListView,
 			expectQuit:  false,
-			expectView:  ProcessListView,
+			expectView:  ComposeProcessListView,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewModel(ProcessListView, "")
+			m := NewModel(ComposeProcessListView, "")
 			m.currentView = tt.currentView
 			m.loading = false
 
@@ -250,7 +250,7 @@ func TestQuitBehavior(t *testing.T) {
 				assert.NotNil(t, cmd)
 			} else {
 				// Should return to process list
-				assert.Equal(t, ProcessListView, m.currentView)
+				assert.Equal(t, ComposeProcessListView, m.currentView)
 			}
 		})
 	}

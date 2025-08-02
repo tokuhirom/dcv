@@ -50,7 +50,7 @@ func (c *ComposeClient) executeCaptured(args ...string) ([]byte, error) {
 	return output, err
 }
 
-func (c *ComposeClient) ListContainers(showAll bool) ([]models.Container, error) {
+func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer, error) {
 	// Always use JSON format for reliable parsing
 	args := []string{"compose", "-p", c.projectName, "ps", "--format", "json", "--no-trunc"}
 	if showAll {
@@ -68,7 +68,7 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.Container, error)
 		}
 		// Check if it's just empty (no containers)
 		if len(output) == 0 || string(output) == "" {
-			return []models.Container{}, nil
+			return []models.ComposeContainer{}, nil
 		}
 		return nil, fmt.Errorf("failed to executeCaptured docker compose ps: %w\nOutput: %s", err, string(output))
 	}
@@ -76,7 +76,7 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.Container, error)
 	// Handle empty output (no containers running)
 	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
 		slog.Info("No containers found")
-		return []models.Container{}, nil
+		return []models.ComposeContainer{}, nil
 	}
 
 	// Parse JSON format
@@ -84,8 +84,8 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.Container, error)
 	return c.parseComposePSJSON(output)
 }
 
-func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Container, error) {
-	containers := make([]models.Container, 0)
+func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.ComposeContainer, error) {
+	containers := make([]models.ComposeContainer, 0)
 
 	// Docker compose outputs each container as a separate JSON object on its own line
 	scanner := bufio.NewScanner(bytes.NewReader(output))
@@ -96,7 +96,7 @@ func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.Container, e
 			continue
 		}
 
-		var container models.Container
+		var container models.ComposeContainer
 		if err := json.Unmarshal(line, &container); err != nil {
 			// If we have content that's not valid JSON, return error
 			if len(line) > 0 && !hasValidJSON {

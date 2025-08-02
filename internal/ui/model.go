@@ -28,12 +28,13 @@ type ContainerStats struct {
 type ViewType int
 
 const (
-	ProcessListView ViewType = iota
+	ComposeProcessListView ViewType = iota
 	LogView
-	DindProcessListView
+	DindComposeProcessListView
 	TopView
 	StatsView
 	ProjectListView
+	DockerContainerListView
 )
 
 // Model represents the application state
@@ -45,7 +46,7 @@ type Model struct {
 	dockerClient *docker.Client
 
 	// Process list state
-	containers        []models.Container
+	containers        []models.ComposeContainer
 	selectedContainer int
 	showAll           bool // Toggle to show all containers including stopped ones
 
@@ -54,10 +55,14 @@ type Model struct {
 	selectedProject int
 
 	// Dind state
-	dindContainers         []models.Container
+	dindContainers         []models.DockerContainer
 	selectedDindContainer  int
 	currentDindHost        string // Container name (for display)
 	currentDindContainerID string // Service name (for docker compose exec)
+
+	// Docker containers state (plain docker ps)
+	dockerContainers        []models.DockerContainer
+	selectedDockerContainer int
 
 	// Log view state
 	logs          []string
@@ -103,6 +108,8 @@ type Model struct {
 	statsViewHandlers         []KeyConfig
 	projectListViewKeymap     map[string]KeyHandler
 	projectListViewHandlers   []KeyConfig
+	dockerListViewKeymap      map[string]KeyHandler
+	dockerListViewHandlers    []KeyConfig
 }
 
 // NewModel creates a new model with initial state
@@ -139,12 +146,12 @@ func (m *Model) Init() tea.Cmd {
 // Messages
 
 type processesLoadedMsg struct {
-	processes []models.Container
+	processes []models.ComposeContainer
 	err       error
 }
 
 type dindContainersLoadedMsg struct {
-	containers []models.Container
+	containers []models.DockerContainer
 	err        error
 }
 
@@ -190,6 +197,11 @@ type statsLoadedMsg struct {
 type projectsLoadedMsg struct {
 	projects []models.ComposeProject
 	err      error
+}
+
+type dockerContainersLoadedMsg struct {
+	containers []models.DockerContainer
+	err        error
 }
 
 // Commands
@@ -338,6 +350,16 @@ func loadProjects(client *docker.Client) tea.Cmd {
 		return projectsLoadedMsg{
 			projects: projects,
 			err:      err,
+		}
+	}
+}
+
+func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
+	return func() tea.Msg {
+		containers, err := client.ListAllContainers(showAll)
+		return dockerContainersLoadedMsg{
+			containers: containers,
+			err:        err,
 		}
 	}
 }

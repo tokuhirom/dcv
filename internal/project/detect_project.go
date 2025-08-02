@@ -22,7 +22,7 @@ func DetectProject(projectName string, composeFile string, showProjects bool) (u
 	if projectName != "" {
 		slog.Info("Using specified project name",
 			slog.String("projectName", projectName))
-		return ui.ProcessListView, projectName
+		return ui.ComposeProcessListView, projectName
 	}
 
 	// execute `docker compose ls --format=json` to find projects
@@ -43,7 +43,7 @@ func DetectProject(projectName string, composeFile string, showProjects bool) (u
 				slog.Info("Found Docker Compose project with config file",
 					slog.String("composeFile", composeFile),
 					slog.String("projectName", project.Name))
-				return ui.ProcessListView, project.Name
+				return ui.ComposeProcessListView, project.Name
 			}
 		}
 		panic(fmt.Sprintf("Failed to find Docker Compose project with config file: %s", composeFile))
@@ -70,7 +70,7 @@ func DetectProject(projectName string, composeFile string, showProjects bool) (u
 					slog.Info("Found Docker Compose project with config file",
 						slog.String("composeFile", project.ConfigFiles),
 						slog.String("projectName", project.Name))
-					return ui.ProcessListView, project.Name
+					return ui.ComposeProcessListView, project.Name
 				}
 			}
 
