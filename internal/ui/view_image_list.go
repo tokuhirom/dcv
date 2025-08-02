@@ -18,11 +18,11 @@ func (m *Model) renderImageList() string {
 	}
 
 	// Create table
-	t := table.New()
-	t.Height(m.height - 4) // Reserve space for footer
-	t.Width(m.width)
-	t.Offset(m.selectedDockerImage)
-	t.Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE")
+	t := table.New().
+		Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE").
+		Height(m.height - 4). // Reserve space for footer
+		Width(m.width).
+		Offset(m.selectedDockerImage)
 
 	// Configure column widths based on terminal width
 	// Approximate widths: REPOSITORY(30), TAG(15), IMAGE ID(12), CREATED(15), SIZE(10)
@@ -33,11 +33,6 @@ func (m *Model) renderImageList() string {
 	}
 	t.Width(availableWidth).
 		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 {
-				return lipgloss.NewStyle().
-					Bold(true).
-					Foreground(lipgloss.Color("99"))
-			}
 			return lipgloss.NewStyle()
 		})
 

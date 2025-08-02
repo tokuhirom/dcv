@@ -22,15 +22,15 @@ func (m *Model) renderProjectList() string {
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 {
-				return headerStyle
-			}
-			if row-1 == m.selectedProject {
+			if row == m.selectedProject {
 				return selectedStyle
 			}
 			return normalStyle
 		}).
-		Headers("NAME", "STATUS", "CONFIG FILES")
+		Headers("NAME", "STATUS", "CONFIG FILES").
+		Height(m.height - 4). // Reserve space for footer
+		Width(m.width).
+		Offset(m.selectedDockerImage)
 
 	for _, project := range m.projects {
 		// Status with color

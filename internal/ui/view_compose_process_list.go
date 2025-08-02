@@ -35,7 +35,10 @@ func (m *Model) renderComposeProcessList() string {
 			}
 			return normalStyle
 		}).
-		Headers("SERVICE", "IMAGE", "STATUS", "PORTS")
+		Headers("SERVICE", "IMAGE", "STATUS", "PORTS").
+		Height(m.height - 4). // Reserve space for footer
+		Width(m.width).
+		Offset(m.selectedDockerImage)
 
 	// Add rows with width control
 	for _, container := range m.composeContainers {
