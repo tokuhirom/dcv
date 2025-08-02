@@ -11,9 +11,9 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.SelectDownContainer},
 		{[]string{"enter"}, "view logs", m.ShowComposeLog},
 		{[]string{"d"}, "dind composeContainers", m.ShowDindProcessList},
-		{[]string{"p"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"i"}, "docker images", m.ShowImageList},
-		{[]string{"n"}, "docker networks", m.ShowNetworkList},
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"f"}, "browse files", m.ShowFileBrowser},
 		{[]string{"!"}, "exec /bin/sh", m.ExecuteShell},
 		{[]string{"I"}, "inspect", m.ShowInspect},
@@ -29,6 +29,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"D"}, "remove", m.DeleteContainer},
 		{[]string{"u"}, "up -d", m.DeployProject},
 		{[]string{"x"}, "down", m.DownProject},
+		{[]string{"2"}, "project list", m.ShowProjectList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
@@ -51,6 +52,10 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.SelectDownDindContainer},
 		{[]string{"enter"}, "view logs", m.ShowDindLog},
 		{[]string{"r"}, "refresh", m.RefreshDindList},
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"2"}, "project list", m.ShowProjectList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"esc"}, "back", m.BackToDindList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
@@ -59,6 +64,10 @@ func (m *Model) initializeKeyHandlers() {
 	// Top View
 	m.topViewHandlers = []KeyConfig{
 		{[]string{"r"}, "refresh", m.RefreshTop},
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"2"}, "project list", m.ShowProjectList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"esc", "q"}, "back", m.BackToProcessList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
@@ -67,6 +76,10 @@ func (m *Model) initializeKeyHandlers() {
 	// Stats View
 	m.statsViewHandlers = []KeyConfig{
 		{[]string{"r"}, "refresh", m.RefreshStats},
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"2"}, "project list", m.ShowProjectList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"esc", "q"}, "back", m.BackToProcessList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
@@ -78,6 +91,9 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.SelectDownProject},
 		{[]string{"enter"}, "select project", m.SelectProject},
 		{[]string{"r"}, "refresh", m.RefreshProjects},
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
@@ -98,6 +114,9 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"R"}, "restart", m.RestartDockerContainer},
 		{[]string{"P"}, "pause/unpause", m.PauseDockerContainer},
 		{[]string{"D"}, "remove", m.DeleteDockerContainer},
+		{[]string{"2"}, "project list", m.ShowProjectList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"esc", "q"}, "back", m.BackFromDockerList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
@@ -112,6 +131,9 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"a"}, "toggle all", m.ToggleAllImages},
 		{[]string{"D"}, "remove", m.DeleteImage},
 		{[]string{"F"}, "force remove", m.ForceDeleteImage},
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"2"}, "project list", m.ShowProjectList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"esc", "q"}, "back", m.BackFromImageList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
@@ -123,6 +145,9 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.SelectDownNetwork},
 		{[]string{"r"}, "refresh", m.RefreshNetworkList},
 		{[]string{"D"}, "remove", m.DeleteNetwork},
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"2"}, "project list", m.ShowProjectList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"esc", "q"}, "back", m.BackFromNetworkList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
