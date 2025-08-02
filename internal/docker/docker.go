@@ -287,3 +287,58 @@ func (c *Client) ListAllContainers(showAll bool) ([]models.DockerContainer, erro
 
 	return containers, nil
 }
+
+func (c *Client) ListImages(showAll bool) ([]models.DockerImage, error) {
+	args := []string{"images", "--format", "json"}
+	if showAll {
+		args = append(args, "--all")
+	}
+
+	output, err := c.executeCaptured(args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute docker images: %w\nOutput: %s", err, string(output))
+	}
+
+	// Docker images outputs each image as a separate JSON object on its own line
+	images := make([]models.DockerImage, 0)
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var image models.DockerImage
+		if err := json.Unmarshal(line, &image); err != nil {
+			// Skip invalid lines
+			continue
+		}
+
+		images = append(images, image)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return images, nil
+}
+
+func (c *Client) RemoveImage(imageID string, force bool) error {
+	args := []string{"rmi"}
+	if force {
+		args = append(args, "-f")
+	}
+	args = append(args, imageID)
+
+	output, err := c.executeCaptured(args...)
+	if err != nil {
+		return fmt.Errorf("failed to remove image: %w\nOutput: %s", err, string(output))
+	}
+
+	slog.Info("Removed image",
+		slog.String("imageID", imageID),
+		slog.String("output", string(output)))
+
+	return nil
+}
