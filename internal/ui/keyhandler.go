@@ -459,6 +459,10 @@ func (m *Model) GetHelpText() string {
 		configs = m.projectListViewHandlers
 	case DockerContainerListView:
 		configs = m.dockerListViewHandlers
+	case ImageListView:
+		configs = m.imageListViewHandlers
+	case NetworkListView:
+		configs = m.networkListViewHandlers
 	default:
 		return ""
 	}
@@ -532,6 +536,51 @@ func (m *Model) ForceDeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) BackFromImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = ComposeProcessListView
+	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+}
+
+// Network list handlers
+func (m *Model) SelectUpNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerNetwork > 0 {
+		m.selectedDockerNetwork--
+	}
+	return m, nil
+}
+
+func (m *Model) SelectDownNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerNetwork < len(m.dockerNetworks)-1 {
+		m.selectedDockerNetwork++
+	}
+	return m, nil
+}
+
+func (m *Model) ShowNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = NetworkListView
+	m.loading = true
+	return m, loadDockerNetworks(m.dockerClient)
+}
+
+func (m *Model) RefreshNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.loading = true
+	return m, loadDockerNetworks(m.dockerClient)
+}
+
+func (m *Model) DeleteNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerNetwork < len(m.dockerNetworks) {
+		network := m.dockerNetworks[m.selectedDockerNetwork]
+		// Don't allow removing default networks
+		if network.Name == "bridge" || network.Name == "host" || network.Name == "none" {
+			m.err = fmt.Errorf("cannot remove default network: %s", network.Name)
+			return m, nil
+		}
+		m.loading = true
+		return m, removeNetwork(m.dockerClient, network.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) BackFromNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 }

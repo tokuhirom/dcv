@@ -13,6 +13,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"d"}, "dind containers", m.ShowDindProcessList},
 		{[]string{"p"}, "docker ps", m.ShowDockerContainerList},
 		{[]string{"i"}, "docker images", m.ShowImageList},
+		{[]string{"n"}, "docker networks", m.ShowNetworkList},
 		{[]string{"r"}, "refresh", m.RefreshProcessList},
 		{[]string{"a"}, "toggle all", m.ToggleAllContainers},
 		{[]string{"s"}, "stats", m.ShowStatsView},
@@ -96,6 +97,16 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"esc", "q"}, "back", m.BackFromImageList},
 	}
 	m.imageListViewKeymap = m.createKeymap(m.imageListViewHandlers)
+
+	// Network List View
+	m.networkListViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.SelectUpNetwork},
+		{[]string{"down", "j"}, "move down", m.SelectDownNetwork},
+		{[]string{"r"}, "refresh", m.RefreshNetworkList},
+		{[]string{"D"}, "remove", m.DeleteNetwork},
+		{[]string{"esc", "q"}, "back", m.BackFromNetworkList},
+	}
+	m.networkListViewKeymap = m.createKeymap(m.networkListViewHandlers)
 
 	slog.Info("Initialized all view keymaps")
 }

@@ -122,6 +122,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, loadDockerImages(m.dockerClient, m.showAll)
 		case DockerContainerListView:
 			return m, loadDockerContainers(m.dockerClient, m.showAll)
+		case NetworkListView:
+			return m, loadDockerNetworks(m.dockerClient)
 		default:
 			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 		}
@@ -183,6 +185,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case dockerNetworksLoadedMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.dockerNetworks = msg.networks
+		m.err = nil
+		if len(m.dockerNetworks) > 0 && m.selectedDockerNetwork >= len(m.dockerNetworks) {
+			m.selectedDockerNetwork = 0
+		}
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -230,6 +245,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleDockerListKeys(msg)
 	case ImageListView:
 		return m.handleImageListKeys(msg)
+	case NetworkListView:
+		return m.handleNetworkListKeys(msg)
 	default:
 		return m, nil
 	}
@@ -322,6 +339,14 @@ func (m *Model) handleDockerListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleImageListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.imageListViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleNetworkListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.networkListViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

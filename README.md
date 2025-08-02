@@ -6,6 +6,7 @@ DCV is a TUI (Terminal User Interface) tool for monitoring Docker containers and
 
 - View all Docker containers (both standalone and Docker Compose managed)
 - List and manage Docker images
+- List and manage Docker networks
 - List and manage Docker Compose containers
 - Switch between multiple Docker Compose projects
 - Real-time container log streaming (shows last 1000 lines, then follows new logs)
@@ -42,6 +43,8 @@ Displays `docker compose ps` results in a table format.
 - `Enter`: View container logs
 - `d`: View dind container contents (only for dind containers)
 - `p`: Switch to Docker container list view
+- `i`: Switch to Docker image list view
+- `n`: Switch to Docker network list view
 - `P`: Switch to project list view
 - `a`: Toggle show all containers (including stopped)
 - `r`: Refresh list
@@ -81,6 +84,17 @@ Displays Docker images with repository, tag, ID, creation time, and size informa
 - `r`: Refresh list
 - `D`: Remove selected image
 - `F`: Force remove selected image (even if used by containers)
+- `Esc`/`q`: Back to Docker Compose process list
+
+### Network List View
+
+Displays Docker networks with ID, name, driver, scope, and container count.
+
+**Key bindings:**
+- `↑`/`k`: Move up
+- `↓`/`j`: Move down
+- `r`: Refresh list
+- `D`: Remove selected network (except default networks)
 - `Esc`/`q`: Back to Docker Compose process list
 
 ## Usage

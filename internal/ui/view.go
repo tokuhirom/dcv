@@ -70,6 +70,8 @@ func (m *Model) View() string {
 		return m.renderDockerList()
 	case ImageListView:
 		return m.renderImageList()
+	case NetworkListView:
+		return m.renderNetworkList()
 	default:
 		return "Unknown view"
 	}

@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and Docker Compose applications. It provides:
 - List view of all Docker containers (both plain Docker and Docker Compose managed)
 - List and manage Docker images
+- List and manage Docker networks
 - Multiple Docker Compose project management and switching
 - Log viewing capability for any container
 - Special handling for dind (Docker-in-Docker) containers to view nested containers
@@ -41,6 +42,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `d`: Navigate to dind process list (for dind containers)
    - `p`: Switch to Docker container list view
    - `i`: Switch to Docker image list view
+   - `n`: Switch to Docker network list view
    - `P`: Switch to project list view
    - `a`: Toggle show all containers (including stopped)
    - `t`: Show process info (docker compose top)
@@ -93,6 +95,13 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `r`: Refresh
    - `Esc`/`q`: Back to process list
 
+9. **Network List View**: Shows Docker networks with ID, name, driver, scope, and container count
+   - `↑`/`k`: Move up
+   - `↓`/`j`: Move down
+   - `r`: Refresh list
+   - `D`: Remove selected network (except default networks)
+   - `Esc`/`q`: Back to Docker Compose process list
+
 ## Development Guidelines
 
 - Follow vim-style keybindings for all shortcuts
@@ -135,7 +144,7 @@ go build -o dcv
 - **View compose file** - Display the active docker-compose.yml
 
 ### Network & Volume Management
-- **Network list/inspect** - View Docker networks
+- **Network inspect** - View detailed network information
 - **Volume list/inspect** - Manage Docker volumes
 - **Network connections** - Show container network relationships
 

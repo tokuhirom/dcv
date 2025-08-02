@@ -342,3 +342,47 @@ func (c *Client) RemoveImage(imageID string, force bool) error {
 
 	return nil
 }
+
+func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
+	output, err := c.executeCaptured("network", "ls", "--format", "json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute docker network ls: %w\nOutput: %s", err, string(output))
+	}
+
+	// Docker network ls outputs each network as a separate JSON object on its own line
+	networks := make([]models.DockerNetwork, 0)
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var network models.DockerNetwork
+		if err := json.Unmarshal(line, &network); err != nil {
+			// Skip invalid lines
+			continue
+		}
+
+		networks = append(networks, network)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return networks, nil
+}
+
+func (c *Client) RemoveNetwork(networkID string) error {
+	output, err := c.executeCaptured("network", "rm", networkID)
+	if err != nil {
+		return fmt.Errorf("failed to remove network: %w\nOutput: %s", err, string(output))
+	}
+
+	slog.Info("Removed network",
+		slog.String("networkID", networkID),
+		slog.String("output", string(output)))
+
+	return nil
+}
