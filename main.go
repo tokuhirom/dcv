@@ -33,7 +33,7 @@ func main() {
 		slog.String("composeFile", composeFile))
 
 	// Create the initial model with options
-	m := ui.NewModelWithOptions(initialView, projectName)
+	m := ui.NewModel(initialView, projectName)
 
 	// Create the program
 	p := tea.NewProgram(m, tea.WithAltScreen())

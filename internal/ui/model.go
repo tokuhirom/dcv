@@ -92,18 +92,7 @@ type Model struct {
 }
 
 // NewModel creates a new model with initial state
-func NewModel() Model {
-	client := docker.NewComposeClient()
-
-	return Model{
-		currentView:  ProcessListView,
-		dockerClient: client,
-		loading:      true,
-	}
-}
-
-// NewModelWithOptions creates a new model with command line options
-func NewModelWithOptions(initialView ViewType, projectName string) Model {
+func NewModel(initialView ViewType, projectName string) Model {
 	client := docker.NewComposeClientWithOptions(projectName)
 
 	return Model{

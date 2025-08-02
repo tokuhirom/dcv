@@ -9,8 +9,8 @@ import (
 )
 
 func TestNewModel(t *testing.T) {
-	m := NewModel()
-	
+	m := NewModel(ProcessListView, "")
+
 	assert.Equal(t, ProcessListView, m.currentView)
 	assert.NotNil(t, m.dockerClient)
 	assert.True(t, m.loading)
@@ -19,16 +19,16 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestModelInit(t *testing.T) {
-	m := NewModel()
+	m := NewModel(ProcessListView, "")
 	cmd := m.Init()
-	
+
 	// Init should return a batch command
 	assert.NotNil(t, cmd)
 }
 
 func TestProcessesLoadedMsg(t *testing.T) {
-	m := NewModel()
-	
+	m := NewModel(ProcessListView, "")
+
 	// Test successful load
 	processes := []models.Process{
 		{
@@ -50,15 +50,15 @@ func TestProcessesLoadedMsg(t *testing.T) {
 			IsDind: true,
 		},
 	}
-	
+
 	msg := processesLoadedMsg{
 		processes: processes,
 		err:       nil,
 	}
-	
+
 	newModel, cmd := m.Update(msg)
 	m = newModel.(Model)
-	
+
 	assert.False(t, m.loading)
 	assert.Nil(t, m.err)
 	assert.Equal(t, 2, len(m.processes))
@@ -69,30 +69,30 @@ func TestProcessesLoadedMsg(t *testing.T) {
 }
 
 func TestWindowSizeMsg(t *testing.T) {
-	m := NewModel()
-	
+	m := NewModel(ProcessListView, "")
+
 	msg := tea.WindowSizeMsg{
 		Width:  80,
 		Height: 24,
 	}
-	
+
 	newModel, cmd := m.Update(msg)
 	m = newModel.(Model)
-	
+
 	assert.Equal(t, 80, m.width)
 	assert.Equal(t, 24, m.height)
 	assert.Nil(t, cmd)
 }
 
 func TestKeyNavigation(t *testing.T) {
-	m := NewModel()
+	m := NewModel(ProcessListView, "")
 	m.loading = false
 	m.processes = []models.Process{
 		{Container: models.Container{Name: "web-1"}},
 		{Container: models.Container{Name: "db-1"}},
 		{Container: models.Container{Name: "redis-1"}},
 	}
-	
+
 	tests := []struct {
 		name     string
 		key      string
@@ -103,11 +103,11 @@ func TestKeyNavigation(t *testing.T) {
 		{"up arrow", "up", 0},
 		{"k key", "k", 0},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m.selectedProcess = 0
-			
+
 			// Move down
 			if tt.expected > 0 {
 				msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
@@ -117,14 +117,14 @@ func TestKeyNavigation(t *testing.T) {
 				newModel, _ := m.Update(msg)
 				m = newModel.(Model)
 			}
-			
+
 			assert.Equal(t, tt.expected, m.selectedProcess)
 		})
 	}
 }
 
 func TestViewSwitching(t *testing.T) {
-	m := NewModel()
+	m := NewModel(ProcessListView, "")
 	m.loading = false
 	m.processes = []models.Process{
 		{
@@ -136,32 +136,32 @@ func TestViewSwitching(t *testing.T) {
 			IsDind:    true,
 		},
 	}
-	
+
 	// Test entering log view
 	m.selectedProcess = 0
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
 	newModel, cmd := m.Update(msg)
 	m = newModel.(Model)
-	
+
 	assert.Equal(t, LogView, m.currentView)
 	assert.Equal(t, "web-1", m.containerName)
 	assert.False(t, m.isDindLog)
 	assert.NotNil(t, cmd)
-	
+
 	// Test going back with ESC
 	msg = tea.KeyMsg{Type: tea.KeyEsc}
 	newModel, cmd = m.Update(msg)
 	m = newModel.(Model)
-	
+
 	assert.Equal(t, ProcessListView, m.currentView)
 	assert.NotNil(t, cmd)
-	
+
 	// Test entering dind view
 	m.selectedProcess = 1
 	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")}
 	newModel, cmd = m.Update(msg)
 	m = newModel.(Model)
-	
+
 	assert.Equal(t, DindProcessListView, m.currentView)
 	assert.Equal(t, "dind-1", m.currentDindHost)
 	assert.True(t, m.loading)
@@ -169,43 +169,43 @@ func TestViewSwitching(t *testing.T) {
 }
 
 func TestSearchMode(t *testing.T) {
-	m := NewModel()
+	m := NewModel(ProcessListView, "")
 	m.currentView = LogView
 	m.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
-	
+
 	// Enter search mode
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")}
 	newModel, _ := m.Update(msg)
 	m = newModel.(Model)
-	
+
 	assert.True(t, m.searchMode)
 	assert.Equal(t, "", m.searchText)
-	
+
 	// Type search text
 	for _, r := range "error" {
 		msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
 		newModel, _ = m.Update(msg)
 		m = newModel.(Model)
 	}
-	
+
 	assert.Equal(t, "error", m.searchText)
-	
+
 	// Exit search mode with ESC
 	msg = tea.KeyMsg{Type: tea.KeyEsc}
 	newModel, _ = m.Update(msg)
 	m = newModel.(Model)
-	
+
 	assert.False(t, m.searchMode)
 }
 
 func TestErrorHandling(t *testing.T) {
-	m := NewModel()
-	
+	m := NewModel(ProcessListView, "")
+
 	// Test error message
 	msg := errorMsg{err: assert.AnError}
 	newModel, _ := m.Update(msg)
 	m = newModel.(Model)
-	
+
 	assert.NotNil(t, m.err)
 	assert.False(t, m.loading)
 }
@@ -236,19 +236,19 @@ func TestQuitBehavior(t *testing.T) {
 			expectView:  ProcessListView,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewModel()
+			m := NewModel(ProcessListView, "")
 			m.currentView = tt.currentView
 			m.loading = false
-			
+
 			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
 			newModel, cmd := m.Update(msg)
 			m = newModel.(Model)
-			
+
 			assert.Equal(t, tt.expectView, m.currentView)
-			
+
 			if tt.expectQuit {
 				// Check if quit command was returned
 				assert.NotNil(t, cmd)

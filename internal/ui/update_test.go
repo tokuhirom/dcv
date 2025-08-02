@@ -263,7 +263,7 @@ func TestHandleDindListKeys(t *testing.T) {
 }
 
 func TestUpdateMessages(t *testing.T) {
-	model := NewModel()
+	model := NewModel(ProcessListView, "")
 
 	// Test window size message
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
@@ -294,7 +294,7 @@ func TestUpdateMessages(t *testing.T) {
 	m = newModel.(Model)
 	assert.Contains(t, m.logs, "[Log reader stopped]")
 	assert.Nil(t, cmd) // Status messages don't trigger continued polling
-	
+
 	// Test log lines message (for actual log streaming)
 	m.logs = []string{} // Reset logs
 	newModel, cmd = m.Update(logLinesMsg{lines: []string{"log line 1", "log line 2"}})
