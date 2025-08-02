@@ -35,6 +35,7 @@ const (
 	StatsView
 	ProjectListView
 	DockerContainerListView
+	ImageListView
 )
 
 // Model represents the application state
@@ -63,6 +64,10 @@ type Model struct {
 	// Docker containers state (plain docker ps)
 	dockerContainers        []models.DockerContainer
 	selectedDockerContainer int
+
+	// Docker images state
+	dockerImages        []models.DockerImage
+	selectedDockerImage int
 
 	// Log view state
 	logs          []string
@@ -110,6 +115,8 @@ type Model struct {
 	projectListViewHandlers []KeyConfig
 	dockerListViewKeymap    map[string]KeyHandler
 	dockerListViewHandlers  []KeyConfig
+	imageListViewKeymap     map[string]KeyHandler
+	imageListViewHandlers   []KeyConfig
 }
 
 // NewModel creates a new model with initial state
@@ -202,6 +209,11 @@ type projectsLoadedMsg struct {
 type dockerContainersLoadedMsg struct {
 	containers []models.DockerContainer
 	err        error
+}
+
+type dockerImagesLoadedMsg struct {
+	images []models.DockerImage
+	err    error
 }
 
 // Commands
@@ -359,6 +371,27 @@ func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
 		return dockerContainersLoadedMsg{
 			containers: containers,
 			err:        err,
+		}
+	}
+}
+
+func loadDockerImages(client *docker.Client, showAll bool) tea.Cmd {
+	return func() tea.Msg {
+		images, err := client.ListImages(showAll)
+		return dockerImagesLoadedMsg{
+			images: images,
+			err:    err,
+		}
+	}
+}
+
+func removeImage(client *docker.Client, imageID string, force bool) tea.Cmd {
+	return func() tea.Msg {
+		err := client.RemoveImage(imageID, force)
+		return serviceActionCompleteMsg{
+			action:  "remove image",
+			service: imageID,
+			err:     err,
 		}
 	}
 }

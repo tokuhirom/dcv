@@ -68,6 +68,8 @@ func (m *Model) View() string {
 		return m.renderProjectList()
 	case DockerContainerListView:
 		return m.renderDockerList()
+	case ImageListView:
+		return m.renderImageList()
 	default:
 		return "Unknown view"
 	}

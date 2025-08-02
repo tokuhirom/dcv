@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and Docker Compose applications. It provides:
 - List view of all Docker containers (both plain Docker and Docker Compose managed)
+- List and manage Docker images
 - Multiple Docker Compose project management and switching
 - Log viewing capability for any container
 - Special handling for dind (Docker-in-Docker) containers to view nested containers
@@ -39,6 +40,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `Enter`: View container logs
    - `d`: Navigate to dind process list (for dind containers)
    - `p`: Switch to Docker container list view
+   - `i`: Switch to Docker image list view
    - `P`: Switch to project list view
    - `a`: Toggle show all containers (including stopped)
    - `t`: Show process info (docker compose top)
@@ -52,21 +54,30 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `r`: Refresh list
    - `q`: Quit
 
-3. **Project List View**: Shows all Docker Compose projects
+3. **Image List View**: Shows Docker images with repository, tag, ID, creation time, and size
+   - `↑`/`k`: Move up
+   - `↓`/`j`: Move down
+   - `a`: Toggle show all images (including intermediate layers)
+   - `r`: Refresh list
+   - `D`: Remove selected image
+   - `F`: Force remove selected image (even if used by containers)
+   - `Esc`/`q`: Back to Docker Compose process list
+
+4. **Project List View**: Shows all Docker Compose projects
    - `↑`/`k`: Move up
    - `↓`/`j`: Move down
    - `Enter`: Select project and view its containers
    - `r`: Refresh list
    - `q`: Quit
 
-4. **Dind Process List View**: Executes `docker ps` inside selected dind containers
+5. **Dind Process List View**: Executes `docker ps` inside selected dind containers
    - `↑`/`k`: Move up
    - `↓`/`j`: Move down
    - `Enter`: View logs of containers running inside dind
    - `r`: Refresh list
    - `Esc`/`q`: Back to process list
 
-5. **Log View**: Displays container logs with vim-like navigation
+6. **Log View**: Displays container logs with vim-like navigation
    - `↑`/`k`: Scroll up
    - `↓`/`j`: Scroll down
    - `G`: Jump to end
@@ -74,11 +85,11 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `/`: Search functionality
    - `Esc`/`q`: Back to previous view
 
-6. **Top View**: Shows process information (docker compose top)
+7. **Top View**: Shows process information (docker compose top)
    - `r`: Refresh
    - `Esc`/`q`: Back to process list
 
-7. **Stats View**: Shows container resource usage statistics
+8. **Stats View**: Shows container resource usage statistics
    - `r`: Refresh
    - `Esc`/`q`: Back to process list
 

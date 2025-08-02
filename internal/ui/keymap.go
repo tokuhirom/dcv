@@ -12,6 +12,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.ShowComposeLog},
 		{[]string{"d"}, "dind containers", m.ShowDindProcessList},
 		{[]string{"p"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"i"}, "docker images", m.ShowImageList},
 		{[]string{"r"}, "refresh", m.RefreshProcessList},
 		{[]string{"a"}, "toggle all", m.ToggleAllContainers},
 		{[]string{"s"}, "stats", m.ShowStatsView},
@@ -83,6 +84,18 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"esc", "q"}, "back", m.BackFromDockerList},
 	}
 	m.dockerListViewKeymap = m.createKeymap(m.dockerListViewHandlers)
+
+	// Image List View
+	m.imageListViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.SelectUpImage},
+		{[]string{"down", "j"}, "move down", m.SelectDownImage},
+		{[]string{"r"}, "refresh", m.RefreshImageList},
+		{[]string{"a"}, "toggle all", m.ToggleAllImages},
+		{[]string{"D"}, "remove", m.DeleteImage},
+		{[]string{"F"}, "force remove", m.ForceDeleteImage},
+		{[]string{"esc", "q"}, "back", m.BackFromImageList},
+	}
+	m.imageListViewKeymap = m.createKeymap(m.imageListViewHandlers)
 
 	slog.Info("Initialized all view keymaps")
 }

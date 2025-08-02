@@ -116,8 +116,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		// Reload the process list after action completes
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		// Reload the appropriate view after action completes
+		switch m.currentView {
+		case ImageListView:
+			return m, loadDockerImages(m.dockerClient, m.showAll)
+		case DockerContainerListView:
+			return m, loadDockerContainers(m.dockerClient, m.showAll)
+		default:
+			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		}
 
 	case upActionCompleteMsg:
 		m.loading = false
@@ -160,6 +167,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = nil
 		if len(m.dockerContainers) > 0 && m.selectedDockerContainer >= len(m.dockerContainers) {
 			m.selectedDockerContainer = 0
+		}
+		return m, nil
+
+	case dockerImagesLoadedMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.dockerImages = msg.images
+		m.err = nil
+		if len(m.dockerImages) > 0 && m.selectedDockerImage >= len(m.dockerImages) {
+			m.selectedDockerImage = 0
 		}
 		return m, nil
 
@@ -208,6 +228,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleProjectListKeys(msg)
 	case DockerContainerListView:
 		return m.handleDockerListKeys(msg)
+	case ImageListView:
+		return m.handleImageListKeys(msg)
 	default:
 		return m, nil
 	}
@@ -292,6 +314,14 @@ func (m *Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleDockerListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.dockerListViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleImageListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.imageListViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

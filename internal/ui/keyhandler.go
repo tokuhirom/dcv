@@ -480,3 +480,58 @@ func (m *Model) GetStyledHelpText() string {
 
 	return style.Render(helpText)
 }
+
+// Image list handlers
+func (m *Model) SelectUpImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerImage > 0 {
+		m.selectedDockerImage--
+	}
+	return m, nil
+}
+
+func (m *Model) SelectDownImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerImage < len(m.dockerImages)-1 {
+		m.selectedDockerImage++
+	}
+	return m, nil
+}
+
+func (m *Model) ShowImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = ImageListView
+	m.loading = true
+	return m, loadDockerImages(m.dockerClient, m.showAll)
+}
+
+func (m *Model) RefreshImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.loading = true
+	return m, loadDockerImages(m.dockerClient, m.showAll)
+}
+
+func (m *Model) ToggleAllImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.showAll = !m.showAll
+	m.loading = true
+	return m, loadDockerImages(m.dockerClient, m.showAll)
+}
+
+func (m *Model) DeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerImage < len(m.dockerImages) {
+		image := m.dockerImages[m.selectedDockerImage]
+		m.loading = true
+		return m, removeImage(m.dockerClient, image.GetRepoTag(), false)
+	}
+	return m, nil
+}
+
+func (m *Model) ForceDeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerImage < len(m.dockerImages) {
+		image := m.dockerImages[m.selectedDockerImage]
+		m.loading = true
+		return m, removeImage(m.dockerClient, image.GetRepoTag(), true)
+	}
+	return m, nil
+}
+
+func (m *Model) BackFromImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = ComposeProcessListView
+	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+}
