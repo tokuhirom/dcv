@@ -475,3 +475,25 @@ func (c *Client) InspectContainer(containerID string) (string, error) {
 	
 	return string(prettyJSON), nil
 }
+
+func (c *Client) InspectImage(imageID string) (string, error) {
+	output, err := c.executeCaptured("image", "inspect", imageID)
+	if err != nil {
+		return "", fmt.Errorf("failed to inspect image: %w\nOutput: %s", err, string(output))
+	}
+	
+	// Pretty format the JSON output
+	var jsonData interface{}
+	if err := json.Unmarshal(output, &jsonData); err != nil {
+		// If we can't parse it, return raw output
+		return string(output), nil
+	}
+	
+	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
+	if err != nil {
+		// If we can't pretty print, return raw output
+		return string(output), nil
+	}
+	
+	return string(prettyJSON), nil
+}

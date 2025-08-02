@@ -547,6 +547,17 @@ func (m *Model) BackFromImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 }
 
+func (m *Model) ShowImageInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerImage < len(m.dockerImages) {
+		image := m.dockerImages[m.selectedDockerImage]
+		m.inspectImageID = image.ID
+		m.inspectContainerID = "" // Clear container ID
+		m.loading = true
+		return m, loadImageInspect(m.dockerClient, image.ID)
+	}
+	return m, nil
+}
+
 // Network list handlers
 func (m *Model) SelectUpNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDockerNetwork > 0 {
@@ -802,6 +813,13 @@ func (m *Model) GoToInspectStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Check if we were inspecting an image
+	if m.inspectImageID != "" {
+		m.currentView = ImageListView
+		m.inspectImageID = ""
+		return m, nil
+	}
+	
 	// Check where we came from based on the container ID
 	for _, container := range m.dockerContainers {
 		if container.ID == m.inspectContainerID {

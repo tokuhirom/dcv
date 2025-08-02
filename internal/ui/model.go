@@ -94,6 +94,7 @@ type Model struct {
 	inspectContent     string
 	inspectScrollY     int
 	inspectContainerID string
+	inspectImageID     string
 
 	// Log view state
 	logs          []string
@@ -532,6 +533,16 @@ func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
 func loadInspect(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
 		content, err := client.InspectContainer(containerID)
+		return inspectLoadedMsg{
+			content: content,
+			err:     err,
+		}
+	}
+}
+
+func loadImageInspect(client *docker.Client, imageID string) tea.Cmd {
+	return func() tea.Msg {
+		content, err := client.InspectImage(imageID)
 		return inspectLoadedMsg{
 			content: content,
 			err:     err,

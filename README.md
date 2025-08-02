@@ -99,6 +99,7 @@ Displays Docker images with repository, tag, ID, creation time, and size informa
 **Key bindings:**
 - `↑`/`k`: Move up
 - `↓`/`j`: Move down
+- `I`: Inspect image (view full config)
 - `a`: Toggle show all images (including intermediate layers)
 - `r`: Refresh list
 - `D`: Remove selected image

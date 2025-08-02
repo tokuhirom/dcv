@@ -70,6 +70,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 3. **Image List View**: Shows Docker images with repository, tag, ID, creation time, and size
    - `↑`/`k`: Move up
    - `↓`/`j`: Move down
+   - `I`: Inspect image (view full config)
    - `a`: Toggle show all images (including intermediate layers)
    - `r`: Refresh list
    - `D`: Remove selected image
@@ -161,7 +162,6 @@ go build -o dcv
 
 ### Image Management
 - **Pull images** (`docker pull`) - Download new images
-- **Image inspect** - View detailed image information
 - **Image history** - Show layer history
 - **Search Docker Hub** (`docker search`)
 - **Build images** from Dockerfile
