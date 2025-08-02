@@ -28,7 +28,7 @@ func (m *Model) SelectUpContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) SelectDownContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers)-1 {
+	if m.selectedContainer < len(m.composeContainers)-1 {
 		m.selectedContainer++
 	}
 	return m, nil
@@ -114,8 +114,8 @@ func (m *Model) StartSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // View-specific handlers
 func (m *Model) ShowComposeLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		process := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		process := m.composeContainers[m.selectedContainer]
 		m.containerName = process.Name
 		m.isDindLog = false
 		m.currentView = LogView
@@ -141,8 +141,8 @@ func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		if container.IsDind() {
 			m.currentDindHost = container.Name
 			m.currentDindContainerID = container.ID
@@ -198,8 +198,8 @@ func (m *Model) ShowStatsView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowTopView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		m.topService = container.Service
 		m.currentView = TopView
 		m.loading = true
@@ -209,8 +209,8 @@ func (m *Model) ShowTopView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) KillContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		m.loading = true
 		return m, killService(m.dockerClient, container.ID)
 	}
@@ -218,8 +218,8 @@ func (m *Model) KillContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) StopContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		m.loading = true
 		return m, stopService(m.dockerClient, container.ID)
 	}
@@ -227,8 +227,8 @@ func (m *Model) StopContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) UpService(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		m.loading = true
 		return m, startService(m.dockerClient, container.Service)
 	}
@@ -236,8 +236,8 @@ func (m *Model) UpService(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) RestartContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		m.loading = true
 		return m, restartService(m.dockerClient, container.ID)
 	}
@@ -245,9 +245,9 @@ func (m *Model) RestartContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) DeleteContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
-		// Only allow removing stopped containers
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		// Only allow removing stopped composeContainers
 		if !strings.Contains(container.GetStatus(), "Up") && !strings.Contains(container.State, "running") {
 			m.loading = true
 			return m, removeService(m.dockerClient, container.ID)
@@ -368,7 +368,7 @@ func (m *Model) RestartDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) DeleteDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		// Only allow removing stopped containers
+		// Only allow removing stopped composeContainers
 		if !strings.Contains(container.Status, "Up") && !strings.Contains(container.State, "running") {
 			m.loading = true
 			return m, removeService(m.dockerClient, container.ID)
@@ -607,8 +607,8 @@ func (m *Model) BackFromNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // File browser handlers
 func (m *Model) ShowFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		m.browsingContainerID = container.ID
 		m.browsingContainerName = container.Name
 		m.currentPath = "/"
@@ -651,11 +651,11 @@ func (m *Model) SelectDownFile(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) OpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedFile < len(m.containerFiles) {
 		file := m.containerFiles[m.selectedFile]
-		
+
 		if file.Name == "." {
 			return m, nil
 		}
-		
+
 		if file.Name == ".." {
 			// Go up one directory
 			if m.currentPath != "/" {
@@ -668,9 +668,9 @@ func (m *Model) OpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.selectedFile = 0
 			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
 		}
-		
+
 		newPath := filepath.Join(m.currentPath, file.Name)
-		
+
 		if file.IsDir {
 			// Navigate into directory
 			m.currentPath = newPath
@@ -746,8 +746,8 @@ func (m *Model) BackFromFileContent(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // Execute command handlers
 func (m *Model) ExecuteShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		// Default to /bin/sh as it's most commonly available
 		return m, executeInteractiveCommand(container.ID, []string{"/bin/sh"})
 	}
@@ -765,8 +765,8 @@ func (m *Model) ExecuteDockerShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // Inspect handlers
 func (m *Model) ShowInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		m.inspectContainerID = container.ID
 		m.loading = true
 		return m, loadInspect(m.dockerClient, container.ID)
@@ -821,7 +821,7 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.inspectImageID = ""
 		return m, nil
 	}
-	
+
 	// Check where we came from based on the container ID
 	for _, container := range m.dockerContainers {
 		if container.ID == m.inspectContainerID {
@@ -836,8 +836,8 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // Pause/Unpause handlers
 func (m *Model) PauseContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		container := m.containers[m.selectedContainer]
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
 		// Check if container is already paused
 		if strings.Contains(container.State, "paused") {
 			// Container is paused, so unpause it

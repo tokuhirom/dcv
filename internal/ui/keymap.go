@@ -10,7 +10,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.SelectUpContainer},
 		{[]string{"down", "j"}, "move down", m.SelectDownContainer},
 		{[]string{"enter"}, "view logs", m.ShowComposeLog},
-		{[]string{"d"}, "dind containers", m.ShowDindProcessList},
+		{[]string{"d"}, "dind composeContainers", m.ShowDindProcessList},
 		{[]string{"p"}, "docker ps", m.ShowDockerContainerList},
 		{[]string{"i"}, "docker images", m.ShowImageList},
 		{[]string{"n"}, "docker networks", m.ShowNetworkList},

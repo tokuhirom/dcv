@@ -23,13 +23,13 @@ func TestView(t *testing.T) {
 			contains: []string{"Loading..."},
 		},
 		{
-			name: "process list with containers",
+			name: "process list with composeContainers",
 			model: Model{
 				currentView: ComposeProcessListView,
 				width:       80,
 				height:      24,
 				loading:     false,
-				containers: []models.ComposeContainer{
+				composeContainers: []models.ComposeContainer{
 					{
 						Name:    "web-1",
 						Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
@@ -170,7 +170,7 @@ func TestRenderProcessList(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		containers: []models.ComposeContainer{
+		composeContainers: []models.ComposeContainer{
 			{
 				Name:    "web-1",
 				Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
@@ -249,7 +249,7 @@ func TestRenderDindList(t *testing.T) {
 	// Check title
 	assert.Contains(t, view, "Docker in Docker: dind-1")
 
-	// Check containers are listed
+	// Check composeContainers are listed
 	assert.Contains(t, view, "abc123def456") // First 12 chars
 	assert.Contains(t, view, "def456ghi789") // First 12 chars
 	assert.Contains(t, view, "alpine:latest")
@@ -258,15 +258,15 @@ func TestRenderDindList(t *testing.T) {
 
 func TestViewWithNoContainers(t *testing.T) {
 	m := Model{
-		currentView: ComposeProcessListView,
-		width:       80,
-		height:      24,
-		loading:     false,
-		containers:  []models.ComposeContainer{},
+		currentView:       ComposeProcessListView,
+		width:             80,
+		height:            24,
+		loading:           false,
+		composeContainers: []models.ComposeContainer{},
 	}
 
 	view := m.renderComposeProcessList()
-	assert.Contains(t, view, "No containers found")
+	assert.Contains(t, view, "No composeContainers found")
 	assert.Contains(t, view, "Press 'r' to refresh")
 }
 
@@ -276,7 +276,7 @@ func TestTableRendering(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		containers: []models.ComposeContainer{
+		composeContainers: []models.ComposeContainer{
 			{
 				Name:    "web-1",
 				Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
@@ -372,7 +372,7 @@ func TestDockerContainerListView(t *testing.T) {
 
 		view := m.View()
 
-		assert.Contains(t, view, "No containers found")
+		assert.Contains(t, view, "No composeContainers found")
 		assert.Contains(t, view, "Press 'r' to refresh")
 	})
 }

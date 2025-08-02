@@ -51,9 +51,9 @@ type Model struct {
 	dockerClient *docker.Client
 
 	// Process list state
-	containers        []models.ComposeContainer
+	composeContainers []models.ComposeContainer
 	selectedContainer int
-	showAll           bool // Toggle to show all containers including stopped ones
+	showAll           bool // Toggle to show all composeContainers including stopped ones
 
 	// Compose list state
 	projects        []models.ComposeProject
@@ -65,7 +65,7 @@ type Model struct {
 	currentDindHost        string // Container name (for display)
 	currentDindContainerID string // Service name (for docker compose exec)
 
-	// Docker containers state (plain docker ps)
+	// Docker composeContainers state (plain docker ps)
 	dockerContainers        []models.DockerContainer
 	selectedDockerContainer int
 
@@ -177,7 +177,7 @@ func (m *Model) Init() tea.Cmd {
 		)
 	}
 
-	// Otherwise, try to load containers first - if it fails due to a missing compose file,
+	// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
 	// we'll switch to the project list view in the update
 	return tea.Batch(
 		loadProcesses(m.dockerClient, m.projectName, m.showAll),
@@ -281,7 +281,7 @@ type inspectLoadedMsg struct {
 
 func loadProcesses(client *docker.Client, projectName string, showAll bool) tea.Cmd {
 	return func() tea.Msg {
-		slog.Info("Loading containers",
+		slog.Info("Loading composeContainers",
 			slog.Bool("showAll", showAll))
 		processes, err := client.Compose(projectName).ListContainers(showAll)
 		return processesLoadedMsg{

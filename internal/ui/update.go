@@ -24,7 +24,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case processesLoadedMsg:
 		m.loading = false
 		// Example debug logging
-		slog.Debug("Loaded containers", slog.Int("count", len(msg.processes)))
+		slog.Debug("Loaded composeContainers", slog.Int("count", len(msg.processes)))
 		if msg.err != nil {
 			// Check if error is due to missing compose file
 			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
@@ -36,9 +36,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.containers = msg.processes
+		m.composeContainers = msg.processes
 		m.err = nil
-		if len(m.containers) > 0 && m.selectedContainer >= len(m.containers) {
+		if len(m.composeContainers) > 0 && m.selectedContainer >= len(m.composeContainers) {
 			m.selectedContainer = 0
 		}
 		return m, nil

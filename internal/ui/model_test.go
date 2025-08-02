@@ -14,7 +14,7 @@ func TestNewModel(t *testing.T) {
 	assert.Equal(t, ComposeProcessListView, m.currentView)
 	assert.NotNil(t, m.dockerClient)
 	assert.True(t, m.loading)
-	assert.Empty(t, m.containers)
+	assert.Empty(t, m.composeContainers)
 	assert.Equal(t, 0, m.selectedContainer)
 }
 
@@ -55,10 +55,10 @@ func TestProcessesLoadedMsg(t *testing.T) {
 
 	assert.False(t, m.loading)
 	assert.Nil(t, m.err)
-	assert.Equal(t, 2, len(m.containers))
-	assert.Equal(t, "web-1", m.containers[0].Name)
-	assert.Equal(t, "dind-1", m.containers[1].Name)
-	assert.True(t, m.containers[1].IsDind())
+	assert.Equal(t, 2, len(m.composeContainers))
+	assert.Equal(t, "web-1", m.composeContainers[0].Name)
+	assert.Equal(t, "dind-1", m.composeContainers[1].Name)
+	assert.True(t, m.composeContainers[1].IsDind())
 	assert.Nil(t, cmd)
 }
 
@@ -82,7 +82,7 @@ func TestKeyNavigation(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.loading = false
-	m.containers = []models.ComposeContainer{
+	m.composeContainers = []models.ComposeContainer{
 		{Name: "web-1"},
 		{Name: "db-1"},
 		{Name: "redis-1"},
@@ -122,7 +122,7 @@ func TestViewSwitching(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.loading = false
-	m.containers = []models.ComposeContainer{
+	m.composeContainers = []models.ComposeContainer{
 		{
 			Name: "web-1",
 		},

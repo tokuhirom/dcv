@@ -12,39 +12,39 @@ import (
 // Styles
 var (
 	titleStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("86")).
-		MarginBottom(1)
+			Bold(true).
+			Foreground(lipgloss.Color("86")).
+			MarginBottom(1)
 
 	selectedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("86")).
-		Background(lipgloss.Color("235"))
+			Foreground(lipgloss.Color("86")).
+			Background(lipgloss.Color("235"))
 
 	normalStyle = lipgloss.NewStyle()
 
 	errorStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("196")).
-		Bold(true)
+			Foreground(lipgloss.Color("196")).
+			Bold(true)
 
 	helpStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("241"))
+			Foreground(lipgloss.Color("241"))
 
 	headerStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("226"))
+			Bold(true).
+			Foreground(lipgloss.Color("226"))
 
 	dindStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("42"))
+			Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("42"))
+			Foreground(lipgloss.Color("42"))
 
 	statusDownStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("196"))
+			Foreground(lipgloss.Color("196"))
 
 	searchStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("226")).
-		Bold(true)
+			Foreground(lipgloss.Color("226")).
+			Bold(true)
 )
 
 // View returns the view for the current model
@@ -110,12 +110,12 @@ func (m *Model) renderComposeProcessList() string {
 	}
 
 	if m.loading {
-		s.WriteString("Loading containers...")
+		s.WriteString("Loading composeContainers...")
 		return s.String()
 	}
 
-	if len(m.containers) == 0 {
-		s.WriteString("No containers found\n")
+	if len(m.composeContainers) == 0 {
+		s.WriteString("No composeContainers found\n")
 		s.WriteString("\n" + helpStyle.Render("Press 'r' to refresh, 'q' to quit"))
 		return s.String()
 	}
@@ -135,7 +135,7 @@ func (m *Model) renderComposeProcessList() string {
 	})
 
 	// Add rows
-	for i, container := range m.containers {
+	for i, container := range m.composeContainers {
 		nameStyle := normalStyle
 		if container.IsDind() {
 			nameStyle = dindStyle
@@ -237,12 +237,12 @@ func (m *Model) renderDindList() string {
 	}
 
 	if m.loading {
-		slog.Info("Loading dind containers...")
+		slog.Info("Loading dind composeContainers...")
 		return s.String()
 	}
 
 	if len(m.dindContainers) == 0 {
-		s.WriteString("No containers found in dind\n")
+		s.WriteString("No composeContainers found in dind\n")
 		s.WriteString("\n" + helpStyle.Render("Press 'r' to refresh, 'Esc' to go back"))
 		return s.String()
 	}
@@ -467,12 +467,12 @@ func (m *Model) renderDockerList() string {
 	}
 
 	if m.loading {
-		s.WriteString("Loading containers...")
+		s.WriteString("Loading composeContainers...")
 		return s.String()
 	}
 
 	if len(m.dockerContainers) == 0 {
-		s.WriteString("No containers found\n")
+		s.WriteString("No composeContainers found\n")
 		s.WriteString("\n" + helpStyle.Render("Press 'r' to refresh, 'a' to toggle all, 'esc' to go back"))
 		return s.String()
 	}
