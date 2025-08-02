@@ -8,6 +8,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - List view of all Docker containers (both plain Docker and Docker Compose managed)
 - List and manage Docker images
 - List and manage Docker networks
+- Browse files inside containers
 - Multiple Docker Compose project management and switching
 - Log viewing capability for any container
 - Special handling for dind (Docker-in-Docker) containers to view nested containers
@@ -26,6 +27,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `↑`/`k`: Move up
    - `↓`/`j`: Move down
    - `Enter`: View container logs
+   - `f`: Browse container files
    - `a`: Toggle show all containers (including stopped)
    - `K`: Kill container
    - `S`: Stop container
@@ -40,6 +42,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `↓`/`j`: Move down
    - `Enter`: View container logs
    - `d`: Navigate to dind process list (for dind containers)
+   - `f`: Browse container files
    - `p`: Switch to Docker container list view
    - `i`: Switch to Docker image list view
    - `n`: Switch to Docker network list view
@@ -102,6 +105,20 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `D`: Remove selected network (except default networks)
    - `Esc`/`q`: Back to Docker Compose process list
 
+10. **File Browser View**: Browse filesystem inside containers
+    - `↑`/`k`: Move up
+    - `↓`/`j`: Move down
+    - `Enter`: Open directory or view file
+    - `r`: Refresh list
+    - `Esc`/`q`: Back to container list
+
+11. **File Content View**: View file contents from containers
+    - `↑`/`k`: Scroll up
+    - `↓`/`j`: Scroll down
+    - `G`: Jump to end
+    - `g`: Jump to start
+    - `Esc`/`q`: Back to file browser
+
 ## Development Guidelines
 
 - Follow vim-style keybindings for all shortcuts
@@ -128,6 +145,7 @@ go build -o dcv
 - **Container inspect** - View detailed container configuration
 - **Container pause/unpause** - Temporarily freeze containers
 - **Container rename** - Change container names
+- **Download files from container** - Save container files locally
 
 ### Image Management
 - **Pull images** (`docker pull`) - Download new images

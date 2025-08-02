@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -463,6 +464,10 @@ func (m *Model) GetHelpText() string {
 		configs = m.imageListViewHandlers
 	case NetworkListView:
 		configs = m.networkListViewHandlers
+	case FileBrowserView:
+		configs = m.fileBrowserHandlers
+	case FileContentView:
+		configs = m.fileContentHandlers
 	default:
 		return ""
 	}
@@ -583,4 +588,143 @@ func (m *Model) DeleteNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) BackFromNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+}
+
+// File browser handlers
+func (m *Model) ShowFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		m.browsingContainerID = container.ID
+		m.browsingContainerName = container.Name
+		m.currentPath = "/"
+		m.pathHistory = []string{"/"}
+		m.currentView = FileBrowserView
+		m.loading = true
+		return m, loadContainerFiles(m.dockerClient, container.ID, "/")
+	}
+	return m, nil
+}
+
+func (m *Model) ShowDockerFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		m.browsingContainerID = container.ID
+		m.browsingContainerName = container.Names
+		m.currentPath = "/"
+		m.pathHistory = []string{"/"}
+		m.currentView = FileBrowserView
+		m.loading = true
+		return m, loadContainerFiles(m.dockerClient, container.ID, "/")
+	}
+	return m, nil
+}
+
+func (m *Model) SelectUpFile(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedFile > 0 {
+		m.selectedFile--
+	}
+	return m, nil
+}
+
+func (m *Model) SelectDownFile(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedFile < len(m.containerFiles)-1 {
+		m.selectedFile++
+	}
+	return m, nil
+}
+
+func (m *Model) OpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedFile < len(m.containerFiles) {
+		file := m.containerFiles[m.selectedFile]
+		
+		if file.Name == "." {
+			return m, nil
+		}
+		
+		if file.Name == ".." {
+			// Go up one directory
+			if m.currentPath != "/" {
+				m.currentPath = filepath.Dir(m.currentPath)
+				if len(m.pathHistory) > 1 {
+					m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
+				}
+			}
+			m.loading = true
+			m.selectedFile = 0
+			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
+		}
+		
+		newPath := filepath.Join(m.currentPath, file.Name)
+		
+		if file.IsDir {
+			// Navigate into directory
+			m.currentPath = newPath
+			m.pathHistory = append(m.pathHistory, newPath)
+			m.loading = true
+			m.selectedFile = 0
+			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, newPath)
+		} else {
+			// View file content
+			m.loading = true
+			return m, loadFileContent(m.dockerClient, m.browsingContainerID, newPath)
+		}
+	}
+	return m, nil
+}
+
+func (m *Model) RefreshFiles(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.loading = true
+	return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
+}
+
+func (m *Model) BackFromFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Check where we came from based on the container name prefix
+	for _, container := range m.dockerContainers {
+		if container.ID == m.browsingContainerID {
+			m.currentView = DockerContainerListView
+			return m, loadDockerContainers(m.dockerClient, m.showAll)
+		}
+	}
+	// Default to compose process list
+	m.currentView = ComposeProcessListView
+	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+}
+
+// File content handlers
+func (m *Model) ScrollFileUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.fileScrollY > 0 {
+		m.fileScrollY--
+	}
+	return m, nil
+}
+
+func (m *Model) ScrollFileDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	lines := strings.Split(m.fileContent, "\n")
+	maxScroll := len(lines) - (m.height - 5)
+	if m.fileScrollY < maxScroll && maxScroll > 0 {
+		m.fileScrollY++
+	}
+	return m, nil
+}
+
+func (m *Model) GoToFileEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	lines := strings.Split(m.fileContent, "\n")
+	maxScroll := len(lines) - (m.height - 5)
+	if maxScroll > 0 {
+		m.fileScrollY = maxScroll
+	}
+	return m, nil
+}
+
+func (m *Model) GoToFileStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.fileScrollY = 0
+	return m, nil
+}
+
+func (m *Model) BackFromFileContent(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = FileBrowserView
+	m.fileContent = ""
+	m.fileContentPath = ""
+	m.fileScrollY = 0
+	return m, nil
 }

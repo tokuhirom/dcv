@@ -198,6 +198,32 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case containerFilesLoadedMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.containerFiles = msg.files
+		m.err = nil
+		if len(m.containerFiles) > 0 && m.selectedFile >= len(m.containerFiles) {
+			m.selectedFile = 0
+		}
+		return m, nil
+
+	case fileContentLoadedMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.fileContent = msg.content
+		m.fileContentPath = msg.path
+		m.fileScrollY = 0
+		m.err = nil
+		m.currentView = FileContentView
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -247,6 +273,10 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleImageListKeys(msg)
 	case NetworkListView:
 		return m.handleNetworkListKeys(msg)
+	case FileBrowserView:
+		return m.handleFileBrowserKeys(msg)
+	case FileContentView:
+		return m.handleFileContentKeys(msg)
 	default:
 		return m, nil
 	}
@@ -347,6 +377,22 @@ func (m *Model) handleImageListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleNetworkListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.networkListViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleFileBrowserKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.fileBrowserKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.fileContentKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

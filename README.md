@@ -7,6 +7,7 @@ DCV is a TUI (Terminal User Interface) tool for monitoring Docker containers and
 - View all Docker containers (both standalone and Docker Compose managed)
 - List and manage Docker images
 - List and manage Docker networks
+- Browse files inside containers
 - List and manage Docker Compose containers
 - Switch between multiple Docker Compose projects
 - Real-time container log streaming (shows last 1000 lines, then follows new logs)
@@ -24,6 +25,7 @@ Displays `docker ps` results in a table format. Shows all Docker containers, not
 - `↑`/`k`: Move up
 - `↓`/`j`: Move down
 - `Enter`: View container logs
+- `f`: Browse container files
 - `a`: Toggle show all containers (including stopped)
 - `r`: Refresh list
 - `K`: Kill container
@@ -42,6 +44,7 @@ Displays `docker compose ps` results in a table format.
 - `↓`/`j`: Move down  
 - `Enter`: View container logs
 - `d`: View dind container contents (only for dind containers)
+- `f`: Browse container files
 - `p`: Switch to Docker container list view
 - `i`: Switch to Docker image list view
 - `n`: Switch to Docker network list view
@@ -96,6 +99,28 @@ Displays Docker networks with ID, name, driver, scope, and container count.
 - `r`: Refresh list
 - `D`: Remove selected network (except default networks)
 - `Esc`/`q`: Back to Docker Compose process list
+
+### File Browser View
+
+Browse the filesystem inside a container. Navigate directories and view file contents.
+
+**Key bindings:**
+- `↑`/`k`: Move up
+- `↓`/`j`: Move down
+- `Enter`: Open directory or view file
+- `r`: Refresh list
+- `Esc`/`q`: Back to container list
+
+### File Content View
+
+View the contents of a file from within a container.
+
+**Key bindings:**
+- `↑`/`k`: Scroll up
+- `↓`/`j`: Scroll down
+- `G`: Jump to end
+- `g`: Jump to start
+- `Esc`/`q`: Back to file browser
 
 ## Usage
 

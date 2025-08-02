@@ -37,6 +37,8 @@ const (
 	DockerContainerListView
 	ImageListView
 	NetworkListView
+	FileBrowserView
+	FileContentView
 )
 
 // Model represents the application state
@@ -73,6 +75,19 @@ type Model struct {
 	// Docker networks state
 	dockerNetworks        []models.DockerNetwork
 	selectedDockerNetwork int
+
+	// File browser state
+	containerFiles        []models.ContainerFile
+	selectedFile          int
+	currentPath           string
+	browsingContainerID   string
+	browsingContainerName string
+	pathHistory           []string
+
+	// File content view state
+	fileContent     string
+	fileContentPath string
+	fileScrollY     int
 
 	// Log view state
 	logs          []string
@@ -124,6 +139,10 @@ type Model struct {
 	imageListViewHandlers   []KeyConfig
 	networkListViewKeymap   map[string]KeyHandler
 	networkListViewHandlers []KeyConfig
+	fileBrowserKeymap       map[string]KeyHandler
+	fileBrowserHandlers     []KeyConfig
+	fileContentKeymap       map[string]KeyHandler
+	fileContentHandlers     []KeyConfig
 }
 
 // NewModel creates a new model with initial state
@@ -226,6 +245,17 @@ type dockerImagesLoadedMsg struct {
 type dockerNetworksLoadedMsg struct {
 	networks []models.DockerNetwork
 	err      error
+}
+
+type containerFilesLoadedMsg struct {
+	files []models.ContainerFile
+	err   error
+}
+
+type fileContentLoadedMsg struct {
+	content string
+	path    string
+	err     error
 }
 
 // Commands
@@ -424,6 +454,27 @@ func removeNetwork(client *docker.Client, networkID string) tea.Cmd {
 		return serviceActionCompleteMsg{
 			action:  "remove network",
 			service: networkID,
+			err:     err,
+		}
+	}
+}
+
+func loadContainerFiles(client *docker.Client, containerID, path string) tea.Cmd {
+	return func() tea.Msg {
+		files, err := client.ListContainerFiles(containerID, path)
+		return containerFilesLoadedMsg{
+			files: files,
+			err:   err,
+		}
+	}
+}
+
+func loadFileContent(client *docker.Client, containerID, path string) tea.Cmd {
+	return func() tea.Msg {
+		content, err := client.ReadContainerFile(containerID, path)
+		return fileContentLoadedMsg{
+			content: content,
+			path:    path,
 			err:     err,
 		}
 	}
