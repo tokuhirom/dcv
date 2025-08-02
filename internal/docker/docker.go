@@ -27,39 +27,6 @@ func (c *Client) Compose(projectName string) *ComposeClient {
 	}
 }
 
-// ListComposeProjects lists all Docker Compose projects
-func (c *Client) ListComposeProjects() ([]models.ComposeProject, error) {
-	output, err := c.executeCaptured("compose", "ls", "--format", "json")
-	if err != nil {
-		return nil, fmt.Errorf("failed to executeCaptured docker compose ls: %w\nOutput: %s", err, string(output))
-	}
-
-	// Handle empty output
-	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
-		return []models.ComposeProject{}, nil
-	}
-
-	// Parse JSON output - docker compose ls returns an array
-	var projects []models.ComposeProject
-	if err := json.Unmarshal(output, &projects); err != nil {
-		// Fallback to line-delimited JSON parsing for older versions
-		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-		for _, line := range lines {
-			if line == "" {
-				continue
-			}
-
-			var project models.ComposeProject
-			if err := json.Unmarshal([]byte(line), &project); err != nil {
-				return nil, fmt.Errorf("failed to parse project JSON: %w", err)
-			}
-			projects = append(projects, project)
-		}
-	}
-
-	return projects, nil
-}
-
 // executeCaptured executes a command and logs the result
 func (c *Client) executeCaptured(args ...string) ([]byte, error) {
 	cmd := c.execute(args...)
@@ -96,6 +63,39 @@ func (c *Client) execute(args ...string) *exec.Cmd {
 		slog.String("args", strings.Join(args, " ")))
 
 	return exec.Command("docker", args...)
+}
+
+// ListComposeProjects lists all Docker Compose projects
+func (c *Client) ListComposeProjects() ([]models.ComposeProject, error) {
+	output, err := c.executeCaptured("compose", "ls", "--format", "json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to executeCaptured docker compose ls: %w\nOutput: %s", err, string(output))
+	}
+
+	// Handle empty output
+	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
+		return []models.ComposeProject{}, nil
+	}
+
+	// Parse JSON output - docker compose ls returns an array
+	var projects []models.ComposeProject
+	if err := json.Unmarshal(output, &projects); err != nil {
+		// Fallback to line-delimited JSON parsing for older versions
+		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+
+			var project models.ComposeProject
+			if err := json.Unmarshal([]byte(line), &project); err != nil {
+				return nil, fmt.Errorf("failed to parse project JSON: %w", err)
+			}
+			projects = append(projects, project)
+		}
+	}
+
+	return projects, nil
 }
 
 func (c *Client) GetContainerLogs(containerID string, follow bool) (*exec.Cmd, error) {
@@ -228,6 +228,7 @@ func (c *ComposeClient) UpService(serviceName string) error {
 
 	return nil
 }
+
 func (c *Client) GetStats() (string, error) {
 	output, err := c.executeCaptured("stats", "--no-stream", "--format", "json", "--all")
 	if err != nil {
