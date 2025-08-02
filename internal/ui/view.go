@@ -72,6 +72,10 @@ func (m *Model) View() string {
 		return m.renderImageList()
 	case NetworkListView:
 		return m.renderNetworkList()
+	case FileBrowserView:
+		return m.renderFileBrowser()
+	case FileContentView:
+		return m.renderFileContent()
 	default:
 		return "Unknown view"
 	}

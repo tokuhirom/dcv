@@ -386,3 +386,24 @@ func (c *Client) RemoveNetwork(networkID string) error {
 
 	return nil
 }
+
+func (c *Client) ListContainerFiles(containerID, path string) ([]models.ContainerFile, error) {
+	// Use ls -la to get detailed file information
+	output, err := c.executeCaptured("exec", containerID, "ls", "-la", path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files in container: %w\nOutput: %s", err, string(output))
+	}
+
+	files := models.ParseLsOutput(string(output))
+	return files, nil
+}
+
+func (c *Client) ReadContainerFile(containerID, path string) (string, error) {
+	// Use cat to read file contents
+	output, err := c.executeCaptured("exec", containerID, "cat", path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file in container: %w\nOutput: %s", err, string(output))
+	}
+
+	return string(output), nil
+}

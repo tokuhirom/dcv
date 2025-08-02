@@ -14,6 +14,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"p"}, "docker ps", m.ShowDockerContainerList},
 		{[]string{"i"}, "docker images", m.ShowImageList},
 		{[]string{"n"}, "docker networks", m.ShowNetworkList},
+		{[]string{"f"}, "browse files", m.ShowFileBrowser},
 		{[]string{"r"}, "refresh", m.RefreshProcessList},
 		{[]string{"a"}, "toggle all", m.ToggleAllContainers},
 		{[]string{"s"}, "stats", m.ShowStatsView},
@@ -75,6 +76,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.SelectUpDockerContainer},
 		{[]string{"down", "j"}, "move down", m.SelectDownDockerContainer},
 		{[]string{"enter"}, "view logs", m.ShowDockerLog},
+		{[]string{"f"}, "browse files", m.ShowDockerFileBrowser},
 		{[]string{"r"}, "refresh", m.RefreshDockerList},
 		{[]string{"a"}, "toggle all", m.ToggleAllDockerContainers},
 		{[]string{"K"}, "kill", m.KillDockerContainer},
@@ -107,6 +109,26 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"esc", "q"}, "back", m.BackFromNetworkList},
 	}
 	m.networkListViewKeymap = m.createKeymap(m.networkListViewHandlers)
+
+	// File Browser View
+	m.fileBrowserHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.SelectUpFile},
+		{[]string{"down", "j"}, "move down", m.SelectDownFile},
+		{[]string{"enter"}, "open", m.OpenFileOrDirectory},
+		{[]string{"r"}, "refresh", m.RefreshFiles},
+		{[]string{"esc", "q"}, "back", m.BackFromFileBrowser},
+	}
+	m.fileBrowserKeymap = m.createKeymap(m.fileBrowserHandlers)
+
+	// File Content View
+	m.fileContentHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "scroll up", m.ScrollFileUp},
+		{[]string{"down", "j"}, "scroll down", m.ScrollFileDown},
+		{[]string{"G"}, "go to end", m.GoToFileEnd},
+		{[]string{"g"}, "go to start", m.GoToFileStart},
+		{[]string{"esc", "q"}, "back", m.BackFromFileContent},
+	}
+	m.fileContentKeymap = m.createKeymap(m.fileContentHandlers)
 
 	slog.Info("Initialized all view keymaps")
 }
