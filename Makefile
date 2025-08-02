@@ -1,4 +1,4 @@
-.PHONY: all up down logs test-dind clean staticcheck
+.PHONY: all up down logs test-dind clean staticcheck test
 
 all:
 	go build -o dcv
@@ -33,3 +33,5 @@ staticcheck:
 	@which staticcheck > /dev/null || go install honnef.co/go/tools/cmd/staticcheck@latest
 	staticcheck ./...
 
+test
+	go test -v ./...
