@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -11,19 +10,6 @@ import (
 func (m *Model) renderProjectList() string {
 	var s strings.Builder
 
-	title := titleStyle.Render("Docker Compose Projects")
-	s.WriteString(title + "\n")
-
-	if m.loading {
-		s.WriteString("\nLoading...\n")
-		return s.String()
-	}
-
-	if m.err != nil {
-		s.WriteString("\n" + errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
-		return s.String()
-	}
-
 	if len(m.projects) == 0 {
 		s.WriteString("\nNo Docker Compose projects found.\n")
 		s.WriteString("\nPress q to quit\n")
@@ -31,7 +17,6 @@ func (m *Model) renderProjectList() string {
 	}
 
 	// Project list
-	s.WriteString("\n")
 
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
@@ -65,10 +50,7 @@ func (m *Model) renderProjectList() string {
 		t.Row(project.Name, status, configFiles)
 	}
 
-	s.WriteString(t.Render() + "\n\n")
-
-	// Show help hint
-	s.WriteString(helpStyle.Render("Press ? for help"))
+	s.WriteString(t.Render() + "\n")
 
 	return s.String()
 }

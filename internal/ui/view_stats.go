@@ -11,26 +11,12 @@ import (
 func (m *Model) renderStatsView() string {
 	var s strings.Builder
 
-	title := titleStyle.Render("Container Resource Usage")
-	s.WriteString(title + "\n")
-
-	if m.loading {
-		s.WriteString("\nLoading...\n")
-		return s.String()
-	}
-
-	if m.err != nil {
-		s.WriteString("\n" + errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
-		return s.String()
-	}
-
 	if len(m.stats) == 0 {
 		s.WriteString("\nNo stats available.\n")
 		return s.String()
 	}
 
 	// Stats table
-	s.WriteString("\n")
 
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
@@ -65,10 +51,7 @@ func (m *Model) renderStatsView() string {
 		t.Row(name, cpu, stat.MemUsage, stat.MemPerc, stat.NetIO, stat.BlockIO)
 	}
 
-	s.WriteString(t.Render() + "\n\n")
-
-	// Show help hint
-	s.WriteString(helpStyle.Render("Press ? for help"))
+	s.WriteString(t.Render() + "\n")
 
 	return s.String()
 }

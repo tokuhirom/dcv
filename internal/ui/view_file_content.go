@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -11,16 +10,6 @@ import (
 // renderFileContent renders the file content view
 func (m *Model) renderFileContent() string {
 	var content strings.Builder
-
-	// Title
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
-	title := fmt.Sprintf("File: %s [%s]", filepath.Base(m.fileContentPath), m.browsingContainerName)
-	content.WriteString(titleStyle.Render(title))
-	content.WriteString("\n\n")
-
-	if m.loading {
-		return content.String() + "Loading file content..."
-	}
 
 	if m.err != nil {
 		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))

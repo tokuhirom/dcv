@@ -11,24 +11,10 @@ import (
 func (m *Model) renderFileBrowser() string {
 	var content strings.Builder
 
-	// Title
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
-	title := fmt.Sprintf("File Browser: %s [%s]", m.browsingContainerName, m.currentPath)
-	content.WriteString(titleStyle.Render(title))
-	content.WriteString("\n\n")
-
-	if m.loading {
-		return content.String() + "Loading files..."
-	}
-
-	if m.err != nil {
-		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
-		return content.String() + errorStyle.Render(fmt.Sprintf("Error: %v", m.err))
-	}
-
 	if len(m.containerFiles) == 0 {
 		dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-		return content.String() + dimStyle.Render("No files found or directory is empty")
+		content.WriteString(dimStyle.Render("No files found or directory is empty"))
+		return content.String()
 	}
 
 	// Table headers

@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 
@@ -15,26 +14,6 @@ func (m *Model) renderComposeProcessList() string {
 	slog.Info("Rendering container list",
 		slog.Int("selectedContainer", m.selectedContainer),
 		slog.Int("numContainers", len(m.composeContainers)))
-
-	// Title with project name
-	title := "Docker Compose"
-	if m.projectName != "" {
-		title = fmt.Sprintf("Docker Compose: %s", m.projectName)
-	}
-	s.WriteString(titleStyle.Render(title) + "\n")
-
-	// Loading state
-	if m.loading {
-		s.WriteString("\nLoading...\n")
-		return s.String()
-	}
-
-	// Error state
-	if m.err != nil {
-		s.WriteString("\n" + errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
-		s.WriteString("\nPress q to quit\n")
-		return s.String()
-	}
 
 	// Empty state
 	if len(m.composeContainers) == 0 {
@@ -90,9 +69,6 @@ func (m *Model) renderComposeProcessList() string {
 	}
 
 	s.WriteString(t.Render() + "\n\n")
-
-	// Show help hint
-	s.WriteString(helpStyle.Render("Press ? for help"))
 
 	return s.String()
 }

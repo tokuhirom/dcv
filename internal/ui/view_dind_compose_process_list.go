@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -10,19 +9,6 @@ import (
 
 func (m *Model) renderDindList() string {
 	var s strings.Builder
-
-	title := titleStyle.Render(fmt.Sprintf("Docker in Docker: %s", m.currentDindHost))
-	s.WriteString(title + "\n")
-
-	if m.loading {
-		s.WriteString("\nLoading...\n")
-		return s.String()
-	}
-
-	if m.err != nil {
-		s.WriteString("\n" + errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
-		return s.String()
-	}
 
 	if len(m.dindContainers) == 0 {
 		s.WriteString("\nNo containers running inside this dind container.\n")
@@ -73,9 +59,6 @@ func (m *Model) renderDindList() string {
 	}
 
 	s.WriteString(t.Render() + "\n\n")
-
-	// Show help hint
-	s.WriteString(helpStyle.Render("Press ? for help"))
 
 	return s.String()
 }

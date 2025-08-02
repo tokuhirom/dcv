@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -10,27 +9,6 @@ import (
 
 func (m *Model) renderImageList() string {
 	var s strings.Builder
-
-	// Title
-	title := "Docker Images"
-	if m.showAll {
-		title += " (All)"
-	}
-	s.WriteString(lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("86")).
-		Render(title) + "\n\n")
-
-	// Loading or error state
-	if m.loading {
-		s.WriteString("Loading images...\n")
-		return s.String()
-	}
-
-	if m.err != nil {
-		s.WriteString(fmt.Sprintf("Error: %v\n", m.err))
-		return s.String()
-	}
 
 	// No images
 	if len(m.dockerImages) == 0 {
@@ -111,10 +89,7 @@ func (m *Model) renderImageList() string {
 		t.Row(repo, tag, id, created, size)
 	}
 
-	s.WriteString(t.Render() + "\n\n")
-
-	// Show help hint
-	s.WriteString(helpStyle.Render("Press ? for help"))
+	s.WriteString(t.Render() + "\n")
 
 	return s.String()
 }

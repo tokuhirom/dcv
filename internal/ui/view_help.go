@@ -10,10 +10,6 @@ import (
 func (m *Model) renderHelpView() string {
 	var s strings.Builder
 
-	// Title
-	title := titleStyle.Render("Help")
-	s.WriteString(title + "\n\n")
-
 	// Get key configurations based on previous view
 	var configs []KeyConfig
 	viewName := ""

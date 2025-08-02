@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -11,29 +10,12 @@ import (
 func (m *Model) renderDockerList() string {
 	var s strings.Builder
 
-	title := "Docker Containers"
-	if m.showAll {
-		title += " (all)"
-	}
-	s.WriteString(titleStyle.Render(title) + "\n")
-
-	if m.loading {
-		s.WriteString("\nLoading...\n")
-		return s.String()
-	}
-
-	if m.err != nil {
-		s.WriteString("\n" + errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
-		return s.String()
-	}
-
 	if len(m.dockerContainers) == 0 {
 		s.WriteString("\nNo containers found.\n")
 		return s.String()
 	}
 
 	// Container list
-	s.WriteString("\n")
 
 	// Define consistent styles for table cells
 	idStyle := lipgloss.NewStyle().Width(12)
@@ -100,10 +82,7 @@ func (m *Model) renderDockerList() string {
 		t.Row(id, image, status, ports, name)
 	}
 
-	s.WriteString(t.Render() + "\n\n")
-
-	// Show help hint
-	s.WriteString(helpStyle.Render("Press ? for help"))
+	s.WriteString(t.Render() + "\n")
 
 	return s.String()
 }

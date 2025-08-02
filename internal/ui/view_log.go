@@ -8,12 +8,6 @@ import (
 func (m *Model) renderLogView() string {
 	var s strings.Builder
 
-	title := fmt.Sprintf("Logs: %s", m.containerName)
-	if m.isDindLog {
-		title = fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainer)
-	}
-	s.WriteString(titleStyle.Render(title) + "\n\n")
-
 	if m.loading && len(m.logs) == 0 {
 		s.WriteString("Loading logs...\n")
 		return s.String()
@@ -53,9 +47,6 @@ func (m *Model) renderLogView() string {
 		scrollInfo := fmt.Sprintf(" [%d-%d/%d] ", startIdx+1, endIdx, len(m.logs))
 		s.WriteString("\n" + helpStyle.Render(scrollInfo))
 	}
-
-	// Show help hint
-	s.WriteString(helpStyle.Render("Press ? for help"))
 
 	return s.String()
 }

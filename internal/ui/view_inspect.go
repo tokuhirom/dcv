@@ -11,21 +11,6 @@ import (
 func (m *Model) renderInspectView() string {
 	var content strings.Builder
 
-	// Title
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
-	title := fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
-	content.WriteString(titleStyle.Render(title))
-	content.WriteString("\n\n")
-
-	if m.loading {
-		return content.String() + "Loading inspect data..."
-	}
-
-	if m.err != nil {
-		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
-		return content.String() + errorStyle.Render(fmt.Sprintf("Error: %v", m.err))
-	}
-
 	// Split content into lines for scrolling
 	lines := strings.Split(m.inspectContent, "\n")
 	viewHeight := m.height - 5

@@ -1,6 +1,10 @@
 package ui
 
 import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -48,6 +52,101 @@ func (m *Model) View() string {
 		return "Loading..."
 	}
 
+	// Get title
+	title := m.viewTitle()
+	titleHeight := lipgloss.Height(titleStyle.Render(title))
+
+	// Handle loading state
+	if m.loading && m.currentView != LogView {
+		body := "\nLoading...\n"
+		return lipgloss.JoinVertical(lipgloss.Left, titleStyle.Render(title), body)
+	}
+
+	// Handle error state
+	if m.err != nil && m.currentView != LogView && m.currentView != FileContentView {
+		body := "\n" + errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n"
+		return lipgloss.JoinVertical(lipgloss.Left, titleStyle.Render(title), body)
+	}
+
+	// Get body content
+	body := m.viewBody()
+	bodyHeight := strings.Count(body, "\n") + 1
+
+	// Special handling for HelpView (it has its own footer)
+	if m.currentView == HelpView {
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			titleStyle.Render(title),
+			body,
+		)
+	}
+
+	// Calculate space for help hint
+	helpHint := helpStyle.Render("Press ? for help")
+	helpHeight := 1
+	totalContentHeight := titleHeight + bodyHeight + helpHeight + 1 // +1 for spacing
+
+	// Add padding if needed to push help to bottom
+	if totalContentHeight < m.height {
+		padding := m.height - totalContentHeight
+		body = body + strings.Repeat("\n", padding)
+	}
+
+	// Join all components
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		titleStyle.Render(title),
+		body,
+		helpHint,
+	)
+}
+
+func (m *Model) viewTitle() string {
+	switch m.currentView {
+	case ComposeProcessListView:
+		if m.projectName != "" {
+			return fmt.Sprintf("Docker Compose: %s", m.projectName)
+		}
+		return "Docker Compose"
+	case LogView:
+		if m.isDindLog {
+			return fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainer)
+		}
+		return fmt.Sprintf("Logs: %s", m.containerName)
+	case DindComposeProcessListView:
+		return fmt.Sprintf("Docker in Docker: %s", m.currentDindHost)
+	case TopView:
+		return fmt.Sprintf("Process Info: %s", m.topService)
+	case StatsView:
+		return "Container Resource Usage"
+	case ProjectListView:
+		return "Docker Compose Projects"
+	case DockerContainerListView:
+		if m.showAll {
+			return "Docker Containers (all)"
+		}
+		return "Docker Containers"
+	case ImageListView:
+		if m.showAll {
+			return "Docker Images (all)"
+		}
+		return "Docker Images"
+	case NetworkListView:
+		return "Docker Networks"
+	case FileBrowserView:
+		return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainerName, m.currentPath)
+	case FileContentView:
+		return fmt.Sprintf("File: %s [%s]", filepath.Base(m.fileContentPath), m.browsingContainerName)
+	case InspectView:
+		return fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
+	case HelpView:
+		return "Help"
+	default:
+		return "Unknown View"
+	}
+}
+
+func (m *Model) viewBody() string {
 	switch m.currentView {
 	case ComposeProcessListView:
 		return m.renderComposeProcessList()
