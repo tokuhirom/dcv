@@ -9,13 +9,6 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
-// Helper function to create a model with initialized key handlers
-func createTestModel(viewType ViewType) Model {
-	m := NewModel(viewType, "")
-	m.Init() // Initialize key handlers
-	return m
-}
-
 func TestHandleKeyPress(t *testing.T) {
 	tests := []struct {
 		name        string

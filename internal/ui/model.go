@@ -285,16 +285,6 @@ func removeService(client *docker.Client, containerID string) tea.Cmd {
 	}
 }
 
-func upService(client *docker.Client, projectName, serviceName string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.Compose(projectName).UpService(serviceName)
-		return serviceActionCompleteMsg{
-			action:  "up -d",
-			service: serviceName,
-			err:     err,
-		}
-	}
-}
 
 func up(client *docker.Client, projectName string) tea.Cmd {
 	return func() tea.Msg {
