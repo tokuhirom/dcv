@@ -36,6 +36,7 @@ const (
 	ProjectListView
 	DockerContainerListView
 	ImageListView
+	NetworkListView
 )
 
 // Model represents the application state
@@ -68,6 +69,10 @@ type Model struct {
 	// Docker images state
 	dockerImages        []models.DockerImage
 	selectedDockerImage int
+
+	// Docker networks state
+	dockerNetworks        []models.DockerNetwork
+	selectedDockerNetwork int
 
 	// Log view state
 	logs          []string
@@ -117,6 +122,8 @@ type Model struct {
 	dockerListViewHandlers  []KeyConfig
 	imageListViewKeymap     map[string]KeyHandler
 	imageListViewHandlers   []KeyConfig
+	networkListViewKeymap   map[string]KeyHandler
+	networkListViewHandlers []KeyConfig
 }
 
 // NewModel creates a new model with initial state
@@ -214,6 +221,11 @@ type dockerContainersLoadedMsg struct {
 type dockerImagesLoadedMsg struct {
 	images []models.DockerImage
 	err    error
+}
+
+type dockerNetworksLoadedMsg struct {
+	networks []models.DockerNetwork
+	err      error
 }
 
 // Commands
@@ -391,6 +403,27 @@ func removeImage(client *docker.Client, imageID string, force bool) tea.Cmd {
 		return serviceActionCompleteMsg{
 			action:  "remove image",
 			service: imageID,
+			err:     err,
+		}
+	}
+}
+
+func loadDockerNetworks(client *docker.Client) tea.Cmd {
+	return func() tea.Msg {
+		networks, err := client.ListNetworks()
+		return dockerNetworksLoadedMsg{
+			networks: networks,
+			err:      err,
+		}
+	}
+}
+
+func removeNetwork(client *docker.Client, networkID string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.RemoveNetwork(networkID)
+		return serviceActionCompleteMsg{
+			action:  "remove network",
+			service: networkID,
 			err:     err,
 		}
 	}
