@@ -157,11 +157,10 @@ func (m *Model) renderProcessList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := []string{
-		"↑/k: up • ↓/j: down • Enter: logs • d: dind • s: stats • t: top • a: toggle all • p: projects",
-		"K: kill • S: stop • U: start • R: restart • D: remove (stopped) • P: deploy • r: refresh • q: quit",
+	helpText := m.GetStyledHelpText()
+	if helpText != "" {
+		s.WriteString(helpText)
 	}
-	s.WriteString(helpStyle.Render(strings.Join(help, "\n")))
 
 	return s.String()
 }
@@ -205,8 +204,10 @@ func (m *Model) renderLogView() string {
 	}
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • G: end • g: start • /: search • Esc/q: back")
-	s.WriteString(help)
+	helpText := m.GetStyledHelpText()
+	if helpText != "" {
+		s.WriteString(helpText)
+	}
 
 	return s.String()
 }
@@ -266,8 +267,10 @@ func (m *Model) renderDindList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: logs • r: refresh • Esc: back • q: quit")
-	s.WriteString(help)
+	helpText := m.GetStyledHelpText()
+	if helpText != "" {
+		s.WriteString(helpText)
+	}
 
 	return s.String()
 }
@@ -304,8 +307,10 @@ func (m *Model) renderTopView() string {
 	}
 
 	// Help text
-	help := helpStyle.Render("r: refresh • Esc/q: back")
-	s.WriteString(help)
+	helpText := m.GetStyledHelpText()
+	if helpText != "" {
+		s.WriteString(helpText)
+	}
 
 	return s.String()
 }
@@ -363,8 +368,10 @@ func (m *Model) renderStatsView() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("r: refresh • Esc/q: back")
-	s.WriteString(help)
+	helpText := m.GetStyledHelpText()
+	if helpText != "" {
+		s.WriteString(helpText)
+	}
 
 	return s.String()
 }
@@ -424,8 +431,10 @@ func (m *Model) renderProjectList() string {
 	s.WriteString(t.Render() + "\n\n")
 
 	// Help text
-	help := helpStyle.Render("↑/k: up • ↓/j: down • Enter: select project • r: refresh • q: quit")
-	s.WriteString(help)
+	helpText := m.GetStyledHelpText()
+	if helpText != "" {
+		s.WriteString(helpText)
+	}
 
 	return s.String()
 }

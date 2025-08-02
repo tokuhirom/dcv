@@ -90,9 +90,19 @@ type Model struct {
 	// Command line options
 	projectName string
 
-	// Key handler map for views
-	processListViewKeymap   map[string]KeyHandler
-	processListViewHandlers []KeyConfig
+	// Key handler maps and configurations for all views
+	processListViewKeymap     map[string]KeyHandler
+	processListViewHandlers   []KeyConfig
+	logViewKeymap             map[string]KeyHandler
+	logViewHandlers           []KeyConfig
+	dindListViewKeymap        map[string]KeyHandler
+	dindListViewHandlers      []KeyConfig
+	topViewKeymap             map[string]KeyHandler
+	topViewHandlers           []KeyConfig
+	statsViewKeymap           map[string]KeyHandler
+	statsViewHandlers         []KeyConfig
+	projectListViewKeymap     map[string]KeyHandler
+	projectListViewHandlers   []KeyConfig
 }
 
 // NewModel creates a new model with initial state
@@ -275,16 +285,6 @@ func removeService(client *docker.Client, containerID string) tea.Cmd {
 	}
 }
 
-func upService(client *docker.Client, projectName, serviceName string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.Compose(projectName).UpService(serviceName)
-		return serviceActionCompleteMsg{
-			action:  "up -d",
-			service: serviceName,
-			err:     err,
-		}
-	}
-}
 
 func up(client *docker.Client, projectName string) tea.Cmd {
 	return func() tea.Msg {
