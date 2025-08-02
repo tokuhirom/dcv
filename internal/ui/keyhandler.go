@@ -62,6 +62,20 @@ func (m *Model) SelectDownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) SelectUpDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer > 0 {
+		m.selectedDockerContainer--
+	}
+	return m, nil
+}
+
+func (m *Model) SelectDownDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers)-1 {
+		m.selectedDockerContainer++
+	}
+	return m, nil
+}
+
 // Log view navigation handlers
 func (m *Model) ScrollLogUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.logScrollY > 0 {
@@ -114,13 +128,13 @@ func (m *Model) ShowComposeLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDindContainer < len(m.dindContainers) {
 		container := m.dindContainers[m.selectedDindContainer]
-		m.containerName = container.Name
+		m.containerName = container.Names
 		m.hostContainer = m.currentDindHost
 		m.isDindLog = true
 		m.currentView = LogView
 		m.logs = []string{}
 		m.logScrollY = 0
-		return m, streamLogs(m.dockerClient, container.Name, true, m.currentDindContainerID)
+		return m, streamLogs(m.dockerClient, container.Names, true, m.currentDindContainerID)
 	}
 	return m, nil
 }
@@ -137,6 +151,12 @@ func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+func (m *Model) ShowDockerContainerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = DockerContainerListView
+	m.loading = true
+	return m, loadDockerContainers(m.dockerClient, m.showAll)
 }
 
 func (m *Model) RefreshProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -227,7 +247,7 @@ func (m *Model) DeleteContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.containers) {
 		container := m.containers[m.selectedContainer]
 		// Only allow removing stopped containers
-		if !strings.Contains(container.Status, "Up") && !strings.Contains(container.State, "running") {
+		if !strings.Contains(container.GetStatus(), "Up") && !strings.Contains(container.State, "running") {
 			m.loading = true
 			return m, removeService(m.dockerClient, container.ID)
 		}
@@ -277,6 +297,84 @@ func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) BackToDindList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = ComposeProcessListView
+	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+}
+
+// Docker container handlers
+func (m *Model) ShowDockerLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		m.containerName = container.Names
+		m.isDindLog = false
+		m.currentView = LogView
+		m.logs = []string{}
+		m.logScrollY = 0
+		return m, streamLogs(m.dockerClient, container.ID, false, "")
+	}
+	return m, nil
+}
+
+func (m *Model) RefreshDockerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.loading = true
+	return m, loadDockerContainers(m.dockerClient, m.showAll)
+}
+
+func (m *Model) ToggleAllDockerContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.showAll = !m.showAll
+	m.loading = true
+	return m, loadDockerContainers(m.dockerClient, m.showAll)
+}
+
+func (m *Model) KillDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		m.loading = true
+		return m, killService(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) StopDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		m.loading = true
+		return m, stopService(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) StartDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		m.loading = true
+		return m, startService(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) RestartDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		m.loading = true
+		return m, restartService(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) DeleteDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		// Only allow removing stopped containers
+		if !strings.Contains(container.Status, "Up") && !strings.Contains(container.State, "running") {
+			m.loading = true
+			return m, removeService(m.dockerClient, container.ID)
+		}
+	}
+	return m, nil
+}
+
+func (m *Model) BackFromDockerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 }
@@ -359,6 +457,8 @@ func (m *Model) GetHelpText() string {
 		configs = m.statsViewHandlers
 	case ProjectListView:
 		configs = m.projectListViewHandlers
+	case DockerContainerListView:
+		configs = m.dockerListViewHandlers
 	default:
 		return ""
 	}

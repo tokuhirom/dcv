@@ -11,6 +11,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.SelectDownContainer},
 		{[]string{"enter"}, "view logs", m.ShowComposeLog},
 		{[]string{"d"}, "dind containers", m.ShowDindProcessList},
+		{[]string{"p"}, "docker ps", m.ShowDockerContainerList},
 		{[]string{"r"}, "refresh", m.RefreshProcessList},
 		{[]string{"a"}, "toggle all", m.ToggleAllContainers},
 		{[]string{"s"}, "stats", m.ShowStatsView},
@@ -66,6 +67,22 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"r"}, "refresh", m.RefreshProjects},
 	}
 	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
+
+	// Docker Container List View
+	m.dockerListViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.SelectUpDockerContainer},
+		{[]string{"down", "j"}, "move down", m.SelectDownDockerContainer},
+		{[]string{"enter"}, "view logs", m.ShowDockerLog},
+		{[]string{"r"}, "refresh", m.RefreshDockerList},
+		{[]string{"a"}, "toggle all", m.ToggleAllDockerContainers},
+		{[]string{"K"}, "kill", m.KillDockerContainer},
+		{[]string{"S"}, "stop", m.StopDockerContainer},
+		{[]string{"U"}, "start", m.StartDockerContainer},
+		{[]string{"R"}, "restart", m.RestartDockerContainer},
+		{[]string{"D"}, "remove", m.DeleteDockerContainer},
+		{[]string{"esc", "q"}, "back", m.BackFromDockerList},
+	}
+	m.dockerListViewKeymap = m.createKeymap(m.dockerListViewHandlers)
 
 	slog.Info("Initialized all view keymaps")
 }

@@ -22,7 +22,7 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "navigate down in process list",
 			model: Model{
 				currentView: ComposeProcessListView,
-				containers: []models.Container{
+				containers: []models.ComposeContainer{
 					{Name: "web-1"},
 					{Name: "db-1"},
 				},
@@ -38,7 +38,7 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "navigate up in process list",
 			model: Model{
 				currentView: ComposeProcessListView,
-				containers: []models.Container{
+				containers: []models.ComposeContainer{
 					{Name: "web-1"},
 					{Name: "db-1"},
 				},
@@ -54,7 +54,7 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "enter log view",
 			model: Model{
 				currentView: ComposeProcessListView,
-				containers: []models.Container{
+				containers: []models.ComposeContainer{
 					{Name: "web-1"},
 				},
 				selectedContainer: 0,
@@ -70,10 +70,10 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "enter dind view",
 			model: Model{
 				currentView: ComposeProcessListView,
-				containers: []models.Container{
+				containers: []models.ComposeContainer{
 					{
-						Name:  "dind-1",
-						Image: "docker:dind",
+						Name:    "dind-1",
+						Command: "dockerd",
 					},
 				},
 				selectedContainer: 0,
@@ -240,9 +240,9 @@ func TestHandleDindListKeys(t *testing.T) {
 	model := Model{
 		currentView:     DindComposeProcessListView,
 		currentDindHost: "dind-1",
-		dindContainers: []models.Container{
-			{ID: "abc123", Name: "test-1"},
-			{ID: "def456", Name: "test-2"},
+		dindContainers: []models.DockerContainer{
+			{ID: "abc123", Names: "test-1"},
+			{ID: "def456", Names: "test-2"},
 		},
 		selectedDindContainer: 0,
 	}
@@ -280,7 +280,7 @@ func TestUpdateMessages(t *testing.T) {
 	assert.Equal(t, 30, m.height)
 
 	// Test containers loaded message
-	processes := []models.Container{
+	processes := []models.ComposeContainer{
 		{Name: "test-1"},
 	}
 	newModel, _ = m.Update(processesLoadedMsg{processes: processes})
@@ -312,8 +312,8 @@ func TestUpdateMessages(t *testing.T) {
 	assert.NotNil(t, cmd) // Should continue streaming
 
 	// Test dind containers loaded
-	containers := []models.Container{
-		{ID: "abc123", Name: "test-container"},
+	containers := []models.DockerContainer{
+		{ID: "abc123", Names: "test-container"},
 	}
 	newModel, _ = m.Update(dindContainersLoadedMsg{containers: containers})
 	m = *newModel.(*Model)
@@ -325,7 +325,7 @@ func TestBoundaryConditions(t *testing.T) {
 	// Test navigation at boundaries
 	model := Model{
 		currentView: ComposeProcessListView,
-		containers: []models.Container{
+		containers: []models.ComposeContainer{
 			{Name: "test-1"},
 		},
 		selectedContainer: 0,
@@ -342,7 +342,7 @@ func TestBoundaryConditions(t *testing.T) {
 	assert.Equal(t, 0, m.selectedContainer) // Should stay at 0 (only one item)
 
 	// Test with empty list
-	model.containers = []models.Container{}
+	model.containers = []models.ComposeContainer{}
 	newModel, _ = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyEnter})
 	m = *newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView) // Should stay in process list

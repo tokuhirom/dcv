@@ -66,6 +66,8 @@ func (m *Model) View() string {
 		return m.renderStatsView()
 	case ProjectListView:
 		return m.renderProjectList()
+	case DockerContainerListView:
+		return m.renderDockerList()
 	default:
 		return "Unknown view"
 	}
@@ -135,19 +137,19 @@ func (m *Model) renderProcessList() string {
 		var statusStyle lipgloss.Style
 		if i == m.selectedContainer {
 			statusStyle = selectedStyle
-		} else if strings.Contains(container.Status, "Up") || strings.Contains(container.State, "running") {
+		} else if strings.Contains(container.GetStatus(), "Up") || strings.Contains(container.State, "running") {
 			statusStyle = statusUpStyle
 		} else {
 			statusStyle = statusDownStyle
 		}
 
 		name := nameStyle.Render(container.Name)
-		image := normalStyle.Render(container.Image)
+		image := normalStyle.Render(container.Command) // Using Command since compose doesn't have Image in JSON
 		service := normalStyle.Render(container.Service)
-		status := statusStyle.Render(container.Status)
+		status := statusStyle.Render(container.GetStatus())
 
 		if i == m.selectedContainer {
-			image = selectedStyle.Render(container.Image)
+			image = selectedStyle.Render(container.Command)
 			service = selectedStyle.Render(container.Service)
 		}
 
@@ -259,7 +261,7 @@ func (m *Model) renderDindList() string {
 		id := style.Render(container.ID[:12])
 		image := style.Render(container.Image)
 		status := style.Render(container.Status)
-		name := style.Render(container.Name)
+		name := style.Render(container.Names)
 
 		t.Row(id, image, status, name)
 	}
@@ -426,6 +428,96 @@ func (m *Model) renderProjectList() string {
 		configFiles := style.Render(project.ConfigFiles)
 
 		t.Row(name, status, configFiles)
+	}
+
+	s.WriteString(t.Render() + "\n\n")
+
+	// Help text
+	helpText := m.GetStyledHelpText()
+	if helpText != "" {
+		s.WriteString(helpText)
+	}
+
+	return s.String()
+}
+
+func (m *Model) renderDockerList() string {
+	var s strings.Builder
+
+	title := "Docker Containers"
+	if m.showAll {
+		title += " (All)"
+	}
+	s.WriteString(titleStyle.Render(title) + "\n\n")
+
+	if m.err != nil {
+		s.WriteString(errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n")
+		s.WriteString("\n" + helpStyle.Render("Press 'esc' or 'q' to go back"))
+		return s.String()
+	}
+
+	if m.loading {
+		s.WriteString("Loading containers...")
+		return s.String()
+	}
+
+	if len(m.dockerContainers) == 0 {
+		s.WriteString("No containers found\n")
+		s.WriteString("\n" + helpStyle.Render("Press 'r' to refresh, 'a' to toggle all, 'esc' to go back"))
+		return s.String()
+	}
+
+	// Create table
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
+		Headers("CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES")
+
+	// Style headers
+	t.StyleFunc(func(row, col int) lipgloss.Style {
+		if row == 0 {
+			return headerStyle
+		}
+		return normalStyle
+	})
+
+	// Add rows
+	for i, container := range m.dockerContainers {
+		var idStyle, imageStyle, statusStyle, portsStyle, nameStyle lipgloss.Style
+		
+		if i == m.selectedDockerContainer {
+			idStyle = selectedStyle
+			imageStyle = selectedStyle
+			statusStyle = selectedStyle
+			portsStyle = selectedStyle
+			nameStyle = selectedStyle
+		} else {
+			idStyle = normalStyle
+			imageStyle = normalStyle
+			portsStyle = normalStyle
+			nameStyle = normalStyle
+			
+			if strings.Contains(container.Status, "Up") || strings.Contains(container.State, "running") {
+				statusStyle = statusUpStyle
+			} else {
+				statusStyle = statusDownStyle
+			}
+		}
+
+		id := idStyle.Render(container.ID[:12])
+		image := imageStyle.Render(container.Image)
+		status := statusStyle.Render(container.Status)
+		
+		// Truncate ports if too long
+		ports := container.Ports
+		if len(ports) > 30 {
+			ports = ports[:27] + "..."
+		}
+		ports = portsStyle.Render(ports)
+		
+		name := nameStyle.Render(container.Names)
+
+		t.Row(id, image, status, ports, name)
 	}
 
 	s.WriteString(t.Render() + "\n\n")

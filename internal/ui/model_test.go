@@ -30,18 +30,18 @@ func TestProcessesLoadedMsg(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 
 	// Test successful load
-	containers := []models.Container{
+	containers := []models.ComposeContainer{
 		{
 			Name:    "web-1",
-			Image:   "nginx:latest",
+			Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
 			Service: "web",
-			Status:  "Up 5 minutes",
+			State:   "running",
 		},
 		{
 			Name:    "dind-1",
-			Image:   "docker:dind",
+			Command: "dockerd",
 			Service: "dind",
-			Status:  "Up 10 minutes",
+			State:   "running",
 		},
 	}
 
@@ -82,7 +82,7 @@ func TestKeyNavigation(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.loading = false
-	m.containers = []models.Container{
+	m.containers = []models.ComposeContainer{
 		{Name: "web-1"},
 		{Name: "db-1"},
 		{Name: "redis-1"},
@@ -122,13 +122,13 @@ func TestViewSwitching(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.loading = false
-	m.containers = []models.Container{
+	m.containers = []models.ComposeContainer{
 		{
 			Name: "web-1",
 		},
 		{
 			Name: "dind-1",
-			Image: "docker:dind",
+			Command: "dockerd",
 		},
 	}
 

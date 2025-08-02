@@ -12,29 +12,33 @@ func TestComposeClient_parseComposePSJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   []byte
-		want    []models.Container
+		want    []models.ComposeContainer
 		wantErr bool
 	}{
 		{
 			name: "parse docker compose ps JSON output (line-delimited)",
-			input: []byte(`{"Name": "web-1", "Image": "nginx:latest", "Status": "Up 5 minutes", "State": "running", "Service": "web", "ID": "abc123"}
-{"Name": "dind-1", "Image": "docker:dind", "Status": "Up 5 minutes", "State": "running", "Service": "dind", "ID": "def456"}`),
-			want: []models.Container{
+			input: []byte(`{"Name": "web-1", "Command": "/docker-entrypoint.sh nginx -g 'daemon off;'", "State": "running", "Service": "web", "ID": "abc123", "Project": "myproject", "Health": "", "ExitCode": 0, "Publishers": null}
+{"Name": "dind-1", "Command": "dockerd", "State": "running", "Service": "dind", "ID": "def456", "Project": "myproject", "Health": "", "ExitCode": 0, "Publishers": null}`),
+			want: []models.ComposeContainer{
 				{
-					Name:    "web-1",
-					Image:   "nginx:latest",
-					Status:  "Up 5 minutes",
-					State:   "running",
-					Service: "web",
-					ID:      "abc123",
+					Name:     "web-1",
+					Command:  "/docker-entrypoint.sh nginx -g 'daemon off;'",
+					State:    "running",
+					Service:  "web",
+					ID:       "abc123",
+					Project:  "myproject",
+					Health:   "",
+					ExitCode: 0,
 				},
 				{
-					Name:    "dind-1",
-					Image:   "docker:dind",
-					Status:  "Up 5 minutes",
-					State:   "running",
-					Service: "dind",
-					ID:      "def456",
+					Name:     "dind-1",
+					Command:  "dockerd",
+					State:    "running",
+					Service:  "dind",
+					ID:       "def456",
+					Project:  "myproject",
+					Health:   "",
+					ExitCode: 0,
 				},
 			},
 			wantErr: false,
@@ -66,27 +70,27 @@ func TestClient_parseDindPSJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   []byte
-		want    []models.Container
+		want    []models.DockerContainer
 		wantErr bool
 	}{
 		{
 			name: "parse docker ps JSON output inside dind",
-			input: []byte(`{"ID":"a1b2c3d4e5f6","Image":"alpine:latest","Name":"test-container","Status":"Up 2 minutes","CreatedAt":"2 minutes ago"}
-{"ID":"b2c3d4e5f6g7","Image":"nginx:latest","Name":"web-server","Status":"Up 5 minutes","CreatedAt":"5 minutes ago"}`),
-			want: []models.Container{
+			input: []byte(`{"ID":"a1b2c3d4e5f6","Image":"alpine:latest","Names":"test-container","Status":"Up 2 minutes","CreatedAt":"2 minutes ago"}
+{"ID":"b2c3d4e5f6g7","Image":"nginx:latest","Names":"web-server","Status":"Up 5 minutes","CreatedAt":"5 minutes ago"}`),
+			want: []models.DockerContainer{
 				{
 					ID:        "a1b2c3d4e5f6",
 					Image:     "alpine:latest",
 					CreatedAt: "2 minutes ago",
 					Status:    "Up 2 minutes",
-					Name:      "test-container",
+					Names:     "test-container",
 				},
 				{
 					ID:        "b2c3d4e5f6g7",
 					Image:     "nginx:latest",
 					CreatedAt: "5 minutes ago",
 					Status:    "Up 5 minutes",
-					Name:      "web-server",
+					Names:     "web-server",
 				},
 			},
 			wantErr: false,

@@ -150,6 +150,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case dockerContainersLoadedMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.dockerContainers = msg.containers
+		m.err = nil
+		if len(m.dockerContainers) > 0 && m.selectedDockerContainer >= len(m.dockerContainers) {
+			m.selectedDockerContainer = 0
+		}
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -193,6 +206,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleStatsViewKeys(msg)
 	case ProjectListView:
 		return m.handleProjectListKeys(msg)
+	case DockerContainerListView:
+		return m.handleDockerListKeys(msg)
 	default:
 		return m, nil
 	}
@@ -269,6 +284,14 @@ func (m *Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.projectListViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleDockerListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.dockerListViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}
