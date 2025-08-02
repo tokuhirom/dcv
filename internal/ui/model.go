@@ -96,20 +96,20 @@ type Model struct {
 	projectName string
 
 	// Key handler maps and configurations for all views
-	processListViewKeymap     map[string]KeyHandler
-	processListViewHandlers   []KeyConfig
-	logViewKeymap             map[string]KeyHandler
-	logViewHandlers           []KeyConfig
-	dindListViewKeymap        map[string]KeyHandler
-	dindListViewHandlers      []KeyConfig
-	topViewKeymap             map[string]KeyHandler
-	topViewHandlers           []KeyConfig
-	statsViewKeymap           map[string]KeyHandler
-	statsViewHandlers         []KeyConfig
-	projectListViewKeymap     map[string]KeyHandler
-	projectListViewHandlers   []KeyConfig
-	dockerListViewKeymap      map[string]KeyHandler
-	dockerListViewHandlers    []KeyConfig
+	processListViewKeymap   map[string]KeyHandler
+	processListViewHandlers []KeyConfig
+	logViewKeymap           map[string]KeyHandler
+	logViewHandlers         []KeyConfig
+	dindListViewKeymap      map[string]KeyHandler
+	dindListViewHandlers    []KeyConfig
+	topViewKeymap           map[string]KeyHandler
+	topViewHandlers         []KeyConfig
+	statsViewKeymap         map[string]KeyHandler
+	statsViewHandlers       []KeyConfig
+	projectListViewKeymap   map[string]KeyHandler
+	projectListViewHandlers []KeyConfig
+	dockerListViewKeymap    map[string]KeyHandler
+	dockerListViewHandlers  []KeyConfig
 }
 
 // NewModel creates a new model with initial state
@@ -296,7 +296,6 @@ func removeService(client *docker.Client, containerID string) tea.Cmd {
 		}
 	}
 }
-
 
 func up(client *docker.Client, projectName string) tea.Cmd {
 	return func() tea.Msg {
