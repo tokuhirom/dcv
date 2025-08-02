@@ -819,7 +819,7 @@ func (m *Model) PauseContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.containers) {
 		container := m.containers[m.selectedContainer]
 		// Check if container is already paused
-		if strings.Contains(container.State, "Paused") || strings.Contains(container.Status, "(Paused)") {
+		if strings.Contains(container.State, "paused") {
 			// Container is paused, so unpause it
 			m.loading = true
 			return m, unpauseService(m.dockerClient, container.ID)
