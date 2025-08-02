@@ -19,6 +19,9 @@ func (m *Model) renderImageList() string {
 
 	// Create table
 	t := table.New()
+	t.Height(m.height - 4) // Reserve space for footer
+	t.Width(m.width)
+	t.Offset(m.selectedDockerImage)
 	t.Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE")
 
 	// Configure column widths based on terminal width
