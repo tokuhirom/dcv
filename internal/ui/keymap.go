@@ -1,44 +1,81 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"log/slog"
 )
 
-type KeyHandler func(msg tea.KeyMsg) (tea.Model, tea.Cmd)
-
-type KeyConfig struct {
-	Keys        []string
-	HandlerName string
-	KeyHandler  KeyHandler
-}
-
 func (m *Model) initializeKeyHandlers() {
+	// Process List View
 	m.processListViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "up", m.SelectUpContainer},
-		{[]string{"down", "j"}, "down", m.SelectDownContainer},
-		{[]string{"enter"}, "log", m.ShowComposeLog},
-		{[]string{"d"}, "dind", m.ShowDindProcessList},
+		{[]string{"up", "k"}, "move up", m.SelectUpContainer},
+		{[]string{"down", "j"}, "move down", m.SelectDownContainer},
+		{[]string{"enter"}, "view logs", m.ShowComposeLog},
+		{[]string{"d"}, "dind containers", m.ShowDindProcessList},
 		{[]string{"r"}, "refresh", m.RefreshProcessList},
-		{[]string{"a"}, "toggleAll", m.ToggleAllContainers},
+		{[]string{"a"}, "toggle all", m.ToggleAllContainers},
 		{[]string{"s"}, "stats", m.ShowStatsView},
 		{[]string{"t"}, "top", m.ShowTopView},
 		{[]string{"K"}, "kill", m.KillContainer},
 		{[]string{"S"}, "stop", m.StopContainer},
-		{[]string{"U"}, "up", m.UpService},
+		{[]string{"U"}, "start", m.UpService},
 		{[]string{"R"}, "restart", m.RestartContainer},
 		{[]string{"D"}, "remove", m.DeleteContainer},
 	}
+	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
+
+	// Log View
+	m.logViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "scroll up", m.ScrollLogUp},
+		{[]string{"down", "j"}, "scroll down", m.ScrollLogDown},
+		{[]string{"G"}, "go to end", m.GoToLogEnd},
+		{[]string{"g"}, "go to start", m.GoToLogStart},
+		{[]string{"/"}, "search", m.StartSearch},
+		{[]string{"esc"}, "back", m.BackFromLogView},
+	}
+	m.logViewKeymap = m.createKeymap(m.logViewHandlers)
+
+	// Dind Process List View
+	m.dindListViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.SelectUpDindContainer},
+		{[]string{"down", "j"}, "move down", m.SelectDownDindContainer},
+		{[]string{"enter"}, "view logs", m.ShowDindLog},
+		{[]string{"r"}, "refresh", m.RefreshDindList},
+		{[]string{"esc"}, "back", m.BackToDindList},
+	}
+	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
+
+	// Top View
+	m.topViewHandlers = []KeyConfig{
+		{[]string{"r"}, "refresh", m.RefreshTop},
+		{[]string{"esc", "q"}, "back", m.BackToProcessList},
+	}
+	m.topViewKeymap = m.createKeymap(m.topViewHandlers)
+
+	// Stats View
+	m.statsViewHandlers = []KeyConfig{
+		{[]string{"r"}, "refresh", m.RefreshStats},
+		{[]string{"esc", "q"}, "back", m.BackToProcessList},
+	}
+	m.statsViewKeymap = m.createKeymap(m.statsViewHandlers)
+
+	// Project List View
+	m.projectListViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.SelectUpProject},
+		{[]string{"down", "j"}, "move down", m.SelectDownProject},
+		{[]string{"enter"}, "select project", m.SelectProject},
+		{[]string{"r"}, "refresh", m.RefreshProjects},
+	}
+	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
+
+	slog.Info("Initialized all view keymaps")
+}
+
+func (m *Model) createKeymap(configs []KeyConfig) map[string]KeyHandler {
 	keymap := make(map[string]KeyHandler)
-	for _, config := range m.processListViewHandlers {
+	for _, config := range configs {
 		for _, key := range config.Keys {
-			slog.Info("Registering key handler",
-				slog.String("key", key),
-				slog.Any("handlerName", config.KeyHandler))
 			keymap[key] = config.KeyHandler
 		}
 	}
-	m.processListViewKeymap = keymap
-	slog.Info("Initialized process list view keymap",
-		slog.Any("handler", m.processListViewKeymap))
+	return keymap
 }

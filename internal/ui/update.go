@@ -210,89 +210,19 @@ func (m *Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc":
-		// Stop the log reader before switching views
-		stopLogReader()
-		if m.isDindLog {
-			m.currentView = DindProcessListView
-			return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
-		}
-		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-
-	case "up", "k":
-		if m.logScrollY > 0 {
-			m.logScrollY--
-		}
-		return m, nil
-
-	case "down", "j":
-		maxScroll := len(m.logs) - (m.height - 4)
-		if m.logScrollY < maxScroll && maxScroll > 0 {
-			m.logScrollY++
-		}
-		return m, nil
-
-	case "G":
-		maxScroll := len(m.logs) - (m.height - 4)
-		if maxScroll > 0 {
-			m.logScrollY = maxScroll
-		}
-		return m, nil
-
-	case "g":
-		m.logScrollY = 0
-		return m, nil
-
-	case "/":
-		m.searchMode = true
-		m.searchText = ""
-		return m, nil
-
-	default:
-		return m, nil
+	handler, ok := m.logViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
 	}
+	return m, nil
 }
 
 func (m *Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "up", "k":
-		if m.selectedDindContainer > 0 {
-			m.selectedDindContainer--
-		}
-		return m, nil
-
-	case "down", "j":
-		if m.selectedDindContainer < len(m.dindContainers)-1 {
-			m.selectedDindContainer++
-		}
-		return m, nil
-
-	case "enter":
-		if m.selectedDindContainer < len(m.dindContainers) {
-			container := m.dindContainers[m.selectedDindContainer]
-			m.containerName = container.Name
-			m.hostContainer = m.currentDindHost
-			m.isDindLog = true
-			m.currentView = LogView
-			m.logs = []string{}
-			m.logScrollY = 0
-			return m, streamLogs(m.dockerClient, container.Name, true, m.currentDindContainerID)
-		}
-		return m, nil
-
-	case "esc":
-		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-
-	case "r":
-		m.loading = true
-		return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
-
-	default:
-		return m, nil
+	handler, ok := m.dindListViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
 	}
+	return m, nil
 }
 
 func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -322,71 +252,27 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc", "q":
-		// Go back to process list
-		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-
-	case "r":
-		// Manual refresh
-		m.loading = true
-		return m, loadTop(m.dockerClient, m.projectName, m.topService)
-
-	default:
-		return m, nil
+	handler, ok := m.topViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
 	}
+	return m, nil
 }
 
 func (m *Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc", "q":
-		// Go back to process list
-		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-
-	case "r":
-		// Refresh stats
-		m.loading = true
-		return m, loadStats(m.dockerClient)
-
-	default:
-		return m, nil
+	handler, ok := m.statsViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
 	}
+	return m, nil
 }
 
 func (m *Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "up", "k":
-		if m.selectedProject > 0 {
-			m.selectedProject--
-		}
-		return m, nil
-
-	case "down", "j":
-		if m.selectedProject < len(m.projects)-1 {
-			m.selectedProject++
-		}
-		return m, nil
-
-	case "enter":
-		if m.selectedProject < len(m.projects) {
-			project := m.projects[m.selectedProject]
-			// Create a new compose client with the selected project
-			m.projectName = project.Name
-			m.currentView = ProcessListView
-			m.loading = true
-			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-		}
-		return m, nil
-
-	case "r":
-		m.loading = true
-		return m, loadProjects(m.dockerClient)
-
-	default:
-		return m, nil
+	handler, ok := m.projectListViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
 	}
+	return m, nil
 }
 
 // containsAny checks if the string contains any of the substrings

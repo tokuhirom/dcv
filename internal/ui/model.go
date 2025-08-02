@@ -90,9 +90,19 @@ type Model struct {
 	// Command line options
 	projectName string
 
-	// Key handler map for views
-	processListViewKeymap   map[string]KeyHandler
-	processListViewHandlers []KeyConfig
+	// Key handler maps and configurations for all views
+	processListViewKeymap     map[string]KeyHandler
+	processListViewHandlers   []KeyConfig
+	logViewKeymap             map[string]KeyHandler
+	logViewHandlers           []KeyConfig
+	dindListViewKeymap        map[string]KeyHandler
+	dindListViewHandlers      []KeyConfig
+	topViewKeymap             map[string]KeyHandler
+	topViewHandlers           []KeyConfig
+	statsViewKeymap           map[string]KeyHandler
+	statsViewHandlers         []KeyConfig
+	projectListViewKeymap     map[string]KeyHandler
+	projectListViewHandlers   []KeyConfig
 }
 
 // NewModel creates a new model with initial state
