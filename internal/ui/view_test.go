@@ -54,8 +54,8 @@ func TestView(t *testing.T) {
 				"nginx:latest",
 				"dind-1",
 				"docker:dind",
-				"↑/k: up",
-				"Enter: logs",
+				"up:move up",
+				"enter:view logs",
 			},
 		},
 		{
@@ -103,8 +103,8 @@ func TestView(t *testing.T) {
 				"Logs: web-1",
 				"Starting web server",
 				"Listening on port 80",
-				"↑/k: up",
-				"/: search",
+				"up:scroll up",
+				"/:search",
 			},
 		},
 		{
@@ -153,6 +153,9 @@ func TestView(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Initialize key handlers for the test model
+			tt.model.initializeKeyHandlers()
+			
 			view := tt.model.View()
 			for _, expected := range tt.contains {
 				assert.Contains(t, view, expected)

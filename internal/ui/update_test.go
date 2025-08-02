@@ -9,6 +9,13 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// Helper function to create a model with initialized key handlers
+func createTestModel(viewType ViewType) Model {
+	m := NewModel(viewType, "")
+	m.Init() // Initialize key handlers
+	return m
+}
+
 func TestHandleKeyPress(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -155,8 +162,11 @@ func TestHandleKeyPress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Initialize key handlers for the test model
+			tt.model.initializeKeyHandlers()
+			
 			newModel, _ := tt.model.handleKeyPress(tt.key)
-			m := newModel.(Model)
+			m := *newModel.(*Model)
 
 			assert.Equal(t, tt.wantView, m.currentView)
 			if tt.wantLoading {
@@ -221,8 +231,11 @@ func TestHandleSearchMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Initialize key handlers for the test model
+			tt.model.initializeKeyHandlers()
+			
 			newModel, _ := tt.model.handleSearchMode(tt.key)
-			m := newModel.(Model)
+			m := *newModel.(*Model)
 
 			assert.Equal(t, tt.wantSearchMode, m.searchMode)
 			assert.Equal(t, tt.wantSearchText, m.searchText)
@@ -240,15 +253,17 @@ func TestHandleDindListKeys(t *testing.T) {
 		},
 		selectedDindContainer: 0,
 	}
+	// Initialize key handlers
+	model.initializeKeyHandlers()
 
 	// Test navigation
 	newModel, _ := model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyDown})
-	m := newModel.(Model)
+	m := *newModel.(*Model)
 	assert.Equal(t, 1, m.selectedDindContainer)
 
 	// Test entering log view
 	newModel, cmd := m.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEnter})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView)
 	assert.Equal(t, "test-2", m.containerName)
 	assert.Equal(t, "dind-1", m.hostContainer)
@@ -258,7 +273,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	// Test escape
 	model.currentView = DindProcessListView
 	newModel, _ = model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEsc})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Equal(t, ProcessListView, m.currentView)
 }
 
@@ -267,7 +282,7 @@ func TestUpdateMessages(t *testing.T) {
 
 	// Test window size message
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-	m := newModel.(Model)
+	m := *newModel.(*Model)
 	assert.Equal(t, 100, m.width)
 	assert.Equal(t, 30, m.height)
 
@@ -276,14 +291,14 @@ func TestUpdateMessages(t *testing.T) {
 		{Name: "test-1"},
 	}
 	newModel, _ = m.Update(processesLoadedMsg{processes: processes})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Equal(t, processes, m.containers)
 	assert.False(t, m.loading)
 
 	// Test error message
 	testErr := errors.New("test error")
 	newModel, _ = m.Update(errorMsg{err: testErr})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Equal(t, testErr, m.err)
 	assert.False(t, m.loading)
 
@@ -291,14 +306,14 @@ func TestUpdateMessages(t *testing.T) {
 	m.currentView = LogView
 	m.height = 10
 	newModel, cmd := m.Update(logLineMsg{line: "[Log reader stopped]"})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Contains(t, m.logs, "[Log reader stopped]")
 	assert.Nil(t, cmd) // Status messages don't trigger continued polling
 
 	// Test log lines message (for actual log streaming)
 	m.logs = []string{} // Reset logs
 	newModel, cmd = m.Update(logLinesMsg{lines: []string{"log line 1", "log line 2"}})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Contains(t, m.logs, "log line 1")
 	assert.Contains(t, m.logs, "log line 2")
 	assert.NotNil(t, cmd) // Should continue streaming
@@ -308,7 +323,7 @@ func TestUpdateMessages(t *testing.T) {
 		{ID: "abc123", Name: "test-container"},
 	}
 	newModel, _ = m.Update(dindContainersLoadedMsg{containers: containers})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Equal(t, containers, m.dindContainers)
 	assert.False(t, m.loading)
 }
@@ -325,18 +340,18 @@ func TestBoundaryConditions(t *testing.T) {
 
 	// Try to go up at the top
 	newModel, _ := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyUp})
-	m := newModel.(Model)
+	m := *newModel.(*Model)
 	assert.Equal(t, 0, m.selectedContainer) // Should stay at 0
 
 	// Try to go down at the bottom
 	newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyDown})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Equal(t, 0, m.selectedContainer) // Should stay at 0 (only one item)
 
 	// Test with empty list
 	model.containers = []models.Container{}
 	newModel, _ = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyEnter})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Equal(t, ProcessListView, m.currentView) // Should stay in process list
 }
 
@@ -349,14 +364,14 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	// From log view - should go back
 	model = Model{currentView: LogView}
 	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	m := newModel.(Model)
+	m := *newModel.(*Model)
 	assert.Equal(t, ProcessListView, m.currentView)
 	assert.NotNil(t, cmd) // Should load containers
 
 	// From dind view - should go back
 	model = Model{currentView: DindProcessListView}
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	m = newModel.(Model)
+	m = *newModel.(*Model)
 	assert.Equal(t, ProcessListView, m.currentView)
 	assert.NotNil(t, cmd) // Should load containers
 }
