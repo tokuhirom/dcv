@@ -25,6 +25,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"S"}, "stop", m.StopContainer},
 		{[]string{"U"}, "start", m.UpService},
 		{[]string{"R"}, "restart", m.RestartContainer},
+		{[]string{"P"}, "pause/unpause", m.PauseContainer},
 		{[]string{"D"}, "remove", m.DeleteContainer},
 	}
 	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
@@ -87,6 +88,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"S"}, "stop", m.StopDockerContainer},
 		{[]string{"U"}, "start", m.StartDockerContainer},
 		{[]string{"R"}, "restart", m.RestartDockerContainer},
+		{[]string{"P"}, "pause/unpause", m.PauseDockerContainer},
 		{[]string{"D"}, "remove", m.DeleteDockerContainer},
 		{[]string{"esc", "q"}, "back", m.BackFromDockerList},
 	}

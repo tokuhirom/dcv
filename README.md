@@ -36,6 +36,7 @@ Displays `docker ps` results in a table format. Shows all Docker containers, not
 - `S`: Stop container
 - `U`: Start container
 - `R`: Restart container
+- `P`: Pause/Unpause container
 - `D`: Delete stopped container
 - `q`/`Esc`: Back to Docker Compose process list
 
@@ -57,6 +58,15 @@ Displays `docker compose ps` results in a table format.
 - `P`: Switch to project list view
 - `a`: Toggle show all containers (including stopped)
 - `r`: Refresh list
+- `t`: Show process info (docker compose top)
+- `s`: Show container stats
+- `K`: Kill service
+- `S`: Stop service
+- `U`: Start service
+- `R`: Restart service
+- `P`: Pause/Unpause container
+- `D`: Delete stopped container
+- `u`: Deploy all services (docker compose up -d)
 - `q`: Quit
 
 ### Log View

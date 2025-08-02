@@ -216,6 +216,32 @@ func (c *Client) RemoveContainer(containerID string) error {
 	return nil
 }
 
+func (c *Client) PauseContainer(containerID string) error {
+	output, err := c.executeCaptured("pause", containerID)
+	if err != nil {
+		return fmt.Errorf("failed to pause container: %w\nOutput: %s", err, string(output))
+	}
+
+	slog.Info("Paused container",
+		slog.String("containerID", containerID),
+		slog.String("output", string(output)))
+
+	return nil
+}
+
+func (c *Client) UnpauseContainer(containerID string) error {
+	output, err := c.executeCaptured("unpause", containerID)
+	if err != nil {
+		return fmt.Errorf("failed to unpause container: %w\nOutput: %s", err, string(output))
+	}
+
+	slog.Info("Unpaused container",
+		slog.String("containerID", containerID),
+		slog.String("output", string(output)))
+
+	return nil
+}
+
 func (c *ComposeClient) UpService(serviceName string) error {
 	out, err := c.executeCaptured("up", "-d", serviceName)
 	if err != nil {

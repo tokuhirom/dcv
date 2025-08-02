@@ -369,6 +369,28 @@ func removeService(client *docker.Client, containerID string) tea.Cmd {
 	}
 }
 
+func pauseService(client *docker.Client, containerID string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.PauseContainer(containerID)
+		return serviceActionCompleteMsg{
+			action:  "pause",
+			service: containerID,
+			err:     err,
+		}
+	}
+}
+
+func unpauseService(client *docker.Client, containerID string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.UnpauseContainer(containerID)
+		return serviceActionCompleteMsg{
+			action:  "unpause",
+			service: containerID,
+			err:     err,
+		}
+	}
+}
+
 func up(client *docker.Client, projectName string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.Compose(projectName).Up()

@@ -37,6 +37,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `S`: Stop container
    - `U`: Start container
    - `R`: Restart container
+   - `P`: Pause/Unpause container
    - `D`: Delete stopped container
    - `r`: Refresh list
    - `q`/`Esc`: Back to Docker Compose view
@@ -60,6 +61,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `S`: Stop service
    - `U`: Start service
    - `R`: Restart service
+   - `P`: Pause/Unpause container
    - `D`: Delete stopped container
    - `u`: Deploy all services (docker compose up -d)
    - `r`: Refresh list
@@ -154,7 +156,6 @@ go build -o dcv
 
 ### Container Management
 - **Copy files to/from containers** (`docker cp`)
-- **Container pause/unpause** - Temporarily freeze containers
 - **Container rename** - Change container names
 - **Download files from container** - Save container files locally
 

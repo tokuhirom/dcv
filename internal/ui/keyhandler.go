@@ -813,3 +813,38 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
 	return m, nil
 }
+
+// Pause/Unpause handlers
+func (m *Model) PauseContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		// Check if container is already paused
+		if strings.Contains(container.State, "Paused") || strings.Contains(container.Status, "(Paused)") {
+			// Container is paused, so unpause it
+			m.loading = true
+			return m, unpauseService(m.dockerClient, container.ID)
+		} else {
+			// Container is running, so pause it
+			m.loading = true
+			return m, pauseService(m.dockerClient, container.ID)
+		}
+	}
+	return m, nil
+}
+
+func (m *Model) PauseDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		// Check if container is already paused
+		if strings.Contains(container.State, "paused") || strings.Contains(container.Status, "(Paused)") {
+			// Container is paused, so unpause it
+			m.loading = true
+			return m, unpauseService(m.dockerClient, container.ID)
+		} else {
+			// Container is running, so pause it
+			m.loading = true
+			return m, pauseService(m.dockerClient, container.ID)
+		}
+	}
+	return m, nil
+}
