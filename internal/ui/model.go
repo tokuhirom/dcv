@@ -28,9 +28,9 @@ type ContainerStats struct {
 type ViewType int
 
 const (
-	ProcessListView ViewType = iota
+	ComposeProcessListView ViewType = iota
 	LogView
-	DindProcessListView
+	DindComposeProcessListView
 	TopView
 	StatsView
 	ProjectListView

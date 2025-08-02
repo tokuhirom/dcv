@@ -131,7 +131,7 @@ func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if container.IsDind() {
 			m.currentDindHost = container.Name
 			m.currentDindContainerID = container.ID
-			m.currentView = DindProcessListView
+			m.currentView = DindComposeProcessListView
 			m.loading = true
 			return m, loadDindContainers(m.dockerClient, container.ID)
 		}
@@ -253,7 +253,7 @@ func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedProject < len(m.projects) {
 		project := m.projects[m.selectedProject]
 		m.projectName = project.Name
-		m.currentView = ProcessListView
+		m.currentView = ComposeProcessListView
 		m.loading = true
 		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 	}
@@ -262,22 +262,22 @@ func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // Back navigation handlers
 func (m *Model) BackToProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ProcessListView
+	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 }
 
 func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	stopLogReader()
 	if m.isDindLog {
-		m.currentView = DindProcessListView
+		m.currentView = DindComposeProcessListView
 		return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
 	}
-	m.currentView = ProcessListView
+	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 }
 
 func (m *Model) BackToDindList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ProcessListView
+	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 }
 
@@ -347,11 +347,11 @@ func (m *Model) GetHelpText() string {
 	var configs []KeyConfig
 	
 	switch m.currentView {
-	case ProcessListView:
+	case ComposeProcessListView:
 		configs = m.processListViewHandlers
 	case LogView:
 		configs = m.logViewHandlers
-	case DindProcessListView:
+	case DindComposeProcessListView:
 		configs = m.dindListViewHandlers
 	case TopView:
 		configs = m.topViewHandlers

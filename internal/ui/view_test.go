@@ -25,7 +25,7 @@ func TestView(t *testing.T) {
 		{
 			name: "process list with containers",
 			model: Model{
-				currentView: ProcessListView,
+				currentView: ComposeProcessListView,
 				width:       80,
 				height:      24,
 				loading:     false,
@@ -61,7 +61,7 @@ func TestView(t *testing.T) {
 		{
 			name: "process list with error",
 			model: Model{
-				currentView: ProcessListView,
+				currentView: ComposeProcessListView,
 				width:       80,
 				height:      24,
 				loading:     false,
@@ -75,7 +75,7 @@ func TestView(t *testing.T) {
 		{
 			name: "process list with docker-compose.yml error",
 			model: Model{
-				currentView: ProcessListView,
+				currentView: ComposeProcessListView,
 				width:       80,
 				height:      24,
 				loading:     false,
@@ -124,7 +124,7 @@ func TestView(t *testing.T) {
 		{
 			name: "dind process list",
 			model: Model{
-				currentView:     DindProcessListView,
+				currentView:     DindComposeProcessListView,
 				width:           80,
 				height:          24,
 				loading:         false,
@@ -166,7 +166,7 @@ func TestView(t *testing.T) {
 
 func TestRenderProcessList(t *testing.T) {
 	m := Model{
-		currentView: ProcessListView,
+		currentView: ComposeProcessListView,
 		width:       80,
 		height:      24,
 		loading:     false,
@@ -222,7 +222,7 @@ func TestRenderLogView(t *testing.T) {
 
 func TestRenderDindList(t *testing.T) {
 	m := Model{
-		currentView:     DindProcessListView,
+		currentView:     DindComposeProcessListView,
 		width:           80,
 		height:          24,
 		loading:         false,
@@ -258,7 +258,7 @@ func TestRenderDindList(t *testing.T) {
 
 func TestViewWithNoContainers(t *testing.T) {
 	m := Model{
-		currentView: ProcessListView,
+		currentView: ComposeProcessListView,
 		width:       80,
 		height:      24,
 		loading:     false,
@@ -272,7 +272,7 @@ func TestViewWithNoContainers(t *testing.T) {
 
 func TestTableRendering(t *testing.T) {
 	m := Model{
-		currentView: ProcessListView,
+		currentView: ComposeProcessListView,
 		width:       80,
 		height:      24,
 		loading:     false,

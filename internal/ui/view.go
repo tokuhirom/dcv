@@ -54,11 +54,11 @@ func (m *Model) View() string {
 	}
 
 	switch m.currentView {
-	case ProcessListView:
+	case ComposeProcessListView:
 		return m.renderProcessList()
 	case LogView:
 		return m.renderLogView()
-	case DindProcessListView:
+	case DindComposeProcessListView:
 		return m.renderDindList()
 	case TopView:
 		return m.renderTopView()

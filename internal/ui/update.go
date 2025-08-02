@@ -170,9 +170,9 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.currentView == ProjectListView {
 			return m, tea.Quit
 		}
-		if m.currentView != ProcessListView {
+		if m.currentView != ComposeProcessListView {
 			// Go back to process list
-			m.currentView = ProcessListView
+			m.currentView = ComposeProcessListView
 			m.err = nil
 			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 		}
@@ -181,11 +181,11 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	// Handle view-specific keys
 	switch m.currentView {
-	case ProcessListView:
+	case ComposeProcessListView:
 		return m.handleProcessListKeys(msg)
 	case LogView:
 		return m.handleLogViewKeys(msg)
-	case DindProcessListView:
+	case DindComposeProcessListView:
 		return m.handleDindListKeys(msg)
 	case TopView:
 		return m.handleTopViewKeys(msg)
