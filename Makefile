@@ -1,4 +1,4 @@
-.PHONY: all up down logs test-dind clean staticcheck test
+.PHONY: all up down logs test-dind clean staticcheck test fmt dev-deps
 
 all:
 	go build -o dcv
@@ -30,8 +30,25 @@ clean:
 
 # Run staticcheck
 staticcheck:
-	@which staticcheck > /dev/null || go install honnef.co/go/tools/cmd/staticcheck@latest
+	@which staticcheck > /dev/null || $(MAKE) dev-deps
 	staticcheck ./...
 
 test:
 	go test -v ./...
+
+# Format code with goimports (fallback to go fmt if goimports fails)
+fmt:
+	@echo "Running code formatter..."
+	@if command -v goimports >/dev/null 2>&1 && goimports -w . 2>/dev/null; then \
+		echo "Formatted with goimports"; \
+	else \
+		echo "goimports not available, using go fmt"; \
+		go fmt ./...; \
+	fi
+
+# Install development dependencies
+dev-deps:
+	@echo "Installing development dependencies..."
+	@go install golang.org/x/tools/cmd/goimports@latest
+	@go install honnef.co/go/tools/cmd/staticcheck@latest
+	@echo "Development dependencies installed successfully"
