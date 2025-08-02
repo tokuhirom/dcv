@@ -40,6 +40,7 @@ const (
 	FileBrowserView
 	FileContentView
 	InspectView
+	HelpView
 )
 
 // Model represents the application state
@@ -152,6 +153,12 @@ type Model struct {
 	fileContentHandlers     []KeyConfig
 	inspectViewKeymap       map[string]KeyHandler
 	inspectViewHandlers     []KeyConfig
+	helpViewKeymap          map[string]KeyHandler
+	helpViewHandlers        []KeyConfig
+
+	// Help view state
+	previousView ViewType
+	helpScrollY  int
 }
 
 // NewModel creates a new model with initial state

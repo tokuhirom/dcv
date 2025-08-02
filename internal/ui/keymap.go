@@ -29,6 +29,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"D"}, "remove", m.DeleteContainer},
 		{[]string{"u"}, "up -d", m.DeployProject},
 		{[]string{"x"}, "down", m.DownProject},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
 
@@ -40,6 +41,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"g"}, "go to start", m.GoToLogStart},
 		{[]string{"/"}, "search", m.StartSearch},
 		{[]string{"esc"}, "back", m.BackFromLogView},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.logViewKeymap = m.createKeymap(m.logViewHandlers)
 
@@ -50,6 +52,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.ShowDindLog},
 		{[]string{"r"}, "refresh", m.RefreshDindList},
 		{[]string{"esc"}, "back", m.BackToDindList},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 
@@ -57,6 +60,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.topViewHandlers = []KeyConfig{
 		{[]string{"r"}, "refresh", m.RefreshTop},
 		{[]string{"esc", "q"}, "back", m.BackToProcessList},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.topViewKeymap = m.createKeymap(m.topViewHandlers)
 
@@ -64,6 +68,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.statsViewHandlers = []KeyConfig{
 		{[]string{"r"}, "refresh", m.RefreshStats},
 		{[]string{"esc", "q"}, "back", m.BackToProcessList},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.statsViewKeymap = m.createKeymap(m.statsViewHandlers)
 
@@ -73,6 +78,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.SelectDownProject},
 		{[]string{"enter"}, "select project", m.SelectProject},
 		{[]string{"r"}, "refresh", m.RefreshProjects},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
 
@@ -93,6 +99,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"P"}, "pause/unpause", m.PauseDockerContainer},
 		{[]string{"D"}, "remove", m.DeleteDockerContainer},
 		{[]string{"esc", "q"}, "back", m.BackFromDockerList},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.dockerListViewKeymap = m.createKeymap(m.dockerListViewHandlers)
 
@@ -106,6 +113,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"D"}, "remove", m.DeleteImage},
 		{[]string{"F"}, "force remove", m.ForceDeleteImage},
 		{[]string{"esc", "q"}, "back", m.BackFromImageList},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.imageListViewKeymap = m.createKeymap(m.imageListViewHandlers)
 
@@ -116,6 +124,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"r"}, "refresh", m.RefreshNetworkList},
 		{[]string{"D"}, "remove", m.DeleteNetwork},
 		{[]string{"esc", "q"}, "back", m.BackFromNetworkList},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.networkListViewKeymap = m.createKeymap(m.networkListViewHandlers)
 
@@ -126,6 +135,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "open", m.OpenFileOrDirectory},
 		{[]string{"r"}, "refresh", m.RefreshFiles},
 		{[]string{"esc", "q"}, "back", m.BackFromFileBrowser},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.fileBrowserKeymap = m.createKeymap(m.fileBrowserHandlers)
 
@@ -136,6 +146,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"G"}, "go to end", m.GoToFileEnd},
 		{[]string{"g"}, "go to start", m.GoToFileStart},
 		{[]string{"esc", "q"}, "back", m.BackFromFileContent},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.fileContentKeymap = m.createKeymap(m.fileContentHandlers)
 
@@ -146,8 +157,17 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"G"}, "go to end", m.GoToInspectEnd},
 		{[]string{"g"}, "go to start", m.GoToInspectStart},
 		{[]string{"esc", "q"}, "back", m.BackFromInspect},
+		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.inspectViewKeymap = m.createKeymap(m.inspectViewHandlers)
+
+	// Help View
+	m.helpViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "scroll up", m.ScrollHelpUp},
+		{[]string{"down", "j"}, "scroll down", m.ScrollHelpDown},
+		{[]string{"esc", "q"}, "back", m.BackFromHelp},
+	}
+	m.helpViewKeymap = m.createKeymap(m.helpViewHandlers)
 
 	slog.Info("Initialized all view keymaps")
 }

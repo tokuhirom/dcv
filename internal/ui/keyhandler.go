@@ -834,6 +834,34 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// Help view handlers
+func (m *Model) ShowHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.previousView = m.currentView
+	m.currentView = HelpView
+	m.helpScrollY = 0
+	return m, nil
+}
+
+func (m *Model) ScrollHelpUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.helpScrollY > 0 {
+		m.helpScrollY--
+	}
+	return m, nil
+}
+
+func (m *Model) ScrollHelpDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Will be calculated based on help content height
+	// For now, just increment
+	m.helpScrollY++
+	return m, nil
+}
+
+func (m *Model) BackFromHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = m.previousView
+	m.helpScrollY = 0
+	return m, nil
+}
+
 // Pause/Unpause handlers
 func (m *Model) PauseContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {

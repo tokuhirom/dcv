@@ -113,11 +113,8 @@ func (m *Model) renderImageList() string {
 
 	s.WriteString(t.Render() + "\n\n")
 
-	// Help text
-	helpText := m.GetStyledHelpText()
-	if helpText != "" {
-		s.WriteString(helpText)
-	}
+	// Show help hint
+	s.WriteString(helpStyle.Render("Press ? for help"))
 
 	return s.String()
 }

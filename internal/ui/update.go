@@ -301,6 +301,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleFileContentKeys(msg)
 	case InspectView:
 		return m.handleInspectKeys(msg)
+	case HelpView:
+		return m.handleHelpKeys(msg)
 	default:
 		return m, nil
 	}
@@ -425,6 +427,14 @@ func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleInspectKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.inspectViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleHelpKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.helpViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}
