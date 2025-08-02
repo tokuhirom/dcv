@@ -64,12 +64,20 @@ func newLogReader(client *docker.Client, serviceName string, isDind bool, hostSe
 	// Log the command execution
 	startTime := time.Now()
 	if err := lr.cmd.Start(); err != nil {
-		client.LogCommand(lr.cmd, startTime, err)
+		slog.Error("Failed to start log command",
+			slog.String("command", strings.Join(lr.cmd.Args, " ")),
+			slog.Duration("startTime", time.Since(startTime)),
+			slog.Any("error", err))
 		return nil, fmt.Errorf("failed to start log command '%s': %w", strings.Join(lr.cmd.Args, " "), err)
 	}
 
 	// Log successful start
-	client.LogCommand(lr.cmd, startTime, nil)
+	slog.Info("Log command started",
+		slog.String("command", strings.Join(lr.cmd.Args, " ")),
+		slog.Duration("startTime", time.Since(startTime)),
+		slog.String("containerName", lr.containerName),
+		slog.Bool("isDind", lr.isDind),
+		slog.String("hostContainer", lr.hostContainer))
 
 	// Start reading logs in background
 	go lr.readLogs()

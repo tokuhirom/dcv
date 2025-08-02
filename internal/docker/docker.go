@@ -60,31 +60,6 @@ func (c *Client) ListComposeProjects() ([]models.ComposeProject, error) {
 	return projects, nil
 }
 
-// LogCommand manually logs a command execution (for streaming commands)
-func (c *Client) LogCommand(cmd *exec.Cmd, startTime time.Time, err error) {
-	duration := time.Since(startTime)
-	cmdStr := strings.Join(cmd.Args, " ")
-
-	exitCode := 0
-	errorStr := ""
-
-	if err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitCode()
-		}
-		errorStr = err.Error()
-	}
-
-	slog.Info("Logged command",
-		slog.String("command", cmdStr),
-		slog.Int("exitCode", exitCode),
-		slog.String("error", errorStr),
-		slog.Duration("duration", duration),
-		slog.String("workDir", cmd.Dir),
-	)
-}
-
 // executeCaptured executes a command and logs the result
 func (c *Client) executeCaptured(args ...string) ([]byte, error) {
 	cmd := c.execute(args...)
