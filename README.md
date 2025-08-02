@@ -1,82 +1,110 @@
-# dcv - Docker Compose Viewer
+# dcv - Docker Container Viewer
 
-DCV は docker-compose の状況を確認できる TUI (Terminal User Interface) ツールです｡
+DCV is a TUI (Terminal User Interface) tool for monitoring Docker containers and Docker Compose applications.
 
-## 主な機能
+## Features
 
-- docker-compose で起動しているコンテナの一覧を表示
-- コンテナのログをリアルタイムで確認（最新1000行を初期表示､その後リアルタイム追従）
-- Docker-in-Docker (dind) コンテナの中で動作するコンテナの管理
-- vim 風のキーバインディング
-- 実行コマンドの表示（デバッグに便利）
+- View all Docker containers (both standalone and Docker Compose managed)
+- List and manage Docker Compose containers
+- Switch between multiple Docker Compose projects
+- Real-time container log streaming (shows last 1000 lines, then follows new logs)
+- Manage containers inside Docker-in-Docker (dind) containers
+- Vim-style key bindings
+- Display executed commands for debugging
 
 ## Views
 
-### Process List View
+### Docker Container List View
 
-`docker compose ps` の結果を見やすくテーブル形式で表示します。
+Displays `docker ps` results in a table format. Shows all Docker containers, not limited to Docker Compose.
 
-**キーバインド:**
-- `↑`/`k`: 上へ移動
-- `↓`/`j`: 下へ移動  
-- `Enter`: 選択したコンテナのログを表示
-- `d`: dind コンテナの中身を表示（dind コンテナ選択時のみ）
-- `r`: リストを更新
-- `q`: 終了
+**Key bindings:**
+- `↑`/`k`: Move up
+- `↓`/`j`: Move down
+- `Enter`: View container logs
+- `a`: Toggle show all containers (including stopped)
+- `r`: Refresh list
+- `K`: Kill container
+- `S`: Stop container
+- `U`: Start container
+- `R`: Restart container
+- `D`: Delete stopped container
+- `q`/`Esc`: Back to Docker Compose process list
+
+### Docker Compose Process List View
+
+Displays `docker compose ps` results in a table format.
+
+**Key bindings:**
+- `↑`/`k`: Move up
+- `↓`/`j`: Move down  
+- `Enter`: View container logs
+- `d`: View dind container contents (only for dind containers)
+- `p`: Switch to Docker container list view
+- `P`: Switch to project list view
+- `a`: Toggle show all containers (including stopped)
+- `r`: Refresh list
+- `q`: Quit
 
 ### Log View
 
-コンテナのログを表示します。初期表示で最新1000行を取得し、その後新しいログをリアルタイムで追加表示します。
+Displays container logs. Initially shows the last 1000 lines, then streams new logs in real-time.
 
-**キーバインド:**
-- `↑`/`k`: 上スクロール
-- `↓`/`j`: 下スクロール
-- `G`: 最下部へジャンプ
-- `g`: 最上部へジャンプ
-- `/`: 検索モード（未実装）
-- `Esc`/`q`: Process List View へ戻る
+**Key bindings:**
+- `↑`/`k`: Scroll up
+- `↓`/`j`: Scroll down
+- `G`: Jump to end
+- `g`: Jump to start
+- `/`: Search mode (not implemented yet)
+- `Esc`/`q`: Back to previous view
 
 ### Docker-in-Docker Process List View
 
-dind コンテナ内で動作しているコンテナの一覧を表示します。
+Shows containers running inside a dind container.
 
-**キーバインド:**
-- `↑`/`k`: 上へ移動
-- `↓`/`j`: 下へ移動
-- `Enter`: 選択したコンテナのログを表示
-- `r`: リストを更新
-- `Esc`: Process List View へ戻る
-- `q`: Process List View へ戻る
+**Key bindings:**
+- `↑`/`k`: Move up
+- `↓`/`j`: Move down
+- `Enter`: View container logs
+- `r`: Refresh list
+- `Esc`/`q`: Back to process list
 
-## 使い方
+## Usage
 
-### オプション
+### Options
 
 ```bash
-dcv [-C <path>] [-d <path>]
+dcv [-p <project>] [-f <compose-file>] [--projects]
 ```
 
-- `-C <path>`, `-d <path>`: 指定したディレクトリで docker-compose を実行（`docker-compose -C` と同じ）
+- `-p <project>`: Display the specified Docker Compose project
+- `-f <compose-file>`: Display the project with the specified compose file
+- `--projects`: Show project list on startup
 
-### 例
+### Examples
 
 ```bash
-# 現在のディレクトリで実行
+# Display Docker Compose project in current directory
 dcv
 
-# 特定のディレクトリで実行
-dcv -C /path/to/project
+# Display specific project
+dcv -p myproject
+
+# Start with project list
+dcv --projects
+
+# To view all Docker containers, press 'p' after starting
 ```
 
-## インストール
+## Installation
 
-### Go install を使う場合
+### Using go install
 
 ```bash
 go install github.com/tokuhirom/dcv@latest
 ```
 
-### ソースからビルドする場合
+### Building from source
 
 ```bash
 git clone https://github.com/tokuhirom/dcv.git
@@ -85,66 +113,78 @@ go build -o dcv
 ./dcv
 ```
 
-## 要件
+## Requirements
 
-- Go 1.24.3 以上
-- Docker および Docker Compose がインストールされていること
-- ターミナルが TUI をサポートしていること
+- Go 1.24.3 or later
+- Docker and Docker Compose installed
+- Terminal with TUI support
 
-## 内部実装
+## Implementation Details
 
-- 言語: Go
-- TUI フレームワーク: [Bubble Tea](https://github.com/charmbracelet/bubbletea)
-- スタイリング: [Lipgloss](https://github.com/charmbracelet/lipgloss)
-- テスト: testify
+- Language: Go
+- TUI Framework: [Bubble Tea](https://github.com/charmbracelet/bubbletea)
+- Styling: [Lipgloss](https://github.com/charmbracelet/lipgloss)
+- Testing: testify
 
-### 特徴
+### Architecture
 
-- Model-View-Update (MVU) アーキテクチャを採用
-- 非同期でログをストリーミング
-- エラー時に実行したコマンドを表示してデバッグを容易に
-- 包括的なユニットテスト
+- Uses Model-View-Update (MVU) pattern
+- Async log streaming
+- Shows executed commands on error for easier debugging
+- Comprehensive unit tests
 
-## デバッグ機能
+## Debugging Features
 
-- 実行されたコマンドがフッターに常時表示される
-- エラー発生時は詳細なエラーメッセージとコマンドが表示される
-- stderr 出力は `[STDERR]` プレフィックス付きで表示
+- Executed commands are always displayed in the footer
+- Detailed error messages and commands shown on error
+- stderr output is prefixed with `[STDERR]`
 
-## 開発
+## Development
 
-### テストの実行
+### Running tests
 
 ```bash
-go test ./...
+make test
 ```
 
-### ビルド
+### Building
 
 ```bash
-go build -o dcv
+make all
 ```
 
-### サンプル環境の起動
-
-リポジトリには Docker Compose のサンプル環境が含まれています：
+### Installing development dependencies
 
 ```bash
-# サンプル環境を起動
-docker compose up -d
+make dev-deps
+```
 
-# dcv でモニタリング
+### Formatting code
+
+```bash
+make fmt
+```
+
+### Starting sample environment
+
+The repository includes a Docker Compose sample environment:
+
+```bash
+# Start sample environment
+make up
+
+# Monitor with dcv
 ./dcv
 
-# サンプル環境を停止
-docker compose down
+# Stop sample environment
+make down
 ```
 
-サンプル環境には以下が含まれます：
-- `web`: Nginx サーバー
-- `db`: PostgreSQL データベース
-- `redis`: Redis キャッシュ
-- `dind`: Docker-in-Docker（内部でテストコンテナが自動起動）
+The sample environment includes:
+- `web`: Nginx server
+- `db`: PostgreSQL database
+- `redis`: Redis cache
+- `dind`: Docker-in-Docker (automatically starts test containers inside)
 
 ## License
 
@@ -171,4 +211,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
-
