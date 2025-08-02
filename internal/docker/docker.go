@@ -257,7 +257,7 @@ func (c *Client) ListAllContainers(showAll bool) ([]models.DockerContainer, erro
 	if showAll {
 		args = append(args, "--all")
 	}
-	
+
 	output, err := c.executeCaptured(args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute docker ps: %w\nOutput: %s", err, string(output))

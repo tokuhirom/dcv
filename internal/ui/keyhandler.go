@@ -403,7 +403,7 @@ func renderHelpText(configs []KeyConfig, width int) string {
 
 	// Join items and wrap if necessary
 	helpText := strings.Join(helpItems, " | ")
-	
+
 	if len(helpText) <= availableWidth {
 		// All items fit on one line
 		return helpText
@@ -412,7 +412,7 @@ func renderHelpText(configs []KeyConfig, width int) string {
 	// Need to wrap or truncate
 	var lines []string
 	var currentLine string
-	
+
 	for i, item := range helpItems {
 		if i == 0 {
 			currentLine = item
@@ -427,7 +427,7 @@ func renderHelpText(configs []KeyConfig, width int) string {
 			}
 		}
 	}
-	
+
 	if currentLine != "" {
 		lines = append(lines, currentLine)
 	}
@@ -436,14 +436,14 @@ func renderHelpText(configs []KeyConfig, width int) string {
 	if len(lines) > 0 {
 		return lines[0]
 	}
-	
+
 	return helpText[:availableWidth-3] + "..."
 }
 
 // GetHelpText returns the help text for the current view
 func (m *Model) GetHelpText() string {
 	var configs []KeyConfig
-	
+
 	switch m.currentView {
 	case ComposeProcessListView:
 		configs = m.processListViewHandlers
@@ -462,7 +462,7 @@ func (m *Model) GetHelpText() string {
 	default:
 		return ""
 	}
-	
+
 	return renderHelpText(configs, m.width)
 }
 
@@ -472,11 +472,11 @@ func (m *Model) GetStyledHelpText() string {
 	if helpText == "" {
 		return ""
 	}
-	
+
 	style := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
 		Italic(true).
 		Padding(0, 1)
-	
+
 	return style.Render(helpText)
 }

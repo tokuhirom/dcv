@@ -35,7 +35,7 @@ func (c ComposeContainer) GetPortsString() string {
 	if len(c.Publishers) == 0 {
 		return ""
 	}
-	
+
 	var ports []string
 	for _, p := range c.Publishers {
 		if p.PublishedPort > 0 {

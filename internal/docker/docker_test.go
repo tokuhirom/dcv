@@ -7,7 +7,6 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
-
 func TestComposeClient_parseComposePSJSON(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -187,4 +186,3 @@ func TestRemoveService(t *testing.T) {
 	// Either error or success is acceptable for rm -f
 	_ = err
 }
-

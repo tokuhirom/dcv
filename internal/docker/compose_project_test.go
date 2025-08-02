@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-
 func TestListProjects(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command

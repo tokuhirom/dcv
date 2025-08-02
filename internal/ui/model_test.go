@@ -127,7 +127,7 @@ func TestViewSwitching(t *testing.T) {
 			Name: "web-1",
 		},
 		{
-			Name: "dind-1",
+			Name:    "dind-1",
 			Command: "dockerd",
 		},
 	}

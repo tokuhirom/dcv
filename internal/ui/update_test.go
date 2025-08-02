@@ -157,7 +157,7 @@ func TestHandleKeyPress(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
-			
+
 			newModel, _ := tt.model.handleKeyPress(tt.key)
 			m := *newModel.(*Model)
 
@@ -226,7 +226,7 @@ func TestHandleSearchMode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
-			
+
 			newModel, _ := tt.model.handleSearchMode(tt.key)
 			m := *newModel.(*Model)
 

@@ -111,7 +111,7 @@ func TestRenderHelpText(t *testing.T) {
 				{Keys: []string{"b"}, Description: "bb"},
 				{Keys: []string{"c"}, Description: "cc"},
 			},
-			width:    24, // Will have 20 chars available (24-4), minimum required
+			width:    24,                   // Will have 20 chars available (24-4), minimum required
 			expected: "a:aa | b:bb | c:cc", // This is 18 chars, fits in 20
 		},
 		{
@@ -121,7 +121,7 @@ func TestRenderHelpText(t *testing.T) {
 				{Keys: []string{"down"}, Description: "move down"},
 				{Keys: []string{"enter"}, Description: "select"},
 			},
-			width:    30, // Will have 26 chars available (30-4)
+			width: 30, // Will have 26 chars available (30-4)
 			// "up:move up | down:move down | enter:select" is 43 chars, won't fit
 			// First line should be "up:move up | down:move down" (28 chars, too long)
 			// So it will be just "up:move up"
@@ -132,11 +132,11 @@ func TestRenderHelpText(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := renderHelpText(tt.configs, tt.width)
-			
+
 			if tt.expected != "" {
 				assert.Equal(t, tt.expected, result)
 			}
-			
+
 			for _, substring := range tt.contains {
 				assert.Contains(t, result, substring)
 			}
@@ -148,11 +148,11 @@ func TestGetHelpText(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.width = 80
-	
+
 	tests := []struct {
-		name     string
-		view     ViewType
-		hasHelp  bool
+		name    string
+		view    ViewType
+		hasHelp bool
 	}{
 		{
 			name:    "process list view",
@@ -190,12 +190,12 @@ func TestGetHelpText(t *testing.T) {
 			hasHelp: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m.currentView = tt.view
 			helpText := m.GetHelpText()
-			
+
 			if tt.hasHelp {
 				assert.NotEmpty(t, helpText)
 				assert.Contains(t, helpText, ":")
@@ -210,7 +210,7 @@ func TestGetStyledHelpText(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 	m.Init()
 	m.width = 80
-	
+
 	// Test with a view that has help text
 	m.currentView = ComposeProcessListView
 	styledHelp := m.GetStyledHelpText()
@@ -222,7 +222,7 @@ func TestGetStyledHelpText(t *testing.T) {
 	assert.True(t, len(styledHelp) > len(plainHelp))
 	// Should have some padding spaces
 	assert.True(t, strings.Contains(styledHelp, " up:move up") || strings.Contains(styledHelp, "up:move up "))
-	
+
 	// Test with no help text
 	m.currentView = ViewType(999)
 	styledHelp = m.GetStyledHelpText()
