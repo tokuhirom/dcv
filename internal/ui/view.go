@@ -12,39 +12,39 @@ import (
 // Styles
 var (
 	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("86")).
-			MarginBottom(1)
+		Bold(true).
+		Foreground(lipgloss.Color("86")).
+		MarginBottom(1)
 
 	selectedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("235"))
+		Foreground(lipgloss.Color("86")).
+		Background(lipgloss.Color("235"))
 
 	normalStyle = lipgloss.NewStyle()
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
-			Bold(true)
+		Foreground(lipgloss.Color("196")).
+		Bold(true)
 
 	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+		Foreground(lipgloss.Color("241"))
 
 	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("226"))
+		Bold(true).
+		Foreground(lipgloss.Color("226"))
 
 	dindStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusDownStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196"))
+		Foreground(lipgloss.Color("196"))
 
 	searchStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("226")).
-			Bold(true)
+		Foreground(lipgloss.Color("226")).
+		Bold(true)
 )
 
 // View returns the view for the current model
@@ -126,10 +126,9 @@ func (m *Model) renderComposeProcessList() string {
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		Headers("NAME", "IMAGE", "SERVICE", "STATUS", "STATE")
 
-	// Style headers
 	t.StyleFunc(func(row, col int) lipgloss.Style {
-		if row == 0 {
-			return headerStyle
+		if row == m.selectedContainer {
+			return selectedStyle
 		}
 		return normalStyle
 	})
@@ -154,14 +153,8 @@ func (m *Model) renderComposeProcessList() string {
 		}
 
 		name := nameStyle.Render(container.Name)
-		var image, service string
-		if i == m.selectedContainer {
-			image = selectedStyle.Render(container.Image)
-			service = selectedStyle.Render(container.Service)
-		} else {
-			image = normalStyle.Render(container.Image)
-			service = normalStyle.Render(container.Service)
-		}
+		image := normalStyle.Render(container.Image)
+		service := normalStyle.Render(container.Service)
 		status := statusStyle.Render(container.GetStatus())
 		state := normalStyle.Render(container.State)
 
