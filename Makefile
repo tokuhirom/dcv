@@ -1,4 +1,4 @@
-.PHONY: all up down logs test-dind clean staticcheck test fmt dev-deps
+.PHONY: all up down logs test-dind clean staticcheck test fmt dev-deps lint
 
 all:
 	go build -o dcv
@@ -32,6 +32,9 @@ clean:
 staticcheck:
 	@which staticcheck > /dev/null || $(MAKE) dev-deps
 	staticcheck ./...
+
+# Run lint (alias for staticcheck)
+lint: staticcheck
 
 test:
 	go test -v ./...
