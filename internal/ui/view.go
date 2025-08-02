@@ -484,7 +484,7 @@ func (m *Model) renderDockerList() string {
 	// Add rows
 	for i, container := range m.dockerContainers {
 		var idStyle, imageStyle, statusStyle, portsStyle, nameStyle lipgloss.Style
-		
+
 		if i == m.selectedDockerContainer {
 			idStyle = selectedStyle
 			imageStyle = selectedStyle
@@ -496,7 +496,7 @@ func (m *Model) renderDockerList() string {
 			imageStyle = normalStyle
 			portsStyle = normalStyle
 			nameStyle = normalStyle
-			
+
 			if strings.Contains(container.Status, "Up") || strings.Contains(container.State, "running") {
 				statusStyle = statusUpStyle
 			} else {
@@ -507,14 +507,14 @@ func (m *Model) renderDockerList() string {
 		id := idStyle.Render(container.ID[:12])
 		image := imageStyle.Render(container.Image)
 		status := statusStyle.Render(container.Status)
-		
+
 		// Truncate ports if too long
 		ports := container.Ports
 		if len(ports) > 30 {
 			ports = ports[:27] + "..."
 		}
 		ports = portsStyle.Render(ports)
-		
+
 		name := nameStyle.Render(container.Names)
 
 		t.Row(id, image, status, ports, name)

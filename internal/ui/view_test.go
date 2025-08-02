@@ -155,7 +155,7 @@ func TestView(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
-			
+
 			view := tt.model.View()
 			for _, expected := range tt.contains {
 				assert.Contains(t, view, expected)
@@ -314,9 +314,9 @@ func TestTableRendering(t *testing.T) {
 func TestDockerContainerListView(t *testing.T) {
 	t.Run("docker_list_with_containers", func(t *testing.T) {
 		m := &Model{
-			width:                  80,
-			height:                 24,
-			currentView:            DockerContainerListView,
+			width:                   80,
+			height:                  24,
+			currentView:             DockerContainerListView,
 			selectedDockerContainer: 0,
 			dockerContainers: []models.DockerContainer{
 				{ID: "abc123def456", Names: "nginx", Image: "nginx:latest", Status: "Up 2 hours", Ports: "80/tcp"},
@@ -347,11 +347,11 @@ func TestDockerContainerListView(t *testing.T) {
 
 	t.Run("docker_list_show_all", func(t *testing.T) {
 		m := &Model{
-			width:                  80,
-			height:                 24,
-			currentView:            DockerContainerListView,
-			showAll:                true,
-			dockerContainers:       []models.DockerContainer{},
+			width:            80,
+			height:           24,
+			currentView:      DockerContainerListView,
+			showAll:          true,
+			dockerContainers: []models.DockerContainer{},
 		}
 		m.initializeKeyHandlers()
 
