@@ -59,7 +59,7 @@ dind-1              docker:dind         dind                Up 5 minutes        
 		},
 	}
 
-	c := &ComposeClient{}
+	c := &Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := c.parseComposePS(tt.input)
@@ -119,7 +119,7 @@ func TestComposeClient_parseComposePSJSON(t *testing.T) {
 		},
 	}
 
-	c := &ComposeClient{}
+	c := &Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := c.parseComposePSJSON(tt.input)
@@ -166,7 +166,7 @@ b2c3d4e5f6g7   nginx:latest   nginx      5 minutes ago   Up 5 minutes   80/tcp  
 		},
 	}
 
-	c := &ComposeClient{}
+	c := &Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := c.parseDindPS(tt.input)
@@ -184,11 +184,11 @@ b2c3d4e5f6g7   nginx:latest   nginx      5 minutes ago   Up 5 minutes   80/tcp  
 func TestKillService(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command
-	client := NewComposeClient()
+	client := NewClient()
 
 	// We can't actually test killing a service without a running container
 	// So we just verify the method exists and returns an error for non-existent service
-	err := client.KillService("non-existent-service")
+	err := client.KillContainer("non-existent-service")
 	if err == nil {
 		t.Error("Expected error for non-existent service, got nil")
 	}
@@ -197,11 +197,11 @@ func TestKillService(t *testing.T) {
 func TestStopService(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command
-	client := NewComposeClient()
+	client := NewClient()
 
 	// We can't actually test stopping a service without a running container
 	// So we just verify the method exists and returns an error for non-existent service
-	err := client.StopService("non-existent-service")
+	err := client.StopContainer("non-existent-service")
 	if err == nil {
 		t.Error("Expected error for non-existent service, got nil")
 	}
@@ -210,7 +210,7 @@ func TestStopService(t *testing.T) {
 func TestGetStats(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command
-	client := NewComposeClient()
+	client := NewClient()
 
 	// We can't actually test getting stats without running containers
 	// The method should return an error or empty result
@@ -222,11 +222,11 @@ func TestGetStats(t *testing.T) {
 func TestStartService(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command
-	client := NewComposeClient()
+	client := NewClient()
 
 	// We can't actually test starting a service without a stopped container
 	// So we just verify the method exists and returns an error for non-existent service
-	err := client.StartService("non-existent-service")
+	err := client.StartContainer("non-existent-service")
 	if err == nil {
 		t.Error("Expected error for non-existent service, got nil")
 	}
@@ -235,11 +235,11 @@ func TestStartService(t *testing.T) {
 func TestRestartService(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command
-	client := NewComposeClient()
+	client := NewClient()
 
 	// We can't actually test restarting a service without a running container
 	// So we just verify the method exists and returns an error for non-existent service
-	err := client.RestartService("non-existent-service")
+	err := client.RestartContainer("non-existent-service")
 	if err == nil {
 		t.Error("Expected error for non-existent service, got nil")
 	}
@@ -248,11 +248,11 @@ func TestRestartService(t *testing.T) {
 func TestRemoveService(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command
-	client := NewComposeClient()
+	client := NewClient()
 
 	// We can't actually test removing a service without a stopped container
 	// So we just verify the method exists and returns an error for non-existent service
-	err := client.RemoveService("non-existent-service")
+	err := client.RemoveContainer("non-existent-service")
 	if err == nil {
 		t.Error("Expected error for non-existent service, got nil")
 	}
@@ -261,7 +261,7 @@ func TestRemoveService(t *testing.T) {
 func TestUpService(t *testing.T) {
 	// This is a basic test that just checks the method exists
 	// In a real test environment, you would mock the exec.Command
-	client := NewComposeClient()
+	client := NewClient()
 
 	// We can't actually test up command without a compose file
 	// So we just verify the method exists and returns an error for non-existent service
@@ -273,7 +273,7 @@ func TestUpService(t *testing.T) {
 
 func TestListContainersWithShowAll(t *testing.T) {
 	// This is a basic test that just checks the method with showAll parameter
-	client := NewComposeClient()
+	client := NewClient()
 
 	// Test with showAll = false
 	_, err := client.ListContainers(false)

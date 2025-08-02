@@ -1,17 +1,19 @@
 package models
 
+import "strings"
+
 type Container struct {
-	Name      string
-	Image     string
-	ID        string
-	Status    string
-	State     string
-	Service   string
-	CreatedAt string
-	Ports     string
+	Name      string `json:"Name"`
+	Image     string `json:"Image"`
+	ID        string `json:"ID"`
+	Status    string `json:"Status"`
+	State     string `json:"State"`
+	Service   string `json:"Service"`
+	CreatedAt string `json:"CreatedAt"`
+	Ports     string `json:"Ports"`
 }
 
-type Process struct {
-	Container
-	IsDind bool
+func (c Container) IsDind() bool {
+	imageLower := strings.ToLower(c.Image)
+	return strings.Contains(imageLower, "dind") || strings.Contains(imageLower, "docker:dind")
 }

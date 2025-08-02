@@ -16,7 +16,7 @@ import (
 
 // logReader manages log streaming from a container
 type logReader struct {
-	client        *docker.ComposeClient
+	client        *docker.Client
 	containerName string
 	isDind        bool
 	hostContainer string
@@ -29,7 +29,7 @@ type logReader struct {
 }
 
 // newLogReader creates a new log reader
-func newLogReader(client *docker.ComposeClient, serviceName string, isDind bool, hostService string) (*logReader, error) {
+func newLogReader(client *docker.Client, serviceName string, isDind bool, hostService string) (*logReader, error) {
 	lr := &logReader{
 		client:        client,
 		containerName: serviceName, // Keep field name for compatibility but it's actually service name
@@ -154,7 +154,7 @@ var logReaderMu sync.Mutex
 var lastLogIndex int
 
 // streamLogsReal creates a command that starts log streaming
-func streamLogsReal(client *docker.ComposeClient, serviceName string, isDind bool, hostService string) tea.Cmd {
+func streamLogsReal(client *docker.Client, serviceName string, isDind bool, hostService string) tea.Cmd {
 	return func() tea.Msg {
 		logReaderMu.Lock()
 		defer logReaderMu.Unlock()

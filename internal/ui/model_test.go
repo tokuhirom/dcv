@@ -14,8 +14,8 @@ func TestNewModel(t *testing.T) {
 	assert.Equal(t, ProcessListView, m.currentView)
 	assert.NotNil(t, m.dockerClient)
 	assert.True(t, m.loading)
-	assert.Empty(t, m.processes)
-	assert.Equal(t, 0, m.selectedProcess)
+	assert.Empty(t, m.containers)
+	assert.Equal(t, 0, m.selectedContainer)
 }
 
 func TestModelInit(t *testing.T) {
@@ -61,10 +61,10 @@ func TestProcessesLoadedMsg(t *testing.T) {
 
 	assert.False(t, m.loading)
 	assert.Nil(t, m.err)
-	assert.Equal(t, 2, len(m.processes))
-	assert.Equal(t, "web-1", m.processes[0].Name)
-	assert.Equal(t, "dind-1", m.processes[1].Name)
-	assert.True(t, m.processes[1].IsDind)
+	assert.Equal(t, 2, len(m.containers))
+	assert.Equal(t, "web-1", m.containers[0].Name)
+	assert.Equal(t, "dind-1", m.containers[1].Name)
+	assert.True(t, m.containers[1].IsDind)
 	assert.Nil(t, cmd)
 }
 
@@ -87,7 +87,7 @@ func TestWindowSizeMsg(t *testing.T) {
 func TestKeyNavigation(t *testing.T) {
 	m := NewModel(ProcessListView, "")
 	m.loading = false
-	m.processes = []models.Process{
+	m.containers = []models.Process{
 		{Container: models.Container{Name: "web-1"}},
 		{Container: models.Container{Name: "db-1"}},
 		{Container: models.Container{Name: "redis-1"}},
@@ -106,7 +106,7 @@ func TestKeyNavigation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m.selectedProcess = 0
+			m.selectedContainer = 0
 
 			// Move down
 			if tt.expected > 0 {
@@ -118,7 +118,7 @@ func TestKeyNavigation(t *testing.T) {
 				m = newModel.(Model)
 			}
 
-			assert.Equal(t, tt.expected, m.selectedProcess)
+			assert.Equal(t, tt.expected, m.selectedContainer)
 		})
 	}
 }
@@ -126,7 +126,7 @@ func TestKeyNavigation(t *testing.T) {
 func TestViewSwitching(t *testing.T) {
 	m := NewModel(ProcessListView, "")
 	m.loading = false
-	m.processes = []models.Process{
+	m.containers = []models.Process{
 		{
 			Container: models.Container{Name: "web-1"},
 			IsDind:    false,
@@ -138,7 +138,7 @@ func TestViewSwitching(t *testing.T) {
 	}
 
 	// Test entering log view
-	m.selectedProcess = 0
+	m.selectedContainer = 0
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
 	newModel, cmd := m.Update(msg)
 	m = newModel.(Model)
@@ -157,7 +157,7 @@ func TestViewSwitching(t *testing.T) {
 	assert.NotNil(t, cmd)
 
 	// Test entering dind view
-	m.selectedProcess = 1
+	m.selectedContainer = 1
 	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")}
 	newModel, cmd = m.Update(msg)
 	m = newModel.(Model)

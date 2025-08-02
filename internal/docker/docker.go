@@ -1,0 +1,343 @@
+package docker
+
+import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log/slog"
+	"os/exec"
+	"strings"
+	"time"
+
+	"github.com/tokuhirom/dcv/internal/models"
+)
+
+type Client struct {
+}
+
+func NewClient() *Client {
+	return &Client{}
+}
+
+func (c *Client) Compose(projectName string) *ComposeClient {
+	return &ComposeClient{
+		projectName: projectName,
+	}
+}
+
+// ListComposeProjects lists all Docker Compose projects
+func (c *Client) ListComposeProjects() ([]models.ComposeProject, error) {
+	output, err := c.executeCaptured("compose", "ls", "--format", "json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to executeCaptured docker compose ls: %w\nOutput: %s", err, string(output))
+	}
+
+	// Handle empty output
+	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
+		return []models.ComposeProject{}, nil
+	}
+
+	// Parse JSON output - docker compose ls returns an array
+	var projects []models.ComposeProject
+	if err := json.Unmarshal(output, &projects); err != nil {
+		// Fallback to line-delimited JSON parsing for older versions
+		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+
+			var project models.ComposeProject
+			if err := json.Unmarshal([]byte(line), &project); err != nil {
+				return nil, fmt.Errorf("failed to parse project JSON: %w", err)
+			}
+			projects = append(projects, project)
+		}
+	}
+
+	return projects, nil
+}
+
+// LogCommand manually logs a command execution (for streaming commands)
+func (c *Client) LogCommand(cmd *exec.Cmd, startTime time.Time, err error) {
+	duration := time.Since(startTime)
+	cmdStr := strings.Join(cmd.Args, " ")
+
+	exitCode := 0
+	errorStr := ""
+
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			exitCode = exitErr.ExitCode()
+		}
+		errorStr = err.Error()
+	}
+
+	slog.Info("Logged command",
+		slog.String("command", cmdStr),
+		slog.Int("exitCode", exitCode),
+		slog.String("error", errorStr),
+		slog.Duration("duration", duration),
+		slog.String("workDir", cmd.Dir),
+	)
+}
+
+// executeCaptured executes a command and logs the result
+func (c *Client) executeCaptured(args ...string) ([]byte, error) {
+	cmd := c.execute(args...)
+
+	startTime := time.Now()
+	cmdStr := strings.Join(cmd.Args, " ")
+
+	output, err := cmd.CombinedOutput()
+	duration := time.Since(startTime)
+
+	exitCode := 0
+	errorStr := ""
+
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			exitCode = exitErr.ExitCode()
+		}
+		errorStr = err.Error()
+	}
+
+	slog.Info("Executed command",
+		slog.String("command", cmdStr),
+		slog.Int("exitCode", exitCode),
+		slog.String("error", errorStr),
+		slog.Duration("duration", duration),
+		slog.String("output", string(output)))
+
+	return output, err
+}
+
+func (c *Client) execute(args ...string) *exec.Cmd {
+	slog.Info("Executing docker command",
+		slog.String("args", strings.Join(args, " ")))
+
+	return exec.Command("docker", args...)
+}
+
+func (c *Client) parseComposePS(output []byte) ([]models.Container, error) {
+	containers := make([]models.Container, 0)
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+
+	// Skip header
+	if scanner.Scan() {
+		scanner.Text() // Skip the header line
+	}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		// Use a more robust parsing approach - split by multiple spaces
+		// Expected format: NAME IMAGE SERVICE STATUS PORTS
+		// Split preserving the column alignment
+		parts := strings.Fields(line)
+		if len(parts) < 4 {
+			continue
+		}
+
+		// Find where STATUS starts (contains "Up", "Exited", etc.)
+		statusStartIdx := -1
+		for i := 2; i < len(parts); i++ {
+			if strings.HasPrefix(parts[i], "Up") || strings.HasPrefix(parts[i], "Exited") || strings.HasPrefix(parts[i], "Created") {
+				statusStartIdx = i
+				break
+			}
+		}
+
+		if statusStartIdx == -1 || statusStartIdx < 3 {
+			continue
+		}
+
+		// Extract fields based on position
+		name := parts[0]
+		image := parts[1]
+		service := parts[statusStartIdx-1]
+
+		// Build status from statusStartIdx onward, stopping at ports
+		statusParts := []string{}
+		for i := statusStartIdx; i < len(parts); i++ {
+			// Stop if we hit a port (contains "/" for tcp/udp or ":" for port mapping)
+			if strings.Contains(parts[i], "/") || strings.Contains(parts[i], ":") {
+				break
+			}
+			statusParts = append(statusParts, parts[i])
+		}
+		status := strings.Join(statusParts, " ")
+
+		container := models.Container{
+			Name:    name,
+			Image:   image,
+			Service: service,
+			Status:  status,
+		}
+
+		containers = append(containers, container)
+	}
+
+	return containers, scanner.Err()
+}
+
+func (c *Client) GetContainerLogs(containerID string, follow bool) (*exec.Cmd, error) {
+	args := []string{"logs", containerID, "--tail", "1000", "--timestamps"}
+	if follow {
+		args = append(args, "-f")
+	}
+
+	cmd := exec.Command("docker", args...)
+
+	return cmd, nil
+}
+
+func (c *Client) ListDindContainers(containerName string) ([]models.Container, error) {
+	// First check if docker daemon is ready
+	checkCmd := c.execute("exec", containerName, "docker", "info")
+	err := checkCmd.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	checkOutput, checkErr := checkCmd.CombinedOutput()
+	if checkErr != nil {
+		// Docker daemon not ready
+		cmdStr := strings.Join(checkCmd.Args, " ")
+		return nil, fmt.Errorf("docker daemon not ready in container %s\nCommand: %s\nOutput: %s\nError: %w",
+			containerName, cmdStr, string(checkOutput), checkErr)
+	}
+
+	output, err := c.executeCaptured("exec", containerName, "docker", "ps", "--format", "json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to executeCaptured docker ps: %w\nOutput: %s", err, string(output))
+	}
+
+	// Try to parse as JSON first
+	containers, err := c.parseDindPSJSON(output)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse docker ps JSON output: %w\nOutput: %s", err, string(output))
+	}
+
+	return containers, nil
+}
+
+func (c *Client) GetDindContainerLogs(hostContainerID, targetContainerID string, follow bool) (*exec.Cmd, error) {
+	args := []string{"logs", hostContainerID, "docker", "logs", targetContainerID, "--tail", "1000", "--timestamps"}
+	if follow {
+		args = append(args, "-f")
+	}
+	cmd := c.execute(args...)
+
+	return cmd, nil
+}
+
+func (c *Client) parseDindPSJSON(output []byte) ([]models.Container, error) {
+	containers := make([]models.Container, 0)
+
+	// Docker ps outputs each container as a separate JSON object on its own line
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var container models.Container
+
+		if err := json.Unmarshal(line, &container); err != nil {
+			// Skip invalid lines
+			continue
+		}
+
+		containers = append(containers, container)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return containers, nil
+}
+
+func (c *Client) KillContainer(containerID string) error {
+	output, err := c.executeCaptured("kill", containerID)
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured docker compose kill: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
+
+func (c *Client) StopContainer(containerID string) error {
+	output, err := c.executeCaptured("stop", containerID)
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured docker compose stop: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
+
+func (c *Client) StartContainer(containerID string) error {
+	output, err := c.executeCaptured("start", containerID)
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured docker compose start: %w\nOutput: %s", err, string(output))
+	}
+
+	slog.Info("Started container",
+		slog.String("containerID", containerID),
+		slog.String("output", string(output)))
+
+	return nil
+}
+
+func (c *Client) RestartContainer(containerID string) error {
+	output, err := c.executeCaptured("restart", containerID)
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured docker compose restart: %w\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
+
+func (c *Client) RemoveContainer(containerID string) error {
+	output, err := c.executeCaptured("rm", "-f", containerID)
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured docker compose rm: %w\nOutput: %s", err, string(output))
+	}
+
+	slog.Info("Removed container",
+		slog.String("containerID", containerID),
+		slog.String("output", string(output)))
+
+	return nil
+}
+
+func (c *ComposeClient) UpService(serviceName string) error {
+	out, err := c.executeCaptured("up", "-d", serviceName)
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured: %w", err)
+	}
+
+	slog.Info("Executed docker compose up",
+		slog.String("output", string(out)))
+
+	// TODO: show the result of the up command
+
+	return nil
+}
+func (c *Client) GetStats() (string, error) {
+	output, err := c.executeCaptured("stats", "--no-stream", "--format", "json", "--all")
+	if err != nil {
+		return "", fmt.Errorf("failed to executeCaptured: %w", err)
+	}
+
+	return string(output), nil
+}

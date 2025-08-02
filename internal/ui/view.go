@@ -12,39 +12,39 @@ import (
 // Styles
 var (
 	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("86")).
-			MarginBottom(1)
+		Bold(true).
+		Foreground(lipgloss.Color("86")).
+		MarginBottom(1)
 
 	selectedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("235"))
+		Foreground(lipgloss.Color("86")).
+		Background(lipgloss.Color("235"))
 
 	normalStyle = lipgloss.NewStyle()
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
-			Bold(true)
+		Foreground(lipgloss.Color("196")).
+		Bold(true)
 
 	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+		Foreground(lipgloss.Color("241"))
 
 	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("226"))
+		Bold(true).
+		Foreground(lipgloss.Color("226"))
 
 	dindStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusDownStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196"))
+		Foreground(lipgloss.Color("196"))
 
 	searchStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("226")).
-			Bold(true)
+		Foreground(lipgloss.Color("226")).
+		Bold(true)
 )
 
 // View returns the view for the current model
@@ -74,7 +74,7 @@ func (m Model) View() string {
 func (m Model) renderProcessList() string {
 	var s strings.Builder
 
-	slog.Info("Rendering process list",
+	slog.Info("Rendering container list",
 		slog.String("projectName", m.projectName))
 
 	title := "Docker Compose Processes"
@@ -82,7 +82,7 @@ func (m Model) renderProcessList() string {
 		title += " (All)"
 	}
 	if m.projectName != "" {
-		title += fmt.Sprintf(" [Project: %s]", m.projectName)
+		title += fmt.Sprintf(" [Compose: %s]", m.projectName)
 	}
 	s.WriteString(titleStyle.Render(title) + "\n\n")
 
@@ -102,7 +102,7 @@ func (m Model) renderProcessList() string {
 		return s.String()
 	}
 
-	if len(m.processes) == 0 {
+	if len(m.containers) == 0 {
 		s.WriteString("No containers found\n")
 		s.WriteString("\n" + helpStyle.Render("Press 'r' to refresh, 'q' to quit"))
 		return s.String()
@@ -123,32 +123,32 @@ func (m Model) renderProcessList() string {
 	})
 
 	// Add rows
-	for i, process := range m.processes {
+	for i, container := range m.containers {
 		nameStyle := normalStyle
-		if process.IsDind {
+		if container.IsDind() {
 			nameStyle = dindStyle
 		}
-		if i == m.selectedProcess {
+		if i == m.selectedContainer {
 			nameStyle = selectedStyle
 		}
 
 		var statusStyle lipgloss.Style
-		if i == m.selectedProcess {
+		if i == m.selectedContainer {
 			statusStyle = selectedStyle
-		} else if strings.Contains(process.Status, "Up") || strings.Contains(process.State, "running") {
+		} else if strings.Contains(container.Status, "Up") || strings.Contains(container.State, "running") {
 			statusStyle = statusUpStyle
 		} else {
 			statusStyle = statusDownStyle
 		}
 
-		name := nameStyle.Render(process.Name)
-		image := normalStyle.Render(process.Image)
-		service := normalStyle.Render(process.Service)
-		status := statusStyle.Render(process.Status)
+		name := nameStyle.Render(container.Name)
+		image := normalStyle.Render(container.Image)
+		service := normalStyle.Render(container.Service)
+		status := statusStyle.Render(container.Status)
 
-		if i == m.selectedProcess {
-			image = selectedStyle.Render(process.Image)
-			service = selectedStyle.Render(process.Service)
+		if i == m.selectedContainer {
+			image = selectedStyle.Render(container.Image)
+			service = selectedStyle.Render(container.Service)
 		}
 
 		t.Row(name, image, service, status)

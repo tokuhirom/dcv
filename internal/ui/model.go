@@ -42,14 +42,14 @@ type Model struct {
 	currentView ViewType
 
 	// Docker client
-	dockerClient *docker.ComposeClient
+	dockerClient *docker.Client
 
 	// Process list state
-	processes       []models.Process
-	selectedProcess int
-	showAll         bool // Toggle to show all containers including stopped ones
+	containers        []models.Container
+	selectedContainer int
+	showAll           bool // Toggle to show all containers including stopped ones
 
-	// Project list state
+	// Compose list state
 	projects        []models.ComposeProject
 	selectedProject int
 
@@ -93,7 +93,7 @@ type Model struct {
 
 // NewModel creates a new model with initial state
 func NewModel(initialView ViewType, projectName string) Model {
-	client := docker.NewComposeClientWithOptions(projectName)
+	client := docker.NewClient()
 
 	return Model{
 		currentView:  initialView,
@@ -112,10 +112,10 @@ func (m Model) Init() tea.Cmd {
 		)
 	}
 
-	// Otherwise, try to load processes first - if it fails due to a missing compose file,
+	// Otherwise, try to load containers first - if it fails due to a missing compose file,
 	// we'll switch to the project list view in the update
 	return tea.Batch(
-		loadProcesses(m.dockerClient, m.showAll),
+		loadProcesses(m.dockerClient, m.projectName, m.showAll),
 		tea.WindowSize(),
 	)
 }
@@ -123,7 +123,7 @@ func (m Model) Init() tea.Cmd {
 // Messages
 
 type processesLoadedMsg struct {
-	processes []models.Process
+	processes []models.Container
 	err       error
 }
 
@@ -173,11 +173,11 @@ type projectsLoadedMsg struct {
 
 // Commands
 
-func loadProcesses(client *docker.ComposeClient, showAll bool) tea.Cmd {
+func loadProcesses(client *docker.Client, projectName string, showAll bool) tea.Cmd {
 	return func() tea.Msg {
-		slog.Info("Loading processes",
+		slog.Info("Loading containers",
 			slog.Bool("showAll", showAll))
-		processes, err := client.ListContainers(showAll)
+		processes, err := client.Compose(projectName).ListContainers(showAll)
 		return processesLoadedMsg{
 			processes: processes,
 			err:       err,
@@ -185,7 +185,7 @@ func loadProcesses(client *docker.ComposeClient, showAll bool) tea.Cmd {
 	}
 }
 
-func loadDindContainers(client *docker.ComposeClient, containerName string) tea.Cmd {
+func loadDindContainers(client *docker.Client, containerName string) tea.Cmd {
 	return func() tea.Msg {
 		containers, err := client.ListDindContainers(containerName)
 		return dindContainersLoadedMsg{
@@ -195,13 +195,13 @@ func loadDindContainers(client *docker.ComposeClient, containerName string) tea.
 	}
 }
 
-func streamLogs(client *docker.ComposeClient, serviceName string, isDind bool, hostService string) tea.Cmd {
+func streamLogs(client *docker.Client, serviceName string, isDind bool, hostService string) tea.Cmd {
 	return streamLogsReal(client, serviceName, isDind, hostService)
 }
 
-func loadTop(client *docker.ComposeClient, serviceName string) tea.Cmd {
+func loadTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
 	return func() tea.Msg {
-		output, err := client.GetContainerTop(serviceName)
+		output, err := client.Compose(projectName).GetContainerTop(serviceName)
 		return topLoadedMsg{
 			output: output,
 			err:    err,
@@ -209,31 +209,31 @@ func loadTop(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	}
 }
 
-func killService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+func killService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.KillService(serviceName)
+		err := client.KillContainer(containerID)
 		return serviceActionCompleteMsg{
 			action:  "kill",
-			service: serviceName,
+			service: containerID,
 			err:     err,
 		}
 	}
 }
 
-func stopService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+func stopService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.StopService(serviceName)
+		err := client.StopContainer(containerID)
 		return serviceActionCompleteMsg{
 			action:  "stop",
-			service: serviceName,
+			service: containerID,
 			err:     err,
 		}
 	}
 }
 
-func startService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+func startService(client *docker.Client, serviceName string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.StartService(serviceName)
+		err := client.StartContainer(serviceName)
 		return serviceActionCompleteMsg{
 			action:  "start",
 			service: serviceName,
@@ -242,31 +242,31 @@ func startService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 	}
 }
 
-func restartService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+func restartService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.RestartService(serviceName)
+		err := client.RestartContainer(containerID)
 		return serviceActionCompleteMsg{
 			action:  "restart",
-			service: serviceName,
+			service: containerID,
 			err:     err,
 		}
 	}
 }
 
-func removeService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+func removeService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.RemoveService(serviceName)
+		err := client.RemoveContainer(containerID)
 		return serviceActionCompleteMsg{
 			action:  "rm",
-			service: serviceName,
+			service: containerID,
 			err:     err,
 		}
 	}
 }
 
-func upService(client *docker.ComposeClient, serviceName string) tea.Cmd {
+func upService(client *docker.Client, projectName, serviceName string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.UpService(serviceName)
+		err := client.Compose(projectName).UpService(serviceName)
 		return serviceActionCompleteMsg{
 			action:  "up -d",
 			service: serviceName,
@@ -274,8 +274,9 @@ func upService(client *docker.ComposeClient, serviceName string) tea.Cmd {
 		}
 	}
 }
-func loadStats(client *docker.ComposeClient) tea.Cmd {
+func loadStats(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
+		// TODO: support periodic update
 		output, err := client.GetStats()
 		if err != nil {
 			return statsLoadedMsg{
@@ -309,9 +310,9 @@ func loadStats(client *docker.ComposeClient) tea.Cmd {
 	}
 }
 
-func loadProjects(client *docker.ComposeClient) tea.Cmd {
+func loadProjects(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
-		projects, err := client.ListProjects()
+		projects, err := client.ListComposeProjects()
 		return projectsLoadedMsg{
 			projects: projects,
 			err:      err,

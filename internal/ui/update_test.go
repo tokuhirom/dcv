@@ -22,42 +22,42 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "navigate down in process list",
 			model: Model{
 				currentView: ProcessListView,
-				processes: []models.Process{
+				containers: []models.Process{
 					{Container: models.Container{Name: "web-1"}},
 					{Container: models.Container{Name: "db-1"}},
 				},
-				selectedProcess: 0,
+				selectedContainer: 0,
 			},
 			key:      tea.KeyMsg{Type: tea.KeyDown},
 			wantView: ProcessListView,
 			checkFunc: func(t *testing.T, m Model) {
-				assert.Equal(t, 1, m.selectedProcess)
+				assert.Equal(t, 1, m.selectedContainer)
 			},
 		},
 		{
 			name: "navigate up in process list",
 			model: Model{
 				currentView: ProcessListView,
-				processes: []models.Process{
+				containers: []models.Process{
 					{Container: models.Container{Name: "web-1"}},
 					{Container: models.Container{Name: "db-1"}},
 				},
-				selectedProcess: 1,
+				selectedContainer: 1,
 			},
 			key:      tea.KeyMsg{Type: tea.KeyUp},
 			wantView: ProcessListView,
 			checkFunc: func(t *testing.T, m Model) {
-				assert.Equal(t, 0, m.selectedProcess)
+				assert.Equal(t, 0, m.selectedContainer)
 			},
 		},
 		{
 			name: "enter log view",
 			model: Model{
 				currentView: ProcessListView,
-				processes: []models.Process{
+				containers: []models.Process{
 					{Container: models.Container{Name: "web-1"}},
 				},
-				selectedProcess: 0,
+				selectedContainer: 0,
 			},
 			key:      tea.KeyMsg{Type: tea.KeyEnter},
 			wantView: LogView,
@@ -70,13 +70,13 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "enter dind view",
 			model: Model{
 				currentView: ProcessListView,
-				processes: []models.Process{
+				containers: []models.Process{
 					{
 						Container: models.Container{Name: "dind-1"},
 						IsDind:    true,
 					},
 				},
-				selectedProcess: 0,
+				selectedContainer: 0,
 			},
 			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")},
 			wantView:    DindProcessListView,
@@ -271,13 +271,13 @@ func TestUpdateMessages(t *testing.T) {
 	assert.Equal(t, 100, m.width)
 	assert.Equal(t, 30, m.height)
 
-	// Test processes loaded message
+	// Test containers loaded message
 	processes := []models.Process{
 		{Container: models.Container{Name: "test-1"}},
 	}
 	newModel, _ = m.Update(processesLoadedMsg{processes: processes})
 	m = newModel.(Model)
-	assert.Equal(t, processes, m.processes)
+	assert.Equal(t, processes, m.containers)
 	assert.False(t, m.loading)
 
 	// Test error message
@@ -317,24 +317,24 @@ func TestBoundaryConditions(t *testing.T) {
 	// Test navigation at boundaries
 	model := Model{
 		currentView: ProcessListView,
-		processes: []models.Process{
+		containers: []models.Process{
 			{Container: models.Container{Name: "test-1"}},
 		},
-		selectedProcess: 0,
+		selectedContainer: 0,
 	}
 
 	// Try to go up at the top
 	newModel, _ := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyUp})
 	m := newModel.(Model)
-	assert.Equal(t, 0, m.selectedProcess) // Should stay at 0
+	assert.Equal(t, 0, m.selectedContainer) // Should stay at 0
 
 	// Try to go down at the bottom
 	newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyDown})
 	m = newModel.(Model)
-	assert.Equal(t, 0, m.selectedProcess) // Should stay at 0 (only one item)
+	assert.Equal(t, 0, m.selectedContainer) // Should stay at 0 (only one item)
 
 	// Test with empty list
-	model.processes = []models.Process{}
+	model.containers = []models.Process{}
 	newModel, _ = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyEnter})
 	m = newModel.(Model)
 	assert.Equal(t, ProcessListView, m.currentView) // Should stay in process list
@@ -351,12 +351,12 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m := newModel.(Model)
 	assert.Equal(t, ProcessListView, m.currentView)
-	assert.NotNil(t, cmd) // Should load processes
+	assert.NotNil(t, cmd) // Should load containers
 
 	// From dind view - should go back
 	model = Model{currentView: DindProcessListView}
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = newModel.(Model)
 	assert.Equal(t, ProcessListView, m.currentView)
-	assert.NotNil(t, cmd) // Should load processes
+	assert.NotNil(t, cmd) // Should load containers
 }

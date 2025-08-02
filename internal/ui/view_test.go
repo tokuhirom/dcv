@@ -29,7 +29,7 @@ func TestView(t *testing.T) {
 				width:       80,
 				height:      24,
 				loading:     false,
-				processes: []models.Process{
+				containers: []models.Process{
 					{
 						Container: models.Container{
 							Name:    "web-1",
@@ -173,7 +173,7 @@ func TestRenderProcessList(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		processes: []models.Process{
+		containers: []models.Process{
 			{
 				Container: models.Container{
 					Name:    "web-1",
@@ -184,7 +184,7 @@ func TestRenderProcessList(t *testing.T) {
 				IsDind: false,
 			},
 		},
-		selectedProcess: 0,
+		selectedContainer: 0,
 	}
 
 	view := m.renderProcessList()
@@ -192,7 +192,7 @@ func TestRenderProcessList(t *testing.T) {
 	// Check that the selected row is highlighted
 	assert.Contains(t, view, "web-1")
 	assert.Contains(t, view, "nginx:latest")
-	
+
 	// Check table structure
 	assert.Contains(t, view, "│")
 	assert.Contains(t, view, "─")
@@ -215,10 +215,10 @@ func TestRenderLogView(t *testing.T) {
 	}
 
 	view := m.renderLogView()
-	
+
 	// Should show logs
 	assert.Contains(t, view, "Line 1")
-	
+
 	// Test scrolling
 	m.logScrollY = 2
 	view = m.renderLogView()
@@ -251,10 +251,10 @@ func TestRenderDindList(t *testing.T) {
 	}
 
 	view := m.renderDindList()
-	
+
 	// Check title
 	assert.Contains(t, view, "Docker in Docker: dind-1")
-	
+
 	// Check containers are listed
 	assert.Contains(t, view, "abc123def456") // First 12 chars
 	assert.Contains(t, view, "def456ghi789") // First 12 chars
@@ -268,7 +268,7 @@ func TestViewWithNoContainers(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		processes:   []models.Process{},
+		containers:  []models.Process{},
 	}
 
 	view := m.renderProcessList()
@@ -282,7 +282,7 @@ func TestTableRendering(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		processes: []models.Process{
+		containers: []models.Process{
 			{
 				Container: models.Container{
 					Name:    "web-1",
@@ -296,13 +296,13 @@ func TestTableRendering(t *testing.T) {
 	}
 
 	view := m.renderProcessList()
-	
+
 	// Check for table borders
 	lines := strings.Split(view, "\n")
 	hasTopBorder := false
 	hasBottomBorder := false
 	hasVerticalBorder := false
-	
+
 	for _, line := range lines {
 		if strings.Contains(line, "┌") || strings.Contains(line, "┐") {
 			hasTopBorder = true
@@ -314,7 +314,7 @@ func TestTableRendering(t *testing.T) {
 			hasVerticalBorder = true
 		}
 	}
-	
+
 	assert.True(t, hasTopBorder, "Table should have top border")
 	assert.True(t, hasBottomBorder, "Table should have bottom border")
 	assert.True(t, hasVerticalBorder, "Table should have vertical borders")

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // Update handles messages and updates the model
@@ -23,7 +22,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case processesLoadedMsg:
 		m.loading = false
 		// Example debug logging
-		slog.Debug("Loaded processes", slog.Int("count", len(msg.processes)))
+		slog.Debug("Loaded containers", slog.Int("count", len(msg.processes)))
 		if msg.err != nil {
 			// Check if error is due to missing compose file
 			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
@@ -35,10 +34,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.processes = msg.processes
+		m.containers = msg.processes
 		m.err = nil
-		if len(m.processes) > 0 && m.selectedProcess >= len(m.processes) {
-			m.selectedProcess = 0
+		if len(m.containers) > 0 && m.selectedContainer >= len(m.containers) {
+			m.selectedContainer = 0
 		}
 		return m, nil
 
@@ -117,7 +116,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		// Reload the process list after action completes
-		return m, loadProcesses(m.dockerClient, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
 	case statsLoadedMsg:
 		m.loading = false
@@ -166,7 +165,7 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			// Go back to process list
 			m.currentView = ProcessListView
 			m.err = nil
-			return m, loadProcesses(m.dockerClient, m.showAll)
+			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 		}
 		return m, tea.Quit
 	}
@@ -193,52 +192,52 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "up", "k":
-		if m.selectedProcess > 0 {
-			m.selectedProcess--
+		if m.selectedContainer > 0 {
+			m.selectedContainer--
 		}
 		return m, nil
 
 	case "down", "j":
-		if m.selectedProcess < len(m.processes)-1 {
-			m.selectedProcess++
+		if m.selectedContainer < len(m.containers)-1 {
+			m.selectedContainer++
 		}
 		return m, nil
 
 	case "enter":
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
+		if m.selectedContainer < len(m.containers) {
+			process := m.containers[m.selectedContainer]
 			m.containerName = process.Name
 			m.isDindLog = false
 			m.currentView = LogView
 			m.logs = []string{}
 			m.logScrollY = 0
 			// Use service name for docker compose logs
-			return m, streamLogs(m.dockerClient, process.Service, false, "")
+			return m, streamLogs(m.dockerClient, process.ID, false, "")
 		}
 		return m, nil
 
 	case "d":
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
-			if process.IsDind {
-				m.currentDindHost = process.Name
-				m.currentDindService = process.Service
+		if m.selectedContainer < len(m.containers) {
+			container := m.containers[m.selectedContainer]
+			if container.IsDind() {
+				m.currentDindHost = container.Name
+				m.currentDindService = container.Service
 				m.currentView = DindProcessListView
 				m.loading = true
-				return m, loadDindContainers(m.dockerClient, process.Service)
+				return m, loadDindContainers(m.dockerClient, container.Service)
 			}
 		}
 		return m, nil
 
 	case "r":
 		m.loading = true
-		return m, loadProcesses(m.dockerClient, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
 	case "a":
 		// Toggle show all containers
 		m.showAll = !m.showAll
 		m.loading = true
-		return m, loadProcesses(m.dockerClient, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
 	case "s":
 		m.currentView = StatsView
@@ -246,63 +245,63 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, loadStats(m.dockerClient)
 
 	case "t":
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
+		if m.selectedContainer < len(m.containers) {
+			process := m.containers[m.selectedContainer]
 			m.topService = process.Service
 			m.currentView = TopView
 			m.loading = true
-			return m, loadTop(m.dockerClient, process.Service)
+			return m, loadTop(m.dockerClient, m.projectName, process.Service)
 		}
 		return m, nil
 
 	case "K": // Capital K for kill
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
+		if m.selectedContainer < len(m.containers) {
+			container := m.containers[m.selectedContainer]
 			m.loading = true
-			return m, killService(m.dockerClient, process.Service)
+			return m, killService(m.dockerClient, container.ID)
 		}
 		return m, nil
 
 	case "S": // Capital S for stop
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
+		if m.selectedContainer < len(m.containers) {
+			container := m.containers[m.selectedContainer]
 			m.loading = true
-			return m, stopService(m.dockerClient, process.Service)
+			return m, stopService(m.dockerClient, container.ID)
 		}
 		return m, nil
 
 	case "U": // Capital U for start (up)
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
+		if m.selectedContainer < len(m.containers) {
+			process := m.containers[m.selectedContainer]
 			m.loading = true
 			return m, startService(m.dockerClient, process.Service)
 		}
 		return m, nil
 
 	case "R": // Capital R for restart
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
+		if m.selectedContainer < len(m.containers) {
+			container := m.containers[m.selectedContainer]
 			m.loading = true
-			return m, restartService(m.dockerClient, process.Service)
+			return m, restartService(m.dockerClient, container.ID)
 		}
 		return m, nil
 
 	case "D": // Capital D for remove (delete)
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
+		if m.selectedContainer < len(m.containers) {
+			container := m.containers[m.selectedContainer]
 			// Only allow removing stopped containers
-			if !strings.Contains(process.Status, "Up") && !strings.Contains(process.State, "running") {
+			if !strings.Contains(container.Status, "Up") && !strings.Contains(container.State, "running") {
 				m.loading = true
-				return m, removeService(m.dockerClient, process.Service)
+				return m, removeService(m.dockerClient, container.ID)
 			}
 		}
 		return m, nil
 
 	case "P": // Capital P for deploy/up
-		if m.selectedProcess < len(m.processes) {
-			process := m.processes[m.selectedProcess]
+		if m.selectedContainer < len(m.containers) {
+			process := m.containers[m.selectedContainer]
 			m.loading = true
-			return m, upService(m.dockerClient, process.Service)
+			return m, upService(m.dockerClient, m.projectName, process.Service)
 		}
 		return m, nil
 
@@ -326,7 +325,7 @@ func (m Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, loadDindContainers(m.dockerClient, m.currentDindService)
 		}
 		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
 	case "up", "k":
 		if m.logScrollY > 0 {
@@ -391,7 +390,7 @@ func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "esc":
 		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
 	case "r":
 		m.loading = true
@@ -433,12 +432,12 @@ func (m Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "esc", "q":
 		// Go back to process list
 		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
 	case "r":
 		// Manual refresh
 		m.loading = true
-		return m, loadTop(m.dockerClient, m.topService)
+		return m, loadTop(m.dockerClient, m.projectName, m.topService)
 
 	default:
 		return m, nil
@@ -450,7 +449,7 @@ func (m Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "esc", "q":
 		// Go back to process list
 		m.currentView = ProcessListView
-		return m, loadProcesses(m.dockerClient, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
 	case "r":
 		// Refresh stats
@@ -480,11 +479,10 @@ func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.selectedProject < len(m.projects) {
 			project := m.projects[m.selectedProject]
 			// Create a new compose client with the selected project
-			m.dockerClient = docker.NewComposeClientWithOptions(project.Name)
 			m.projectName = project.Name
 			m.currentView = ProcessListView
 			m.loading = true
-			return m, loadProcesses(m.dockerClient, m.showAll)
+			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 		}
 		return m, nil
 
