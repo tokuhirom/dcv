@@ -64,6 +64,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `P`: Pause/Unpause container
    - `D`: Delete stopped container
    - `u`: Deploy all services (docker compose up -d)
+   - `x`: Stop and remove all services (docker compose down)
    - `r`: Refresh list
    - `q`: Quit
 
@@ -167,7 +168,6 @@ go build -o dcv
 - **Build images** from Dockerfile
 
 ### Docker Compose Operations
-- **Down command** (`docker compose down`) - Stop and remove containers
 - **Build services** (`docker compose build`)
 - **Pull service images** (`docker compose pull`)
 - **Scale services** (`docker compose scale`)

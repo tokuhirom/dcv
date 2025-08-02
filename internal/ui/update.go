@@ -135,7 +135,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		return m, nil
+		// Reload process list after up/down action
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
 	case statsLoadedMsg:
 		m.loading = false

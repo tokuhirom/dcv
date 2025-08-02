@@ -257,11 +257,13 @@ func (m *Model) DeleteContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) DeployProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.containers) {
-		m.loading = true
-		return m, up(m.dockerClient, m.projectName)
-	}
-	return m, nil
+	m.loading = true
+	return m, up(m.dockerClient, m.projectName)
+}
+
+func (m *Model) DownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.loading = true
+	return m, down(m.dockerClient, m.projectName)
 }
 
 func (m *Model) ShowProjectList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

@@ -67,6 +67,7 @@ Displays `docker compose ps` results in a table format.
 - `P`: Pause/Unpause container
 - `D`: Delete stopped container
 - `u`: Deploy all services (docker compose up -d)
+- `x`: Stop and remove all services (docker compose down)
 - `q`: Quit
 
 ### Log View

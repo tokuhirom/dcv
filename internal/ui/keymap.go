@@ -27,6 +27,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"R"}, "restart", m.RestartContainer},
 		{[]string{"P"}, "pause/unpause", m.PauseContainer},
 		{[]string{"D"}, "remove", m.DeleteContainer},
+		{[]string{"u"}, "up -d", m.DeployProject},
+		{[]string{"x"}, "down", m.DownProject},
 	}
 	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
 

@@ -402,6 +402,16 @@ func up(client *docker.Client, projectName string) tea.Cmd {
 	}
 }
 
+func down(client *docker.Client, projectName string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.Compose(projectName).Down()
+		return upActionCompleteMsg{
+			action: "down",
+			err:    err,
+		}
+	}
+}
+
 func loadStats(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		// TODO: support periodic update

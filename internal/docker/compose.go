@@ -124,3 +124,15 @@ func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
 
 	return string(output), nil
 }
+
+func (c *ComposeClient) Down() error {
+	output, err := c.executeCaptured("compose", "-p", c.projectName, "down")
+	if err != nil {
+		return fmt.Errorf("failed to execute docker compose down: %w\nOutput: %s", err, string(output))
+	}
+
+	slog.Info("Executed docker compose down",
+		slog.String("output", string(output)))
+
+	return nil
+}
