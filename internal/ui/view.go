@@ -12,39 +12,39 @@ import (
 // Styles
 var (
 	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("86")).
-			MarginBottom(1)
+		Bold(true).
+		Foreground(lipgloss.Color("86")).
+		MarginBottom(1)
 
 	selectedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("235"))
+		Foreground(lipgloss.Color("86")).
+		Background(lipgloss.Color("235"))
 
 	normalStyle = lipgloss.NewStyle()
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
-			Bold(true)
+		Foreground(lipgloss.Color("196")).
+		Bold(true)
 
 	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+		Foreground(lipgloss.Color("241"))
 
 	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("226"))
+		Bold(true).
+		Foreground(lipgloss.Color("226"))
 
 	dindStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusDownStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196"))
+		Foreground(lipgloss.Color("196"))
 
 	searchStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("226")).
-			Bold(true)
+		Foreground(lipgloss.Color("226")).
+		Bold(true)
 )
 
 // View returns the view for the current model
@@ -124,7 +124,7 @@ func (m *Model) renderComposeProcessList() string {
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		Headers("NAME", "IMAGE", "SERVICE", "STATUS")
+		Headers("NAME", "IMAGE", "SERVICE", "STATUS", "STATE")
 
 	// Style headers
 	t.StyleFunc(func(row, col int) lipgloss.Style {
@@ -154,16 +154,18 @@ func (m *Model) renderComposeProcessList() string {
 		}
 
 		name := nameStyle.Render(container.Name)
-		image := normalStyle.Render(container.Command) // Using Command since compose doesn't have Image in JSON
-		service := normalStyle.Render(container.Service)
-		status := statusStyle.Render(container.GetStatus())
-
+		var image, service string
 		if i == m.selectedContainer {
-			image = selectedStyle.Render(container.Command)
+			image = selectedStyle.Render(container.Image)
 			service = selectedStyle.Render(container.Service)
+		} else {
+			image = normalStyle.Render(container.Image)
+			service = normalStyle.Render(container.Service)
 		}
+		status := statusStyle.Render(container.GetStatus())
+		state := normalStyle.Render(container.State)
 
-		t.Row(name, image, service, status)
+		t.Row(name, image, service, status, state)
 	}
 
 	s.WriteString(t.Render() + "\n\n")

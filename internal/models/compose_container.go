@@ -9,6 +9,7 @@ import (
 type ComposeContainer struct {
 	ID         string `json:"ID"`
 	Name       string `json:"Name"`
+	Image      string `json:"Image"`
 	Command    string `json:"Command"`
 	Project    string `json:"Project"`
 	Service    string `json:"Service"`
