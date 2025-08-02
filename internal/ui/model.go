@@ -54,10 +54,10 @@ type Model struct {
 	selectedProject int
 
 	// Dind state
-	dindContainers        []models.Container
-	selectedDindContainer int
-	currentDindHost       string // Container name (for display)
-	currentDindService    string // Service name (for docker compose exec)
+	dindContainers         []models.Container
+	selectedDindContainer  int
+	currentDindHost        string // Container name (for display)
+	currentDindContainerID string // Service name (for docker compose exec)
 
 	// Log view state
 	logs          []string
@@ -185,9 +185,9 @@ func loadProcesses(client *docker.Client, projectName string, showAll bool) tea.
 	}
 }
 
-func loadDindContainers(client *docker.Client, containerName string) tea.Cmd {
+func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		containers, err := client.ListDindContainers(containerName)
+		containers, err := client.ListDindContainers(containerID)
 		return dindContainersLoadedMsg{
 			containers: containers,
 			err:        err,

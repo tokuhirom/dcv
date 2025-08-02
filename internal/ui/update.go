@@ -221,10 +221,10 @@ func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			container := m.containers[m.selectedContainer]
 			if container.IsDind() {
 				m.currentDindHost = container.Name
-				m.currentDindService = container.Service
+				m.currentDindContainerID = container.ID
 				m.currentView = DindProcessListView
 				m.loading = true
-				return m, loadDindContainers(m.dockerClient, container.Service)
+				return m, loadDindContainers(m.dockerClient, container.ID)
 			}
 		}
 		return m, nil
@@ -322,7 +322,7 @@ func (m Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		stopLogReader()
 		if m.isDindLog {
 			m.currentView = DindProcessListView
-			return m, loadDindContainers(m.dockerClient, m.currentDindService)
+			return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
 		}
 		m.currentView = ProcessListView
 		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
@@ -384,7 +384,7 @@ func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.currentView = LogView
 			m.logs = []string{}
 			m.logScrollY = 0
-			return m, streamLogs(m.dockerClient, container.Name, true, m.currentDindService)
+			return m, streamLogs(m.dockerClient, container.Name, true, m.currentDindContainerID)
 		}
 		return m, nil
 
@@ -394,7 +394,7 @@ func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "r":
 		m.loading = true
-		return m, loadDindContainers(m.dockerClient, m.currentDindService)
+		return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
 
 	default:
 		return m, nil

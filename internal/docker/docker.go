@@ -123,71 +123,6 @@ func (c *Client) execute(args ...string) *exec.Cmd {
 	return exec.Command("docker", args...)
 }
 
-func (c *Client) parseComposePS(output []byte) ([]models.Container, error) {
-	containers := make([]models.Container, 0)
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-
-	// Skip header
-	if scanner.Scan() {
-		scanner.Text() // Skip the header line
-	}
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-
-		// Use a more robust parsing approach - split by multiple spaces
-		// Expected format: NAME IMAGE SERVICE STATUS PORTS
-		// Split preserving the column alignment
-		parts := strings.Fields(line)
-		if len(parts) < 4 {
-			continue
-		}
-
-		// Find where STATUS starts (contains "Up", "Exited", etc.)
-		statusStartIdx := -1
-		for i := 2; i < len(parts); i++ {
-			if strings.HasPrefix(parts[i], "Up") || strings.HasPrefix(parts[i], "Exited") || strings.HasPrefix(parts[i], "Created") {
-				statusStartIdx = i
-				break
-			}
-		}
-
-		if statusStartIdx == -1 || statusStartIdx < 3 {
-			continue
-		}
-
-		// Extract fields based on position
-		name := parts[0]
-		image := parts[1]
-		service := parts[statusStartIdx-1]
-
-		// Build status from statusStartIdx onward, stopping at ports
-		statusParts := []string{}
-		for i := statusStartIdx; i < len(parts); i++ {
-			// Stop if we hit a port (contains "/" for tcp/udp or ":" for port mapping)
-			if strings.Contains(parts[i], "/") || strings.Contains(parts[i], ":") {
-				break
-			}
-			statusParts = append(statusParts, parts[i])
-		}
-		status := strings.Join(statusParts, " ")
-
-		container := models.Container{
-			Name:    name,
-			Image:   image,
-			Service: service,
-			Status:  status,
-		}
-
-		containers = append(containers, container)
-	}
-
-	return containers, scanner.Err()
-}
-
 func (c *Client) GetContainerLogs(containerID string, follow bool) (*exec.Cmd, error) {
 	args := []string{"logs", containerID, "--tail", "1000", "--timestamps"}
 	if follow {
@@ -199,23 +134,8 @@ func (c *Client) GetContainerLogs(containerID string, follow bool) (*exec.Cmd, e
 	return cmd, nil
 }
 
-func (c *Client) ListDindContainers(containerName string) ([]models.Container, error) {
-	// First check if docker daemon is ready
-	checkCmd := c.execute("exec", containerName, "docker", "info")
-	err := checkCmd.Wait()
-	if err != nil {
-		return nil, err
-	}
-
-	checkOutput, checkErr := checkCmd.CombinedOutput()
-	if checkErr != nil {
-		// Docker daemon not ready
-		cmdStr := strings.Join(checkCmd.Args, " ")
-		return nil, fmt.Errorf("docker daemon not ready in container %s\nCommand: %s\nOutput: %s\nError: %w",
-			containerName, cmdStr, string(checkOutput), checkErr)
-	}
-
-	output, err := c.executeCaptured("exec", containerName, "docker", "ps", "--format", "json")
+func (c *Client) ListDindContainers(containerID string) ([]models.Container, error) {
+	output, err := c.executeCaptured("exec", containerID, "docker", "ps", "--format", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to executeCaptured docker ps: %w\nOutput: %s", err, string(output))
 	}
