@@ -3,12 +3,13 @@ package project
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tokuhirom/dcv/internal/models"
-	"github.com/tokuhirom/dcv/internal/ui"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/tokuhirom/dcv/internal/models"
+	"github.com/tokuhirom/dcv/internal/ui"
 )
 
 // DetectProject detects the Docker Compose project based on the provided parameters.

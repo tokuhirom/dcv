@@ -20,12 +20,12 @@ type ContainerFile struct {
 func ParseLsOutput(output string) []ContainerFile {
 	var files []ContainerFile
 	lines := strings.Split(strings.TrimSpace(output), "\n")
-	
+
 	for _, line := range lines {
 		if line == "" || strings.HasPrefix(line, "total") {
 			continue
 		}
-		
+
 		// Parse ls -la output format:
 		// drwxr-xr-x  2 root root 4096 Dec 15 10:30 dirname
 		// -rw-r--r--  1 root root  123 Dec 15 10:30 filename
@@ -33,23 +33,23 @@ func ParseLsOutput(output string) []ContainerFile {
 		if len(parts) < 9 {
 			continue
 		}
-		
+
 		file := ContainerFile{
 			Permissions: parts[0],
 			Mode:        parts[0],
 			IsDir:       strings.HasPrefix(parts[0], "d"),
 		}
-		
+
 		// Parse size
 		if size := parts[4]; size != "" {
 			// Convert size string to int64 if needed
 			// For now, keep it simple
 		}
-		
+
 		// Get filename (handle spaces in filename)
 		// Everything from parts[8] onwards is the filename
 		file.Name = strings.Join(parts[8:], " ")
-		
+
 		// Handle symlinks (file -> target)
 		if strings.Contains(file.Name, " -> ") {
 			parts := strings.Split(file.Name, " -> ")
@@ -58,10 +58,10 @@ func ParseLsOutput(output string) []ContainerFile {
 				file.LinkTarget = parts[1]
 			}
 		}
-		
+
 		files = append(files, file)
 	}
-	
+
 	return files
 }
 

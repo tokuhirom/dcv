@@ -48,7 +48,7 @@ func (m *Model) renderInspectView() string {
 		for i := startIdx; i < endIdx; i++ {
 			line := lines[i]
 			lineNum := lineNumStyle.Render(fmt.Sprintf("%4d ", i+1))
-			
+
 			// Simple JSON syntax highlighting
 			highlightedLine := line
 			if strings.Contains(line, "\":") {
@@ -61,18 +61,18 @@ func (m *Model) renderInspectView() string {
 						indent := parts[0][:keyStart]
 						key := parts[0][keyStart:]
 						value := parts[1]
-						
+
 						// Apply styles
 						highlightedLine = indent + jsonKeyStyle.Render(key+"\":") + jsonValueStyle.Render(value)
 					}
 				}
-			} else if strings.TrimSpace(line) == "{" || strings.TrimSpace(line) == "}" || 
-			          strings.TrimSpace(line) == "[" || strings.TrimSpace(line) == "]" ||
-			          strings.TrimSpace(line) == "}," || strings.TrimSpace(line) == "]," {
+			} else if strings.TrimSpace(line) == "{" || strings.TrimSpace(line) == "}" ||
+				strings.TrimSpace(line) == "[" || strings.TrimSpace(line) == "]" ||
+				strings.TrimSpace(line) == "}," || strings.TrimSpace(line) == "]," {
 				// Highlight braces and brackets
 				highlightedLine = jsonBraceStyle.Render(line)
 			}
-			
+
 			content.WriteString(lineNum + highlightedLine + "\n")
 		}
 	}

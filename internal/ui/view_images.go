@@ -97,7 +97,7 @@ func (m *Model) renderImageList() string {
 		repo = rowRepoStyle.Render(repo)
 
 		tag := rowTagStyle.Render(image.Tag)
-		
+
 		// Show first 12 chars of ID
 		id := image.ID
 		if len(id) > 12 {

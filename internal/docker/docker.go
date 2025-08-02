@@ -439,17 +439,17 @@ func (c *Client) ExecuteInteractive(containerID string, command []string) error 
 	// Build docker exec command with -it flags for interactive session
 	args := append([]string{"exec", "-it", containerID}, command...)
 	cmd := exec.Command("docker", args...)
-	
+
 	// Connect to standard input/output/error
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	
+
 	// Log the command
 	slog.Info("Executing interactive command",
 		slog.String("containerID", containerID),
 		slog.String("command", strings.Join(command, " ")))
-	
+
 	// Run the command
 	return cmd.Run()
 }
@@ -459,20 +459,20 @@ func (c *Client) InspectContainer(containerID string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to inspect container: %w\nOutput: %s", err, string(output))
 	}
-	
+
 	// Pretty format the JSON output
 	var jsonData interface{}
 	if err := json.Unmarshal(output, &jsonData); err != nil {
 		// If we can't parse it, return raw output
 		return string(output), nil
 	}
-	
+
 	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
 	if err != nil {
 		// If we can't pretty print, return raw output
 		return string(output), nil
 	}
-	
+
 	return string(prettyJSON), nil
 }
 
@@ -481,19 +481,19 @@ func (c *Client) InspectImage(imageID string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to inspect image: %w\nOutput: %s", err, string(output))
 	}
-	
+
 	// Pretty format the JSON output
 	var jsonData interface{}
 	if err := json.Unmarshal(output, &jsonData); err != nil {
 		// If we can't parse it, return raw output
 		return string(output), nil
 	}
-	
+
 	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
 	if err != nil {
 		// If we can't pretty print, return raw output
 		return string(output), nil
 	}
-	
+
 	return string(prettyJSON), nil
 }

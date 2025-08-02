@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/tokuhirom/dcv/internal/models"
 	"log/slog"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type ComposeClient struct {

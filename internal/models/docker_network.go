@@ -2,17 +2,17 @@ package models
 
 // DockerNetwork represents a Docker network
 type DockerNetwork struct {
-	Name      string `json:"Name"`
-	ID        string `json:"ID"`
-	Created   string `json:"Created"`
-	Scope     string `json:"Scope"`
-	Driver    string `json:"Driver"`
+	Name       string `json:"Name"`
+	ID         string `json:"ID"`
+	Created    string `json:"Created"`
+	Scope      string `json:"Scope"`
+	Driver     string `json:"Driver"`
 	EnableIPv6 bool   `json:"EnableIPv6"`
-	IPAM      struct {
-		Driver string `json:"Driver"`
+	IPAM       struct {
+		Driver  string            `json:"Driver"`
 		Options map[string]string `json:"Options"`
-		Config []struct {
-			Subnet string `json:"Subnet"`
+		Config  []struct {
+			Subnet  string `json:"Subnet"`
 			Gateway string `json:"Gateway"`
 		} `json:"Config"`
 	} `json:"IPAM"`

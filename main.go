@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
+	"os"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fujiwara/sloghandler"
 	"github.com/tokuhirom/dcv/internal/project"
 	"github.com/tokuhirom/dcv/internal/ui"
-	"log/slog"
-	"os"
 )
 
 func main() {
