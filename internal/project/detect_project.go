@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 )
 
+// DetectProject detects the Docker Compose project based on the provided parameters.
+// This method panics if it encounters an error during execution or parsing.
 func DetectProject(projectName string, composeFile string, showProjects bool) (ui.ViewType, string) {
 	if showProjects {
 		slog.Info("Showing project list at startup")
