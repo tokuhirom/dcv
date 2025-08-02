@@ -229,6 +229,20 @@ func (c *ComposeClient) UpService(serviceName string) error {
 	return nil
 }
 
+func (c *ComposeClient) Up() error {
+	out, err := c.executeCaptured("up", "-d")
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured: %w", err)
+	}
+
+	slog.Info("Executed docker compose up",
+		slog.String("output", string(out)))
+
+	// TODO: show the result/progress of the up command
+
+	return nil
+}
+
 func (c *Client) GetStats() (string, error) {
 	output, err := c.executeCaptured("stats", "--no-stream", "--format", "json", "--all")
 	if err != nil {

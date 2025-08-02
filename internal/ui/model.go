@@ -36,6 +36,8 @@ const (
 	ProjectListView
 )
 
+type KeyHandler func(msg tea.KeyMsg) (tea.Model, tea.Cmd)
+
 // Model represents the application state
 type Model struct {
 	// Current view
@@ -89,6 +91,10 @@ type Model struct {
 
 	// Command line options
 	projectName string
+
+	// Key handler map for views
+	processListViewKeymap   map[string]KeyHandler
+	processListViewHandlers []KeyConfig
 }
 
 // NewModel creates a new model with initial state
@@ -104,7 +110,9 @@ func NewModel(initialView ViewType, projectName string) Model {
 }
 
 // Init returns an initial command for the application
-func (m Model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
+	m.initializeKeyHandlers()
+
 	if m.currentView == ProjectListView {
 		return tea.Batch(
 			loadProjects(m.dockerClient),
@@ -118,6 +126,42 @@ func (m Model) Init() tea.Cmd {
 		loadProcesses(m.dockerClient, m.projectName, m.showAll),
 		tea.WindowSize(),
 	)
+}
+
+type KeyConfig struct {
+	Keys        []string
+	HandlerName string
+	KeyHandler  KeyHandler
+}
+
+func (m *Model) initializeKeyHandlers() {
+	m.processListViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "up", m.SelectUpContainer},
+		{[]string{"down", "j"}, "down", m.SelectDownContainer},
+		{[]string{"enter"}, "log", m.ShowComposeLog},
+		{[]string{"d"}, "dind", m.ShowDindProcessList},
+		{[]string{"r"}, "refresh", m.RefreshProcessList},
+		{[]string{"a"}, "toggleAll", m.ToggleAllContainers},
+		{[]string{"s"}, "stats", m.ShowStatsView},
+		{[]string{"t"}, "top", m.ShowTopView},
+		{[]string{"K"}, "kill", m.KillContainer},
+		{[]string{"S"}, "stop", m.StopContainer},
+		{[]string{"U"}, "up", m.UpService},
+		{[]string{"R"}, "restart", m.RestartContainer},
+		{[]string{"D"}, "remove", m.DeleteContainer},
+	}
+	keymap := make(map[string]KeyHandler)
+	for _, config := range m.processListViewHandlers {
+		for _, key := range config.Keys {
+			slog.Info("Registering key handler",
+				slog.String("key", key),
+				slog.Any("handlerName", config.KeyHandler))
+			keymap[key] = config.KeyHandler
+		}
+	}
+	m.processListViewKeymap = keymap
+	slog.Info("Initialized process list view keymap",
+		slog.Any("handler", m.processListViewKeymap))
 }
 
 // Messages
@@ -159,6 +203,11 @@ type serviceActionCompleteMsg struct {
 	action  string
 	service string
 	err     error
+}
+
+type upActionCompleteMsg struct {
+	action string
+	err    error
 }
 
 type statsLoadedMsg struct {
@@ -274,6 +323,17 @@ func upService(client *docker.Client, projectName, serviceName string) tea.Cmd {
 		}
 	}
 }
+
+func up(client *docker.Client, projectName string) tea.Cmd {
+	return func() tea.Msg {
+		err := client.Compose(projectName).Up()
+		return upActionCompleteMsg{
+			action: "up -d",
+			err:    err,
+		}
+	}
+}
+
 func loadStats(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		// TODO: support periodic update

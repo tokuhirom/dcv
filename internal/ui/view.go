@@ -12,43 +12,43 @@ import (
 // Styles
 var (
 	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("86")).
-			MarginBottom(1)
+		Bold(true).
+		Foreground(lipgloss.Color("86")).
+		MarginBottom(1)
 
 	selectedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("235"))
+		Foreground(lipgloss.Color("86")).
+		Background(lipgloss.Color("235"))
 
 	normalStyle = lipgloss.NewStyle()
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
-			Bold(true)
+		Foreground(lipgloss.Color("196")).
+		Bold(true)
 
 	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+		Foreground(lipgloss.Color("241"))
 
 	headerStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("226"))
+		Bold(true).
+		Foreground(lipgloss.Color("226"))
 
 	dindStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
+		Foreground(lipgloss.Color("42"))
 
 	statusDownStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196"))
+		Foreground(lipgloss.Color("196"))
 
 	searchStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("226")).
-			Bold(true)
+		Foreground(lipgloss.Color("226")).
+		Bold(true)
 )
 
 // View returns the view for the current model
-func (m Model) View() string {
+func (m *Model) View() string {
 	if m.width == 0 || m.height == 0 {
 		return "Loading..."
 	}
@@ -71,7 +71,7 @@ func (m Model) View() string {
 	}
 }
 
-func (m Model) renderProcessList() string {
+func (m *Model) renderProcessList() string {
 	var s strings.Builder
 
 	slog.Info("Rendering container list",
@@ -166,7 +166,7 @@ func (m Model) renderProcessList() string {
 	return s.String()
 }
 
-func (m Model) renderLogView() string {
+func (m *Model) renderLogView() string {
 	var s strings.Builder
 
 	title := fmt.Sprintf("Logs: %s", m.containerName)
@@ -211,7 +211,7 @@ func (m Model) renderLogView() string {
 	return s.String()
 }
 
-func (m Model) renderDindList() string {
+func (m *Model) renderDindList() string {
 	var s strings.Builder
 
 	title := titleStyle.Render(fmt.Sprintf("Docker in Docker: %s", m.currentDindHost))
@@ -272,7 +272,7 @@ func (m Model) renderDindList() string {
 	return s.String()
 }
 
-func (m Model) renderTopView() string {
+func (m *Model) renderTopView() string {
 	var s strings.Builder
 
 	title := titleStyle.Render(fmt.Sprintf("Process Info: %s", m.topService))
@@ -310,7 +310,7 @@ func (m Model) renderTopView() string {
 	return s.String()
 }
 
-func (m Model) renderStatsView() string {
+func (m *Model) renderStatsView() string {
 	var s strings.Builder
 
 	title := titleStyle.Render("Container Resource Usage")
@@ -369,7 +369,7 @@ func (m Model) renderStatsView() string {
 	return s.String()
 }
 
-func (m Model) renderProjectList() string {
+func (m *Model) renderProjectList() string {
 	var s strings.Builder
 
 	title := titleStyle.Render("Docker Compose Projects")

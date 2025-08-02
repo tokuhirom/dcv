@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
@@ -9,7 +10,7 @@ import (
 )
 
 // Update handles messages and updates the model
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		return m.handleKeyPress(msg)
@@ -118,6 +119,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Reload the process list after action completes
 		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 
+	case upActionCompleteMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		return m, nil
+
 	case statsLoadedMsg:
 		m.loading = false
 		if msg.err != nil {
@@ -146,7 +155,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle search mode first
 	if m.searchMode {
 		return m.handleSearchMode(msg)
@@ -189,133 +198,151 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "up", "k":
-		if m.selectedContainer > 0 {
-			m.selectedContainer--
-		}
-		return m, nil
-
-	case "down", "j":
-		if m.selectedContainer < len(m.containers)-1 {
-			m.selectedContainer++
-		}
-		return m, nil
-
-	case "enter":
-		if m.selectedContainer < len(m.containers) {
-			process := m.containers[m.selectedContainer]
-			m.containerName = process.Name
-			m.isDindLog = false
-			m.currentView = LogView
-			m.logs = []string{}
-			m.logScrollY = 0
-			// Use service name for docker compose logs
-			return m, streamLogs(m.dockerClient, process.ID, false, "")
-		}
-		return m, nil
-
-	case "d":
-		if m.selectedContainer < len(m.containers) {
-			container := m.containers[m.selectedContainer]
-			if container.IsDind() {
-				m.currentDindHost = container.Name
-				m.currentDindContainerID = container.ID
-				m.currentView = DindProcessListView
-				m.loading = true
-				return m, loadDindContainers(m.dockerClient, container.ID)
-			}
-		}
-		return m, nil
-
-	case "r":
-		m.loading = true
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-
-	case "a":
-		// Toggle show all containers
-		m.showAll = !m.showAll
-		m.loading = true
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-
-	case "s":
-		m.currentView = StatsView
-		m.loading = true
-		return m, loadStats(m.dockerClient)
-
-	case "t":
-		if m.selectedContainer < len(m.containers) {
-			process := m.containers[m.selectedContainer]
-			m.topService = process.Service
-			m.currentView = TopView
-			m.loading = true
-			return m, loadTop(m.dockerClient, m.projectName, process.Service)
-		}
-		return m, nil
-
-	case "K": // Capital K for kill
-		if m.selectedContainer < len(m.containers) {
-			container := m.containers[m.selectedContainer]
-			m.loading = true
-			return m, killService(m.dockerClient, container.ID)
-		}
-		return m, nil
-
-	case "S": // Capital S for stop
-		if m.selectedContainer < len(m.containers) {
-			container := m.containers[m.selectedContainer]
-			m.loading = true
-			return m, stopService(m.dockerClient, container.ID)
-		}
-		return m, nil
-
-	case "U": // Capital U for start (up)
-		if m.selectedContainer < len(m.containers) {
-			process := m.containers[m.selectedContainer]
-			m.loading = true
-			return m, startService(m.dockerClient, process.Service)
-		}
-		return m, nil
-
-	case "R": // Capital R for restart
-		if m.selectedContainer < len(m.containers) {
-			container := m.containers[m.selectedContainer]
-			m.loading = true
-			return m, restartService(m.dockerClient, container.ID)
-		}
-		return m, nil
-
-	case "D": // Capital D for remove (delete)
-		if m.selectedContainer < len(m.containers) {
-			container := m.containers[m.selectedContainer]
-			// Only allow removing stopped containers
-			if !strings.Contains(container.Status, "Up") && !strings.Contains(container.State, "running") {
-				m.loading = true
-				return m, removeService(m.dockerClient, container.ID)
-			}
-		}
-		return m, nil
-
-	case "P": // Capital P for deploy/up
-		if m.selectedContainer < len(m.containers) {
-			process := m.containers[m.selectedContainer]
-			m.loading = true
-			return m, upService(m.dockerClient, m.projectName, process.Service)
-		}
-		return m, nil
-
-	case "p": // Show project list
-		m.currentView = ProjectListView
-		m.loading = true
-		return m, loadProjects(m.dockerClient)
-
-	default:
-		return m, nil
+func (m *Model) SelectUpContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer > 0 {
+		m.selectedContainer--
 	}
+	return m, nil
 }
 
-func (m Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) SelectDownContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers)-1 {
+		m.selectedContainer++
+	}
+	return m, nil
+}
+
+func (m *Model) ShowComposeLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// TODO: abstract this to a common function, dind log and container log and compose log...
+	if m.selectedContainer < len(m.containers) {
+		process := m.containers[m.selectedContainer]
+		m.containerName = process.Name
+		m.isDindLog = false
+		m.currentView = LogView
+		m.logs = []string{}
+		m.logScrollY = 0
+		// Use service name for docker compose logs
+		return m, streamLogs(m.dockerClient, process.ID, false, "")
+	}
+	return m, nil
+}
+
+func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		if container.IsDind() {
+			m.currentDindHost = container.Name
+			m.currentDindContainerID = container.ID
+			m.currentView = DindProcessListView
+			m.loading = true
+			return m, loadDindContainers(m.dockerClient, container.ID)
+		}
+	}
+	return m, nil
+}
+
+func (m *Model) RefreshProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.loading = true
+	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+}
+
+func (m *Model) ToggleAllContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.showAll = !m.showAll
+	m.loading = true
+	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+}
+
+func (m *Model) ShowStatsView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = StatsView
+	m.loading = true
+	return m, loadStats(m.dockerClient)
+}
+
+func (m *Model) ShowTopView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		m.topService = container.Service
+		m.currentView = TopView
+		m.loading = true
+		return m, loadTop(m.dockerClient, m.projectName, container.Service)
+	}
+	return m, nil
+}
+
+func (m *Model) KillContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		m.loading = true
+		return m, killService(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) StopContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		m.loading = true
+		return m, stopService(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) UpService(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		m.loading = true
+		return m, startService(m.dockerClient, container.Service)
+	}
+	return m, nil
+}
+
+func (m *Model) RestartContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		m.loading = true
+		return m, restartService(m.dockerClient, container.ID)
+	}
+	return m, nil
+}
+
+func (m *Model) DeleteContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		container := m.containers[m.selectedContainer]
+		// Only allow removing stopped containers
+		if !strings.Contains(container.Status, "Up") && !strings.Contains(container.State, "running") {
+			m.loading = true
+			return m, removeService(m.dockerClient, container.ID)
+		}
+	}
+	return m, nil
+}
+
+func (m *Model) DeployProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedContainer < len(m.containers) {
+		m.loading = true
+		return m, up(m.dockerClient, m.projectName)
+	}
+	return m, nil
+}
+
+func (m *Model) ShowProjectList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.currentView = ProjectListView
+	m.loading = true
+	return m, loadProjects(m.dockerClient)
+}
+
+func (m *Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.processListViewKeymap[msg.String()]
+	slog.Info(fmt.Sprintf("Key: %s", msg.String()),
+		slog.Bool("ok", ok),
+		slog.Any("handler", m.processListViewKeymap))
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		// Stop the log reader before switching views
@@ -361,7 +388,7 @@ func (m Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "up", "k":
 		if m.selectedDindContainer > 0 {
@@ -401,7 +428,7 @@ func (m Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.Type {
 	case tea.KeyEsc:
 		m.searchMode = false
@@ -427,7 +454,7 @@ func (m Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc", "q":
 		// Go back to process list
@@ -444,7 +471,7 @@ func (m Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc", "q":
 		// Go back to process list
@@ -461,7 +488,7 @@ func (m Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "up", "k":
 		if m.selectedProject > 0 {
