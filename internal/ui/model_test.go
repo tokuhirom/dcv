@@ -30,29 +30,23 @@ func TestProcessesLoadedMsg(t *testing.T) {
 	m := NewModel(ProcessListView, "")
 
 	// Test successful load
-	processes := []models.Process{
+	containers := []models.Container{
 		{
-			Container: models.Container{
-				Name:    "web-1",
-				Image:   "nginx:latest",
-				Service: "web",
-				Status:  "Up 5 minutes",
-			},
-			IsDind: false,
+			Name:    "web-1",
+			Image:   "nginx:latest",
+			Service: "web",
+			Status:  "Up 5 minutes",
 		},
 		{
-			Container: models.Container{
-				Name:    "dind-1",
-				Image:   "docker:dind",
-				Service: "dind",
-				Status:  "Up 10 minutes",
-			},
-			IsDind: true,
+			Name:    "dind-1",
+			Image:   "docker:dind",
+			Service: "dind",
+			Status:  "Up 10 minutes",
 		},
 	}
 
 	msg := processesLoadedMsg{
-		processes: processes,
+		processes: containers,
 		err:       nil,
 	}
 
@@ -64,7 +58,7 @@ func TestProcessesLoadedMsg(t *testing.T) {
 	assert.Equal(t, 2, len(m.containers))
 	assert.Equal(t, "web-1", m.containers[0].Name)
 	assert.Equal(t, "dind-1", m.containers[1].Name)
-	assert.True(t, m.containers[1].IsDind)
+	assert.True(t, m.containers[1].IsDind())
 	assert.Nil(t, cmd)
 }
 
@@ -87,10 +81,10 @@ func TestWindowSizeMsg(t *testing.T) {
 func TestKeyNavigation(t *testing.T) {
 	m := NewModel(ProcessListView, "")
 	m.loading = false
-	m.containers = []models.Process{
-		{Container: models.Container{Name: "web-1"}},
-		{Container: models.Container{Name: "db-1"}},
-		{Container: models.Container{Name: "redis-1"}},
+	m.containers = []models.Container{
+		{Name: "web-1"},
+		{Name: "db-1"},
+		{Name: "redis-1"},
 	}
 
 	tests := []struct {
@@ -126,14 +120,13 @@ func TestKeyNavigation(t *testing.T) {
 func TestViewSwitching(t *testing.T) {
 	m := NewModel(ProcessListView, "")
 	m.loading = false
-	m.containers = []models.Process{
+	m.containers = []models.Container{
 		{
-			Container: models.Container{Name: "web-1"},
-			IsDind:    false,
+			Name: "web-1",
 		},
 		{
-			Container: models.Container{Name: "dind-1"},
-			IsDind:    true,
+			Name: "dind-1",
+			Image: "docker:dind",
 		},
 	}
 

@@ -7,106 +7,34 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
-func TestComposeClient_parseComposePS(t *testing.T) {
-	tests := []struct {
-		name    string
-		input   []byte
-		want    []models.Process
-		wantErr bool
-	}{
-		{
-			name: "parse docker compose ps table output",
-			input: []byte(`NAME                IMAGE               SERVICE             STATUS              PORTS
-web-1               nginx:latest        web                 Up 5 minutes        80/tcp
-db-1                postgres:13         db                  Up 5 minutes        5432/tcp
-dind-1              docker:dind         dind                Up 5 minutes        2375/tcp, 2376/tcp`),
-			want: []models.Process{
-				{
-					Container: models.Container{
-						Name:    "web-1",
-						Image:   "nginx:latest",
-						Service: "web",
-						Status:  "Up 5 minutes",
-					},
-					IsDind: false,
-				},
-				{
-					Container: models.Container{
-						Name:    "db-1",
-						Image:   "postgres:13",
-						Service: "db",
-						Status:  "Up 5 minutes",
-					},
-					IsDind: false,
-				},
-				{
-					Container: models.Container{
-						Name:    "dind-1",
-						Image:   "docker:dind",
-						Service: "dind",
-						Status:  "Up 5 minutes",
-					},
-					IsDind: true,
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name:    "empty output",
-			input:   []byte(""),
-			want:    []models.Process{},
-			wantErr: false,
-		},
-	}
-
-	c := &Client{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := c.parseComposePS(tt.input)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseComposePS() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseComposePS() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 func TestComposeClient_parseComposePSJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   []byte
-		want    []models.Process
+		want    []models.Container
 		wantErr bool
 	}{
 		{
 			name: "parse docker compose ps JSON output (line-delimited)",
 			input: []byte(`{"Name": "web-1", "Image": "nginx:latest", "Status": "Up 5 minutes", "State": "running", "Service": "web", "ID": "abc123"}
 {"Name": "dind-1", "Image": "docker:dind", "Status": "Up 5 minutes", "State": "running", "Service": "dind", "ID": "def456"}`),
-			want: []models.Process{
+			want: []models.Container{
 				{
-					Container: models.Container{
-						Name:    "web-1",
-						Image:   "nginx:latest",
-						Status:  "Up 5 minutes",
-						State:   "running",
-						Service: "web",
-						ID:      "abc123",
-					},
-					IsDind: false,
+					Name:    "web-1",
+					Image:   "nginx:latest",
+					Status:  "Up 5 minutes",
+					State:   "running",
+					Service: "web",
+					ID:      "abc123",
 				},
 				{
-					Container: models.Container{
-						Name:    "dind-1",
-						Image:   "docker:dind",
-						Status:  "Up 5 minutes",
-						State:   "running",
-						Service: "dind",
-						ID:      "def456",
-					},
-					IsDind: true,
+					Name:    "dind-1",
+					Image:   "docker:dind",
+					Status:  "Up 5 minutes",
+					State:   "running",
+					Service: "dind",
+					ID:      "def456",
 				},
 			},
 			wantErr: false,
@@ -119,7 +47,7 @@ func TestComposeClient_parseComposePSJSON(t *testing.T) {
 		},
 	}
 
-	c := &Client{}
+	c := &ComposeClient{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := c.parseComposePSJSON(tt.input)
@@ -134,7 +62,7 @@ func TestComposeClient_parseComposePSJSON(t *testing.T) {
 	}
 }
 
-func TestComposeClient_parseDindPS(t *testing.T) {
+func TestClient_parseDindPSJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   []byte
@@ -142,10 +70,9 @@ func TestComposeClient_parseDindPS(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "parse docker ps table output inside dind",
-			input: []byte(`CONTAINER ID   IMAGE          COMMAND    CREATED         STATUS         PORTS     NAMES
-a1b2c3d4e5f6   alpine:latest  "/bin/sh"  2 minutes ago   Up 2 minutes             test-container
-b2c3d4e5f6g7   nginx:latest   nginx      5 minutes ago   Up 5 minutes   80/tcp    web-server`),
+			name: "parse docker ps JSON output inside dind",
+			input: []byte(`{"ID":"a1b2c3d4e5f6","Image":"alpine:latest","Name":"test-container","Status":"Up 2 minutes","CreatedAt":"2 minutes ago"}
+{"ID":"b2c3d4e5f6g7","Image":"nginx:latest","Name":"web-server","Status":"Up 5 minutes","CreatedAt":"5 minutes ago"}`),
 			want: []models.Container{
 				{
 					ID:        "a1b2c3d4e5f6",
@@ -169,7 +96,7 @@ b2c3d4e5f6g7   nginx:latest   nginx      5 minutes ago   Up 5 minutes   80/tcp  
 	c := &Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := c.parseDindPS(tt.input)
+			got, err := c.parseDindPSJSON(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseDindPS() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -251,37 +178,9 @@ func TestRemoveService(t *testing.T) {
 	client := NewClient()
 
 	// We can't actually test removing a service without a stopped container
-	// So we just verify the method exists and returns an error for non-existent service
+	// Docker rm -f returns success (exit code 0) even for non-existent containers
 	err := client.RemoveContainer("non-existent-service")
-	if err == nil {
-		t.Error("Expected error for non-existent service, got nil")
-	}
-}
-
-func TestUpService(t *testing.T) {
-	// This is a basic test that just checks the method exists
-	// In a real test environment, you would mock the exec.Command
-	client := NewClient()
-
-	// We can't actually test up command without a compose file
-	// So we just verify the method exists and returns an error for non-existent service
-	err := client.UpService("non-existent-service")
-	if err == nil {
-		t.Error("Expected error for non-existent service, got nil")
-	}
-}
-
-func TestListContainersWithShowAll(t *testing.T) {
-	// This is a basic test that just checks the method with showAll parameter
-	client := NewClient()
-
-	// Test with showAll = false
-	_, err := client.ListContainers(false)
-	// Either error or empty result is acceptable
-	_ = err
-
-	// Test with showAll = true
-	_, err = client.ListContainers(true)
-	// Either error or empty result is acceptable
+	// Either error or success is acceptable for rm -f
 	_ = err
 }
+

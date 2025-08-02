@@ -29,24 +29,18 @@ func TestView(t *testing.T) {
 				width:       80,
 				height:      24,
 				loading:     false,
-				containers: []models.Process{
+				containers: []models.Container{
 					{
-						Container: models.Container{
-							Name:    "web-1",
-							Image:   "nginx:latest",
-							Service: "web",
-							Status:  "Up 5 minutes",
-						},
-						IsDind: false,
+						Name:    "web-1",
+						Image:   "nginx:latest",
+						Service: "web",
+						Status:  "Up 5 minutes",
 					},
 					{
-						Container: models.Container{
-							Name:    "dind-1",
-							Image:   "docker:dind",
-							Service: "dind",
-							Status:  "Up 10 minutes",
-						},
-						IsDind: true,
+						Name:    "dind-1",
+						Image:   "docker:dind",
+						Service: "dind",
+						Status:  "Up 10 minutes",
 					},
 				},
 			},
@@ -173,15 +167,12 @@ func TestRenderProcessList(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		containers: []models.Process{
+		containers: []models.Container{
 			{
-				Container: models.Container{
-					Name:    "web-1",
-					Image:   "nginx:latest",
-					Service: "web",
-					Status:  "Up 5 minutes",
-				},
-				IsDind: false,
+				Name:    "web-1",
+				Image:   "nginx:latest",
+				Service: "web",
+				Status:  "Up 5 minutes",
 			},
 		},
 		selectedContainer: 0,
@@ -268,7 +259,7 @@ func TestViewWithNoContainers(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		containers:  []models.Process{},
+		containers:  []models.Container{},
 	}
 
 	view := m.renderProcessList()
@@ -282,15 +273,12 @@ func TestTableRendering(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		containers: []models.Process{
+		containers: []models.Container{
 			{
-				Container: models.Container{
-					Name:    "web-1",
-					Image:   "nginx:latest",
-					Service: "web",
-					Status:  "Up 5 minutes",
-				},
-				IsDind: false,
+				Name:    "web-1",
+				Image:   "nginx:latest",
+				Service: "web",
+				Status:  "Up 5 minutes",
 			},
 		},
 	}

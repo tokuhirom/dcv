@@ -22,9 +22,9 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "navigate down in process list",
 			model: Model{
 				currentView: ProcessListView,
-				containers: []models.Process{
-					{Container: models.Container{Name: "web-1"}},
-					{Container: models.Container{Name: "db-1"}},
+				containers: []models.Container{
+					{Name: "web-1"},
+					{Name: "db-1"},
 				},
 				selectedContainer: 0,
 			},
@@ -38,9 +38,9 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "navigate up in process list",
 			model: Model{
 				currentView: ProcessListView,
-				containers: []models.Process{
-					{Container: models.Container{Name: "web-1"}},
-					{Container: models.Container{Name: "db-1"}},
+				containers: []models.Container{
+					{Name: "web-1"},
+					{Name: "db-1"},
 				},
 				selectedContainer: 1,
 			},
@@ -54,8 +54,8 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "enter log view",
 			model: Model{
 				currentView: ProcessListView,
-				containers: []models.Process{
-					{Container: models.Container{Name: "web-1"}},
+				containers: []models.Container{
+					{Name: "web-1"},
 				},
 				selectedContainer: 0,
 			},
@@ -70,10 +70,10 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "enter dind view",
 			model: Model{
 				currentView: ProcessListView,
-				containers: []models.Process{
+				containers: []models.Container{
 					{
-						Container: models.Container{Name: "dind-1"},
-						IsDind:    true,
+						Name:  "dind-1",
+						Image: "docker:dind",
 					},
 				},
 				selectedContainer: 0,
@@ -272,8 +272,8 @@ func TestUpdateMessages(t *testing.T) {
 	assert.Equal(t, 30, m.height)
 
 	// Test containers loaded message
-	processes := []models.Process{
-		{Container: models.Container{Name: "test-1"}},
+	processes := []models.Container{
+		{Name: "test-1"},
 	}
 	newModel, _ = m.Update(processesLoadedMsg{processes: processes})
 	m = newModel.(Model)
@@ -317,8 +317,8 @@ func TestBoundaryConditions(t *testing.T) {
 	// Test navigation at boundaries
 	model := Model{
 		currentView: ProcessListView,
-		containers: []models.Process{
-			{Container: models.Container{Name: "test-1"}},
+		containers: []models.Container{
+			{Name: "test-1"},
 		},
 		selectedContainer: 0,
 	}
@@ -334,7 +334,7 @@ func TestBoundaryConditions(t *testing.T) {
 	assert.Equal(t, 0, m.selectedContainer) // Should stay at 0 (only one item)
 
 	// Test with empty list
-	model.containers = []models.Process{}
+	model.containers = []models.Container{}
 	newModel, _ = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyEnter})
 	m = newModel.(Model)
 	assert.Equal(t, ProcessListView, m.currentView) // Should stay in process list
