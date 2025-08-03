@@ -177,7 +177,12 @@ Displays the full Docker inspect output for containers, images, or networks in J
 
 ### Help View
 
-Shows all available keyboard shortcuts for the current view.
+Shows all available keyboard shortcuts and their corresponding commands for the current view.
+
+The help view displays three columns:
+- **Key**: The keyboard shortcut (e.g., 'j' or 'down')
+- **Command**: The vim-style command that can be used in command mode (e.g., ':select-down-container')
+- **Description**: What the action does
 
 **Key bindings:**
 - `↑`/`k`: Scroll up

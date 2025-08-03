@@ -19,9 +19,13 @@ type CommandHandler struct {
 // commandRegistry maps command names to their handlers
 var commandRegistry map[string]CommandHandler
 
+// handlerToCommand maps handler function pointers to command names
+var handlerToCommand map[uintptr]string
+
 // initCommandRegistry initializes the command registry with all available commands
 func (m *Model) initCommandRegistry() {
 	commandRegistry = make(map[string]CommandHandler)
+	handlerToCommand = make(map[uintptr]string)
 
 	// Register all key handlers as commands
 	m.registerCommands()
@@ -83,6 +87,9 @@ func (m *Model) registerCommands() {
 					Description: handler.Description,
 					ViewMask:    viewHandlers.viewMask,
 				}
+				
+				// Also map the handler to command name for help display
+				handlerToCommand[funcPtr] = cmdName
 			}
 		}
 	}
@@ -216,4 +223,18 @@ func (m *Model) getCommandSuggestions(partial string) []string {
 	}
 	
 	return suggestions
+}
+
+// getCommandForHandler returns the command name for a given key handler
+func getCommandForHandler(handler KeyHandler) string {
+	if handler == nil {
+		return ""
+	}
+	
+	funcPtr := reflect.ValueOf(handler).Pointer()
+	if cmdName, exists := handlerToCommand[funcPtr]; exists {
+		return cmdName
+	}
+	
+	return ""
 }

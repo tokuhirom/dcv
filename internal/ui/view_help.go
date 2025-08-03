@@ -55,10 +55,24 @@ func (m *Model) renderHelpView(availableHeight int) string {
 
 	// Show view name
 	s.WriteString(headerStyle.Render(fmt.Sprintf("Keyboard shortcuts for: %s", viewName)) + "\n\n")
+	
+	// Column styles
+	keyStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("86")).
+		Bold(true)
+	cmdStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("214"))
+	
+	// Column headers
+	headerKeyStr := keyStyle.Render(fmt.Sprintf("%-12s", "Key"))
+	headerCmdStr := cmdStyle.Render(fmt.Sprintf("%-25s", "Command"))
+	headerDescStr := normalStyle.Render("Description")
+	s.WriteString(fmt.Sprintf("%s %s %s\n", headerKeyStr, headerCmdStr, headerDescStr))
+	s.WriteString(strings.Repeat("─", 65) + "\n")
 
 	// Calculate max scroll
-	totalLines := len(configs) + 5 // title + view name + margins
-	visibleLines := availableHeight - 4   // footer + margins
+	totalLines := len(configs) + 7 // title + view name + header + separator + margins
+	visibleLines := availableHeight - 6   // footer + header + margins
 	maxScroll := totalLines - visibleLines
 	if maxScroll < 0 {
 		maxScroll = 0
@@ -83,12 +97,21 @@ func (m *Model) renderHelpView(availableHeight int) string {
 			if len(config.Keys) > 1 {
 				key = strings.Join(config.Keys, "/")
 			}
-			keyStr := lipgloss.NewStyle().
-				Foreground(lipgloss.Color("86")).
-				Bold(true).
-				Render(fmt.Sprintf("%-15s", key))
+			
+			// Get command name for this handler
+			cmdName := getCommandForHandler(config.KeyHandler)
+			
+			// Format columns
+			keyStr := keyStyle.Render(fmt.Sprintf("%-12s", key))
+			cmdStr := ""
+			if cmdName != "" {
+				cmdStr = cmdStyle.Render(fmt.Sprintf("%-25s", ":"+cmdName))
+			} else {
+				cmdStr = fmt.Sprintf("%-25s", "")
+			}
 			descStr := normalStyle.Render(config.Description)
-			s.WriteString(fmt.Sprintf("%s %s\n", keyStr, descStr))
+			
+			s.WriteString(fmt.Sprintf("%s %s %s\n", keyStr, cmdStr, descStr))
 		}
 	}
 
