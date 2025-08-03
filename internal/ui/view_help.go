@@ -42,6 +42,9 @@ func (m *Model) renderHelpView(availableHeight int) string {
 	case NetworkListView:
 		configs = m.networkListViewHandlers
 		viewName = "Docker Networks"
+	case VolumeListView:
+		configs = m.volumeListViewHandlers
+		viewName = "Docker Volumes"
 	case FileBrowserView:
 		configs = m.fileBrowserHandlers
 		viewName = "File Browser"

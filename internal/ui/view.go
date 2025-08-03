@@ -225,6 +225,8 @@ func (m *Model) viewTitle() string {
 		return "Docker Images"
 	case NetworkListView:
 		return "Docker Networks"
+	case VolumeListView:
+		return "Docker Volumes"
 	case FileBrowserView:
 		return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainerName, m.currentPath)
 	case FileContentView:
@@ -235,6 +237,8 @@ func (m *Model) viewTitle() string {
 			base = fmt.Sprintf("Image Inspect: %s", m.inspectImageID)
 		} else if m.inspectNetworkID != "" {
 			base = fmt.Sprintf("Network Inspect: %s", m.inspectNetworkID)
+		} else if m.inspectVolumeID != "" {
+			base = fmt.Sprintf("Volume Inspect: %s", m.inspectVolumeID)
 		} else {
 			base = fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
 		}
@@ -295,6 +299,8 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.renderImageList(availableHeight)
 	case NetworkListView:
 		return m.renderNetworkList(availableHeight)
+	case VolumeListView:
+		return m.renderVolumeList()
 	case FileBrowserView:
 		return m.renderFileBrowser(availableHeight)
 	case FileContentView:

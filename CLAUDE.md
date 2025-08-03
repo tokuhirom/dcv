@@ -8,6 +8,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - List view of all Docker containers (both plain Docker and Docker Compose managed)
 - List and manage Docker images
 - List and manage Docker networks
+- List and manage Docker volumes
 - Browse files inside containers
 - Execute shell commands in containers
 - Inspect container configuration
@@ -129,7 +130,17 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `D`: Remove selected network (except default networks)
    - `Esc`/`q`: Back to Docker Compose process list
 
-10. **File Browser View**: Browse filesystem inside containers
+10. **Volume List View**: Shows Docker volumes with name, driver, scope, size, creation date, and reference count
+    - `↑`/`k`: Move up
+    - `↓`/`j`: Move down
+    - `Enter`: Inspect volume (view full config)
+    - `r`: Refresh list
+    - `D`: Remove selected volume
+    - `F`: Force remove selected volume
+    - `1`/`2`/`3`/`4`: Switch to other views
+    - `Esc`/`q`: Back to Docker Compose process list
+
+11. **File Browser View**: Browse filesystem inside containers
     - `↑`/`k`: Move up
     - `↓`/`j`: Move down
     - `Enter`: Open directory or view file
@@ -138,7 +149,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
     - `?`: Show help view
     - `Esc`/`q`: Back to container list
 
-11. **File Content View**: View file contents from containers
+12. **File Content View**: View file contents from containers
     - `↑`/`k`: Scroll up
     - `↓`/`j`: Scroll down
     - `G`: Jump to end
@@ -146,7 +157,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
     - `?`: Show help view
     - `Esc`/`q`: Back to file browser
 
-12. **Inspect View**: Shows full container configuration in JSON format
+13. **Inspect View**: Shows full container configuration in JSON format
     - `↑`/`k`: Scroll up
     - `↓`/`j`: Scroll down
     - `G`: Jump to end
@@ -154,12 +165,12 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
     - `?`: Show help view
     - `Esc`/`q`: Back to container list
 
-13. **Help View**: Displays all available keyboard shortcuts for the current view
+14. **Help View**: Displays all available keyboard shortcuts for the current view
     - `↑`/`k`: Scroll up
     - `↓`/`j`: Scroll down
     - `Esc`/`q`: Back to previous view
 
-14. **Command Mode**: Vim-style command line interface
+15. **Command Mode**: Vim-style command line interface
     - `:q` or `:quit`: Quit with confirmation
     - `:q!` or `:quit!`: Force quit without confirmation
     - `:help commands`: List all available commands
