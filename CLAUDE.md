@@ -26,6 +26,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - **TUI Framework**: Bubble Tea (with Lipgloss for styling)
 - **Architecture**: Model-View-Update (MVU) pattern
 - **Core Functionality**: Wraps docker and docker-compose commands to provide an interactive interface
+- **Configuration**: TOML-based configuration file support
 
 ## Key Views
 
@@ -255,6 +256,32 @@ go build -o dcv
 ### Configuration
 - **Config file** - Save preferences (default view, filters, etc.)
 - **Custom keybindings** - Allow users to customize shortcuts
+
+## Configuration
+
+DCV supports configuration through TOML files. The configuration file is searched in the following locations (in order):
+
+1. `./dcv.toml` - Current directory
+2. `~/.config/dcv/config.toml` - User config directory
+3. `~/.dcv.toml` - Home directory
+
+### Configuration Options
+
+```toml
+[general]
+# Initial view to show on startup
+# Valid values: "docker", "compose", "projects"
+# Default: "docker"
+initial_view = "docker"
+```
+
+### Example Configuration
+
+Copy `dcv.toml.example` to one of the locations above and modify as needed:
+
+```bash
+cp dcv.toml.example ~/.config/dcv/config.toml
+```
 
 ## License
 

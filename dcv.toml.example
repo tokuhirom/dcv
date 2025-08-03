@@ -1,0 +1,11 @@
+# DCV Configuration File
+# Copy this file to one of the following locations:
+# - ./dcv.toml (current directory)
+# - ~/.config/dcv/config.toml (user config directory)
+# - ~/.dcv.toml (home directory)
+
+[general]
+# Initial view to show on startup
+# Valid values: "docker", "compose", "projects"
+# Default: "docker"
+initial_view = "docker"
