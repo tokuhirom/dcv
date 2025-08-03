@@ -217,28 +217,38 @@ Vim-style command line interface for executing commands.
 - `:set all` or `:set showAll`: Show all containers (including stopped)
 - `:set noall` or `:set noshowAll`: Hide stopped containers
 
-**Key handler commands:**
-All key handler functions can be called as commands using kebab-case naming:
-- `:select-up-container`: Move selection up
-- `:select-down-container`: Move selection down
-- `:show-compose-log`: View container logs
-- `:kill-container`: Kill selected container
-- `:stop-container`: Stop selected container
-- `:restart-container`: Restart selected container
-- `:show-file-browser`: Browse container files
-- `:execute-shell`: Execute /bin/sh in container
-- And many more...
+**Common commands:**
+- `:up` / `:down`: Navigate up/down in lists
+- `:ps`: Show Docker container list
+- `:logs`: View container logs
+- `:exec`: Execute shell in container
+- `:inspect`: Inspect container/image/network/volume
+- `:images`: Show Docker images
+- `:networks`: Show Docker networks
+- `:volumes`: Show Docker volumes
+- `:projects`: Show Docker Compose projects
+- `:files`: Browse container files
+- `:top`: Show process info
+- `:stats`: Show container stats
+- `:refresh`: Refresh current view
+- `:back`: Go back to previous view
 
-**Command aliases:**
-- `:up` → `:select-up-container`
-- `:down` → `:select-down-container`
-- `:logs` → `:show-compose-log`
-- `:inspect` → `:show-inspect`
-- `:exec` → `:execute-shell`
-- `:ps` → `:show-docker-container-list`
-- `:images` → `:show-image-list`
-- `:networks` → `:show-network-list`
-- `:volumes` → `:show-volume-list`
+**Action commands:**
+- `:kill`: Kill container
+- `:stop`: Stop container
+- `:start`: Start container
+- `:restart`: Restart container
+- `:rm`: Remove container
+- `:rmi`: Remove image
+- `:pause` / `:unpause`: Pause/unpause container
+- `:deploy`: Deploy all services (docker compose up -d)
+- `:down`: Stop and remove all services (docker compose down)
+
+**Other commands:**
+- `:all`: Toggle show all (including stopped containers)
+- `:search` / `:filter`: Search or filter logs
+- `:next` / `:prev`: Navigate search results
+- `:end` / `:start`: Jump to end/start of logs or files
 
 **Key bindings:**
 - `:`: Enter command mode from any view

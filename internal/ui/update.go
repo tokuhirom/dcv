@@ -593,8 +593,9 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 			commands := m.getAvailableCommands()
 			helpText := "Available commands in current view:\n"
 			for _, cmd := range commands {
-				if handler, exists := commandRegistry[cmd]; exists {
-					helpText += fmt.Sprintf("  :%s - %s\n", cmd, handler.Description)
+				if handlers, exists := commandRegistry[cmd]; exists && len(handlers) > 0 {
+					// Use the description from the first handler
+					helpText += fmt.Sprintf("  :%s - %s\n", cmd, handlers[0].Description)
 				}
 			}
 			m.err = fmt.Errorf("%s", helpText)
