@@ -276,7 +276,7 @@ func loadVolumes(client *docker.Client) tea.Cmd {
 
 func removeVolume(client *docker.Client, volumeName string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.RemoveVolume(volumeName)
+		err := client.RemoveVolume(volumeName, false)
 		return serviceActionCompleteMsg{err: err}
 	}
 }

@@ -250,7 +250,8 @@ func formatNetworkLine(network models.DockerNetwork, width int, selected bool) s
 		name = name[:18]
 	}
 	
-	containerCount := fmt.Sprintf("%d", network.ContainerCount)
+	// For now, we don't have container count in the model
+	containerCount := "-"
 	
 	line := fmt.Sprintf("%-15s %-20s %-10s %-10s %s",
 		id, name, network.Driver, network.Scope, containerCount)

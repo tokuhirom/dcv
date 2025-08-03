@@ -1,8 +1,6 @@
 package views
 
 import (
-	"encoding/json"
-	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,16 +9,16 @@ import (
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
-// InspectView represents the inspect view for containers, images, networks, volumes
-type InspectView struct {
+// FileContentView represents the file content viewer
+type FileContentView struct {
 	// View state
 	width        int
 	height       int
 	content      []string
 	scrollY      int
-	resourceID   string
-	resourceType string
-	resourceName string
+	containerID  string
+	filePath     string
+	fileName     string
 
 	// Loading/error state
 	loading bool
@@ -31,29 +29,29 @@ type InspectView struct {
 	rootScreen   tea.Model
 }
 
-// NewInspectView creates a new inspect view
-func NewInspectView(dockerClient *docker.Client, resourceID, resourceType, resourceName string) *InspectView {
-	return &InspectView{
+// NewFileContentView creates a new file content view
+func NewFileContentView(dockerClient *docker.Client, containerID, filePath, fileName string) *FileContentView {
+	return &FileContentView{
 		dockerClient: dockerClient,
-		resourceID:   resourceID,
-		resourceType: resourceType,
-		resourceName: resourceName,
+		containerID:  containerID,
+		filePath:     filePath,
+		fileName:     fileName,
 	}
 }
 
 // SetRootScreen sets the root screen reference
-func (v *InspectView) SetRootScreen(root tea.Model) {
+func (v *FileContentView) SetRootScreen(root tea.Model) {
 	v.rootScreen = root
 }
 
 // Init initializes the view
-func (v *InspectView) Init() tea.Cmd {
+func (v *FileContentView) Init() tea.Cmd {
 	v.loading = true
-	return loadInspectData(v.dockerClient, v.resourceID, v.resourceType)
+	return loadFileContent(v.dockerClient, v.containerID, v.filePath)
 }
 
 // Update handles messages for this view
-func (v *InspectView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (v *FileContentView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
@@ -63,24 +61,13 @@ func (v *InspectView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return v.handleKeyPress(msg)
 
-	case inspectDataLoadedMsg:
+	case fileContentLoadedMsg:
 		v.loading = false
 		if msg.err != nil {
 			v.err = msg.err
 			return v, nil
 		}
-		// Format JSON data
-		var data interface{}
-		if err := json.Unmarshal([]byte(msg.data), &data); err != nil {
-			v.content = []string{msg.data}
-		} else {
-			formatted, err := json.MarshalIndent(data, "", "  ")
-			if err != nil {
-				v.content = []string{msg.data}
-			} else {
-				v.content = strings.Split(string(formatted), "\n")
-			}
-		}
+		v.content = strings.Split(msg.content, "\n")
 		v.err = nil
 		v.scrollY = 0
 		return v, nil
@@ -89,20 +76,20 @@ func (v *InspectView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return v, nil
 }
 
-// View renders the inspect view
-func (v *InspectView) View() string {
+// View renders the file content
+func (v *FileContentView) View() string {
 	if v.loading {
-		return renderLoadingView(v.width, v.height, "Loading inspect data...")
+		return renderLoadingView(v.width, v.height, "Loading file content...")
 	}
 
 	if v.err != nil {
 		return renderErrorView(v.width, v.height, v.err)
 	}
 
-	return v.renderInspect()
+	return v.renderContent()
 }
 
-func (v *InspectView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (v *FileContentView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "up", "k":
 		if v.scrollY > 0 {
@@ -136,7 +123,7 @@ func (v *InspectView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			if switcher, ok := v.rootScreen.(interface {
 				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
 			}); ok {
-				helpView := NewHelpView("Inspect View", v)
+				helpView := NewHelpView("File Viewer", v)
 				helpView.SetRootScreen(v.rootScreen)
 				return switcher.SwitchScreen(helpView)
 			}
@@ -144,15 +131,30 @@ func (v *InspectView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return v, nil
 
 	case "esc", "q":
-		// Go back
-		// TODO: Navigate back to the appropriate view based on resourceType
-		return v, tea.Quit
+		// Go back to file browser
+		if v.rootScreen != nil {
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				// Extract directory from file path
+				lastSlash := strings.LastIndex(v.filePath, "/")
+				dir := "/"
+				if lastSlash > 0 {
+					dir = v.filePath[:lastSlash]
+				}
+				
+				browserView := NewFileBrowserView(v.dockerClient, v.containerID, "", dir)
+				browserView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(browserView)
+			}
+		}
+		return v, nil
 	}
 
 	return v, nil
 }
 
-func (v *InspectView) renderInspect() string {
+func (v *FileContentView) renderContent() string {
 	var s strings.Builder
 
 	// Header
@@ -162,7 +164,7 @@ func (v *InspectView) renderInspect() string {
 		Background(lipgloss.Color("4")).
 		Width(v.width).
 		Padding(0, 1).
-		Render("Inspect - " + v.resourceName)
+		Render("File: " + v.fileName)
 	s.WriteString(header + "\n")
 
 	// Calculate visible lines
@@ -173,10 +175,13 @@ func (v *InspectView) renderInspect() string {
 		end = len(v.content)
 	}
 
-	// Render content
+	// Render content with line numbers
 	for i := start; i < end; i++ {
 		if i < len(v.content) {
-			s.WriteString(v.content[i] + "\n")
+			lineNum := lipgloss.NewStyle().
+				Foreground(lipgloss.Color("240")).
+				Render(strings.Printf("%4d ", i+1))
+			s.WriteString(lineNum + v.content[i] + "\n")
 		}
 	}
 
@@ -197,30 +202,15 @@ func (v *InspectView) renderInspect() string {
 }
 
 // Messages
-type inspectDataLoadedMsg struct {
-	data string
-	err  error
+type fileContentLoadedMsg struct {
+	content string
+	err     error
 }
 
 // Commands
-func loadInspectData(client *docker.Client, resourceID, resourceType string) tea.Cmd {
+func loadFileContent(client *docker.Client, containerID, filePath string) tea.Cmd {
 	return func() tea.Msg {
-		var data string
-		var err error
-
-		switch resourceType {
-		case "container":
-			data, err = client.InspectContainer(resourceID)
-		case "image":
-			data, err = client.InspectImage(resourceID)
-		case "network":
-			data, err = client.InspectNetwork(resourceID)
-		case "volume":
-			data, err = client.InspectVolume(resourceID)
-		default:
-			return inspectDataLoadedMsg{err: fmt.Errorf("unknown resource type: %s", resourceType)}
-		}
-
-		return inspectDataLoadedMsg{data: data, err: err}
+		content, err := client.ReadFile(containerID, filePath)
+		return fileContentLoadedMsg{content: content, err: err}
 	}
 }

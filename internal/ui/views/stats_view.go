@@ -1,6 +1,7 @@
 package views
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/docker"
-	"github.com/tokuhirom/dcv/internal/models"
 )
 
 // StatsView represents the container statistics view
@@ -16,7 +16,7 @@ type StatsView struct {
 	// View state
 	width       int
 	height      int
-	stats       []models.ContainerStats
+	stats       []ContainerStats
 	projectName string
 
 	// Loading/error state
@@ -174,7 +174,7 @@ func (v *StatsView) renderStats() string {
 	return strings.Join(lines, "\n") + "\n" + footer
 }
 
-func formatStatsLine(stat models.ContainerStats, width int) string {
+func formatStatsLine(stat ContainerStats, width int) string {
 	// Truncate container name if too long
 	name := stat.Name
 	if len(name) > 28 {
@@ -208,15 +208,48 @@ func formatStatsLine(stat models.ContainerStats, width int) string {
 }
 
 // Messages
+// ContainerStats represents container resource usage statistics
+type ContainerStats struct {
+	Container string `json:"Container"`
+	Name      string `json:"Name"`
+	Service   string `json:"Service"`
+	CPUPerc   string `json:"CPUPerc"`
+	MemUsage  string `json:"MemUsage"`
+	MemPerc   string `json:"MemPerc"`
+	NetIO     string `json:"NetIO"`
+	BlockIO   string `json:"BlockIO"`
+	PIDs      string `json:"PIDs"`
+	Status    string `json:"Status"`
+}
+
 type statsLoadedMsg struct {
-	stats []models.ContainerStats
+	stats []ContainerStats
 	err   error
 }
 
 // Commands
 func loadStats(client *docker.Client, projectName string) tea.Cmd {
 	return func() tea.Msg {
-		stats, err := client.GetStats(projectName)
+		// Get raw stats output
+		output, err := client.GetStats()
+		if err != nil {
+			return statsLoadedMsg{err: err}
+		}
+		
+		// Parse stats
+		var stats []ContainerStats
+		if output != "" {
+			lines := strings.Split(strings.TrimSpace(output), "\n")
+			for _, line := range lines {
+				var stat ContainerStats
+				if err := json.Unmarshal([]byte(line), &stat); err == nil {
+					// Filter by project if specified
+					if projectName == "" || stat.Service != "" {
+						stats = append(stats, stat)
+					}
+				}
+			}
+		}
 		return statsLoadedMsg{stats: stats, err: err}
 	}
 }
