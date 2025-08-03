@@ -63,26 +63,3 @@ func TestLoad_InvalidTOML(t *testing.T) {
 	assert.Nil(t, cfg)
 }
 
-func TestSave(t *testing.T) {
-	// Setup temp config dir
-	tmpDir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", tmpDir)
-
-	cfg := &Config{
-		General: GeneralConfig{
-			InitialView: "projects",
-		},
-	}
-
-	err := cfg.Save()
-	require.NoError(t, err)
-
-	// Check file was created
-	expectedPath := filepath.Join(tmpDir, "dcv", "config.toml")
-	assert.FileExists(t, expectedPath)
-
-	// Load it back
-	loadedCfg, err := Load()
-	require.NoError(t, err)
-	assert.Equal(t, "projects", loadedCfg.General.InitialView)
-}

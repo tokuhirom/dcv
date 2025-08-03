@@ -72,34 +72,3 @@ func getConfigPaths() []string {
 	return paths
 }
 
-// Save saves the configuration to the user config directory
-func (c *Config) Save() error {
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return fmt.Errorf("failed to get user config directory: %w", err)
-	}
-
-	dcvConfigDir := filepath.Join(configDir, "dcv")
-	if err := os.MkdirAll(dcvConfigDir, 0755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
-	}
-
-	configPath := filepath.Join(dcvConfigDir, "config.toml")
-
-	f, err := os.Create(configPath)
-	if err != nil {
-		return fmt.Errorf("failed to create config file: %w", err)
-	}
-	defer func() {
-		if cerr := f.Close(); cerr != nil && err == nil {
-			err = cerr
-		}
-	}()
-
-	encoder := toml.NewEncoder(f)
-	if err := encoder.Encode(c); err != nil {
-		return fmt.Errorf("failed to encode config: %w", err)
-	}
-
-	return nil
-}
