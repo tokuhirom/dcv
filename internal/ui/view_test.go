@@ -110,9 +110,10 @@ func TestView(t *testing.T) {
 				containerName: "web-1",
 				searchMode:    true,
 				searchText:    "error",
+				searchCursorPos: 5,
 			},
 			contains: []string{
-				"Search: error",
+				"/error", // Search prompt in footer
 			},
 		},
 		{

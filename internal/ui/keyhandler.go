@@ -109,6 +109,42 @@ func (m *Model) GoToLogStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) StartSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.searchMode = true
 	m.searchText = ""
+	m.searchCursorPos = 0
+	m.searchResults = nil
+	m.currentSearchIdx = 0
+	return m, nil
+}
+
+func (m *Model) NextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if len(m.searchResults) > 0 {
+		m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.searchResults)
+		// Jump to the line
+		if m.currentSearchIdx < len(m.searchResults) {
+			targetLine := m.searchResults[m.currentSearchIdx]
+			m.logScrollY = targetLine - m.height/2 + 3 // Center the result
+			if m.logScrollY < 0 {
+				m.logScrollY = 0
+			}
+		}
+	}
+	return m, nil
+}
+
+func (m *Model) PrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if len(m.searchResults) > 0 {
+		m.currentSearchIdx--
+		if m.currentSearchIdx < 0 {
+			m.currentSearchIdx = len(m.searchResults) - 1
+		}
+		// Jump to the line
+		if m.currentSearchIdx < len(m.searchResults) {
+			targetLine := m.searchResults[m.currentSearchIdx]
+			m.logScrollY = targetLine - m.height/2 + 3 // Center the result
+			if m.logScrollY < 0 {
+				m.logScrollY = 0
+			}
+		}
+	}
 	return m, nil
 }
 

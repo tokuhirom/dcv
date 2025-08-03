@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -112,8 +113,13 @@ type Model struct {
 	stats []ContainerStats
 
 	// Search state
-	searchMode bool
-	searchText string
+	searchMode        bool
+	searchText        string
+	searchIgnoreCase  bool
+	searchRegex       bool
+	searchResults     []int // Line indices of search results
+	currentSearchIdx  int   // Current position in searchResults
+	searchCursorPos   int   // Cursor position in search text
 
 	// Error state
 	err error
@@ -168,6 +174,51 @@ type Model struct {
 	commandCursorPos   int
 	quitConfirmation   bool
 	quitConfirmMessage string
+}
+
+func (m *Model) performSearch() {
+	m.searchResults = nil
+	if m.searchText == "" {
+		return
+	}
+
+	searchText := m.searchText
+	if m.searchIgnoreCase && !m.searchRegex {
+		searchText = strings.ToLower(searchText)
+	}
+
+	for i, line := range m.logs {
+		lineToSearch := line
+		if m.searchIgnoreCase && !m.searchRegex {
+			lineToSearch = strings.ToLower(line)
+		}
+
+		match := false
+		if m.searchRegex {
+			pattern := searchText
+			if m.searchIgnoreCase {
+				pattern = "(?i)" + pattern
+			}
+			if re, err := regexp.Compile(pattern); err == nil {
+				match = re.MatchString(line)
+			}
+		} else {
+			match = strings.Contains(lineToSearch, searchText)
+		}
+
+		if match {
+			m.searchResults = append(m.searchResults, i)
+		}
+	}
+
+	// If we have results, jump to the first one
+	if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) {
+		targetLine := m.searchResults[m.currentSearchIdx]
+		m.logScrollY = targetLine - m.height/2 + 3
+		if m.logScrollY < 0 {
+			m.logScrollY = 0
+		}
+	}
 }
 
 // NewModel creates a new model with initial state

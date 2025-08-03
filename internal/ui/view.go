@@ -88,6 +88,25 @@ func (m *Model) View() string {
 	if m.quitConfirmation {
 		// Show quit confirmation dialog
 		footer = errorStyle.Render(m.quitConfirmMessage)
+	} else if m.searchMode && m.currentView == LogView {
+		// Show search prompt
+		cursor := " "
+		if m.searchCursorPos < len(m.searchText) {
+			cursor = string(m.searchText[m.searchCursorPos])
+		}
+		
+		// Build search line with cursor
+		before := m.searchText[:m.searchCursorPos]
+		after := ""
+		if m.searchCursorPos < len(m.searchText) {
+			after = m.searchText[m.searchCursorPos+1:]
+		}
+		
+		cursorStyle := lipgloss.NewStyle().
+			Background(lipgloss.Color("226")).
+			Foreground(lipgloss.Color("235"))
+		
+		footer = "/" + before + cursorStyle.Render(cursor) + after
 	} else if m.commandMode {
 		// Show command line
 		cursor := " "
@@ -137,10 +156,34 @@ func (m *Model) viewTitle() string {
 		}
 		return "Docker Compose"
 	case LogView:
+		title := ""
 		if m.isDindLog {
-			return fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainer)
+			title = fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainer)
+		} else {
+			title = fmt.Sprintf("Logs: %s", m.containerName)
 		}
-		return fmt.Sprintf("Logs: %s", m.containerName)
+		
+		// Add search status to title
+		if len(m.searchResults) > 0 {
+			statusParts := []string{}
+			if m.searchIgnoreCase {
+				statusParts = append(statusParts, "i")
+			}
+			if m.searchRegex {
+				statusParts = append(statusParts, "r")
+			}
+			
+			statusStr := ""
+			if len(statusParts) > 0 {
+				statusStr = fmt.Sprintf(" [%s]", strings.Join(statusParts, ""))
+			}
+			
+			title += fmt.Sprintf(" - Search: %d/%d%s", m.currentSearchIdx+1, len(m.searchResults), statusStr)
+		} else if m.searchText != "" && !m.searchMode {
+			title += " - No matches found"
+		}
+		
+		return title
 	case DindComposeProcessListView:
 		return fmt.Sprintf("Docker in Docker: %s", m.currentDindHost)
 	case TopView:
