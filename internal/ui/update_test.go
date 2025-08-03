@@ -349,15 +349,17 @@ func TestBoundaryConditions(t *testing.T) {
 }
 
 func TestQuitBehaviorInDifferentViews(t *testing.T) {
-	// From process list - should quit
+	// From process list - should show quit confirmation
 	model := Model{currentView: ComposeProcessListView}
-	_, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	assert.NotNil(t, cmd)
+	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	m := *newModel.(*Model)
+	assert.True(t, m.quitConfirmation)
+	assert.Nil(t, cmd) // No command yet, just showing confirmation
 
 	// From log view - should go back
 	model = Model{currentView: LogView}
-	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	m := *newModel.(*Model)
+	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	m = *newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView)
 	assert.NotNil(t, cmd) // Should load composeContainers
 
