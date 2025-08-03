@@ -56,18 +56,6 @@ func (m *Model) View() string {
 	title := m.viewTitle()
 	titleHeight := lipgloss.Height(titleStyle.Render(title))
 
-	// Handle loading state
-	if m.loading && m.currentView != LogView {
-		body := "\nLoading...\n"
-		return lipgloss.JoinVertical(lipgloss.Left, titleStyle.Render(title), body)
-	}
-
-	// Handle error state
-	if m.err != nil && m.currentView != LogView && m.currentView != FileContentView {
-		body := "\n" + errorStyle.Render(fmt.Sprintf("Error: %v", m.err)) + "\n"
-		return lipgloss.JoinVertical(lipgloss.Left, titleStyle.Render(title), body)
-	}
-
 	// Calculate available height for body content
 	// Layout: title (with margin) + body + footer
 	titleRendered := titleStyle.Render(title)
@@ -254,6 +242,16 @@ func (m *Model) viewTitle() string {
 }
 
 func (m *Model) viewBody(availableHeight int) string {
+	// Handle loading state
+	if m.loading && m.currentView != LogView {
+		return "\nLoading...\n"
+	}
+
+	// Handle error state
+	if m.err != nil && m.currentView != LogView && m.currentView != FileContentView {
+		return "\n" + errorStyle.Render(fmt.Sprintf("Error: %v", m.err))
+	}
+
 	switch m.currentView {
 	case ComposeProcessListView:
 		return m.renderComposeProcessList(availableHeight)
