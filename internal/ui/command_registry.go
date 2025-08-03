@@ -102,7 +102,6 @@ func (m *Model) registerCommands() {
 		"select":   "show-compose-log",
 		"enter":    "show-compose-log",
 		"back":     "back-to-process-list",
-		"refresh":  "refresh-process-list",
 		"kill":     "kill-container",
 		"stop":     "stop-container",
 		"start":    "up-service",
