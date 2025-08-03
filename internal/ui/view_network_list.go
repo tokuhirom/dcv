@@ -8,7 +8,7 @@ import (
 )
 
 // renderNetworkList renders the network list view
-func (m *Model) renderNetworkList() string {
+func (m *Model) renderNetworkList(availableHeight int) string {
 	var content strings.Builder
 
 	if len(m.dockerNetworks) == 0 {

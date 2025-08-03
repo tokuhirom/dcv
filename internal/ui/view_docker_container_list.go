@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
-func (m *Model) renderDockerList() string {
+func (m *Model) renderDockerList(availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.dockerContainers) == 0 {

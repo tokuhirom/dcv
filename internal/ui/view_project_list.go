@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
-func (m *Model) renderProjectList() string {
+func (m *Model) renderProjectList(availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.projects) == 0 {
@@ -28,7 +28,7 @@ func (m *Model) renderProjectList() string {
 			return normalStyle
 		}).
 		Headers("NAME", "STATUS", "CONFIG FILES").
-		Height(m.height - 4). // Reserve space for footer
+		Height(availableHeight).
 		Width(m.width).
 		Offset(m.selectedDockerImage)
 

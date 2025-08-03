@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func (m *Model) renderTopView() string {
+func (m *Model) renderTopView(availableHeight int) string {
 	var s strings.Builder
 
 	if m.topOutput == "" {
@@ -12,7 +12,7 @@ func (m *Model) renderTopView() string {
 	} else {
 		// Display the raw top output
 		lines := strings.Split(m.topOutput, "\n")
-		visibleHeight := m.height - 2 // Account for margins
+		visibleHeight := availableHeight
 
 		for i, line := range lines {
 			if i >= visibleHeight {

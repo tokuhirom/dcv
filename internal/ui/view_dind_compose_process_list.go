@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
-func (m *Model) renderDindList() string {
+func (m *Model) renderDindList(availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.dindContainers) == 0 {
