@@ -177,6 +177,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - Follow vim-style keybindings for all shortcuts
 - The tool internally executes both docker and docker-compose commands
 - Special handling required for dind (Docker-in-Docker) containers
+- **Protected main branch**: The main branch is protected and cannot be committed to directly. Always create a feature branch and submit a pull request for code changes.
 
 ## Code Style and Quality
 
