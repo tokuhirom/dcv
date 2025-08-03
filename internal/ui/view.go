@@ -68,8 +68,20 @@ func (m *Model) View() string {
 		return lipgloss.JoinVertical(lipgloss.Left, titleStyle.Render(title), body)
 	}
 
-	// Get body content
-	body := m.viewBody()
+	// Calculate available height for body content
+	// Layout: title (with margin) + body + footer
+	titleRendered := titleStyle.Render(title)
+	actualTitleHeight := lipgloss.Height(titleRendered)
+	footerHeight := 1
+	
+	// Available height = total height - title height - footer height
+	availableBodyHeight := m.height - actualTitleHeight - footerHeight
+	if availableBodyHeight < 1 {
+		availableBodyHeight = 1
+	}
+
+	// Get body content with available height
+	body := m.viewBody(availableBodyHeight)
 	bodyHeight := strings.Count(body, "\n") + 1
 
 	// Special handling for HelpView (it has its own footer)
@@ -83,7 +95,6 @@ func (m *Model) View() string {
 
 	// Build footer content (command line or quit confirmation or help hint)
 	var footer string
-	footerHeight := 1
 	
 	if m.quitConfirmation {
 		// Show quit confirmation dialog
@@ -220,34 +231,34 @@ func (m *Model) viewTitle() string {
 	}
 }
 
-func (m *Model) viewBody() string {
+func (m *Model) viewBody(availableHeight int) string {
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m.renderComposeProcessList()
+		return m.renderComposeProcessList(availableHeight)
 	case LogView:
-		return m.renderLogView()
+		return m.renderLogView(availableHeight)
 	case DindComposeProcessListView:
-		return m.renderDindList()
+		return m.renderDindList(availableHeight)
 	case TopView:
-		return m.renderTopView()
+		return m.renderTopView(availableHeight)
 	case StatsView:
-		return m.renderStatsView()
+		return m.renderStatsView(availableHeight)
 	case ProjectListView:
-		return m.renderProjectList()
+		return m.renderProjectList(availableHeight)
 	case DockerContainerListView:
-		return m.renderDockerList()
+		return m.renderDockerList(availableHeight)
 	case ImageListView:
-		return m.renderImageList()
+		return m.renderImageList(availableHeight)
 	case NetworkListView:
-		return m.renderNetworkList()
+		return m.renderNetworkList(availableHeight)
 	case FileBrowserView:
-		return m.renderFileBrowser()
+		return m.renderFileBrowser(availableHeight)
 	case FileContentView:
-		return m.renderFileContent()
+		return m.renderFileContent(availableHeight)
 	case InspectView:
-		return m.renderInspectView()
+		return m.renderInspectView(availableHeight)
 	case HelpView:
-		return m.renderHelpView()
+		return m.renderHelpView(availableHeight)
 	default:
 		return "Unknown view"
 	}

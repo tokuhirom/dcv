@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
-func (m *Model) renderImageList() string {
+func (m *Model) renderImageList(availableHeight int) string {
 	var s strings.Builder
 
 	// No images
@@ -20,7 +20,7 @@ func (m *Model) renderImageList() string {
 	// Create table
 	t := table.New().
 		Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE").
-		Height(m.height - 4). // Reserve space for footer
+		Height(availableHeight).
 		Width(m.width).
 		Offset(m.selectedDockerImage)
 

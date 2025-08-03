@@ -176,7 +176,9 @@ func TestRenderProcessList(t *testing.T) {
 		selectedContainer: 0,
 	}
 
-	view := m.renderComposeProcessList()
+	// Calculate available height (height - title - footer)
+	availableHeight := m.height - 2
+	view := m.renderComposeProcessList(availableHeight)
 
 	// Check that the selected row is highlighted
 	assert.Contains(t, view, "web")
@@ -202,14 +204,16 @@ func TestRenderLogView(t *testing.T) {
 		logScrollY: 0,
 	}
 
-	view := m.renderLogView()
+	// Calculate available height
+	availableHeight := m.height - 2
+	view := m.renderLogView(availableHeight)
 
 	// Should show logs
 	assert.Contains(t, view, "Line 1")
 
 	// Test scrolling
 	m.logScrollY = 2
-	view = m.renderLogView()
+	view = m.renderLogView(availableHeight)
 	assert.NotContains(t, view, "Line 1")
 	assert.Contains(t, view, "Line 3")
 }
@@ -238,7 +242,9 @@ func TestRenderDindList(t *testing.T) {
 		selectedDindContainer: 1,
 	}
 
-	view := m.renderDindList()
+	// Calculate available height
+	availableHeight := m.height - 2
+	view := m.renderDindList(availableHeight)
 
 	// The title is in viewTitle(), not renderDindList()
 	// Check that dind containers are listed correctly
@@ -259,7 +265,9 @@ func TestViewWithNoContainers(t *testing.T) {
 		composeContainers: []models.ComposeContainer{},
 	}
 
-	view := m.renderComposeProcessList()
+	// Calculate available height
+	availableHeight := m.height - 2
+	view := m.renderComposeProcessList(availableHeight)
 	assert.Contains(t, view, "No containers found")
 	assert.Contains(t, view, "Press u to start services or p to switch to project list")
 }
@@ -280,7 +288,9 @@ func TestTableRendering(t *testing.T) {
 		},
 	}
 
-	view := m.renderComposeProcessList()
+	// Calculate available height
+	availableHeight := m.height - 2
+	view := m.renderComposeProcessList(availableHeight)
 
 	// Check for table borders
 	lines := strings.Split(view, "\n")

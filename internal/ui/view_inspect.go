@@ -8,12 +8,12 @@ import (
 )
 
 // renderInspectView renders the container inspect view
-func (m *Model) renderInspectView() string {
+func (m *Model) renderInspectView(availableHeight int) string {
 	var content strings.Builder
 
 	// Split content into lines for scrolling
 	lines := strings.Split(m.inspectContent, "\n")
-	viewHeight := m.height - 5
+	viewHeight := availableHeight
 	startIdx := m.inspectScrollY
 	endIdx := startIdx + viewHeight
 

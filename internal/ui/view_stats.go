@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
-func (m *Model) renderStatsView() string {
+func (m *Model) renderStatsView(availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.stats) == 0 {

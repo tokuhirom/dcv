@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
-func (m *Model) renderComposeProcessList() string {
+func (m *Model) renderComposeProcessList(availableHeight int) string {
 	var s strings.Builder
 
 	slog.Info("Rendering container list",
@@ -36,7 +36,7 @@ func (m *Model) renderComposeProcessList() string {
 			return normalStyle
 		}).
 		Headers("SERVICE", "IMAGE", "STATUS", "PORTS").
-		Height(m.height - 4). // Reserve space for footer
+		Height(availableHeight).
 		Width(m.width).
 		Offset(m.selectedDockerImage)
 

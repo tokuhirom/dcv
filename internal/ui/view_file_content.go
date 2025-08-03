@@ -8,7 +8,7 @@ import (
 )
 
 // renderFileContent renders the file content view
-func (m *Model) renderFileContent() string {
+func (m *Model) renderFileContent(availableHeight int) string {
 	var content strings.Builder
 
 	if m.err != nil {
@@ -18,7 +18,7 @@ func (m *Model) renderFileContent() string {
 
 	// File content with line numbers
 	lines := strings.Split(m.fileContent, "\n")
-	viewHeight := m.height - 5
+	viewHeight := availableHeight
 	startIdx := m.fileScrollY
 	endIdx := startIdx + viewHeight
 

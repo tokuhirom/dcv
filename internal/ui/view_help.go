@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m *Model) renderHelpView() string {
+func (m *Model) renderHelpView(availableHeight int) string {
 	var s strings.Builder
 
 	// Get key configurations based on previous view
@@ -58,7 +58,7 @@ func (m *Model) renderHelpView() string {
 
 	// Calculate max scroll
 	totalLines := len(configs) + 5 // title + view name + margins
-	visibleLines := m.height - 4   // footer + margins
+	visibleLines := availableHeight - 4   // footer + margins
 	maxScroll := totalLines - visibleLines
 	if maxScroll < 0 {
 		maxScroll = 0
@@ -95,7 +95,7 @@ func (m *Model) renderHelpView() string {
 	// Footer
 	footer := "\n" + helpStyle.Render("Press ESC or q to go back")
 	footerHeight := 2
-	contentHeight := m.height - footerHeight
+	contentHeight := availableHeight - footerHeight
 	currentHeight := strings.Count(s.String(), "\n") + 1
 	if currentHeight < contentHeight {
 		s.WriteString(strings.Repeat("\n", contentHeight-currentHeight))

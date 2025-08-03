@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m *Model) renderLogView() string {
+func (m *Model) renderLogView(availableHeight int) string {
 	var s strings.Builder
 
 	if m.loading && len(m.logs) == 0 {
@@ -17,7 +17,7 @@ func (m *Model) renderLogView() string {
 	}
 
 	// Calculate visible logs based on scroll position
-	visibleHeight := m.height - 4 // Account for title, footer, and borders
+	visibleHeight := availableHeight
 
 	startIdx := m.logScrollY
 	endIdx := startIdx + visibleHeight

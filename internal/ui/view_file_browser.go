@@ -9,7 +9,7 @@ import (
 )
 
 // renderFileBrowser renders the file browser view
-func (m *Model) renderFileBrowser() string {
+func (m *Model) renderFileBrowser(availableHeight int) string {
 	var content strings.Builder
 
 	if len(m.containerFiles) == 0 {
@@ -34,7 +34,7 @@ func (m *Model) renderFileBrowser() string {
 			return normalStyle
 		}).
 		Headers("PERMISSIONS", "NAME").
-		Height(m.height - 6). // Reserve space for title, footer, and path
+		Height(availableHeight - 3). // Reserve 3 lines for path display
 		Width(m.width).
 		Offset(m.selectedFile)
 
