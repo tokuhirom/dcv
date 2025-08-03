@@ -39,16 +39,21 @@ func (c *ComposeClient) executeCaptured(args ...string) ([]byte, error) {
 			exitCode = exitErr.ExitCode()
 		}
 		errorStr = err.Error()
+		slog.Info("Executed command",
+			slog.String("command", cmdStr),
+			slog.Int("exitCode", exitCode),
+			slog.String("error", errorStr),
+			slog.Duration("duration", duration),
+			slog.String("output", string(output)))
+		return output, fmt.Errorf("failed to execute command '%s': %w\n\n%s", cmdStr, err, output)
 	}
 
 	slog.Info("Executed command",
 		slog.String("command", cmdStr),
-		slog.Int("exitCode", exitCode),
-		slog.String("error", errorStr),
 		slog.Duration("duration", duration),
 		slog.String("output", string(output)))
 
-	return output, err
+	return output, nil
 }
 
 func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer, error) {

@@ -243,7 +243,8 @@ func (c *Client) UnpauseContainer(containerID string) error {
 }
 
 func (c *ComposeClient) UpService(serviceName string) error {
-	out, err := c.executeCaptured("up", "-d", serviceName)
+	args := []string{"compose", "-p", c.projectName, "up", "-d", serviceName}
+	out, err := c.executeCaptured(args...)
 	if err != nil {
 		return fmt.Errorf("failed to executeCaptured: %w", err)
 	}
@@ -257,7 +258,8 @@ func (c *ComposeClient) UpService(serviceName string) error {
 }
 
 func (c *ComposeClient) Up() error {
-	out, err := c.executeCaptured("up", "-d")
+	args := []string{"compose", "-p", c.projectName, "up", "-d"}
+	out, err := c.executeCaptured(args...)
 	if err != nil {
 		return fmt.Errorf("failed to executeCaptured: %w", err)
 	}
