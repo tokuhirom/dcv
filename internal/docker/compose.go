@@ -58,7 +58,11 @@ func (c *ComposeClient) executeCaptured(args ...string) ([]byte, error) {
 
 func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer, error) {
 	// Always use JSON format for reliable parsing
-	args := []string{"compose", "-p", c.projectName, "ps", "--format", "json", "--no-trunc"}
+	args := []string{"compose"}
+	if c.projectName != "" {
+		args = append(args, "-p", c.projectName)
+	}
+	args = append(args, "ps", "--format", "json", "--no-trunc")
 	if showAll {
 		args = append(args, "--all")
 	}
@@ -76,7 +80,7 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer,
 		if len(output) == 0 || string(output) == "" {
 			return []models.ComposeContainer{}, nil
 		}
-		return nil, fmt.Errorf("failed to executeCaptured docker compose ps: %w\nOutput: %s", err, string(output))
+		return nil, fmt.Errorf("failed to execute docker compose ps for project %s: %w\nOutput: %s", c.projectName, err, string(output))
 	}
 
 	// Handle empty output (no containers running)
@@ -123,18 +127,28 @@ func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.ComposeConta
 }
 
 func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
-	output, err := c.executeCaptured("compose", "-p", c.projectName, "top", serviceName)
+	args := []string{"compose"}
+	if c.projectName != "" {
+		args = append(args, "-p", c.projectName)
+	}
+	args = append(args, "top", serviceName)
+	output, err := c.executeCaptured(args...)
 	if err != nil {
-		return "", fmt.Errorf("failed to executeCaptured docker compose top: %w\nOutput: %s", err, string(output))
+		return "", fmt.Errorf("failed to execute docker compose top for service %s: %w\nOutput: %s", serviceName, err, string(output))
 	}
 
 	return string(output), nil
 }
 
 func (c *ComposeClient) Down() error {
-	output, err := c.executeCaptured("compose", "-p", c.projectName, "down")
+	args := []string{"compose"}
+	if c.projectName != "" {
+		args = append(args, "-p", c.projectName)
+	}
+	args = append(args, "down")
+	output, err := c.executeCaptured(args...)
 	if err != nil {
-		return fmt.Errorf("failed to execute docker compose down: %w\nOutput: %s", err, string(output))
+		return fmt.Errorf("failed to execute docker compose down for project %s: %w\nOutput: %s", c.projectName, err, string(output))
 	}
 
 	slog.Info("Executed docker compose down",
@@ -144,31 +158,37 @@ func (c *ComposeClient) Down() error {
 }
 
 func (c *ComposeClient) UpService(serviceName string) error {
-	args := []string{"compose", "-p", c.projectName, "up", "-d", serviceName}
+	args := []string{"compose"}
+	if c.projectName != "" {
+		args = append(args, "-p", c.projectName)
+	}
+	args = append(args, "up", "-d", serviceName)
 	out, err := c.executeCaptured(args...)
 	if err != nil {
-		return fmt.Errorf("failed to executeCaptured: %w", err)
+		return fmt.Errorf("failed to execute docker compose up for service %s: %w\nOutput: %s", serviceName, err, string(out))
 	}
 
-	slog.Info("Executed docker compose up",
+	slog.Info("Executed docker compose up for service",
+		slog.String("service", serviceName),
 		slog.String("output", string(out)))
-
-	// TODO: show the result of the up command
 
 	return nil
 }
 
 func (c *ComposeClient) Up() error {
-	args := []string{"compose", "-p", c.projectName, "up", "-d"}
+	args := []string{"compose"}
+	if c.projectName != "" {
+		args = append(args, "-p", c.projectName)
+	}
+	args = append(args, "up", "-d")
 	out, err := c.executeCaptured(args...)
 	if err != nil {
-		return fmt.Errorf("failed to executeCaptured: %w", err)
+		return fmt.Errorf("failed to execute docker compose up for project %s: %w\nOutput: %s", c.projectName, err, string(out))
 	}
 
 	slog.Info("Executed docker compose up",
+		slog.String("project", c.projectName),
 		slog.String("output", string(out)))
-
-	// TODO: show the result/progress of the up command
 
 	return nil
 }
