@@ -10,6 +10,7 @@ import (
 	"github.com/fujiwara/sloghandler"
 
 	"github.com/tokuhirom/dcv/internal/config"
+	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/ui"
 )
 
@@ -49,11 +50,14 @@ func main() {
 
 	slog.Info("Starting dcv", slog.String("initial_view", cfg.General.InitialView))
 
-	// Create the initial model with configured view
-	m := ui.NewModel(initialView, "")
+	// Create Docker client
+	dockerClient := docker.NewClient()
+
+	// Create the root screen with configured initial view
+	root := ui.NewRootScreen(dockerClient, initialView, "")
 
 	// Create the program
-	p := tea.NewProgram(&m, tea.WithAltScreen())
+	p := tea.NewProgram(root, tea.WithAltScreen())
 
 	// Run the program
 	if _, err := p.Run(); err != nil {
