@@ -728,6 +728,20 @@ func (m *Model) RefreshFiles(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
 }
 
+func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Go up one directory
+	if m.currentPath != "/" {
+		m.currentPath = filepath.Dir(m.currentPath)
+		if len(m.pathHistory) > 1 {
+			m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
+		}
+		m.loading = true
+		m.selectedFile = 0
+		return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
+	}
+	return m, nil
+}
+
 func (m *Model) BackFromFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Check where we came from based on the container name prefix
 	for _, container := range m.dockerContainers {

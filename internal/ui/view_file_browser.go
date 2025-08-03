@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 // renderFileBrowser renders the file browser view
@@ -13,58 +14,54 @@ func (m *Model) renderFileBrowser() string {
 
 	if len(m.containerFiles) == 0 {
 		dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+		content.WriteString("\n")
 		content.WriteString(dimStyle.Render("No files found or directory is empty"))
+		content.WriteString("\n")
 		return content.String()
 	}
 
-	// Table headers
-	headerStyle := lipgloss.NewStyle().Bold(true).Underline(true).Foreground(lipgloss.Color("86"))
-	headers := []string{"PERMISSIONS", "NAME"}
-	colWidths := []int{11, 60}
-
-	// Render headers
-	for i, header := range headers {
-		content.WriteString(headerStyle.Render(padRight(header, colWidths[i])))
-		if i < len(headers)-1 {
-			content.WriteString(" ")
-		}
-	}
+	// Add spacing
 	content.WriteString("\n")
 
-	// Render files
+	// Create table
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			if row == m.selectedFile {
+				return selectedStyle
+			}
+			return normalStyle
+		}).
+		Headers("PERMISSIONS", "NAME").
+		Height(m.height - 6). // Reserve space for title, footer, and path
+		Width(m.width).
+		Offset(m.selectedFile)
+
+	// Define styles for different file types
 	dirStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
 	linkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
 
-	for i, file := range m.containerFiles {
-		style := normalStyle
-		nameStyle := normalStyle
-
+	// Add rows
+	for _, file := range m.containerFiles {
+		// Style the name based on file type
+		name := file.GetDisplayName()
 		if file.IsDir {
-			nameStyle = dirStyle
+			name = dirStyle.Render(name)
 		} else if file.LinkTarget != "" {
-			nameStyle = linkStyle
+			name = linkStyle.Render(name)
 		}
 
-		if i == m.selectedFile {
-			style = selectedStyle
-			nameStyle = selectedStyle
-		}
-
-		// Format row data
-		permissions := style.Render(padRight(file.Permissions, colWidths[0]))
-		name := nameStyle.Render(padRight(file.GetDisplayName(), colWidths[1]))
-
-		// Render row
-		content.WriteString(permissions)
-		content.WriteString(" ")
-		content.WriteString(name)
-		content.WriteString("\n")
+		t.Row(file.Permissions, name)
 	}
+
+	content.WriteString(t.Render())
+	content.WriteString("\n\n")
 
 	// Show current path at bottom
 	pathStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true)
-	content.WriteString("\n")
 	content.WriteString(pathStyle.Render(fmt.Sprintf("Path: %s", m.currentPath)))
+	content.WriteString("\n")
 
 	return content.String()
 }
