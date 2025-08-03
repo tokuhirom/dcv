@@ -123,6 +123,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 9. **Network List View**: Shows Docker networks with ID, name, driver, scope, and container count
    - `↑`/`k`: Move up
    - `↓`/`j`: Move down
+   - `I`: Inspect network (view full config)
    - `r`: Refresh list
    - `D`: Remove selected network (except default networks)
    - `Esc`/`q`: Back to Docker Compose process list
