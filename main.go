@@ -36,8 +36,14 @@ func main() {
 	case "projects":
 		initialView = ui.ProjectListView
 	case "docker":
-		fallthrough
+		initialView = ui.DockerContainerListView
+	case "":
+		// Empty is valid, use default
+		initialView = ui.DockerContainerListView
 	default:
+		slog.Warn("Unknown initial_view in config, using default",
+			slog.String("initial_view", cfg.General.InitialView),
+			slog.String("valid_values", "docker, compose, projects"))
 		initialView = ui.DockerContainerListView
 	}
 
