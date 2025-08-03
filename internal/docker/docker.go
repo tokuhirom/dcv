@@ -385,12 +385,14 @@ func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
 			continue
 		}
 
-		var network models.DockerNetwork
-		if err := json.Unmarshal(line, &network); err != nil {
+		var networkList models.DockerNetworkList
+		if err := json.Unmarshal(line, &networkList); err != nil {
 			// Skip invalid lines
 			continue
 		}
 
+		// Convert to DockerNetwork
+		network := networkList.ToDockerNetwork()
 		networks = append(networks, network)
 	}
 
