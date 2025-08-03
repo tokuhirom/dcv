@@ -84,7 +84,7 @@ func TestDockerNetworkList_ToDockerNetwork(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			result := tc.input.ToDockerNetwork()
-			
+
 			assert.Equal(t, tc.expected.Name, result.Name)
 			assert.Equal(t, tc.expected.ID, result.ID)
 			assert.Equal(t, tc.expected.Created, result.Created)
@@ -137,7 +137,7 @@ func TestDockerNetworkList_JSONUnmarshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var result DockerNetworkList
 			err := json.Unmarshal([]byte(tc.json), &result)
-			
+
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, result)
 		})

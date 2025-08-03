@@ -104,12 +104,12 @@ func TestView(t *testing.T) {
 		{
 			name: "log view in search mode",
 			model: Model{
-				currentView:   LogView,
-				width:         80,
-				height:        24,
-				containerName: "web-1",
-				searchMode:    true,
-				searchText:    "error",
+				currentView:     LogView,
+				width:           80,
+				height:          24,
+				containerName:   "web-1",
+				searchMode:      true,
+				searchText:      "error",
 				searchCursorPos: 5,
 			},
 			contains: []string{
@@ -383,12 +383,12 @@ func TestDockerContainerListView(t *testing.T) {
 func TestFileBrowserTableView(t *testing.T) {
 	t.Run("file_browser_with_files", func(t *testing.T) {
 		m := &Model{
-			width:               80,
-			height:              24,
-			currentView:         FileBrowserView,
+			width:                 80,
+			height:                24,
+			currentView:           FileBrowserView,
 			browsingContainerName: "web-1",
-			currentPath:         "/app",
-			selectedFile:        1,
+			currentPath:           "/app",
+			selectedFile:          1,
 			containerFiles: []models.ContainerFile{
 				{Name: "Dockerfile", Permissions: "-rw-r--r--", IsDir: false},
 				{Name: "src", Permissions: "drwxr-xr-x", IsDir: true},
@@ -443,12 +443,12 @@ func TestFileBrowserTableView(t *testing.T) {
 
 	t.Run("file_browser_empty_directory", func(t *testing.T) {
 		m := &Model{
-			width:               80,
-			height:              24,
-			currentView:         FileBrowserView,
+			width:                 80,
+			height:                24,
+			currentView:           FileBrowserView,
 			browsingContainerName: "web-1",
-			currentPath:         "/empty",
-			containerFiles:      []models.ContainerFile{},
+			currentPath:           "/empty",
+			containerFiles:        []models.ContainerFile{},
 		}
 		m.initializeKeyHandlers()
 

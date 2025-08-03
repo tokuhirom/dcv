@@ -60,7 +60,7 @@ func (m *Model) registerCommands() {
 		for _, handler := range viewHandlers.handlers {
 			// Get the function pointer
 			funcPtr := reflect.ValueOf(handler.KeyHandler).Pointer()
-			
+
 			// Skip if already registered
 			if registered[funcPtr] {
 				continue
@@ -78,16 +78,16 @@ func (m *Model) registerCommands() {
 				// Remove the (*Model) part if present
 				methodName = strings.TrimPrefix(methodName, "(*Model)")
 				methodName = strings.TrimPrefix(methodName, ")")
-				
+
 				// Convert to kebab-case command name (e.g., "SelectUpContainer" -> "select-up-container")
 				cmdName := toKebabCase(methodName)
-				
+
 				commandRegistry[cmdName] = CommandHandler{
 					Handler:     handler.KeyHandler,
 					Description: handler.Description,
 					ViewMask:    viewHandlers.viewMask,
 				}
-				
+
 				// Also map the handler to command name for help display
 				handlerToCommand[funcPtr] = cmdName
 			}
@@ -96,30 +96,30 @@ func (m *Model) registerCommands() {
 
 	// Add some view-agnostic aliases for common commands
 	aliases := map[string]string{
-		"up":     "select-up-container",
-		"down":   "select-down-container",
-		"select": "show-compose-log",
-		"enter":  "show-compose-log",
-		"back":   "back-to-process-list",
-		"refresh": "refresh-process-list",
-		"kill":   "kill-container",
-		"stop":   "stop-container",
-		"start":  "up-service",
-		"restart": "restart-container",
-		"delete": "delete-container",
-		"rm":     "delete-container",
-		"logs":   "show-compose-log",
-		"top":    "show-top-view",
-		"stats":  "show-stats-view",
-		"images": "show-image-list",
+		"up":       "select-up-container",
+		"down":     "select-down-container",
+		"select":   "show-compose-log",
+		"enter":    "show-compose-log",
+		"back":     "back-to-process-list",
+		"refresh":  "refresh-process-list",
+		"kill":     "kill-container",
+		"stop":     "stop-container",
+		"start":    "up-service",
+		"restart":  "restart-container",
+		"delete":   "delete-container",
+		"rm":       "delete-container",
+		"logs":     "show-compose-log",
+		"top":      "show-top-view",
+		"stats":    "show-stats-view",
+		"images":   "show-image-list",
 		"networks": "show-network-list",
 		"projects": "show-project-list",
-		"ps":     "show-docker-container-list",
-		"inspect": "show-inspect",
-		"exec":   "execute-shell",
-		"files":  "show-file-browser",
-		"pause":  "pause-container",
-		"unpause": "pause-container", // Toggle
+		"ps":       "show-docker-container-list",
+		"inspect":  "show-inspect",
+		"exec":     "execute-shell",
+		"files":    "show-file-browser",
+		"pause":    "pause-container",
+		"unpause":  "pause-container", // Toggle
 	}
 
 	// Register aliases
@@ -180,8 +180,8 @@ func (m *Model) findCommandForCurrentView(baseCmdName string) *CommandHandler {
 		if strings.HasPrefix(baseCmdName, pattern) {
 			// Try to find a view-specific version
 			for cmdName, cmd := range commandRegistry {
-				if strings.HasPrefix(cmdName, pattern) && 
-				   (cmd.ViewMask == 0 || cmd.ViewMask == m.currentView) {
+				if strings.HasPrefix(cmdName, pattern) &&
+					(cmd.ViewMask == 0 || cmd.ViewMask == m.currentView) {
 					return &cmd
 				}
 			}
@@ -206,13 +206,13 @@ func (m *Model) getAvailableCommands() []string {
 func (m *Model) getCommandSuggestions(partial string) []string {
 	var suggestions []string
 	availableCommands := m.getAvailableCommands()
-	
+
 	for _, cmdName := range availableCommands {
 		if strings.HasPrefix(cmdName, partial) {
 			suggestions = append(suggestions, cmdName)
 		}
 	}
-	
+
 	// If no prefix matches, try substring matching
 	if len(suggestions) == 0 {
 		for _, cmdName := range availableCommands {
@@ -221,7 +221,7 @@ func (m *Model) getCommandSuggestions(partial string) []string {
 			}
 		}
 	}
-	
+
 	return suggestions
 }
 
@@ -230,11 +230,11 @@ func getCommandForHandler(handler KeyHandler) string {
 	if handler == nil {
 		return ""
 	}
-	
+
 	funcPtr := reflect.ValueOf(handler).Pointer()
 	if cmdName, exists := handlerToCommand[funcPtr]; exists {
 		return cmdName
 	}
-	
+
 	return ""
 }

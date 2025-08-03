@@ -27,7 +27,7 @@ func (m *Model) renderInspectView(availableHeight int) string {
 	jsonKeyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
 	jsonValueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
 	jsonBraceStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-	
+
 	// Define highlight style for search matches
 	highlightStyle := lipgloss.NewStyle().
 		Background(lipgloss.Color("226")).
@@ -39,10 +39,10 @@ func (m *Model) renderInspectView(availableHeight int) string {
 		for i := startIdx; i < endIdx; i++ {
 			line := lines[i]
 			lineNum := lineNumStyle.Render(fmt.Sprintf("%4d ", i+1))
-			
+
 			// Mark current search result line
-			if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) && 
-			   i == m.searchResults[m.currentSearchIdx] {
+			if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) &&
+				i == m.searchResults[m.currentSearchIdx] {
 				// Add a marker in the margin
 				lineNum = lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Render("▶") + lineNum[1:]
 			}
@@ -70,7 +70,7 @@ func (m *Model) renderInspectView(availableHeight int) string {
 				// Highlight braces and brackets
 				highlightedLine = jsonBraceStyle.Render(line)
 			}
-			
+
 			// Then apply search highlighting if in search mode and have search text
 			if m.searchText != "" && !m.searchMode {
 				highlightedLine = m.highlightInspectLine(line, highlightedLine, highlightStyle)
@@ -121,12 +121,12 @@ func (m *Model) highlightInspectLine(originalLine, styledLine string, highlightS
 		// Simple string search
 		searchStr := m.searchText
 		lineToSearch := originalLine
-		
+
 		if m.searchIgnoreCase {
 			searchStr = strings.ToLower(searchStr)
 			lineToSearch = strings.ToLower(originalLine)
 		}
-		
+
 		// Find all occurrences
 		var result strings.Builder
 		lastEnd := 0
@@ -135,15 +135,15 @@ func (m *Model) highlightInspectLine(originalLine, styledLine string, highlightS
 			if idx == -1 {
 				break
 			}
-			
+
 			realIdx := lastEnd + idx
 			result.WriteString(originalLine[lastEnd:realIdx])
-			result.WriteString(highlightStyle.Render(originalLine[realIdx:realIdx+len(m.searchText)]))
+			result.WriteString(highlightStyle.Render(originalLine[realIdx : realIdx+len(m.searchText)]))
 			lastEnd = realIdx + len(m.searchText)
 		}
 		result.WriteString(originalLine[lastEnd:])
 		return result.String()
 	}
-	
+
 	return styledLine
 }

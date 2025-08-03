@@ -882,7 +882,7 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.searchText = ""
 	m.searchResults = nil
 	m.currentSearchIdx = 0
-	
+
 	// Check if we were inspecting an image
 	if m.inspectImageID != "" {
 		m.currentView = ImageListView

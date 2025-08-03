@@ -56,9 +56,9 @@ func TestCommandRegistry(t *testing.T) {
 
 	// Test aliases
 	aliases := map[string]string{
-		"up":     "select-up-container",
-		"down":   "select-down-container",
-		"logs":   "show-compose-log",
+		"up":      "select-up-container",
+		"down":    "select-down-container",
+		"logs":    "show-compose-log",
 		"refresh": "refresh-process-list",
 	}
 
@@ -66,10 +66,10 @@ func TestCommandRegistry(t *testing.T) {
 		t.Run("alias_"+alias, func(t *testing.T) {
 			aliasCmd, aliasExists := commandRegistry[alias]
 			targetCmd, targetExists := commandRegistry[target]
-			
+
 			assert.True(t, aliasExists, "Alias %s should exist", alias)
 			assert.True(t, targetExists, "Target %s should exist", target)
-			
+
 			if aliasExists && targetExists {
 				// Check that the handlers are the same
 				assert.Equal(t, aliasCmd.Description, targetCmd.Description)
