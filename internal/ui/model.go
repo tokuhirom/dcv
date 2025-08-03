@@ -1,9 +1,12 @@
 package ui
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
+	"os/exec"
 	"regexp"
 	"strings"
 
@@ -43,6 +46,7 @@ const (
 	FileContentView
 	InspectView
 	HelpView
+	CommandExecutionView
 )
 
 // Model represents the application state
@@ -182,6 +186,17 @@ type Model struct {
 	commandCursorPos   int
 	quitConfirmation   bool
 	quitConfirmMessage string
+
+	// Command execution view state
+	commandExecCmd       *exec.Cmd
+	commandExecOutput    []string
+	commandExecScrollY   int
+	commandExecDone      bool
+	commandExecExitCode  int
+	commandExecCmdString string
+	commandExecKeymap    map[string]KeyHandler
+	commandExecHandlers  []KeyConfig
+	commandExecReader    *bufio.Reader
 }
 
 func (m *Model) performSearch() {
@@ -363,14 +378,12 @@ type topLoadedMsg struct {
 }
 
 type serviceActionCompleteMsg struct {
-	action  string
 	service string
 	err     error
 }
 
 type upActionCompleteMsg struct {
-	action string
-	err    error
+	err error
 }
 
 type statsLoadedMsg struct {
@@ -419,6 +432,20 @@ type inspectLoadedMsg struct {
 	err     error
 }
 
+type commandExecOutputMsg struct {
+	line string
+}
+
+type commandExecCompleteMsg struct {
+	exitCode int
+}
+
+type commandExecStartedMsg struct {
+	cmd    *exec.Cmd
+	stdout io.ReadCloser
+	stderr io.ReadCloser
+}
+
 // Commands
 
 func loadProcesses(client *docker.Client, projectName string, showAll bool) tea.Cmd {
@@ -457,55 +484,10 @@ func loadTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
 	}
 }
 
-func killService(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.KillContainer(containerID)
-		return serviceActionCompleteMsg{
-			action:  "kill",
-			service: containerID,
-			err:     err,
-		}
-	}
-}
-
-func stopService(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.StopContainer(containerID)
-		return serviceActionCompleteMsg{
-			action:  "stop",
-			service: containerID,
-			err:     err,
-		}
-	}
-}
-
-func startService(client *docker.Client, serviceName string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.StartContainer(serviceName)
-		return serviceActionCompleteMsg{
-			action:  "start",
-			service: serviceName,
-			err:     err,
-		}
-	}
-}
-
-func restartService(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.RestartContainer(containerID)
-		return serviceActionCompleteMsg{
-			action:  "restart",
-			service: containerID,
-			err:     err,
-		}
-	}
-}
-
 func removeService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.RemoveContainer(containerID)
 		return serviceActionCompleteMsg{
-			action:  "rm",
 			service: containerID,
 			err:     err,
 		}
@@ -516,7 +498,6 @@ func pauseService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.PauseContainer(containerID)
 		return serviceActionCompleteMsg{
-			action:  "pause",
 			service: containerID,
 			err:     err,
 		}
@@ -527,30 +508,110 @@ func unpauseService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.UnpauseContainer(containerID)
 		return serviceActionCompleteMsg{
-			action:  "unpause",
 			service: containerID,
 			err:     err,
 		}
 	}
 }
 
-func up(client *docker.Client, projectName string) tea.Cmd {
+func executeCommandWithStreaming(client *docker.Client, projectName string, operation string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.Compose(projectName).Up()
-		return upActionCompleteMsg{
-			action: "up -d",
-			err:    err,
+		// Create the command based on operation
+		var cmd *exec.Cmd
+		switch operation {
+		case "up":
+			cmd = exec.Command("docker", "compose", "-p", projectName, "up", "-d")
+		case "down":
+			cmd = exec.Command("docker", "compose", "-p", projectName, "down")
+		default:
+			return errorMsg{err: fmt.Errorf("unknown operation: %s", operation)}
 		}
+
+		// Create pipes for stdout and stderr
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stdout pipe: %w", err)}
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
+		}
+
+		// Start the command
+		if err := cmd.Start(); err != nil {
+			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
+		}
+
+		// Store the command reference and output channel
+		return commandExecStartedMsg{cmd: cmd, stdout: stdout, stderr: stderr}
 	}
 }
 
-func down(client *docker.Client, projectName string) tea.Cmd {
+func streamCommandFromReader(m *Model) tea.Cmd {
 	return func() tea.Msg {
-		err := client.Compose(projectName).Down()
-		return upActionCompleteMsg{
-			action: "down",
-			err:    err,
+		if m.commandExecReader == nil || m.commandExecCmd == nil {
+			return commandExecCompleteMsg{exitCode: 1}
 		}
+
+		// Read one line
+		line, err := m.commandExecReader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				// Command finished, wait for exit code
+				exitCode := 0
+				if waitErr := m.commandExecCmd.Wait(); waitErr != nil {
+					if exitErr, ok := waitErr.(*exec.ExitError); ok {
+						exitCode = exitErr.ExitCode()
+					} else {
+						exitCode = 1
+					}
+				}
+				return commandExecCompleteMsg{exitCode: exitCode}
+			}
+			// Other error, treat as completion
+			return commandExecCompleteMsg{exitCode: 1}
+		}
+
+		// Remove trailing newline
+		line = strings.TrimRight(line, "\n\r")
+		return commandExecOutputMsg{line: line}
+	}
+}
+
+func executeContainerCommand(client *docker.Client, containerID string, operation string) tea.Cmd {
+	return func() tea.Msg {
+		// Create the command based on operation
+		var cmd *exec.Cmd
+		switch operation {
+		case "start":
+			cmd = exec.Command("docker", "start", containerID)
+		case "stop":
+			cmd = exec.Command("docker", "stop", containerID)
+		case "restart":
+			cmd = exec.Command("docker", "restart", containerID)
+		case "kill":
+			cmd = exec.Command("docker", "kill", containerID)
+		default:
+			return errorMsg{err: fmt.Errorf("unknown operation: %s", operation)}
+		}
+
+		// Create pipes for stdout and stderr
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stdout pipe: %w", err)}
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
+		}
+
+		// Start the command
+		if err := cmd.Start(); err != nil {
+			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
+		}
+
+		// Store the command reference and output channel
+		return commandExecStartedMsg{cmd: cmd, stdout: stdout, stderr: stderr}
 	}
 }
 
@@ -624,7 +685,6 @@ func removeImage(client *docker.Client, imageID string, force bool) tea.Cmd {
 	return func() tea.Msg {
 		err := client.RemoveImage(imageID, force)
 		return serviceActionCompleteMsg{
-			action:  "remove image",
 			service: imageID,
 			err:     err,
 		}
@@ -645,7 +705,6 @@ func removeNetwork(client *docker.Client, networkID string) tea.Cmd {
 	return func() tea.Msg {
 		err := client.RemoveNetwork(networkID)
 		return serviceActionCompleteMsg{
-			action:  "remove network",
 			service: networkID,
 			err:     err,
 		}

@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"log/slog"
 	"os/exec"
 	"strings"
@@ -252,6 +254,27 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.currentView = InspectView
 		return m, nil
 
+	case commandExecStartedMsg:
+		m.commandExecCmd = msg.cmd
+		m.commandExecReader = bufio.NewReader(io.MultiReader(msg.stdout, msg.stderr))
+		// Start reading output
+		return m, streamCommandFromReader(m)
+
+	case commandExecOutputMsg:
+		m.commandExecOutput = append(m.commandExecOutput, msg.line)
+		// Auto-scroll to bottom
+		maxScroll := len(m.commandExecOutput) - (m.height - 6)
+		if maxScroll > 0 && m.commandExecScrollY == maxScroll-1 {
+			m.commandExecScrollY = maxScroll
+		}
+		// Continue reading output
+		return m, streamCommandFromReader(m)
+
+	case commandExecCompleteMsg:
+		m.commandExecDone = true
+		m.commandExecExitCode = msg.exitCode
+		return m, nil
+
 	default:
 		return m, nil
 	}
@@ -339,6 +362,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleInspectKeys(msg)
 	case HelpView:
 		return m.handleHelpKeys(msg)
+	case CommandExecutionView:
+		return m.handleCommandExecutionKeys(msg)
 	default:
 		return m, nil
 	}
@@ -795,6 +820,14 @@ func (m *Model) handleInspectSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleHelpKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.helpViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleCommandExecutionKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.commandExecKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

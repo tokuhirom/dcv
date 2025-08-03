@@ -102,8 +102,8 @@ networks:
     name: dcv-main-network
     ipam:
       config:
-        - subnet: 172.20.0.0/16
-          gateway: 172.20.0.1
+        - subnet: 172.24.0.0/16
+          gateway: 172.24.0.1
 
   # Frontend network (web-facing services)
   frontend:
@@ -111,8 +111,8 @@ networks:
     name: dcv-frontend
     ipam:
       config:
-        - subnet: 172.21.0.0/16
-          gateway: 172.21.0.1
+        - subnet: 172.25.0.0/16
+          gateway: 172.25.0.1
 
   # Backend network (database and cache)
   backend:
@@ -120,8 +120,8 @@ networks:
     name: dcv-backend
     ipam:
       config:
-        - subnet: 172.22.0.0/16
-          gateway: 172.22.0.1
+        - subnet: 172.26.0.0/16
+          gateway: 172.26.0.1
 
   # Monitoring network (for future monitoring services)
   monitoring:
@@ -129,11 +129,15 @@ networks:
     name: dcv-monitoring
     ipam:
       config:
-        - subnet: 172.23.0.0/16
-          gateway: 172.23.0.1
+        - subnet: 172.27.0.0/16
+          gateway: 172.27.0.1
 
   # Development network (for dind and testing)
   development:
     driver: bridge
     name: dcv-development
     internal: true  # This network has no external access
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1

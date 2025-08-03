@@ -202,6 +202,18 @@ func (m *Model) initializeKeyHandlers() {
 	}
 	m.helpViewKeymap = m.createKeymap(m.helpViewHandlers)
 
+	// Command Execution View
+	m.commandExecHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "scroll up", m.ScrollCommandExecUp},
+		{[]string{"down", "j"}, "scroll down", m.ScrollCommandExecDown},
+		{[]string{"G"}, "go to end", m.GoToCommandExecEnd},
+		{[]string{"g"}, "go to start", m.GoToCommandExecStart},
+		{[]string{"ctrl+c"}, "cancel", m.CancelCommandExec},
+		{[]string{"esc", "q"}, "back", m.BackFromCommandExec},
+		{[]string{"?"}, "help", m.ShowHelp},
+	}
+	m.commandExecKeymap = m.createKeymap(m.commandExecHandlers)
+
 	// Initialize command registry
 	m.initCommandRegistry()
 
