@@ -32,42 +32,47 @@ func Default() *Config {
 
 // Load loads configuration from file
 func Load() (*Config, error) {
-	// Get config file paths
-	configPaths := getConfigPaths()
+	// Get config file path
+	configPath := getConfigPath()
 
 	// Start with default config
 	cfg := Default()
 
-	// Try to load from each path
-	for _, path := range configPaths {
-		if _, err := os.Stat(path); err == nil {
-			// File exists, try to load it
-			data, err := os.ReadFile(path)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read config file %s: %w", path, err)
-			}
-
-			if err := toml.Unmarshal(data, cfg); err != nil {
-				return nil, fmt.Errorf("failed to parse config file %s: %w", path, err)
-			}
-
-			// Successfully loaded, return
-			return cfg, nil
-		}
+	// If we couldn't determine config path, return default
+	if configPath == "" {
+		return cfg, nil
 	}
 
-	// No config file found, return default
+	// Check if config file exists
+	if _, err := os.Stat(configPath); err != nil {
+		// File doesn't exist, return default
+		if os.IsNotExist(err) {
+			return cfg, nil
+		}
+		return nil, fmt.Errorf("failed to stat config file: %w", err)
+	}
+
+	// Read config file
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file %s: %w", configPath, err)
+	}
+
+	// Parse config file
+	if err := toml.Unmarshal(data, cfg); err != nil {
+		return nil, fmt.Errorf("failed to parse config file %s: %w", configPath, err)
+	}
+
 	return cfg, nil
 }
 
-// getConfigPaths returns the paths where config files are searched
-func getConfigPaths() []string {
-	var paths []string
-
+// getConfigPath returns the path where config file is located
+func getConfigPath() string {
 	// User config directory
-	if configDir, err := os.UserConfigDir(); err == nil {
-		paths = append(paths, filepath.Join(configDir, "dcv", "config.toml"))
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return ""
 	}
 
-	return paths
+	return filepath.Join(configDir, "dcv", "config.toml")
 }
