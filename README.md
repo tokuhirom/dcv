@@ -162,15 +162,18 @@ View the contents of a file from within a container.
 
 ### Inspect View
 
-Displays the full Docker inspect output for a container in JSON format with syntax highlighting.
+Displays the full Docker inspect output for containers, images, or networks in JSON format with syntax highlighting.
 
 **Key bindings:**
 - `↑`/`k`: Scroll up
 - `↓`/`j`: Scroll down
 - `G`: Jump to end
 - `g`: Jump to start
+- `/`: Search
+- `n`: Next search result
+- `N`: Previous search result
 - `?`: Show help view
-- `Esc`/`q`: Back to container list
+- `Esc`/`q`: Back to previous view
 
 ### Help View
 

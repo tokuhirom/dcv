@@ -877,6 +877,12 @@ func (m *Model) GoToInspectStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Clear search state when leaving inspect view
+	m.searchMode = false
+	m.searchText = ""
+	m.searchResults = nil
+	m.currentSearchIdx = 0
+	
 	// Check if we were inspecting an image
 	if m.inspectImageID != "" {
 		m.currentView = ImageListView
@@ -900,6 +906,48 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 	// Default to compose process list
 	m.currentView = ComposeProcessListView
+	return m, nil
+}
+
+func (m *Model) StartInspectSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.searchMode = true
+	m.searchText = ""
+	m.searchCursorPos = 0
+	m.searchResults = nil
+	m.currentSearchIdx = 0
+	return m, nil
+}
+
+func (m *Model) NextInspectSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if len(m.searchResults) > 0 {
+		m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.searchResults)
+		// Jump to the line
+		if m.currentSearchIdx < len(m.searchResults) {
+			targetLine := m.searchResults[m.currentSearchIdx]
+			m.inspectScrollY = targetLine - m.height/2 + 3 // Center the result
+			if m.inspectScrollY < 0 {
+				m.inspectScrollY = 0
+			}
+		}
+	}
+	return m, nil
+}
+
+func (m *Model) PrevInspectSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if len(m.searchResults) > 0 {
+		m.currentSearchIdx--
+		if m.currentSearchIdx < 0 {
+			m.currentSearchIdx = len(m.searchResults) - 1
+		}
+		// Jump to the line
+		if m.currentSearchIdx < len(m.searchResults) {
+			targetLine := m.searchResults[m.currentSearchIdx]
+			m.inspectScrollY = targetLine - m.height/2 + 3 // Center the result
+			if m.inspectScrollY < 0 {
+				m.inspectScrollY = 0
+			}
+		}
+	}
 	return m, nil
 }
 

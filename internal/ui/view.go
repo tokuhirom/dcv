@@ -99,7 +99,7 @@ func (m *Model) View() string {
 	if m.quitConfirmation {
 		// Show quit confirmation dialog
 		footer = errorStyle.Render(m.quitConfirmMessage)
-	} else if m.searchMode && m.currentView == LogView {
+	} else if m.searchMode && (m.currentView == LogView || m.currentView == InspectView) {
 		// Show search prompt
 		cursor := " "
 		if m.searchCursorPos < len(m.searchText) {
@@ -220,10 +220,32 @@ func (m *Model) viewTitle() string {
 	case FileContentView:
 		return fmt.Sprintf("File: %s [%s]", filepath.Base(m.fileContentPath), m.browsingContainerName)
 	case InspectView:
+		base := ""
 		if m.inspectImageID != "" {
-			return fmt.Sprintf("Image Inspect: %s", m.inspectImageID)
+			base = fmt.Sprintf("Image Inspect: %s", m.inspectImageID)
+		} else if m.inspectNetworkID != "" {
+			base = fmt.Sprintf("Network Inspect: %s", m.inspectNetworkID)
+		} else {
+			base = fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
 		}
-		return fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
+		
+		// Add search status if applicable
+		if m.searchText != "" && !m.searchMode {
+			searchInfo := fmt.Sprintf(" | Search: %s", m.searchText)
+			if len(m.searchResults) > 0 {
+				searchInfo += fmt.Sprintf(" (%d/%d)", m.currentSearchIdx+1, len(m.searchResults))
+			} else {
+				searchInfo += " (no matches)"
+			}
+			if m.searchIgnoreCase {
+				searchInfo += " [i]"
+			}
+			if m.searchRegex {
+				searchInfo += " [re]"
+			}
+			base += searchInfo
+		}
+		return base
 	case HelpView:
 		return "Help"
 	default:
