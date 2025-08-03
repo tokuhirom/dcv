@@ -50,13 +50,12 @@ func (c ComposeContainer) GetPortsString() string {
 
 // GetStatus returns a status string for the container
 func (c ComposeContainer) GetStatus() string {
-	if c.State == "running" {
+	switch c.State {
+	case "running":
 		return "Up"
-	} else if c.State == "exited" {
-		if c.ExitCode == 0 {
-			return fmt.Sprintf("Exited (%d)", c.ExitCode)
-		}
+	case "exited":
 		return fmt.Sprintf("Exited (%d)", c.ExitCode)
+	default:
+		return c.State
 	}
-	return c.State
 }
