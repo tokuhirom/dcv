@@ -252,25 +252,50 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Handle search mode first
+	// Handle command mode first
+	if m.commandMode {
+		return m.handleCommandMode(msg)
+	}
+
+	// Handle quit confirmation dialog
+	if m.quitConfirmation {
+		return m.handleQuitConfirmation(msg)
+	}
+
+	// Handle search mode
 	if m.searchMode {
 		return m.handleSearchMode(msg)
 	}
 
+	// Handle ':' to enter command mode
+	if msg.String() == ":" {
+		m.commandMode = true
+		m.commandBuffer = ":"
+		m.commandCursorPos = 1
+		return m, nil
+	}
+
 	// Handle quit globally
-	if msg.String() == "q" || msg.String() == "ctrl+c" {
-		// Stop log reader if in log view
+	if msg.String() == "q" {
+		// For 'q' key, show confirmation dialog
+		if m.currentView == ProjectListView || m.currentView == ComposeProcessListView {
+			m.quitConfirmation = true
+			m.quitConfirmMessage = "Really quit? (y/n)"
+			return m, nil
+		}
+		// For other views, go back
 		if m.currentView == LogView {
 			stopLogReader()
 		}
-		if m.currentView == ProjectListView {
-			return m, tea.Quit
-		}
-		if m.currentView != ComposeProcessListView {
-			// Go back to process list
-			m.currentView = ComposeProcessListView
-			m.err = nil
-			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		m.currentView = ComposeProcessListView
+		m.err = nil
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	}
+	
+	// Handle ctrl+c for immediate quit
+	if msg.String() == "ctrl+c" {
+		if m.currentView == LogView {
+			stopLogReader()
 		}
 		return m, tea.Quit
 	}
@@ -359,6 +384,176 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
+}
+
+func (m *Model) handleCommandMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEsc:
+		// Exit command mode
+		m.commandMode = false
+		m.commandBuffer = ""
+		m.commandCursorPos = 0
+		return m, nil
+
+	case tea.KeyEnter:
+		// Execute command
+		return m.executeCommand()
+
+	case tea.KeyBackspace:
+		if len(m.commandBuffer) > 1 && m.commandCursorPos > 1 {
+			m.commandBuffer = m.commandBuffer[:m.commandCursorPos-1] + m.commandBuffer[m.commandCursorPos:]
+			m.commandCursorPos--
+		}
+		return m, nil
+
+	case tea.KeyLeft:
+		if m.commandCursorPos > 1 {
+			m.commandCursorPos--
+		}
+		return m, nil
+
+	case tea.KeyRight:
+		if m.commandCursorPos < len(m.commandBuffer) {
+			m.commandCursorPos++
+		}
+		return m, nil
+
+	case tea.KeyUp:
+		// Navigate command history
+		if m.commandHistoryIdx > 0 {
+			m.commandHistoryIdx--
+			if m.commandHistoryIdx < len(m.commandHistory) {
+				m.commandBuffer = ":" + m.commandHistory[m.commandHistoryIdx]
+				m.commandCursorPos = len(m.commandBuffer)
+			}
+		}
+		return m, nil
+
+	case tea.KeyDown:
+		// Navigate command history
+		if m.commandHistoryIdx < len(m.commandHistory)-1 {
+			m.commandHistoryIdx++
+			m.commandBuffer = ":" + m.commandHistory[m.commandHistoryIdx]
+			m.commandCursorPos = len(m.commandBuffer)
+		} else if m.commandHistoryIdx == len(m.commandHistory)-1 {
+			m.commandHistoryIdx++
+			m.commandBuffer = ":"
+			m.commandCursorPos = 1
+		}
+		return m, nil
+
+	default:
+		if msg.Type == tea.KeyRunes {
+			// Insert character at cursor position
+			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + msg.String() + m.commandBuffer[m.commandCursorPos:]
+			m.commandCursorPos += len(msg.String())
+		}
+		return m, nil
+	}
+}
+
+func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "y", "Y":
+		// Confirm quit
+		m.quitConfirmation = false
+		if m.currentView == LogView {
+			stopLogReader()
+		}
+		return m, tea.Quit
+	case "n", "N", "esc":
+		// Cancel quit
+		m.quitConfirmation = false
+		m.quitConfirmMessage = ""
+		return m, nil
+	}
+	return m, nil
+}
+
+func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
+	command := strings.TrimSpace(m.commandBuffer[1:]) // Remove leading ':'
+	
+	// Add to command history
+	if command != "" && (len(m.commandHistory) == 0 || m.commandHistory[len(m.commandHistory)-1] != command) {
+		m.commandHistory = append(m.commandHistory, command)
+	}
+	m.commandHistoryIdx = len(m.commandHistory)
+	
+	// Exit command mode
+	m.commandMode = false
+	m.commandBuffer = ""
+	m.commandCursorPos = 0
+	
+	// Parse and execute command
+	parts := strings.Fields(command)
+	if len(parts) == 0 {
+		return m, nil
+	}
+	
+	switch parts[0] {
+	case "q", "quit":
+		// Show quit confirmation
+		m.quitConfirmation = true
+		m.quitConfirmMessage = "Really quit? (y/n)"
+		return m, nil
+		
+	case "q!", "quit!":
+		// Force quit without confirmation
+		if m.currentView == LogView {
+			stopLogReader()
+		}
+		return m, tea.Quit
+		
+	case "h", "help":
+		// Show help
+		m.previousView = m.currentView
+		m.currentView = HelpView
+		m.helpScrollY = 0
+		return m, nil
+		
+	case "set":
+		// Handle set commands (e.g., :set showAll)
+		if len(parts) > 1 {
+			switch parts[1] {
+			case "all", "showAll":
+				m.showAll = true
+				return m, m.refreshCurrentView()
+			case "noall", "noshowAll":
+				m.showAll = false
+				return m, m.refreshCurrentView()
+			}
+		}
+		return m, nil
+		
+	default:
+		m.err = fmt.Errorf("unknown command: %s", command)
+		return m, nil
+	}
+}
+
+
+func (m *Model) refreshCurrentView() tea.Cmd {
+	switch m.currentView {
+	case ComposeProcessListView:
+		return loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	case DockerContainerListView:
+		return loadDockerContainers(m.dockerClient, m.showAll)
+	case ImageListView:
+		return loadDockerImages(m.dockerClient, m.showAll)
+	case NetworkListView:
+		return loadDockerNetworks(m.dockerClient)
+	case ProjectListView:
+		return loadProjects(m.dockerClient)
+	case DindComposeProcessListView:
+		if m.currentDindContainerID != "" {
+			return loadDindContainers(m.dockerClient, m.currentDindContainerID)
+		}
+	case FileBrowserView:
+		if m.browsingContainerID != "" {
+			return loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
+		}
+	}
+	return nil
 }
 
 func (m *Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
