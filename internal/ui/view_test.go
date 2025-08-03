@@ -370,6 +370,84 @@ func TestDockerContainerListView(t *testing.T) {
 	})
 }
 
+func TestFileBrowserTableView(t *testing.T) {
+	t.Run("file_browser_with_files", func(t *testing.T) {
+		m := &Model{
+			width:               80,
+			height:              24,
+			currentView:         FileBrowserView,
+			browsingContainerName: "web-1",
+			currentPath:         "/app",
+			selectedFile:        1,
+			containerFiles: []models.ContainerFile{
+				{Name: "Dockerfile", Permissions: "-rw-r--r--", IsDir: false},
+				{Name: "src", Permissions: "drwxr-xr-x", IsDir: true},
+				{Name: "README.md", Permissions: "-rw-r--r--", IsDir: false},
+				{Name: "link", Permissions: "lrwxrwxrwx", IsDir: false, LinkTarget: "/etc/hosts"},
+			},
+		}
+		m.initializeKeyHandlers()
+
+		view := m.View()
+
+		// Check title
+		assert.Contains(t, view, "File Browser: web-1 [/app]")
+
+		// Check for table headers
+		assert.Contains(t, view, "PERMISSIONS")
+		assert.Contains(t, view, "NAME")
+
+		// Check for file data
+		assert.Contains(t, view, "-rw-r--r--")
+		assert.Contains(t, view, "drwxr-xr-x")
+		assert.Contains(t, view, "Dockerfile")
+		assert.Contains(t, view, "src/")
+		assert.Contains(t, view, "README.md")
+		assert.Contains(t, view, "link -> /etc/hosts")
+
+		// Check for path at bottom
+		assert.Contains(t, view, "Path: /app")
+
+		// Check for table borders
+		lines := strings.Split(view, "\n")
+		hasTopBorder := false
+		hasBottomBorder := false
+		hasVerticalBorder := false
+
+		for _, line := range lines {
+			if strings.Contains(line, "┌") || strings.Contains(line, "┐") {
+				hasTopBorder = true
+			}
+			if strings.Contains(line, "└") || strings.Contains(line, "┘") {
+				hasBottomBorder = true
+			}
+			if strings.Contains(line, "│") {
+				hasVerticalBorder = true
+			}
+		}
+
+		assert.True(t, hasTopBorder, "Table should have top border")
+		assert.True(t, hasBottomBorder, "Table should have bottom border")
+		assert.True(t, hasVerticalBorder, "Table should have vertical borders")
+	})
+
+	t.Run("file_browser_empty_directory", func(t *testing.T) {
+		m := &Model{
+			width:               80,
+			height:              24,
+			currentView:         FileBrowserView,
+			browsingContainerName: "web-1",
+			currentPath:         "/empty",
+			containerFiles:      []models.ContainerFile{},
+		}
+		m.initializeKeyHandlers()
+
+		view := m.View()
+
+		assert.Contains(t, view, "No files found or directory is empty")
+	})
+}
+
 // mockError implements error interface for testing
 type mockError struct {
 	msg string
