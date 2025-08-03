@@ -9,33 +9,21 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fujiwara/sloghandler"
 
-	"github.com/tokuhirom/dcv/internal/project"
 	"github.com/tokuhirom/dcv/internal/ui"
 )
 
 func main() {
 	// Parse command-line flags
-	var projectName string
-	var composeFile string
-	var showProjects bool
 	var debugLog string
-	flag.StringVar(&projectName, "p", "", "Specify project name")
-	flag.StringVar(&composeFile, "f", "", "Specify compose file")
-	flag.BoolVar(&showProjects, "projects", false, "Show project list at startup")
 	flag.StringVar(&debugLog, "debug", "", "enable debug logging to a file")
 	flag.Parse()
 
 	setupLog(debugLog)
 
-	initialView, projectName := project.DetectProject(projectName, composeFile, showProjects)
+	slog.Info("Starting dcv with container list view")
 
-	slog.Info("Starting dcv",
-		slog.Int("initialView", int(initialView)),
-		slog.String("project", projectName),
-		slog.String("composeFile", composeFile))
-
-	// Create the initial model with options
-	m := ui.NewModel(initialView, projectName)
+	// Create the initial model with container list view
+	m := ui.NewModel(ui.DockerContainerListView, "")
 
 	// Create the program
 	p := tea.NewProgram(&m, tea.WithAltScreen())
