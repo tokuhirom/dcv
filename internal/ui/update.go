@@ -651,10 +651,81 @@ func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleInspectKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Handle search mode
+	if m.searchMode {
+		return m.handleInspectSearchMode(msg)
+	}
+	
 	handler, ok := m.inspectViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}
+	return m, nil
+}
+
+func (m *Model) handleInspectSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyCtrlC, tea.KeyEsc:
+		m.searchMode = false
+		m.searchText = ""
+		m.searchResults = nil
+		m.currentSearchIdx = 0
+		return m, nil
+		
+	case tea.KeyEnter:
+		m.searchMode = false
+		m.performInspectSearch()
+		return m, nil
+		
+	case tea.KeyBackspace:
+		if m.searchCursorPos > 0 {
+			m.searchText = m.searchText[:m.searchCursorPos-1] + m.searchText[m.searchCursorPos:]
+			m.searchCursorPos--
+		}
+		return m, nil
+		
+	case tea.KeyDelete:
+		if m.searchCursorPos < len(m.searchText) {
+			m.searchText = m.searchText[:m.searchCursorPos] + m.searchText[m.searchCursorPos+1:]
+		}
+		return m, nil
+		
+	case tea.KeyLeft:
+		if m.searchCursorPos > 0 {
+			m.searchCursorPos--
+		}
+		return m, nil
+		
+	case tea.KeyRight:
+		if m.searchCursorPos < len(m.searchText) {
+			m.searchCursorPos++
+		}
+		return m, nil
+		
+	case tea.KeyHome:
+		m.searchCursorPos = 0
+		return m, nil
+		
+	case tea.KeyEnd:
+		m.searchCursorPos = len(m.searchText)
+		return m, nil
+		
+	case tea.KeyCtrlI: // Tab - toggle case insensitive
+		m.searchIgnoreCase = !m.searchIgnoreCase
+		return m, nil
+		
+	case tea.KeyCtrlR: // Toggle regex
+		m.searchRegex = !m.searchRegex
+		return m, nil
+		
+	case tea.KeyRunes:
+		// Insert characters at cursor position
+		runes := string(msg.Runes)
+		m.searchText = m.searchText[:m.searchCursorPos] + runes + m.searchText[m.searchCursorPos:]
+		m.searchCursorPos += len(runes)
+		return m, nil
+	}
+	
 	return m, nil
 }
 

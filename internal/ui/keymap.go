@@ -185,6 +185,9 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "scroll down", m.ScrollInspectDown},
 		{[]string{"G"}, "go to end", m.GoToInspectEnd},
 		{[]string{"g"}, "go to start", m.GoToInspectStart},
+		{[]string{"/"}, "search", m.StartInspectSearch},
+		{[]string{"n"}, "next match", m.NextInspectSearchResult},
+		{[]string{"N"}, "prev match", m.PrevInspectSearchResult},
 		{[]string{"esc", "q"}, "back", m.BackFromInspect},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
