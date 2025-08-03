@@ -15,6 +15,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"2"}, "project list", m.ShowProjectList},
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
+		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"f"}, "browse files", m.ShowFileBrowser},
 		{[]string{"!"}, "exec /bin/sh", m.ExecuteShell},
 		{[]string{"I"}, "inspect", m.ShowInspect},
@@ -156,6 +157,23 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.networkListViewKeymap = m.createKeymap(m.networkListViewHandlers)
+
+	// Volume List View
+	m.volumeListViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.SelectUpVolume},
+		{[]string{"down", "j"}, "move down", m.SelectDownVolume},
+		{[]string{"enter"}, "inspect", m.ShowVolumeInspect},
+		{[]string{"r"}, "refresh", m.RefreshVolumeList},
+		{[]string{"D"}, "remove", m.DeleteVolume},
+		{[]string{"F"}, "force remove", m.ForceDeleteVolume},
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"2"}, "project list", m.ShowProjectList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
+		{[]string{"esc", "q"}, "back", m.BackFromVolumeList},
+		{[]string{"?"}, "help", m.ShowHelp},
+	}
+	m.volumeListViewKeymap = m.createKeymap(m.volumeListViewHandlers)
 
 	// File Browser View
 	m.fileBrowserHandlers = []KeyConfig{

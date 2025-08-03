@@ -493,3 +493,4 @@ func (c *Client) InspectNetwork(networkID string) (string, error) {
 
 	return string(prettyJSON), nil
 }
+

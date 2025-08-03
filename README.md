@@ -7,6 +7,7 @@ DCV is a TUI (Terminal User Interface) tool for monitoring Docker containers and
 - View all Docker containers (both standalone and Docker Compose managed)
 - List and manage Docker images
 - List and manage Docker networks
+- List and manage Docker volumes with size information
 - Browse files inside containers
 - Execute shell commands in containers
 - Inspect container configuration

@@ -208,6 +208,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case dockerVolumesLoadedMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.dockerVolumes = msg.volumes
+		m.err = nil
+		if len(m.dockerVolumes) > 0 && m.selectedDockerVolume >= len(m.dockerVolumes) {
+			m.selectedDockerVolume = 0
+		}
+		return m, nil
+
 	case containerFilesLoadedMsg:
 		m.loading = false
 		if msg.err != nil {
@@ -354,6 +367,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleImageListKeys(msg)
 	case NetworkListView:
 		return m.handleNetworkListKeys(msg)
+	case VolumeListView:
+		return m.handleVolumeListKeys(msg)
 	case FileBrowserView:
 		return m.handleFileBrowserKeys(msg)
 	case FileContentView:
@@ -620,6 +635,8 @@ func (m *Model) refreshCurrentView() tea.Cmd {
 		return loadDockerImages(m.dockerClient, m.showAll)
 	case NetworkListView:
 		return loadDockerNetworks(m.dockerClient)
+	case VolumeListView:
+		return loadDockerVolumes(m.dockerClient)
 	case ProjectListView:
 		return loadProjects(m.dockerClient)
 	case DindComposeProcessListView:
@@ -676,6 +693,14 @@ func (m *Model) handleImageListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleNetworkListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.networkListViewKeymap[msg.String()]
+	if ok {
+		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleVolumeListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.volumeListViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

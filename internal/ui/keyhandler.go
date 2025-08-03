@@ -955,6 +955,13 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// Check if we were inspecting a volume
+	if m.inspectVolumeID != "" {
+		m.currentView = VolumeListView
+		m.inspectVolumeID = ""
+		return m, nil
+	}
+
 	// Check where we came from based on the container ID
 	for _, container := range m.dockerContainers {
 		if container.ID == m.inspectContainerID {

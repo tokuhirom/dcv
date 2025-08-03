@@ -42,6 +42,7 @@ const (
 	DockerContainerListView
 	ImageListView
 	NetworkListView
+	VolumeListView
 	FileBrowserView
 	FileContentView
 	InspectView
@@ -84,6 +85,10 @@ type Model struct {
 	dockerNetworks        []models.DockerNetwork
 	selectedDockerNetwork int
 
+	// Docker volumes state
+	dockerVolumes        []models.DockerVolume
+	selectedDockerVolume int
+
 	// File browser state
 	containerFiles        []models.ContainerFile
 	selectedFile          int
@@ -103,6 +108,7 @@ type Model struct {
 	inspectContainerID string
 	inspectImageID     string
 	inspectNetworkID   string
+	inspectVolumeID    string
 
 	// Log view state
 	logs          []string
@@ -165,6 +171,8 @@ type Model struct {
 	imageListViewHandlers   []KeyConfig
 	networkListViewKeymap   map[string]KeyHandler
 	networkListViewHandlers []KeyConfig
+	volumeListViewKeymap    map[string]KeyHandler
+	volumeListViewHandlers  []KeyConfig
 	fileBrowserKeymap       map[string]KeyHandler
 	fileBrowserHandlers     []KeyConfig
 	fileContentKeymap       map[string]KeyHandler
@@ -409,6 +417,11 @@ type dockerImagesLoadedMsg struct {
 type dockerNetworksLoadedMsg struct {
 	networks []models.DockerNetwork
 	err      error
+}
+
+type dockerVolumesLoadedMsg struct {
+	volumes []models.DockerVolume
+	err     error
 }
 
 type containerFilesLoadedMsg struct {
