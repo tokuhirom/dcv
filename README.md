@@ -14,7 +14,9 @@ DCV is a TUI (Terminal User Interface) tool for monitoring Docker containers and
 - Switch between multiple Docker Compose projects
 - Real-time container log streaming (shows last 1000 lines, then follows new logs)
 - Manage containers inside Docker-in-Docker (dind) containers
-- Vim-style key bindings
+- Vim-style key bindings and command-line interface
+- Help view accessible with `?` key
+- Quit confirmation dialog for safer exits
 - Display executed commands for debugging
 
 ## Views
@@ -38,6 +40,8 @@ Displays `docker ps` results in a table format. Shows all Docker containers, not
 - `R`: Restart container
 - `P`: Pause/Unpause container
 - `D`: Delete stopped container
+- `?`: Show help view with all keybindings
+- `:`: Enter command mode (vim-style commands)
 - `q`/`Esc`: Back to Docker Compose process list
 
 ### Docker Compose Process List View
@@ -56,6 +60,10 @@ Displays `docker compose ps` results in a table format.
 - `i`: Switch to Docker image list view
 - `n`: Switch to Docker network list view
 - `P`: Switch to project list view
+- `1`: Quick switch to Docker container list view
+- `2`: Quick switch to project list view
+- `3`: Quick switch to Docker image list view
+- `4`: Quick switch to Docker network list view
 - `a`: Toggle show all containers (including stopped)
 - `r`: Refresh list
 - `t`: Show process info (docker compose top)
@@ -68,7 +76,9 @@ Displays `docker compose ps` results in a table format.
 - `D`: Delete stopped container
 - `u`: Deploy all services (docker compose up -d)
 - `x`: Stop and remove all services (docker compose down)
-- `q`: Quit
+- `?`: Show help view with all keybindings
+- `:`: Enter command mode (vim-style commands)
+- `q`: Quit (with confirmation)
 
 ### Log View
 
@@ -79,7 +89,10 @@ Displays container logs. Initially shows the last 1000 lines, then streams new l
 - `↓`/`j`: Scroll down
 - `G`: Jump to end
 - `g`: Jump to start
-- `/`: Search mode (not implemented yet)
+- `/`: Search logs
+- `n`: Next search result
+- `N`: Previous search result
+- `?`: Show help view
 - `Esc`/`q`: Back to previous view
 
 ### Docker-in-Docker Process List View
@@ -91,6 +104,7 @@ Shows containers running inside a dind container.
 - `↓`/`j`: Move down
 - `Enter`: View container logs
 - `r`: Refresh list
+- `?`: Show help view
 - `Esc`/`q`: Back to process list
 
 ### Image List View
@@ -105,6 +119,7 @@ Displays Docker images with repository, tag, ID, creation time, and size informa
 - `r`: Refresh list
 - `D`: Remove selected image
 - `F`: Force remove selected image (even if used by containers)
+- `?`: Show help view
 - `Esc`/`q`: Back to Docker Compose process list
 
 ### Network List View
@@ -116,6 +131,7 @@ Displays Docker networks with ID, name, driver, scope, and container count.
 - `↓`/`j`: Move down
 - `r`: Refresh list
 - `D`: Remove selected network (except default networks)
+- `?`: Show help view
 - `Esc`/`q`: Back to Docker Compose process list
 
 ### File Browser View
@@ -127,6 +143,7 @@ Browse the filesystem inside a container. Navigate directories and view file con
 - `↓`/`j`: Move down
 - `Enter`: Open directory or view file
 - `r`: Refresh list
+- `?`: Show help view
 - `Esc`/`q`: Back to container list
 
 ### File Content View
@@ -138,6 +155,7 @@ View the contents of a file from within a container.
 - `↓`/`j`: Scroll down
 - `G`: Jump to end
 - `g`: Jump to start
+- `?`: Show help view
 - `Esc`/`q`: Back to file browser
 
 ### Inspect View
@@ -149,7 +167,33 @@ Displays the full Docker inspect output for a container in JSON format with synt
 - `↓`/`j`: Scroll down
 - `G`: Jump to end
 - `g`: Jump to start
+- `?`: Show help view
 - `Esc`/`q`: Back to container list
+
+### Help View
+
+Shows all available keyboard shortcuts for the current view.
+
+**Key bindings:**
+- `↑`/`k`: Scroll up
+- `↓`/`j`: Scroll down
+- `Esc`/`q`: Back to previous view
+
+### Command Mode
+
+Vim-style command line interface for executing commands.
+
+**Available commands:**
+- `:q` or `:quit`: Quit the application (with confirmation)
+- `:q!` or `:quit!`: Force quit without confirmation
+- `Esc`: Exit command mode
+
+**Key bindings:**
+- `:`: Enter command mode from any view
+- `↑`/`↓`: Navigate command history
+- `←`/`→`: Move cursor in command line
+- `Enter`: Execute command
+- `Esc`: Cancel command mode
 
 ## Usage
 
