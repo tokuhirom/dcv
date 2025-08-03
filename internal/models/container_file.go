@@ -41,10 +41,8 @@ func ParseLsOutput(output string) []ContainerFile {
 		}
 
 		// Parse size
-		if size := parts[4]; size != "" {
-			// Convert size string to int64 if needed
-			// For now, keep it simple
-		}
+		// TODO: Convert size string to int64 if needed
+		// For now, the size is kept as string in SizeStr field
 
 		// Get filename (handle spaces in filename)
 		// Everything from parts[8] onwards is the filename

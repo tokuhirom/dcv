@@ -11,6 +11,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
@@ -171,8 +172,12 @@ func streamLogsReal(client *docker.Client, serviceName string, isDind bool, host
 		if activeLogReader != nil && activeLogReader.cmd != nil {
 			slog.Debug("Stopping existing log reader")
 			if activeLogReader.cmd.Process != nil {
-				activeLogReader.cmd.Process.Kill()
-				activeLogReader.cmd.Wait() // Wait for process to terminate
+				if err := activeLogReader.cmd.Process.Kill(); err != nil {
+					slog.Warn("Failed to kill log reader process", slog.Any("error", err))
+				}
+				if err := activeLogReader.cmd.Wait(); err != nil {
+					slog.Debug("Log reader process wait error", slog.Any("error", err))
+				}
 			}
 		}
 
@@ -207,7 +212,9 @@ func stopLogReader() {
 
 	if activeLogReader != nil {
 		if activeLogReader.cmd != nil && activeLogReader.cmd.Process != nil {
-			activeLogReader.cmd.Process.Kill()
+			if err := activeLogReader.cmd.Process.Kill(); err != nil {
+				slog.Warn("Failed to kill log reader process in stopLogReader", slog.Any("error", err))
+			}
 			// Don't wait here as it might block
 		}
 		activeLogReader = nil

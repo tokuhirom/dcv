@@ -32,14 +32,11 @@ jobs:
     - name: Download dependencies
       run: go mod download
     
-    - name: Run go vet
-      run: go vet ./...
-    
-    - name: Run staticcheck
-      uses: dominikh/staticcheck-action@v1
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v6
       with:
-        version: "latest"
-        install-go: false
+        version: latest
+        args: --timeout=10m
     
     - name: Run tests
       run: go test -race -coverprofile=coverage.out -covermode=atomic ./...

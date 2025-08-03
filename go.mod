@@ -1,8 +1,6 @@
 module github.com/tokuhirom/dcv
 
-go 1.23.0
-
-toolchain go1.24.5
+go 1.24.0
 
 require (
 	github.com/charmbracelet/bubbletea v1.3.6
