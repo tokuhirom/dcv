@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fujiwara/sloghandler"
 
+	"github.com/tokuhirom/dcv/internal/config"
 	"github.com/tokuhirom/dcv/internal/ui"
 )
 
@@ -20,10 +21,36 @@ func main() {
 
 	setupLog(debugLog)
 
-	slog.Info("Starting dcv with container list view")
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Printf("Error loading configuration: %v\n", err)
+		os.Exit(1)
+	}
 
-	// Create the initial model with container list view
-	m := ui.NewModel(ui.DockerContainerListView, "")
+	// Determine initial view from config
+	var initialView ui.ViewType
+	switch cfg.General.InitialView {
+	case "compose":
+		initialView = ui.ComposeProcessListView
+	case "projects":
+		initialView = ui.ProjectListView
+	case "docker":
+		initialView = ui.DockerContainerListView
+	case "":
+		// Empty is valid, use default
+		initialView = ui.DockerContainerListView
+	default:
+		slog.Warn("Unknown initial_view in config, using default",
+			slog.String("initial_view", cfg.General.InitialView),
+			slog.String("valid_values", "docker, compose, projects"))
+		initialView = ui.DockerContainerListView
+	}
+
+	slog.Info("Starting dcv", slog.String("initial_view", cfg.General.InitialView))
+
+	// Create the initial model with configured view
+	m := ui.NewModel(initialView, "")
 
 	// Create the program
 	p := tea.NewProgram(&m, tea.WithAltScreen())
