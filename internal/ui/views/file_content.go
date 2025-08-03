@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,13 +13,13 @@ import (
 // FileContentView represents the file content viewer
 type FileContentView struct {
 	// View state
-	width        int
-	height       int
-	content      []string
-	scrollY      int
-	containerID  string
-	filePath     string
-	fileName     string
+	width       int
+	height      int
+	content     []string
+	scrollY     int
+	containerID string
+	filePath    string
+	fileName    string
 
 	// Loading/error state
 	loading bool
@@ -142,7 +143,7 @@ func (v *FileContentView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				if lastSlash > 0 {
 					dir = v.filePath[:lastSlash]
 				}
-				
+
 				browserView := NewFileBrowserView(v.dockerClient, v.containerID, "", dir)
 				browserView.SetRootScreen(v.rootScreen)
 				return switcher.SwitchScreen(browserView)
@@ -180,7 +181,7 @@ func (v *FileContentView) renderContent() string {
 		if i < len(v.content) {
 			lineNum := lipgloss.NewStyle().
 				Foreground(lipgloss.Color("240")).
-				Render(strings.Printf("%4d ", i+1))
+				Render(fmt.Sprintf("%4d ", i+1))
 			s.WriteString(lineNum + v.content[i] + "\n")
 		}
 	}
@@ -210,7 +211,7 @@ type fileContentLoadedMsg struct {
 // Commands
 func loadFileContent(client *docker.Client, containerID, filePath string) tea.Cmd {
 	return func() tea.Msg {
-		content, err := client.ReadFile(containerID, filePath)
+		content, err := client.ReadContainerFile(containerID, filePath)
 		return fileContentLoadedMsg{content: content, err: err}
 	}
 }

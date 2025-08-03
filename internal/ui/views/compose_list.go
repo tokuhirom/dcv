@@ -141,6 +141,130 @@ func (v *ComposeListView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		v.loading = true
 		return v, loadProcesses(v.dockerClient, v.projectName, v.showAll)
 
+	case "d":
+		// View dind containers
+		if v.selectedContainer < len(v.containers) && v.rootScreen != nil {
+			container := v.containers[v.selectedContainer]
+			// Check if container name contains "dind"
+			if strings.Contains(strings.ToLower(container.Name), "dind") ||
+				strings.Contains(strings.ToLower(container.Service), "dind") {
+				if switcher, ok := v.rootScreen.(interface {
+					SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+				}); ok {
+					dindView := NewDindView(v.dockerClient, container.ID, container.Name)
+					dindView.SetRootScreen(v.rootScreen)
+					return switcher.SwitchScreen(dindView)
+				}
+			}
+		}
+		return v, nil
+
+	case "f":
+		// Browse container files
+		if v.selectedContainer < len(v.containers) && v.rootScreen != nil {
+			container := v.containers[v.selectedContainer]
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				fileBrowser := NewFileBrowserView(v.dockerClient, container.ID, container.Name, "/")
+				fileBrowser.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(fileBrowser)
+			}
+		}
+		return v, nil
+
+	case "I":
+		// Inspect container
+		if v.selectedContainer < len(v.containers) && v.rootScreen != nil {
+			container := v.containers[v.selectedContainer]
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				inspectView := NewInspectView(v.dockerClient, container.ID, "container", container.Name)
+				inspectView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(inspectView)
+			}
+		}
+		return v, nil
+
+	case "s":
+		// Show stats
+		if v.rootScreen != nil {
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				statsView := NewStatsView(v.dockerClient, v.projectName)
+				statsView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(statsView)
+			}
+		}
+		return v, nil
+
+	case "t":
+		// Show top (process info)
+		if v.rootScreen != nil {
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				topView := NewTopView(v.dockerClient, v.projectName)
+				topView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(topView)
+			}
+		}
+		return v, nil
+
+	case "p":
+		// Switch to Docker container list
+		if v.rootScreen != nil {
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				dockerView := NewDockerListView(v.dockerClient)
+				dockerView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(dockerView)
+			}
+		}
+		return v, nil
+
+	case "i":
+		// Switch to image list
+		if v.rootScreen != nil {
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				imageView := NewImageListView(v.dockerClient)
+				imageView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(imageView)
+			}
+		}
+		return v, nil
+
+	case "n":
+		// Switch to network list
+		if v.rootScreen != nil {
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				networkView := NewNetworkListView(v.dockerClient)
+				networkView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(networkView)
+			}
+		}
+		return v, nil
+
+	case "P":
+		// Switch to project list
+		if v.rootScreen != nil {
+			if switcher, ok := v.rootScreen.(interface {
+				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
+			}); ok {
+				projectView := NewProjectListView(v.dockerClient)
+				projectView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(projectView)
+			}
+		}
+		return v, nil
+
 	case "?":
 		// Show help
 		if v.rootScreen != nil {
@@ -190,7 +314,7 @@ func (v *ComposeListView) renderComposeList() string {
 		Foreground(lipgloss.Color("240")).
 		Width(v.width).
 		Align(lipgloss.Center).
-		Render("↑/↓: Navigate • Enter: Logs • r: Refresh • a: Toggle All • q: Quit")
+		Render("↑/↓: Navigate • Enter: Logs • d: Dind • f: Files • s: Stats • t: Top • p: Docker • P: Projects • q: Quit")
 
 	// Pad to fill screen
 	content := s.String()

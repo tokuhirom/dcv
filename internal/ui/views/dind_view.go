@@ -11,14 +11,15 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
-// DockerListView represents the Docker container list view
-type DockerListView struct {
+// DindView represents the Docker-in-Docker container list view
+type DindView struct {
 	// View state
 	width             int
 	height            int
 	selectedContainer int
 	containers        []models.DockerContainer
-	showAll           bool
+	hostContainerID   string
+	hostContainerName string
 
 	// Loading/error state
 	loading bool
@@ -29,27 +30,28 @@ type DockerListView struct {
 	rootScreen   tea.Model
 }
 
-// NewDockerListView creates a new Docker container list view
-func NewDockerListView(dockerClient *docker.Client) *DockerListView {
-	return &DockerListView{
-		dockerClient: dockerClient,
-		showAll:      false,
+// NewDindView creates a new dind view
+func NewDindView(dockerClient *docker.Client, hostContainerID, hostContainerName string) *DindView {
+	return &DindView{
+		dockerClient:      dockerClient,
+		hostContainerID:   hostContainerID,
+		hostContainerName: hostContainerName,
 	}
 }
 
 // SetRootScreen sets the root screen reference
-func (v *DockerListView) SetRootScreen(root tea.Model) {
+func (v *DindView) SetRootScreen(root tea.Model) {
 	v.rootScreen = root
 }
 
 // Init initializes the view
-func (v *DockerListView) Init() tea.Cmd {
+func (v *DindView) Init() tea.Cmd {
 	v.loading = true
-	return loadDockerContainers(v.dockerClient, v.showAll)
+	return loadDindContainers(v.dockerClient, v.hostContainerID)
 }
 
 // Update handles messages for this view
-func (v *DockerListView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (v *DindView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		v.width = msg.Width
@@ -59,7 +61,7 @@ func (v *DockerListView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return v.handleKeyPress(msg)
 
-	case dockerContainersLoadedMsg:
+	case dindContainersLoadedMsg:
 		v.loading = false
 		if msg.err != nil {
 			v.err = msg.err
@@ -75,26 +77,26 @@ func (v *DockerListView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case RefreshMsg:
 		v.loading = true
 		v.err = nil
-		return v, loadDockerContainers(v.dockerClient, v.showAll)
+		return v, loadDindContainers(v.dockerClient, v.hostContainerID)
 	}
 
 	return v, nil
 }
 
-// View renders the Docker container list
-func (v *DockerListView) View() string {
+// View renders the dind container list
+func (v *DindView) View() string {
 	if v.loading {
-		return renderLoadingView(v.width, v.height, "Loading Docker containers...")
+		return renderLoadingView(v.width, v.height, "Loading dind containers...")
 	}
 
 	if v.err != nil {
 		return renderErrorView(v.width, v.height, v.err)
 	}
 
-	return v.renderDockerList()
+	return v.renderDindList()
 }
 
-func (v *DockerListView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (v *DindView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "up", "k":
 		if v.selectedContainer > 0 {
@@ -109,7 +111,7 @@ func (v *DockerListView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return v, nil
 
 	case "enter":
-		// Switch to log view
+		// View logs of dind container
 		if v.selectedContainer < len(v.containers) && v.rootScreen != nil {
 			container := v.containers[v.selectedContainer]
 			if switcher, ok := v.rootScreen.(interface {
@@ -117,7 +119,7 @@ func (v *DockerListView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}); ok {
 				// Extract container name
 				name := strings.TrimPrefix(container.Names, "/")
-				logView := NewLogView(v.dockerClient, container.ID, name, false)
+				logView := NewLogView(v.dockerClient, container.ID, name, true)
 				logView.SetRootScreen(v.rootScreen)
 				return switcher.SwitchScreen(logView)
 			}
@@ -128,72 +130,37 @@ func (v *DockerListView) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Send refresh message
 		return v, func() tea.Msg { return RefreshMsg{} }
 
-	case "a":
-		// Toggle show all
-		v.showAll = !v.showAll
-		v.loading = true
-		return v, loadDockerContainers(v.dockerClient, v.showAll)
-
-	case "2":
-		// Switch to project list
+	case "?":
+		// Show help
 		if v.rootScreen != nil {
 			if switcher, ok := v.rootScreen.(interface {
 				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
 			}); ok {
-				projectView := NewProjectListView(v.dockerClient)
-				projectView.SetRootScreen(v.rootScreen)
-				return switcher.SwitchScreen(projectView)
+				helpView := NewHelpView("Docker-in-Docker", v)
+				helpView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(helpView)
 			}
 		}
 		return v, nil
 
-	case "3":
-		// Switch to image list
+	case "esc", "q":
+		// Go back to compose list
 		if v.rootScreen != nil {
 			if switcher, ok := v.rootScreen.(interface {
 				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
 			}); ok {
-				imageView := NewImageListView(v.dockerClient)
-				imageView.SetRootScreen(v.rootScreen)
-				return switcher.SwitchScreen(imageView)
+				composeView := NewComposeListView(v.dockerClient, "")
+				composeView.SetRootScreen(v.rootScreen)
+				return switcher.SwitchScreen(composeView)
 			}
 		}
 		return v, nil
-
-	case "4":
-		// Switch to network list
-		if v.rootScreen != nil {
-			if switcher, ok := v.rootScreen.(interface {
-				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
-			}); ok {
-				networkView := NewNetworkListView(v.dockerClient)
-				networkView.SetRootScreen(v.rootScreen)
-				return switcher.SwitchScreen(networkView)
-			}
-		}
-		return v, nil
-
-	case "5":
-		// Switch to volume list
-		if v.rootScreen != nil {
-			if switcher, ok := v.rootScreen.(interface {
-				SwitchScreen(tea.Model) (tea.Model, tea.Cmd)
-			}); ok {
-				volumeView := NewVolumeListView(v.dockerClient)
-				volumeView.SetRootScreen(v.rootScreen)
-				return switcher.SwitchScreen(volumeView)
-			}
-		}
-		return v, nil
-
-	case "q":
-		return v, tea.Quit
 	}
 
 	return v, nil
 }
 
-func (v *DockerListView) renderDockerList() string {
+func (v *DindView) renderDindList() string {
 	var s strings.Builder
 
 	// Header
@@ -203,12 +170,12 @@ func (v *DockerListView) renderDockerList() string {
 		Background(lipgloss.Color("4")).
 		Width(v.width).
 		Padding(0, 1).
-		Render("Docker Containers")
+		Render(fmt.Sprintf("Docker-in-Docker - %s", v.hostContainerName))
 	s.WriteString(header + "\n")
 
 	// Container list
 	if len(v.containers) == 0 {
-		s.WriteString("\nNo containers found.\n")
+		s.WriteString("\nNo containers found in dind.\n")
 	} else {
 		// Column headers
 		headers := fmt.Sprintf("%-15s %-30s %-20s %-15s %s",
@@ -220,7 +187,7 @@ func (v *DockerListView) renderDockerList() string {
 
 		for i, container := range v.containers {
 			selected := i == v.selectedContainer
-			line := formatDockerContainerLine(container, v.width, selected)
+			line := formatDindContainerLine(container, v.width, selected)
 			s.WriteString(line + "\n")
 		}
 	}
@@ -230,7 +197,7 @@ func (v *DockerListView) renderDockerList() string {
 		Foreground(lipgloss.Color("240")).
 		Width(v.width).
 		Align(lipgloss.Center).
-		Render("↑/↓: Navigate • Enter: Logs • r: Refresh • a: Toggle All • 2: Projects • 3: Images • 4: Networks • 5: Volumes • q: Quit")
+		Render("↑/↓: Navigate • Enter: View Logs • r: Refresh • ESC: Back")
 
 	// Pad to fill screen
 	content := s.String()
@@ -242,7 +209,7 @@ func (v *DockerListView) renderDockerList() string {
 	return strings.Join(lines, "\n") + "\n" + footer
 }
 
-func formatDockerContainerLine(container models.DockerContainer, width int, selected bool) string {
+func formatDindContainerLine(container models.DockerContainer, width int, selected bool) string {
 	// Truncate long fields
 	id := container.ID
 	if len(id) > 12 {
@@ -292,15 +259,15 @@ func formatDockerContainerLine(container models.DockerContainer, width int, sele
 }
 
 // Messages
-type dockerContainersLoadedMsg struct {
+type dindContainersLoadedMsg struct {
 	containers []models.DockerContainer
 	err        error
 }
 
 // Commands
-func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
+func loadDindContainers(client *docker.Client, hostContainerID string) tea.Cmd {
 	return func() tea.Msg {
-		containers, err := client.ListAllContainers(showAll)
-		return dockerContainersLoadedMsg{containers: containers, err: err}
+		containers, err := client.ListDindContainers(hostContainerID)
+		return dindContainersLoadedMsg{containers: containers, err: err}
 	}
 }

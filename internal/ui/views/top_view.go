@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -196,13 +197,29 @@ type topDataLoadedMsg struct {
 // Commands
 func loadTopData(client *docker.Client, projectName string) tea.Cmd {
 	return func() tea.Msg {
-		output, err := client.Compose(projectName).Top()
+		// Get all containers for the project first
+		containers, err := client.Compose(projectName).ListContainers(false)
 		if err != nil {
 			return topDataLoadedMsg{err: err}
 		}
-		
-		// Split output into lines
-		lines := strings.Split(strings.TrimSpace(output), "\n")
-		return topDataLoadedMsg{lines: lines, err: nil}
+
+		// Get top output for all containers
+		var allLines []string
+		for _, container := range containers {
+			topOutput, err := client.Compose(projectName).GetContainerTop(container.Service)
+			if err == nil && topOutput != "" {
+				allLines = append(allLines, fmt.Sprintf("\n=== %s ===", container.Service))
+				allLines = append(allLines, strings.Split(strings.TrimSpace(topOutput), "\n")...)
+			}
+		}
+
+		if len(allLines) == 0 {
+			allLines = []string{"No process information available"}
+		}
+		if err != nil {
+			return topDataLoadedMsg{err: err}
+		}
+
+		return topDataLoadedMsg{lines: allLines, err: nil}
 	}
 }

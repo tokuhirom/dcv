@@ -18,7 +18,7 @@ type FileBrowserView struct {
 	width         int
 	height        int
 	selectedFile  int
-	files         []models.FileInfo
+	files         []models.ContainerFile
 	currentPath   string
 	containerID   string
 	containerName string
@@ -232,7 +232,7 @@ func (v *FileBrowserView) renderFileBrowser() string {
 	return strings.Join(lines[:v.height-1], "\n") + "\n" + footer
 }
 
-func formatFileLine(file models.FileInfo, width int, selected bool) string {
+func formatFileLine(file models.ContainerFile, width int, selected bool) string {
 	// Format name with directory indicator
 	name := file.Name
 	if file.IsDir {
@@ -243,15 +243,16 @@ func formatFileLine(file models.FileInfo, width int, selected bool) string {
 	}
 
 	// Format size
-	size := file.Size
-	if file.IsDir {
-		size = "<DIR>"
-	} else if len(size) > 8 {
-		size = size[:8]
+	size := "<DIR>"
+	if !file.IsDir {
+		size = fmt.Sprintf("%d", file.Size)
+		if len(size) > 8 {
+			size = size[:8]
+		}
 	}
 
 	// Format modified time
-	modified := file.ModTime
+	modified := file.ModTime.Format("2006-01-02 15:04")
 	if len(modified) > 18 {
 		modified = modified[:18]
 	}
@@ -278,14 +279,14 @@ func formatFileLine(file models.FileInfo, width int, selected bool) string {
 
 // Messages
 type filesLoadedMsg struct {
-	files []models.FileInfo
+	files []models.ContainerFile
 	err   error
 }
 
 // Commands
 func loadFiles(client *docker.Client, containerID, path string) tea.Cmd {
 	return func() tea.Msg {
-		files, err := client.ListFiles(containerID, path)
+		files, err := client.ListContainerFiles(containerID, path)
 		return filesLoadedMsg{files: files, err: err}
 	}
 }

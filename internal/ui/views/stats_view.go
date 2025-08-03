@@ -196,7 +196,7 @@ func formatStatsLine(stat ContainerStats, width int) string {
 	}
 
 	style := lipgloss.NewStyle()
-	
+
 	// Color based on status
 	if strings.Contains(stat.Status, "running") {
 		style = style.Foreground(lipgloss.Color("2")) // Green
@@ -235,7 +235,7 @@ func loadStats(client *docker.Client, projectName string) tea.Cmd {
 		if err != nil {
 			return statsLoadedMsg{err: err}
 		}
-		
+
 		// Parse stats
 		var stats []ContainerStats
 		if output != "" {
