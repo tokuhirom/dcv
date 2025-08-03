@@ -17,16 +17,9 @@ func TestDefault(t *testing.T) {
 
 func TestLoad_NoConfigFile(t *testing.T) {
 	// Ensure no config files exist in test environment
-	oldHome := os.Getenv("HOME")
-	oldUserConfigDir := os.Getenv("XDG_CONFIG_HOME")
-	defer func() {
-		os.Setenv("HOME", oldHome)
-		os.Setenv("XDG_CONFIG_HOME", oldUserConfigDir)
-	}()
-
 	tmpDir := t.TempDir()
-	os.Setenv("HOME", tmpDir)
-	os.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpDir, ".config"))
+	t.Setenv("HOME", tmpDir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmpDir, ".config"))
 
 	cfg, err := Load()
 	require.NoError(t, err)
@@ -39,7 +32,7 @@ func TestLoad_FromCurrentDir(t *testing.T) {
 	tmpDir := t.TempDir()
 	oldCwd, err := os.Getwd()
 	require.NoError(t, err)
-	defer os.Chdir(oldCwd)
+	defer func() { _ = os.Chdir(oldCwd) }()
 
 	err = os.Chdir(tmpDir)
 	require.NoError(t, err)
@@ -58,11 +51,8 @@ initial_view = "compose"`
 
 func TestLoad_FromHomeDir(t *testing.T) {
 	// Setup temp home
-	oldHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", oldHome)
-
 	tmpDir := t.TempDir()
-	os.Setenv("HOME", tmpDir)
+	t.Setenv("HOME", tmpDir)
 
 	// Create config file
 	configContent := `[general]
@@ -81,7 +71,7 @@ func TestLoad_InvalidTOML(t *testing.T) {
 	tmpDir := t.TempDir()
 	oldCwd, err := os.Getwd()
 	require.NoError(t, err)
-	defer os.Chdir(oldCwd)
+	defer func() { _ = os.Chdir(oldCwd) }()
 
 	err = os.Chdir(tmpDir)
 	require.NoError(t, err)
@@ -97,11 +87,8 @@ func TestLoad_InvalidTOML(t *testing.T) {
 
 func TestSave(t *testing.T) {
 	// Setup temp config dir
-	oldUserConfigDir := os.Getenv("XDG_CONFIG_HOME")
-	defer os.Setenv("XDG_CONFIG_HOME", oldUserConfigDir)
-
 	tmpDir := t.TempDir()
-	os.Setenv("XDG_CONFIG_HOME", tmpDir)
+	t.Setenv("XDG_CONFIG_HOME", tmpDir)
 
 	cfg := &Config{
 		General: GeneralConfig{
@@ -121,4 +108,3 @@ func TestSave(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "projects", loadedCfg.General.InitialView)
 }
-
