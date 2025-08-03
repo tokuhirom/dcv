@@ -247,8 +247,13 @@ func (m *Model) ShowTopView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) KillContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		m.loading = true
-		return m, killService(m.dockerClient, container.ID)
+		m.previousView = m.currentView
+		m.currentView = CommandExecutionView
+		m.commandExecOutput = []string{}
+		m.commandExecScrollY = 0
+		m.commandExecDone = false
+		m.commandExecCmdString = fmt.Sprintf("docker kill %s", container.ID)
+		return m, executeContainerCommand(m.dockerClient, container.ID, "kill")
 	}
 	return m, nil
 }
@@ -256,8 +261,13 @@ func (m *Model) KillContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) StopContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		m.loading = true
-		return m, stopService(m.dockerClient, container.ID)
+		m.previousView = m.currentView
+		m.currentView = CommandExecutionView
+		m.commandExecOutput = []string{}
+		m.commandExecScrollY = 0
+		m.commandExecDone = false
+		m.commandExecCmdString = fmt.Sprintf("docker stop %s", container.ID)
+		return m, executeContainerCommand(m.dockerClient, container.ID, "stop")
 	}
 	return m, nil
 }
@@ -265,8 +275,13 @@ func (m *Model) StopContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) UpService(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		m.loading = true
-		return m, startService(m.dockerClient, container.Service)
+		m.previousView = m.currentView
+		m.currentView = CommandExecutionView
+		m.commandExecOutput = []string{}
+		m.commandExecScrollY = 0
+		m.commandExecDone = false
+		m.commandExecCmdString = fmt.Sprintf("docker start %s", container.ID)
+		return m, executeContainerCommand(m.dockerClient, container.ID, "start")
 	}
 	return m, nil
 }
@@ -274,8 +289,13 @@ func (m *Model) UpService(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) RestartContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		m.loading = true
-		return m, restartService(m.dockerClient, container.ID)
+		m.previousView = m.currentView
+		m.currentView = CommandExecutionView
+		m.commandExecOutput = []string{}
+		m.commandExecScrollY = 0
+		m.commandExecDone = false
+		m.commandExecCmdString = fmt.Sprintf("docker restart %s", container.ID)
+		return m, executeContainerCommand(m.dockerClient, container.ID, "restart")
 	}
 	return m, nil
 }
@@ -293,13 +313,23 @@ func (m *Model) DeleteContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) DeployProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, up(m.dockerClient, m.projectName)
+	m.previousView = m.currentView
+	m.currentView = CommandExecutionView
+	m.commandExecOutput = []string{}
+	m.commandExecScrollY = 0
+	m.commandExecDone = false
+	m.commandExecCmdString = fmt.Sprintf("docker compose -p %s up -d", m.projectName)
+	return m, executeCommandWithStreaming(m.dockerClient, m.projectName, "up")
 }
 
 func (m *Model) DownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, down(m.dockerClient, m.projectName)
+	m.previousView = m.currentView
+	m.currentView = CommandExecutionView
+	m.commandExecOutput = []string{}
+	m.commandExecScrollY = 0
+	m.commandExecDone = false
+	m.commandExecCmdString = fmt.Sprintf("docker compose -p %s down", m.projectName)
+	return m, executeCommandWithStreaming(m.dockerClient, m.projectName, "down")
 }
 
 func (m *Model) ShowProjectList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -368,8 +398,13 @@ func (m *Model) ToggleAllDockerContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) KillDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		m.loading = true
-		return m, killService(m.dockerClient, container.ID)
+		m.previousView = m.currentView
+		m.currentView = CommandExecutionView
+		m.commandExecOutput = []string{}
+		m.commandExecScrollY = 0
+		m.commandExecDone = false
+		m.commandExecCmdString = fmt.Sprintf("docker kill %s", container.ID)
+		return m, executeContainerCommand(m.dockerClient, container.ID, "kill")
 	}
 	return m, nil
 }
@@ -377,8 +412,13 @@ func (m *Model) KillDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) StopDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		m.loading = true
-		return m, stopService(m.dockerClient, container.ID)
+		m.previousView = m.currentView
+		m.currentView = CommandExecutionView
+		m.commandExecOutput = []string{}
+		m.commandExecScrollY = 0
+		m.commandExecDone = false
+		m.commandExecCmdString = fmt.Sprintf("docker stop %s", container.ID)
+		return m, executeContainerCommand(m.dockerClient, container.ID, "stop")
 	}
 	return m, nil
 }
@@ -386,8 +426,13 @@ func (m *Model) StopDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) StartDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		m.loading = true
-		return m, startService(m.dockerClient, container.ID)
+		m.previousView = m.currentView
+		m.currentView = CommandExecutionView
+		m.commandExecOutput = []string{}
+		m.commandExecScrollY = 0
+		m.commandExecDone = false
+		m.commandExecCmdString = fmt.Sprintf("docker start %s", container.ID)
+		return m, executeContainerCommand(m.dockerClient, container.ID, "start")
 	}
 	return m, nil
 }
@@ -395,8 +440,13 @@ func (m *Model) StartDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) RestartDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		m.loading = true
-		return m, restartService(m.dockerClient, container.ID)
+		m.previousView = m.currentView
+		m.currentView = CommandExecutionView
+		m.commandExecOutput = []string{}
+		m.commandExecScrollY = 0
+		m.commandExecDone = false
+		m.commandExecCmdString = fmt.Sprintf("docker restart %s", container.ID)
+		return m, executeContainerCommand(m.dockerClient, container.ID, "restart")
 	}
 	return m, nil
 }

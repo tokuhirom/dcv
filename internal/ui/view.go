@@ -236,6 +236,8 @@ func (m *Model) viewTitle() string {
 		return base
 	case HelpView:
 		return "Help"
+	case CommandExecutionView:
+		return "Command Execution"
 	default:
 		return "Unknown View"
 	}
@@ -279,6 +281,8 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.renderInspectView(availableHeight)
 	case HelpView:
 		return m.renderHelpView(availableHeight)
+	case CommandExecutionView:
+		return m.renderCommandExecutionView()
 	default:
 		return "Unknown view"
 	}
