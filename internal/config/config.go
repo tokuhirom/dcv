@@ -64,17 +64,9 @@ func Load() (*Config, error) {
 func getConfigPaths() []string {
 	var paths []string
 
-	// 1. Current directory
-	paths = append(paths, "dcv.toml")
-
-	// 2. User config directory
+	// User config directory
 	if configDir, err := os.UserConfigDir(); err == nil {
 		paths = append(paths, filepath.Join(configDir, "dcv", "config.toml"))
-	}
-
-	// 3. Home directory
-	if homeDir, err := os.UserHomeDir(); err == nil {
-		paths = append(paths, filepath.Join(homeDir, ".dcv.toml"))
 	}
 
 	return paths

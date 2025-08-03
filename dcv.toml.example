@@ -1,8 +1,5 @@
 # DCV Configuration File
-# Copy this file to one of the following locations:
-# - ./dcv.toml (current directory)
-# - ~/.config/dcv/config.toml (user config directory)
-# - ~/.dcv.toml (home directory)
+# Copy this file to: ~/.config/dcv/config.toml
 
 [general]
 # Initial view to show on startup

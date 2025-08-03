@@ -259,11 +259,9 @@ go build -o dcv
 
 ## Configuration
 
-DCV supports configuration through TOML files. The configuration file is searched in the following locations (in order):
+DCV supports configuration through a TOML file located at:
 
-1. `./dcv.toml` - Current directory
-2. `~/.config/dcv/config.toml` - User config directory
-3. `~/.dcv.toml` - Home directory
+- `~/.config/dcv/config.toml` - User config directory
 
 ### Configuration Options
 
