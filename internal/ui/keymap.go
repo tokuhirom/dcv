@@ -41,6 +41,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"G"}, "go to end", m.GoToLogEnd},
 		{[]string{"g"}, "go to start", m.GoToLogStart},
 		{[]string{"/"}, "search", m.StartSearch},
+		{[]string{"n"}, "next match", m.NextSearchResult},
+		{[]string{"N"}, "prev match", m.PrevSearchResult},
 		{[]string{"esc"}, "back", m.BackFromLogView},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}

@@ -185,6 +185,7 @@ func TestHandleSearchMode(t *testing.T) {
 			model: Model{
 				searchMode: true,
 				searchText: "err",
+				searchCursorPos: 3, // at end of "err"
 			},
 			key:            tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("o")},
 			wantSearchMode: true,
@@ -195,6 +196,7 @@ func TestHandleSearchMode(t *testing.T) {
 			model: Model{
 				searchMode: true,
 				searchText: "error",
+				searchCursorPos: 5, // at end of "error"
 			},
 			key:            tea.KeyMsg{Type: tea.KeyBackspace},
 			wantSearchMode: true,

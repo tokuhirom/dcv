@@ -365,22 +365,52 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case tea.KeyEsc:
 		m.searchMode = false
 		m.searchText = ""
+		m.searchResults = nil
+		m.currentSearchIdx = 0
+		m.searchCursorPos = 0
 		return m, nil
 
 	case tea.KeyEnter:
 		m.searchMode = false
-		// Implement search functionality
+		m.performSearch()
 		return m, nil
 
 	case tea.KeyBackspace:
-		if len(m.searchText) > 0 {
-			m.searchText = m.searchText[:len(m.searchText)-1]
+		if m.searchCursorPos > 0 && len(m.searchText) > 0 {
+			m.searchText = m.searchText[:m.searchCursorPos-1] + m.searchText[m.searchCursorPos:]
+			m.searchCursorPos--
+			m.performSearch()
 		}
+		return m, nil
+
+	case tea.KeyLeft:
+		if m.searchCursorPos > 0 {
+			m.searchCursorPos--
+		}
+		return m, nil
+
+	case tea.KeyRight:
+		if m.searchCursorPos < len(m.searchText) {
+			m.searchCursorPos++
+		}
+		return m, nil
+
+	case tea.KeyCtrlI:
+		m.searchIgnoreCase = !m.searchIgnoreCase
+		m.performSearch()
+		return m, nil
+
+	case tea.KeyCtrlR:
+		m.searchRegex = !m.searchRegex
+		m.performSearch()
 		return m, nil
 
 	default:
 		if msg.Type == tea.KeyRunes {
-			m.searchText += msg.String()
+			// Insert at cursor position
+			m.searchText = m.searchText[:m.searchCursorPos] + msg.String() + m.searchText[m.searchCursorPos:]
+			m.searchCursorPos += len(msg.String())
+			m.performSearch()
 		}
 		return m, nil
 	}
