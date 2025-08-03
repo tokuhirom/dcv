@@ -104,7 +104,8 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `↓`/`j`: Scroll down
    - `G`: Jump to end
    - `g`: Jump to start
-   - `/`: Search logs
+   - `/`: Search logs (highlights matches in all logs)
+   - `f`: Filter logs (shows only lines matching the filter)
    - `n`: Next search result
    - `N`: Previous search result
    - `?`: Show help view

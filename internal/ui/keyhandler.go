@@ -115,6 +115,14 @@ func (m *Model) StartSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) StartFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.filterMode = true
+	m.filterText = ""
+	m.filterCursorPos = 0
+	m.filteredLogs = nil
+	return m, nil
+}
+
 func (m *Model) NextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if len(m.searchResults) > 0 {
 		m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.searchResults)

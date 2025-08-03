@@ -16,14 +16,20 @@ func (m *Model) renderLogView(availableHeight int) string {
 		return s.String()
 	}
 
+	// Determine which logs to display
+	logsToDisplay := m.logs
+	if m.filterMode && m.filterText != "" {
+		logsToDisplay = m.filteredLogs
+	}
+
 	// Calculate visible logs based on scroll position
 	visibleHeight := availableHeight
 
 	startIdx := m.logScrollY
 	endIdx := startIdx + visibleHeight
 
-	if endIdx > len(m.logs) {
-		endIdx = len(m.logs)
+	if endIdx > len(logsToDisplay) {
+		endIdx = len(logsToDisplay)
 	}
 
 	// Define highlight style
@@ -32,20 +38,29 @@ func (m *Model) renderLogView(availableHeight int) string {
 		Foreground(lipgloss.Color("235"))
 
 	// Display logs
-	if len(m.logs) == 0 {
-		s.WriteString("No logs available.\n")
+	if len(logsToDisplay) == 0 {
+		if m.filterMode && m.filterText != "" {
+			s.WriteString("No logs match the filter.\n")
+		} else {
+			s.WriteString("No logs available.\n")
+		}
 	} else {
 		for i := startIdx; i < endIdx; i++ {
-			if i < len(m.logs) {
-				line := m.logs[i]
+			if i < len(logsToDisplay) {
+				line := logsToDisplay[i]
 
 				// Highlight search matches if we have results and search text
-				if m.searchText != "" && !m.searchMode {
+				if m.searchText != "" && !m.searchMode && !m.filterMode {
 					line = m.highlightLine(line, highlightStyle)
 				}
 
-				// Mark current search result line
-				if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) &&
+				// Highlight filter matches in filter mode
+				if m.filterMode && m.filterText != "" {
+					line = m.highlightFilterMatch(line, highlightStyle)
+				}
+
+				// Mark current search result line (only in search mode)
+				if !m.filterMode && len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) &&
 					i == m.searchResults[m.currentSearchIdx] {
 					// Add a marker in the margin
 					s.WriteString("> ")
@@ -59,8 +74,11 @@ func (m *Model) renderLogView(availableHeight int) string {
 	}
 
 	// Scroll indicator
-	if len(m.logs) > visibleHeight {
-		scrollInfo := fmt.Sprintf(" [%d-%d/%d] ", startIdx+1, endIdx, len(m.logs))
+	if len(logsToDisplay) > visibleHeight {
+		scrollInfo := fmt.Sprintf(" [%d-%d/%d] ", startIdx+1, endIdx, len(logsToDisplay))
+		if m.filterMode && m.filterText != "" {
+			scrollInfo += fmt.Sprintf(" (filtered from %d)", len(m.logs))
+		}
 		s.WriteString("\n" + helpStyle.Render(scrollInfo))
 	}
 
@@ -125,4 +143,41 @@ func (m *Model) highlightLine(line string, style lipgloss.Style) string {
 	}
 
 	return line
+}
+
+func (m *Model) highlightFilterMatch(line string, style lipgloss.Style) string {
+	if m.filterText == "" {
+		return line
+	}
+
+	// Simple case-insensitive string search for filter
+	searchStr := strings.ToLower(m.filterText)
+	lineToSearch := strings.ToLower(line)
+
+	// Find all occurrences
+	var result strings.Builder
+	lastEnd := 0
+	searchLen := len(searchStr)
+
+	for lastEnd < len(line) {
+		idx := strings.Index(lineToSearch[lastEnd:], searchStr)
+		if idx == -1 {
+			// No more matches, append the rest
+			result.WriteString(line[lastEnd:])
+			break
+		}
+
+		// Found a match
+		matchStart := lastEnd + idx
+		matchEnd := matchStart + searchLen
+
+		// Append text before the match
+		result.WriteString(line[lastEnd:matchStart])
+		// Append highlighted match
+		result.WriteString(style.Render(line[matchStart:matchEnd]))
+		// Move past this match
+		lastEnd = matchEnd
+	}
+
+	return result.String()
 }

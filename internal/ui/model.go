@@ -127,6 +127,12 @@ type Model struct {
 	currentSearchIdx int   // Current position in searchResults
 	searchCursorPos  int   // Cursor position in search text
 
+	// Filter state
+	filterMode      bool
+	filterText      string
+	filterCursorPos int
+	filteredLogs    []string // Logs that match the filter
+
 	// Error state
 	err error
 
@@ -284,6 +290,25 @@ func (m *Model) performInspectSearch() {
 			m.inspectScrollY = 0
 		}
 	}
+}
+
+func (m *Model) performFilter() {
+	m.filteredLogs = nil
+	if m.filterText == "" {
+		return
+	}
+
+	filterText := strings.ToLower(m.filterText)
+
+	for _, line := range m.logs {
+		lineToSearch := strings.ToLower(line)
+		if strings.Contains(lineToSearch, filterText) {
+			m.filteredLogs = append(m.filteredLogs, line)
+		}
+	}
+
+	// Reset scroll position when filter changes
+	m.logScrollY = 0
 }
 
 // NewModel creates a new model with initial state

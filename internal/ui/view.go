@@ -87,6 +87,25 @@ func (m *Model) View() string {
 	if m.quitConfirmation {
 		// Show quit confirmation dialog
 		footer = errorStyle.Render(m.quitConfirmMessage)
+	} else if m.filterMode && m.currentView == LogView {
+		// Show filter prompt
+		cursor := " "
+		if m.filterCursorPos < len(m.filterText) {
+			cursor = string(m.filterText[m.filterCursorPos])
+		}
+
+		// Build filter line with cursor
+		before := m.filterText[:m.filterCursorPos]
+		after := ""
+		if m.filterCursorPos < len(m.filterText) {
+			after = m.filterText[m.filterCursorPos+1:]
+		}
+
+		cursorStyle := lipgloss.NewStyle().
+			Background(lipgloss.Color("226")).
+			Foreground(lipgloss.Color("235"))
+
+		footer = "Filter: " + before + cursorStyle.Render(cursor) + after + " (ESC to clear)"
 	} else if m.searchMode && (m.currentView == LogView || m.currentView == InspectView) {
 		// Show search prompt
 		cursor := " "
@@ -162,8 +181,11 @@ func (m *Model) viewTitle() string {
 			title = fmt.Sprintf("Logs: %s", m.containerName)
 		}
 
-		// Add search status to title
-		if len(m.searchResults) > 0 {
+		// Add search or filter status to title
+		if m.filterMode && m.filterText != "" {
+			filterCount := len(m.filteredLogs)
+			title += fmt.Sprintf(" - Filter: '%s' (%d/%d lines)", m.filterText, filterCount, len(m.logs))
+		} else if len(m.searchResults) > 0 {
 			statusParts := []string{}
 			if m.searchIgnoreCase {
 				statusParts = append(statusParts, "i")

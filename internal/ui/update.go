@@ -78,10 +78,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.logs) > 10000 {
 			m.logs = m.logs[len(m.logs)-10000:]
 		}
-		// Auto-scroll to bottom
-		maxScroll := len(m.logs) - (m.height - 4)
-		if maxScroll > 0 {
-			m.logScrollY = maxScroll
+
+		// If we're in filter mode, update filtered logs
+		if m.filterMode && m.filterText != "" {
+			m.performFilter()
+		} else {
+			// Auto-scroll to bottom only when not filtering
+			maxScroll := len(m.logs) - (m.height - 4)
+			if maxScroll > 0 {
+				m.logScrollY = maxScroll
+			}
 		}
 		// Continue polling for more logs with a small delay
 		return m, tea.Tick(time.Millisecond*50, func(time.Time) tea.Msg {
@@ -288,6 +294,11 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle search mode
 	if m.searchMode {
 		return m.handleSearchMode(msg)
+	}
+
+	// Handle filter mode
+	if m.filterMode {
+		return m.handleFilterMode(msg)
 	}
 
 	// Handle ':' to enter command mode
@@ -683,6 +694,47 @@ func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.fileContentKeymap[msg.String()]
 	if ok {
 		return handler(msg)
+	}
+	return m, nil
+}
+
+func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEsc:
+		m.filterMode = false
+		m.filterText = ""
+		m.filteredLogs = nil
+		m.filterCursorPos = 0
+		m.logScrollY = 0
+		return m, nil
+	case tea.KeyEnter:
+		m.filterMode = false
+		m.performFilter()
+		return m, nil
+	case tea.KeyBackspace:
+		if m.filterCursorPos > 0 && len(m.filterText) > 0 {
+			m.filterText = m.filterText[:m.filterCursorPos-1] + m.filterText[m.filterCursorPos:]
+			m.filterCursorPos--
+			m.performFilter()
+		}
+		return m, nil
+	case tea.KeyLeft:
+		if m.filterCursorPos > 0 {
+			m.filterCursorPos--
+		}
+		return m, nil
+	case tea.KeyRight:
+		if m.filterCursorPos < len(m.filterText) {
+			m.filterCursorPos++
+		}
+		return m, nil
+	default:
+		if msg.Type == tea.KeyRunes {
+			// Insert at cursor position
+			m.filterText = m.filterText[:m.filterCursorPos] + msg.String() + m.filterText[m.filterCursorPos:]
+			m.filterCursorPos += len(msg.String())
+			m.performFilter()
+		}
 	}
 	return m, nil
 }
