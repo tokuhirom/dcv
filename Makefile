@@ -28,13 +28,19 @@ clean:
 	docker compose down -v
 	rm -f dcv
 
-# Run staticcheck
-staticcheck:
-	@which staticcheck > /dev/null || $(MAKE) dev-deps
-	staticcheck ./...
+# Run golangci-lint
+lint:
+	@which golangci-lint > /dev/null || $(MAKE) install-golangci-lint
+	golangci-lint run
 
-# Run lint (alias for staticcheck)
-lint: staticcheck
+# Install golangci-lint
+install-golangci-lint:
+	@echo "Installing golangci-lint..."
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin latest
+	@echo "golangci-lint installed successfully"
+
+# Run staticcheck (kept for backward compatibility)
+staticcheck: lint
 
 test:
 	go test -v ./...
@@ -53,5 +59,5 @@ fmt:
 dev-deps:
 	@echo "Installing development dependencies..."
 	@go install golang.org/x/tools/cmd/goimports@latest
-	@go install honnef.co/go/tools/cmd/staticcheck@latest
+	@which golangci-lint > /dev/null || $(MAKE) install-golangci-lint
 	@echo "Development dependencies installed successfully"

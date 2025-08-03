@@ -177,6 +177,21 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - The tool internally executes both docker and docker-compose commands
 - Special handling required for dind (Docker-in-Docker) containers
 
+## Code Style and Quality
+
+- **Code Formatting**: All code must be formatted with `goimports`
+  - Run `make fmt` before committing
+  - CI will fail if code is not properly formatted
+- **Linting**: Code must pass all golangci-lint checks
+  - Run `make lint` to check locally
+  - Configuration is in `.golangci.yml`
+- **Import Ordering**: 
+  - Standard library imports first
+  - Third-party imports second
+  - Local imports last (with prefix `github.com/tokuhirom/dcv`)
+- **Error Handling**: Always handle errors appropriately
+- **Comments**: Add comments for exported functions and types
+
 ## Build and Installation
 
 ```bash
