@@ -7,7 +7,8 @@ services:
     volumes:
       - ./html:/usr/share/nginx/html:ro
     networks:
-      - dcv-network
+      - frontend
+      - backend  # Needs to connect to backend services
 
   # Database
   db:
@@ -19,7 +20,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - dcv-network
+      - backend  # Only on backend network
 
   # Redis cache
   redis:
@@ -28,7 +29,7 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - dcv-network
+      - backend  # Only on backend network
 
   # Docker in Docker for CI/CD simulation
   dind:
@@ -41,7 +42,7 @@ services:
       - ./dind-startup.sh:/startup.sh:ro
       - ./dind-entrypoint.sh:/entrypoint.sh:ro
     networks:
-      - dcv-network
+      - development  # On isolated development network
     entrypoint: ["/entrypoint.sh"]
     command: ["dockerd", "--host=unix:///var/run/docker.sock", "--host=tcp://0.0.0.0:2375"]
 
@@ -62,7 +63,32 @@ services:
         done
       "
     networks:
-      - dcv-network
+      - monitoring  # On monitoring network
+
+  # API Gateway service
+  api-gateway:
+    image: nginx:alpine
+    ports:
+      - "8091:80"
+    networks:
+      - frontend
+      - backend
+      - monitoring
+    volumes:
+      - ./nginx-api.conf:/etc/nginx/nginx.conf:ro
+
+  # Cache warmer service
+  cache-warmer:
+    image: alpine:latest
+    command: |
+      sh -c "
+        while true; do
+          echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Warming cache...\"
+          sleep 30
+        done
+      "
+    networks:
+      - backend  # Needs access to cache
 
 volumes:
   postgres-data:
@@ -70,5 +96,44 @@ volumes:
   dind-storage:
 
 networks:
+  # Default bridge network for main services
   dcv-network:
     driver: bridge
+    name: dcv-main-network
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+  # Frontend network (web-facing services)
+  frontend:
+    driver: bridge
+    name: dcv-frontend
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1
+
+  # Backend network (database and cache)
+  backend:
+    driver: bridge
+    name: dcv-backend
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+          gateway: 172.22.0.1
+
+  # Monitoring network (for future monitoring services)
+  monitoring:
+    driver: bridge
+    name: dcv-monitoring
+    ipam:
+      config:
+        - subnet: 172.23.0.0/16
+          gateway: 172.23.0.1
+
+  # Development network (for dind and testing)
+  development:
+    driver: bridge
+    name: dcv-development
+    internal: true  # This network has no external access

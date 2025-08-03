@@ -145,6 +145,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.networkListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.SelectUpNetwork},
 		{[]string{"down", "j"}, "move down", m.SelectDownNetwork},
+		{[]string{"I"}, "inspect", m.ShowNetworkInspect},
 		{[]string{"r"}, "refresh", m.RefreshNetworkList},
 		{[]string{"D"}, "remove", m.DeleteNetwork},
 		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},

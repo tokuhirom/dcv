@@ -636,6 +636,18 @@ func (m *Model) DeleteNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) ShowNetworkInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selectedDockerNetwork < len(m.dockerNetworks) {
+		network := m.dockerNetworks[m.selectedDockerNetwork]
+		m.inspectNetworkID = network.ID
+		m.inspectContainerID = "" // Clear container ID
+		m.inspectImageID = ""     // Clear image ID
+		m.loading = true
+		return m, loadNetworkInspect(m.dockerClient, network.ID)
+	}
+	return m, nil
+}
+
 func (m *Model) BackFromNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
@@ -869,6 +881,13 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.inspectImageID != "" {
 		m.currentView = ImageListView
 		m.inspectImageID = ""
+		return m, nil
+	}
+
+	// Check if we were inspecting a network
+	if m.inspectNetworkID != "" {
+		m.currentView = NetworkListView
+		m.inspectNetworkID = ""
 		return m, nil
 	}
 

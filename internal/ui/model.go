@@ -97,6 +97,7 @@ type Model struct {
 	inspectScrollY     int
 	inspectContainerID string
 	inspectImageID     string
+	inspectNetworkID   string
 
 	// Log view state
 	logs          []string
@@ -620,6 +621,16 @@ func loadInspect(client *docker.Client, containerID string) tea.Cmd {
 func loadImageInspect(client *docker.Client, imageID string) tea.Cmd {
 	return func() tea.Msg {
 		content, err := client.InspectImage(imageID)
+		return inspectLoadedMsg{
+			content: content,
+			err:     err,
+		}
+	}
+}
+
+func loadNetworkInspect(client *docker.Client, networkID string) tea.Cmd {
+	return func() tea.Msg {
+		content, err := client.InspectNetwork(networkID)
 		return inspectLoadedMsg{
 			content: content,
 			err:     err,
