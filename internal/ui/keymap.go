@@ -160,6 +160,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.SelectUpFile},
 		{[]string{"down", "j"}, "move down", m.SelectDownFile},
 		{[]string{"enter"}, "open", m.OpenFileOrDirectory},
+		{[]string{"u"}, "parent directory", m.GoToParentDirectory},
 		{[]string{"r"}, "refresh", m.RefreshFiles},
 		{[]string{"esc", "q"}, "back", m.BackFromFileBrowser},
 		{[]string{"?"}, "help", m.ShowHelp},

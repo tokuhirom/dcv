@@ -142,6 +142,7 @@ Browse the filesystem inside a container. Navigate directories and view file con
 - `↑`/`k`: Move up
 - `↓`/`j`: Move down
 - `Enter`: Open directory or view file
+- `u`: Go to parent directory
 - `r`: Refresh list
 - `?`: Show help view
 - `Esc`/`q`: Back to container list
