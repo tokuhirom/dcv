@@ -201,7 +201,10 @@ func (m *Model) initializeKeyHandlers() {
 	}
 	m.helpViewKeymap = m.createKeymap(m.helpViewHandlers)
 
-	slog.Info("Initialized all view keymaps")
+	// Initialize command registry
+	m.initCommandRegistry()
+
+	slog.Info("Initialized all view keymaps and command registry")
 }
 
 func (m *Model) createKeymap(configs []KeyConfig) map[string]KeyHandler {

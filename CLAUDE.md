@@ -161,6 +161,11 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 14. **Command Mode**: Vim-style command line interface
     - `:q` or `:quit`: Quit with confirmation
     - `:q!` or `:quit!`: Force quit without confirmation
+    - `:help commands`: List all available commands
+    - `:set all`: Show all containers (including stopped)
+    - `:set noall`: Hide stopped containers
+    - **Key handler commands**: All key handlers can be called as commands (e.g., `:select-up-container`, `:show-compose-log`, `:kill-container`)
+    - **Command aliases**: Common aliases like `:up`, `:down`, `:logs`, `:inspect`, `:exec`
     - `↑`/`↓`: Navigate command history
     - `←`/`→`: Move cursor in command line
     - `Enter`: Execute command

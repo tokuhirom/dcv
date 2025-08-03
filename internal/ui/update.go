@@ -536,6 +536,19 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 		
 	case "h", "help":
 		// Show help
+		if len(parts) > 1 && parts[1] == "commands" {
+			// Show available commands
+			m.err = nil
+			commands := m.getAvailableCommands()
+			helpText := "Available commands in current view:\n"
+			for _, cmd := range commands {
+				if handler, exists := commandRegistry[cmd]; exists {
+					helpText += fmt.Sprintf("  :%s - %s\n", cmd, handler.Description)
+				}
+			}
+			m.err = fmt.Errorf(helpText)
+			return m, nil
+		}
 		m.previousView = m.currentView
 		m.currentView = HelpView
 		m.helpScrollY = 0
@@ -556,8 +569,8 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 		return m, nil
 		
 	default:
-		m.err = fmt.Errorf("unknown command: %s", command)
-		return m, nil
+		// Try to execute as a key handler command
+		return m.executeKeyHandlerCommand(parts[0])
 	}
 }
 
