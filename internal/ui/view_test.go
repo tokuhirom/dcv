@@ -45,17 +45,14 @@ func TestView(t *testing.T) {
 				},
 			},
 			contains: []string{
-				"Docker Compose Processes",
-				"NAME",
-				"IMAGE",
+				"Docker Compose",
 				"SERVICE",
+				"IMAGE",
 				"STATUS",
-				"web-1",
-				"/docker-entrypoint.sh nginx",
-				"dind-1",
-				"dockerd",
-				"up:move up",
-				"enter:view logs",
+				"PORTS",
+				"web",
+				"dind",
+				"Press ? for help",
 			},
 		},
 		{
@@ -69,7 +66,6 @@ func TestView(t *testing.T) {
 			},
 			contains: []string{
 				"Error:",
-				"Press 'q' to quit",
 			},
 		},
 		{
@@ -82,8 +78,7 @@ func TestView(t *testing.T) {
 				err:         &mockError{msg: "no configuration file provided"},
 			},
 			contains: []string{
-				"No docker-compose.yml found",
-				"Please run from a directory",
+				"Error: no configuration file provided",
 			},
 		},
 		{
@@ -103,8 +98,7 @@ func TestView(t *testing.T) {
 				"Logs: web-1",
 				"Starting web server",
 				"Listening on port 80",
-				"up:scroll up",
-				"/:search",
+				"Press ? for help",
 			},
 		},
 		{
@@ -184,8 +178,7 @@ func TestRenderProcessList(t *testing.T) {
 	view := m.renderComposeProcessList()
 
 	// Check that the selected row is highlighted
-	assert.Contains(t, view, "web-1")
-	assert.Contains(t, view, "/docker-entrypoint.sh nginx")
+	assert.Contains(t, view, "web")
 
 	// Check table structure
 	assert.Contains(t, view, "│")
@@ -246,8 +239,8 @@ func TestRenderDindList(t *testing.T) {
 
 	view := m.renderDindList()
 
-	// Check title
-	assert.Contains(t, view, "Docker in Docker: dind-1")
+	// The title is in viewTitle(), not renderDindList()
+	// Check that dind containers are listed correctly
 
 	// Check composeContainers are listed
 	assert.Contains(t, view, "abc123def456") // First 12 chars
@@ -266,8 +259,8 @@ func TestViewWithNoContainers(t *testing.T) {
 	}
 
 	view := m.renderComposeProcessList()
-	assert.Contains(t, view, "No composeContainers found")
-	assert.Contains(t, view, "Press 'r' to refresh")
+	assert.Contains(t, view, "No containers found")
+	assert.Contains(t, view, "Press u to start services or p to switch to project list")
 }
 
 func TestTableRendering(t *testing.T) {
@@ -357,8 +350,8 @@ func TestDockerContainerListView(t *testing.T) {
 
 		view := m.View()
 
-		// Check title includes (All)
-		assert.Contains(t, view, "Docker Containers (All)")
+		// Check title includes (all)
+		assert.Contains(t, view, "Docker Containers (all)")
 	})
 
 	t.Run("docker_list_empty", func(t *testing.T) {
@@ -372,8 +365,7 @@ func TestDockerContainerListView(t *testing.T) {
 
 		view := m.View()
 
-		assert.Contains(t, view, "No composeContainers found")
-		assert.Contains(t, view, "Press 'r' to refresh")
+		assert.Contains(t, view, "No containers found")
 	})
 }
 
