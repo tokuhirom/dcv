@@ -291,7 +291,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.err = nil
 		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 	}
-	
+
 	// Handle ctrl+c for immediate quit
 	if msg.String() == "ctrl+c" {
 		if m.currentView == LogView {
@@ -502,45 +502,58 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 	command := strings.TrimSpace(m.commandBuffer[1:]) // Remove leading ':'
-	
+
 	// Add to command history
 	if command != "" && (len(m.commandHistory) == 0 || m.commandHistory[len(m.commandHistory)-1] != command) {
 		m.commandHistory = append(m.commandHistory, command)
 	}
 	m.commandHistoryIdx = len(m.commandHistory)
-	
+
 	// Exit command mode
 	m.commandMode = false
 	m.commandBuffer = ""
 	m.commandCursorPos = 0
-	
+
 	// Parse and execute command
 	parts := strings.Fields(command)
 	if len(parts) == 0 {
 		return m, nil
 	}
-	
+
 	switch parts[0] {
 	case "q", "quit":
 		// Show quit confirmation
 		m.quitConfirmation = true
 		m.quitConfirmMessage = "Really quit? (y/n)"
 		return m, nil
-		
+
 	case "q!", "quit!":
 		// Force quit without confirmation
 		if m.currentView == LogView {
 			stopLogReader()
 		}
 		return m, tea.Quit
-		
+
 	case "h", "help":
 		// Show help
+		if len(parts) > 1 && parts[1] == "commands" {
+			// Show available commands
+			m.err = nil
+			commands := m.getAvailableCommands()
+			helpText := "Available commands in current view:\n"
+			for _, cmd := range commands {
+				if handler, exists := commandRegistry[cmd]; exists {
+					helpText += fmt.Sprintf("  :%s - %s\n", cmd, handler.Description)
+				}
+			}
+			m.err = fmt.Errorf("%s", helpText)
+			return m, nil
+		}
 		m.previousView = m.currentView
 		m.currentView = HelpView
 		m.helpScrollY = 0
 		return m, nil
-		
+
 	case "set":
 		// Handle set commands (e.g., :set showAll)
 		if len(parts) > 1 {
@@ -554,13 +567,12 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 			}
 		}
 		return m, nil
-		
+
 	default:
-		m.err = fmt.Errorf("unknown command: %s", command)
-		return m, nil
+		// Try to execute as a key handler command
+		return m.executeKeyHandlerCommand(parts[0])
 	}
 }
-
 
 func (m *Model) refreshCurrentView() tea.Cmd {
 	switch m.currentView {
@@ -655,7 +667,7 @@ func (m *Model) handleInspectKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.searchMode {
 		return m.handleInspectSearchMode(msg)
 	}
-	
+
 	handler, ok := m.inspectViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
@@ -671,53 +683,53 @@ func (m *Model) handleInspectSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.searchResults = nil
 		m.currentSearchIdx = 0
 		return m, nil
-		
+
 	case tea.KeyEnter:
 		m.searchMode = false
 		m.performInspectSearch()
 		return m, nil
-		
+
 	case tea.KeyBackspace:
 		if m.searchCursorPos > 0 {
 			m.searchText = m.searchText[:m.searchCursorPos-1] + m.searchText[m.searchCursorPos:]
 			m.searchCursorPos--
 		}
 		return m, nil
-		
+
 	case tea.KeyDelete:
 		if m.searchCursorPos < len(m.searchText) {
 			m.searchText = m.searchText[:m.searchCursorPos] + m.searchText[m.searchCursorPos+1:]
 		}
 		return m, nil
-		
+
 	case tea.KeyLeft:
 		if m.searchCursorPos > 0 {
 			m.searchCursorPos--
 		}
 		return m, nil
-		
+
 	case tea.KeyRight:
 		if m.searchCursorPos < len(m.searchText) {
 			m.searchCursorPos++
 		}
 		return m, nil
-		
+
 	case tea.KeyHome:
 		m.searchCursorPos = 0
 		return m, nil
-		
+
 	case tea.KeyEnd:
 		m.searchCursorPos = len(m.searchText)
 		return m, nil
-		
+
 	case tea.KeyCtrlI: // Tab - toggle case insensitive
 		m.searchIgnoreCase = !m.searchIgnoreCase
 		return m, nil
-		
+
 	case tea.KeyCtrlR: // Toggle regex
 		m.searchRegex = !m.searchRegex
 		return m, nil
-		
+
 	case tea.KeyRunes:
 		// Insert characters at cursor position
 		runes := string(msg.Runes)
@@ -725,7 +737,7 @@ func (m *Model) handleInspectSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.searchCursorPos += len(runes)
 		return m, nil
 	}
-	
+
 	return m, nil
 }
 

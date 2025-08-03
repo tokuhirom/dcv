@@ -38,21 +38,21 @@ func (m *Model) renderLogView(availableHeight int) string {
 		for i := startIdx; i < endIdx; i++ {
 			if i < len(m.logs) {
 				line := m.logs[i]
-				
+
 				// Highlight search matches if we have results and search text
 				if m.searchText != "" && !m.searchMode {
 					line = m.highlightLine(line, highlightStyle)
 				}
-				
+
 				// Mark current search result line
-				if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) && 
-				   i == m.searchResults[m.currentSearchIdx] {
+				if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) &&
+					i == m.searchResults[m.currentSearchIdx] {
 					// Add a marker in the margin
 					s.WriteString("> ")
 				} else {
 					s.WriteString("  ")
 				}
-				
+
 				s.WriteString(line + "\n")
 			}
 		}
@@ -83,7 +83,7 @@ func (m *Model) highlightLine(line string, style lipgloss.Style) string {
 			if len(matches) == 0 {
 				return line
 			}
-			
+
 			// Build the line with highlights
 			var result strings.Builder
 			lastEnd := 0
@@ -100,12 +100,12 @@ func (m *Model) highlightLine(line string, style lipgloss.Style) string {
 		// Simple string search
 		searchStr := m.searchText
 		lineToSearch := line
-		
+
 		if m.searchIgnoreCase {
 			searchStr = strings.ToLower(searchStr)
 			lineToSearch = strings.ToLower(line)
 		}
-		
+
 		// Find all occurrences
 		var result strings.Builder
 		lastEnd := 0
@@ -114,15 +114,15 @@ func (m *Model) highlightLine(line string, style lipgloss.Style) string {
 			if idx == -1 {
 				break
 			}
-			
+
 			realIdx := lastEnd + idx
 			result.WriteString(line[lastEnd:realIdx])
-			result.WriteString(style.Render(line[realIdx:realIdx+len(m.searchText)]))
+			result.WriteString(style.Render(line[realIdx : realIdx+len(m.searchText)]))
 			lastEnd = realIdx + len(m.searchText)
 		}
 		result.WriteString(line[lastEnd:])
 		return result.String()
 	}
-	
+
 	return line
 }

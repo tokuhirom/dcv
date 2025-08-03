@@ -114,13 +114,13 @@ type Model struct {
 	stats []ContainerStats
 
 	// Search state
-	searchMode        bool
-	searchText        string
-	searchIgnoreCase  bool
-	searchRegex       bool
-	searchResults     []int // Line indices of search results
-	currentSearchIdx  int   // Current position in searchResults
-	searchCursorPos   int   // Cursor position in search text
+	searchMode       bool
+	searchText       string
+	searchIgnoreCase bool
+	searchRegex      bool
+	searchResults    []int // Line indices of search results
+	currentSearchIdx int   // Current position in searchResults
+	searchCursorPos  int   // Cursor position in search text
 
 	// Error state
 	err error
@@ -230,7 +230,7 @@ func (m *Model) performInspectSearch() {
 
 	// Split inspect content into lines for searching
 	lines := strings.Split(m.inspectContent, "\n")
-	
+
 	searchText := m.searchText
 	if m.searchIgnoreCase && !m.searchRegex {
 		searchText = strings.ToLower(searchText)

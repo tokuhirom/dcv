@@ -183,8 +183,8 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "type in search mode",
 			model: Model{
-				searchMode: true,
-				searchText: "err",
+				searchMode:      true,
+				searchText:      "err",
 				searchCursorPos: 3, // at end of "err"
 			},
 			key:            tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("o")},
@@ -194,8 +194,8 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "backspace in search mode",
 			model: Model{
-				searchMode: true,
-				searchText: "error",
+				searchMode:      true,
+				searchText:      "error",
 				searchCursorPos: 5, // at end of "error"
 			},
 			key:            tea.KeyMsg{Type: tea.KeyBackspace},
@@ -395,18 +395,18 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 	assert.Equal(t, 2, len(m.pathHistory)) // Should have removed the last entry
 	assert.True(t, m.loading)
 	assert.Equal(t, 0, m.selectedFile) // Should reset selection
-	assert.NotNil(t, cmd) // Should trigger loading parent directory files
+	assert.NotNil(t, cmd)              // Should trigger loading parent directory files
 
 	// Test at root directory - should not change
 	model.currentPath = "/"
 	model.pathHistory = []string{"/"}
 	model.loading = false
-	
+
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("u")})
 	m = *newModel.(*Model)
 
 	assert.Equal(t, "/", m.currentPath) // Should stay at root
 	assert.Equal(t, 1, len(m.pathHistory))
 	assert.False(t, m.loading) // Should not trigger loading
-	assert.Nil(t, cmd) // No command when already at root
+	assert.Nil(t, cmd)         // No command when already at root
 }

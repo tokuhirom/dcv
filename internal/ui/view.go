@@ -73,7 +73,7 @@ func (m *Model) View() string {
 	titleRendered := titleStyle.Render(title)
 	actualTitleHeight := lipgloss.Height(titleRendered)
 	footerHeight := 1
-	
+
 	// Available height = total height - title height - footer height
 	availableBodyHeight := m.height - actualTitleHeight - footerHeight
 	if availableBodyHeight < 1 {
@@ -95,7 +95,7 @@ func (m *Model) View() string {
 
 	// Build footer content (command line or quit confirmation or help hint)
 	var footer string
-	
+
 	if m.quitConfirmation {
 		// Show quit confirmation dialog
 		footer = errorStyle.Render(m.quitConfirmMessage)
@@ -105,18 +105,18 @@ func (m *Model) View() string {
 		if m.searchCursorPos < len(m.searchText) {
 			cursor = string(m.searchText[m.searchCursorPos])
 		}
-		
+
 		// Build search line with cursor
 		before := m.searchText[:m.searchCursorPos]
 		after := ""
 		if m.searchCursorPos < len(m.searchText) {
 			after = m.searchText[m.searchCursorPos+1:]
 		}
-		
+
 		cursorStyle := lipgloss.NewStyle().
 			Background(lipgloss.Color("226")).
 			Foreground(lipgloss.Color("235"))
-		
+
 		footer = "/" + before + cursorStyle.Render(cursor) + after
 	} else if m.commandMode {
 		// Show command line
@@ -124,24 +124,24 @@ func (m *Model) View() string {
 		if m.commandCursorPos < len(m.commandBuffer) {
 			cursor = string(m.commandBuffer[m.commandCursorPos])
 		}
-		
+
 		// Build command line with cursor
 		before := m.commandBuffer[:m.commandCursorPos]
 		after := ""
 		if m.commandCursorPos < len(m.commandBuffer) {
 			after = m.commandBuffer[m.commandCursorPos+1:]
 		}
-		
+
 		cursorStyle := lipgloss.NewStyle().
 			Background(lipgloss.Color("226")).
 			Foreground(lipgloss.Color("235"))
-		
+
 		footer = before + cursorStyle.Render(cursor) + after
 	} else {
 		// Show help hint
 		footer = helpStyle.Render("Press ? for help")
 	}
-	
+
 	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for spacing
 
 	// Add padding if needed to push footer to bottom
@@ -173,7 +173,7 @@ func (m *Model) viewTitle() string {
 		} else {
 			title = fmt.Sprintf("Logs: %s", m.containerName)
 		}
-		
+
 		// Add search status to title
 		if len(m.searchResults) > 0 {
 			statusParts := []string{}
@@ -183,17 +183,17 @@ func (m *Model) viewTitle() string {
 			if m.searchRegex {
 				statusParts = append(statusParts, "r")
 			}
-			
+
 			statusStr := ""
 			if len(statusParts) > 0 {
 				statusStr = fmt.Sprintf(" [%s]", strings.Join(statusParts, ""))
 			}
-			
+
 			title += fmt.Sprintf(" - Search: %d/%d%s", m.currentSearchIdx+1, len(m.searchResults), statusStr)
 		} else if m.searchText != "" && !m.searchMode {
 			title += " - No matches found"
 		}
-		
+
 		return title
 	case DindComposeProcessListView:
 		return fmt.Sprintf("Docker in Docker: %s", m.currentDindHost)
@@ -228,7 +228,7 @@ func (m *Model) viewTitle() string {
 		} else {
 			base = fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
 		}
-		
+
 		// Add search status if applicable
 		if m.searchText != "" && !m.searchMode {
 			searchInfo := fmt.Sprintf(" | Search: %s", m.searchText)

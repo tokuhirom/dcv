@@ -102,7 +102,7 @@ func TestRenderNetworkList(t *testing.T) {
 
 	// Test rendering with sufficient height
 	output := m.renderNetworkList(10)
-	
+
 	assert.Contains(t, output, "NETWORK ID")
 	assert.Contains(t, output, "NAME")
 	assert.Contains(t, output, "DRIVER")

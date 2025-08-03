@@ -177,7 +177,12 @@ Displays the full Docker inspect output for containers, images, or networks in J
 
 ### Help View
 
-Shows all available keyboard shortcuts for the current view.
+Shows all available keyboard shortcuts and their corresponding commands for the current view.
+
+The help view displays three columns:
+- **Key**: The keyboard shortcut (e.g., 'j' or 'down')
+- **Command**: The vim-style command that can be used in command mode (e.g., ':select-down-container')
+- **Description**: What the action does
 
 **Key bindings:**
 - `↑`/`k`: Scroll up
@@ -188,10 +193,35 @@ Shows all available keyboard shortcuts for the current view.
 
 Vim-style command line interface for executing commands.
 
-**Available commands:**
+**Built-in commands:**
 - `:q` or `:quit`: Quit the application (with confirmation)
 - `:q!` or `:quit!`: Force quit without confirmation
-- `Esc`: Exit command mode
+- `:h` or `:help`: Show help view
+- `:help commands`: List all available commands in current view
+- `:set all` or `:set showAll`: Show all containers (including stopped)
+- `:set noall` or `:set noshowAll`: Hide stopped containers
+
+**Key handler commands:**
+All key handler functions can be called as commands using kebab-case naming:
+- `:select-up-container`: Move selection up
+- `:select-down-container`: Move selection down
+- `:show-compose-log`: View container logs
+- `:kill-container`: Kill selected container
+- `:stop-container`: Stop selected container
+- `:restart-container`: Restart selected container
+- `:show-file-browser`: Browse container files
+- `:execute-shell`: Execute /bin/sh in container
+- And many more...
+
+**Command aliases:**
+- `:up` → `:select-up-container`
+- `:down` → `:select-down-container`
+- `:logs` → `:show-compose-log`
+- `:inspect` → `:show-inspect`
+- `:exec` → `:execute-shell`
+- `:ps` → `:show-docker-container-list`
+- `:images` → `:show-image-list`
+- `:networks` → `:show-network-list`
 
 **Key bindings:**
 - `:`: Enter command mode from any view
