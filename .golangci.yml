@@ -1,26 +1,22 @@
-version: "2"
 linters:
   enable:
+    - goimports
+    - staticcheck
+    - govet
+    - errcheck
+    - gosimple
+    - ineffassign
+    - unused
     - misspell
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/tokuhirom/dcv
+
 issues:
+  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-formatters:
-  enable:
-    - goimports
-  settings:
-    goimports:
-      local-prefixes:
-        - github.com/tokuhirom/dcv
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+
+run:
+  timeout: 5m
