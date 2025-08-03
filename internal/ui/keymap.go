@@ -12,6 +12,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.ShowComposeLog},
 		{[]string{"d"}, "dind composeContainers", m.ShowDindProcessList},
 		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"2"}, "project list", m.ShowProjectList},
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"f"}, "browse files", m.ShowFileBrowser},
@@ -29,7 +30,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"D"}, "remove", m.DeleteContainer},
 		{[]string{"u"}, "up -d", m.DeployProject},
 		{[]string{"x"}, "down", m.DownProject},
-		{[]string{"2"}, "project list", m.ShowProjectList},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
