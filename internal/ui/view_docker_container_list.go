@@ -53,7 +53,11 @@ func (m *Model) renderDockerList(availableHeight int) string {
 
 	for _, container := range m.dockerContainers {
 		// Truncate container ID
-		id := idStyle.Render(container.ID[:12])
+		id := container.ID
+		if len(id) > 12 {
+			id = id[:12]
+		}
+		id = idStyle.Render(id)
 
 		// Truncate image name
 		image := container.Image
