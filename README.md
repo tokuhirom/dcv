@@ -129,7 +129,7 @@ Displays Docker networks with ID, name, driver, scope, and container count.
 **Key bindings:**
 - `↑`/`k`: Move up
 - `↓`/`j`: Move down
-- `I`: Inspect network (view full config)
+- `Enter`: Inspect network (view full config)
 - `r`: Refresh list
 - `D`: Remove selected network (except default networks)
 - `?`: Show help view
