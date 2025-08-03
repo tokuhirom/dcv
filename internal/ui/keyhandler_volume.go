@@ -51,10 +51,9 @@ func (m *Model) ShowVolumeInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, inspectVolume(m.dockerClient, volume.Name)
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshVolumeList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	m.err = nil
-	return m, loadDockerVolumes(m.dockerClient)
+	return m.Refresh(tea.KeyMsg{})
 }
 
 func (m *Model) DeleteVolume(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

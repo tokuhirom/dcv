@@ -204,29 +204,61 @@ func (m *Model) ShowDockerContainerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadDockerContainers(m.dockerClient, m.showAll)
 }
 
+// Refresh refreshes the current view's data
+func (m *Model) Refresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.loading = true
+
+	switch m.currentView {
+	case ComposeProcessListView:
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	case DindComposeProcessListView:
+		return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
+	case ProjectListView:
+		return m, loadProjects(m.dockerClient)
+	case TopView:
+		return m, loadTop(m.dockerClient, m.projectName, m.topService)
+	case StatsView:
+		return m, loadStats(m.dockerClient)
+	case DockerContainerListView:
+		return m, loadDockerContainers(m.dockerClient, m.showAll)
+	case ImageListView:
+		return m, loadDockerImages(m.dockerClient, m.showAll)
+	case NetworkListView:
+		return m, loadDockerNetworks(m.dockerClient)
+	case VolumeListView:
+		return m, loadDockerVolumes(m.dockerClient)
+	case FileBrowserView:
+		return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
+	default:
+		// For views that don't need refresh, just clear loading state
+		m.loading = false
+		return m, nil
+	}
+}
+
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	return m.Refresh(tea.KeyMsg{})
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshDindList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
+	return m.Refresh(tea.KeyMsg{})
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshProjects(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadProjects(m.dockerClient)
+	return m.Refresh(tea.KeyMsg{})
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadTop(m.dockerClient, m.projectName, m.topService)
+	return m.Refresh(tea.KeyMsg{})
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshStats(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadStats(m.dockerClient)
+	return m.Refresh(tea.KeyMsg{})
 }
 
 func (m *Model) ToggleAllContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -392,9 +424,9 @@ func (m *Model) ShowDockerLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshDockerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadDockerContainers(m.dockerClient, m.showAll)
+	return m.Refresh(tea.KeyMsg{})
 }
 
 func (m *Model) ToggleAllDockerContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -609,9 +641,9 @@ func (m *Model) ShowImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadDockerImages(m.dockerClient, m.showAll)
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadDockerImages(m.dockerClient, m.showAll)
+	return m.Refresh(tea.KeyMsg{})
 }
 
 func (m *Model) ToggleAllImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -675,9 +707,9 @@ func (m *Model) ShowNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadDockerNetworks(m.dockerClient)
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadDockerNetworks(m.dockerClient)
+	return m.Refresh(tea.KeyMsg{})
 }
 
 func (m *Model) DeleteNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -793,9 +825,9 @@ func (m *Model) OpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// Deprecated: Use Refresh instead
 func (m *Model) RefreshFiles(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
+	return m.Refresh(tea.KeyMsg{})
 }
 
 func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

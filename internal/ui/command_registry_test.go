@@ -43,7 +43,7 @@ func TestCommandRegistry(t *testing.T) {
 		"select-up-container",
 		"select-down-container",
 		"show-compose-log",
-		"refresh-process-list",
+		"refresh",
 		"kill-container",
 		"stop-container",
 	}
@@ -57,10 +57,9 @@ func TestCommandRegistry(t *testing.T) {
 
 	// Test aliases
 	aliases := map[string]string{
-		"up":      "select-up-container",
-		"down":    "select-down-container",
-		"logs":    "show-compose-log",
-		"refresh": "refresh-process-list",
+		"up":   "select-up-container",
+		"down": "select-down-container",
+		"logs": "show-compose-log",
 	}
 
 	for alias, target := range aliases {
