@@ -19,6 +19,13 @@ type KeyConfig struct {
 	KeyHandler  KeyHandler
 }
 
+// Refresh sends a RefreshMsg to trigger a reload of the current view
+func (m *Model) Refresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	return m, func() tea.Msg {
+		return RefreshMsg{}
+	}
+}
+
 // Common navigation handlers
 func (m *Model) SelectUpContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer > 0 {
@@ -204,31 +211,6 @@ func (m *Model) ShowDockerContainerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadDockerContainers(m.dockerClient, m.showAll)
 }
 
-func (m *Model) RefreshProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-}
-
-func (m *Model) RefreshDindList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
-}
-
-func (m *Model) RefreshProjects(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadProjects(m.dockerClient)
-}
-
-func (m *Model) RefreshTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadTop(m.dockerClient, m.projectName, m.topService)
-}
-
-func (m *Model) RefreshStats(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadStats(m.dockerClient)
-}
-
 func (m *Model) ToggleAllContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.showAll = !m.showAll
 	m.loading = true
@@ -390,11 +372,6 @@ func (m *Model) ShowDockerLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, streamLogs(m.dockerClient, container.ID, false, "")
 	}
 	return m, nil
-}
-
-func (m *Model) RefreshDockerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadDockerContainers(m.dockerClient, m.showAll)
 }
 
 func (m *Model) ToggleAllDockerContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -609,11 +586,6 @@ func (m *Model) ShowImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadDockerImages(m.dockerClient, m.showAll)
 }
 
-func (m *Model) RefreshImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadDockerImages(m.dockerClient, m.showAll)
-}
-
 func (m *Model) ToggleAllImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.showAll = !m.showAll
 	m.loading = true
@@ -671,11 +643,6 @@ func (m *Model) SelectDownNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) ShowNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = NetworkListView
-	m.loading = true
-	return m, loadDockerNetworks(m.dockerClient)
-}
-
-func (m *Model) RefreshNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.loading = true
 	return m, loadDockerNetworks(m.dockerClient)
 }
@@ -791,11 +758,6 @@ func (m *Model) OpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 	return m, nil
-}
-
-func (m *Model) RefreshFiles(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
 }
 
 func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

@@ -12,6 +12,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// RefreshMsg signals that the current view should be refreshed
+type RefreshMsg struct{}
+
 // Update handles messages and updates the model
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -287,6 +290,52 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.commandExecDone = true
 		m.commandExecExitCode = msg.exitCode
 		return m, nil
+
+	case RefreshMsg:
+		// Handle refresh based on current view
+		m.loading = true
+		m.err = nil
+
+		switch m.currentView {
+		case ComposeProcessListView:
+			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		case DindComposeProcessListView:
+			return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
+		case LogView:
+			// Logs are continuously streamed, no need to refresh
+			return m, nil
+		case TopView:
+			return m, loadTop(m.dockerClient, m.projectName, m.topService)
+		case StatsView:
+			return m, loadStats(m.dockerClient)
+		case ProjectListView:
+			return m, loadProjects(m.dockerClient)
+		case DockerContainerListView:
+			return m, loadDockerContainers(m.dockerClient, m.showAll)
+		case ImageListView:
+			return m, loadDockerImages(m.dockerClient, m.showAll)
+		case NetworkListView:
+			return m, loadDockerNetworks(m.dockerClient)
+		case VolumeListView:
+			return m, loadDockerVolumes(m.dockerClient)
+		case FileBrowserView:
+			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
+		case FileContentView:
+			// File content doesn't need refresh, it's static
+			return m, nil
+		case InspectView:
+			// Inspect view doesn't need refresh, it's static
+			return m, nil
+		case HelpView:
+			// Help view doesn't need refresh
+			return m, nil
+		case CommandExecutionView:
+			// Command execution is already running, no refresh needed
+			return m, nil
+		default:
+			m.loading = false
+			return m, nil
+		}
 
 	default:
 		return m, nil

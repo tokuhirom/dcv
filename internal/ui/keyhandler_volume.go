@@ -51,12 +51,6 @@ func (m *Model) ShowVolumeInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, inspectVolume(m.dockerClient, volume.Name)
 }
 
-func (m *Model) RefreshVolumeList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.loading = true
-	m.err = nil
-	return m, loadDockerVolumes(m.dockerClient)
-}
-
 func (m *Model) DeleteVolume(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if len(m.dockerVolumes) == 0 || m.selectedDockerVolume >= len(m.dockerVolumes) {
 		return m, nil
