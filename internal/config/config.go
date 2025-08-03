@@ -71,4 +71,3 @@ func getConfigPaths() []string {
 
 	return paths
 }
-

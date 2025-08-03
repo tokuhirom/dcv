@@ -27,7 +27,6 @@ func TestLoad_NoConfigFile(t *testing.T) {
 	assert.Equal(t, "docker", cfg.General.InitialView)
 }
 
-
 func TestLoad_FromUserConfigDir(t *testing.T) {
 	// Setup temp config dir
 	tmpDir := t.TempDir()
@@ -62,4 +61,3 @@ func TestLoad_InvalidTOML(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, cfg)
 }
-
