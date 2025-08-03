@@ -159,6 +159,15 @@ type Model struct {
 	// Help view state
 	previousView ViewType
 	helpScrollY  int
+
+	// Command-line mode state
+	commandMode        bool
+	commandBuffer      string
+	commandHistory     []string
+	commandHistoryIdx  int
+	commandCursorPos   int
+	quitConfirmation   bool
+	quitConfirmMessage string
 }
 
 // NewModel creates a new model with initial state

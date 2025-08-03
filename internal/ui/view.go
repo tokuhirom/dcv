@@ -81,12 +81,40 @@ func (m *Model) View() string {
 		)
 	}
 
-	// Calculate space for help hint
-	helpHint := helpStyle.Render("Press ? for help")
-	helpHeight := 1
-	totalContentHeight := titleHeight + bodyHeight + helpHeight + 1 // +1 for spacing
+	// Build footer content (command line or quit confirmation or help hint)
+	var footer string
+	footerHeight := 1
+	
+	if m.quitConfirmation {
+		// Show quit confirmation dialog
+		footer = errorStyle.Render(m.quitConfirmMessage)
+	} else if m.commandMode {
+		// Show command line
+		cursor := " "
+		if m.commandCursorPos < len(m.commandBuffer) {
+			cursor = string(m.commandBuffer[m.commandCursorPos])
+		}
+		
+		// Build command line with cursor
+		before := m.commandBuffer[:m.commandCursorPos]
+		after := ""
+		if m.commandCursorPos < len(m.commandBuffer) {
+			after = m.commandBuffer[m.commandCursorPos+1:]
+		}
+		
+		cursorStyle := lipgloss.NewStyle().
+			Background(lipgloss.Color("226")).
+			Foreground(lipgloss.Color("235"))
+		
+		footer = before + cursorStyle.Render(cursor) + after
+	} else {
+		// Show help hint
+		footer = helpStyle.Render("Press ? for help")
+	}
+	
+	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for spacing
 
-	// Add padding if needed to push help to bottom
+	// Add padding if needed to push footer to bottom
 	if totalContentHeight < m.height {
 		padding := m.height - totalContentHeight
 		body = body + strings.Repeat("\n", padding)
@@ -97,7 +125,7 @@ func (m *Model) View() string {
 		lipgloss.Left,
 		titleStyle.Render(title),
 		body,
-		helpHint,
+		footer,
 	)
 }
 
@@ -138,6 +166,9 @@ func (m *Model) viewTitle() string {
 	case FileContentView:
 		return fmt.Sprintf("File: %s [%s]", filepath.Base(m.fileContentPath), m.browsingContainerName)
 	case InspectView:
+		if m.inspectImageID != "" {
+			return fmt.Sprintf("Image Inspect: %s", m.inspectImageID)
+		}
 		return fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
 	case HelpView:
 		return "Help"
