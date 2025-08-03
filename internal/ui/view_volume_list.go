@@ -49,7 +49,7 @@ func (m Model) renderVolumeList() string {
 		if volume.Size == 0 {
 			size = "-"
 		}
-		
+
 		refCount := fmt.Sprintf("%d", volume.RefCount)
 		if volume.RefCount == 0 && volume.Size == 0 {
 			refCount = "-"

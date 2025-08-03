@@ -65,6 +65,7 @@ Displays `docker compose ps` results in a table format.
 - `2`: Quick switch to project list view
 - `3`: Quick switch to Docker image list view
 - `4`: Quick switch to Docker network list view
+- `5`: Quick switch to Docker volume list view
 - `a`: Toggle show all containers (including stopped)
 - `r`: Refresh list
 - `t`: Show process info (docker compose top)
@@ -133,6 +134,20 @@ Displays Docker networks with ID, name, driver, scope, and container count.
 - `Enter`: Inspect network (view full config)
 - `r`: Refresh list
 - `D`: Remove selected network (except default networks)
+- `?`: Show help view
+- `Esc`/`q`: Back to Docker Compose process list
+
+### Volume List View
+
+Displays Docker volumes with name, driver, scope, size, creation time, and reference count.
+
+**Key bindings:**
+- `↑`/`k`: Move up
+- `↓`/`j`: Move down
+- `Enter`: Inspect volume (view full config)
+- `r`: Refresh list
+- `D`: Remove selected volume
+- `F`: Force remove selected volume (even if used by containers)
 - `?`: Show help view
 - `Esc`/`q`: Back to Docker Compose process list
 
@@ -223,6 +238,7 @@ All key handler functions can be called as commands using kebab-case naming:
 - `:ps` → `:show-docker-container-list`
 - `:images` → `:show-image-list`
 - `:networks` → `:show-network-list`
+- `:volumes` → `:show-volume-list`
 
 **Key bindings:**
 - `:`: Enter command mode from any view

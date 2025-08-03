@@ -27,7 +27,7 @@ func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 	// Parse line-delimited JSON
 	volumes := make([]models.DockerVolume, 0)
 	scanner := bufio.NewScanner(bytes.NewReader(output))
-	
+
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) == 0 {
@@ -59,7 +59,7 @@ func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 		for _, size := range sizeInfo {
 			sizeMap[size.Name] = size
 		}
-		
+
 		for i := range volumes {
 			if size, ok := sizeMap[volumes[i].Name]; ok {
 				volumes[i].Size = size.Size
@@ -81,7 +81,7 @@ func (c *Client) getVolumeSizes() ([]models.DockerVolumeSize, error) {
 	var systemDf struct {
 		Volumes []models.DockerVolumeSize `json:"Volumes"`
 	}
-	
+
 	if err := json.Unmarshal(output, &systemDf); err != nil {
 		return nil, fmt.Errorf("failed to parse docker system df output: %w", err)
 	}
