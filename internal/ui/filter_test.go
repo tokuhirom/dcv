@@ -80,9 +80,9 @@ func TestFilterMode(t *testing.T) {
 		m = newModel.(*Model)
 
 		assert.False(t, m.filterMode)
-		assert.Equal(t, "", m.filterText)      // Filter text is cleared
-		assert.Nil(t, m.filteredLogs)          // Filtered logs are cleared
-		assert.Equal(t, 0, m.logScrollY)       // Scroll is reset
+		assert.Equal(t, "", m.filterText) // Filter text is cleared
+		assert.Nil(t, m.filteredLogs)     // Filtered logs are cleared
+		assert.Equal(t, 0, m.logScrollY)  // Scroll is reset
 	})
 
 	t.Run("case_insensitive_filter", func(t *testing.T) {

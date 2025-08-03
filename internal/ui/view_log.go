@@ -158,7 +158,7 @@ func (m *Model) highlightFilterMatch(line string, style lipgloss.Style) string {
 	var result strings.Builder
 	lastEnd := 0
 	searchLen := len(searchStr)
-	
+
 	for lastEnd < len(line) {
 		idx := strings.Index(lineToSearch[lastEnd:], searchStr)
 		if idx == -1 {
@@ -170,7 +170,7 @@ func (m *Model) highlightFilterMatch(line string, style lipgloss.Style) string {
 		// Found a match
 		matchStart := lastEnd + idx
 		matchEnd := matchStart + searchLen
-		
+
 		// Append text before the match
 		result.WriteString(line[lastEnd:matchStart])
 		// Append highlighted match
@@ -178,6 +178,6 @@ func (m *Model) highlightFilterMatch(line string, style lipgloss.Style) string {
 		// Move past this match
 		lastEnd = matchEnd
 	}
-	
+
 	return result.String()
 }
