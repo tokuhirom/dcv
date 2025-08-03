@@ -142,3 +142,33 @@ func (c *ComposeClient) Down() error {
 
 	return nil
 }
+
+func (c *ComposeClient) UpService(serviceName string) error {
+	args := []string{"compose", "-p", c.projectName, "up", "-d", serviceName}
+	out, err := c.executeCaptured(args...)
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured: %w", err)
+	}
+
+	slog.Info("Executed docker compose up",
+		slog.String("output", string(out)))
+
+	// TODO: show the result of the up command
+
+	return nil
+}
+
+func (c *ComposeClient) Up() error {
+	args := []string{"compose", "-p", c.projectName, "up", "-d"}
+	out, err := c.executeCaptured(args...)
+	if err != nil {
+		return fmt.Errorf("failed to executeCaptured: %w", err)
+	}
+
+	slog.Info("Executed docker compose up",
+		slog.String("output", string(out)))
+
+	// TODO: show the result/progress of the up command
+
+	return nil
+}
