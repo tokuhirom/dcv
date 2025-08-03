@@ -14,7 +14,10 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - Multiple Docker Compose project management and switching
 - Log viewing capability for any container
 - Special handling for dind (Docker-in-Docker) containers to view nested containers
-- Vim-like navigation and commands throughout the interface
+- Vim-like navigation and command-line interface
+- Built-in help system accessible with `?` key
+- Quit confirmation dialog for safer exits
+- Search functionality in log views
 
 ## Technical Architecture
 
@@ -40,6 +43,8 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `P`: Pause/Unpause container
    - `D`: Delete stopped container
    - `r`: Refresh list
+   - `?`: Show help view
+   - `:`: Enter command mode
    - `q`/`Esc`: Back to Docker Compose view
 
 2. **Docker Compose Process List View**: Shows `docker compose ps` results
@@ -66,7 +71,9 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `u`: Deploy all services (docker compose up -d)
    - `x`: Stop and remove all services (docker compose down)
    - `r`: Refresh list
-   - `q`: Quit
+   - `?`: Show help view
+   - `:`: Enter command mode
+   - `q`: Quit (with confirmation)
 
 3. **Image List View**: Shows Docker images with repository, tag, ID, creation time, and size
    - `↑`/`k`: Move up
@@ -97,15 +104,20 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `↓`/`j`: Scroll down
    - `G`: Jump to end
    - `g`: Jump to start
-   - `/`: Search functionality
+   - `/`: Search logs
+   - `n`: Next search result
+   - `N`: Previous search result
+   - `?`: Show help view
    - `Esc`/`q`: Back to previous view
 
 7. **Top View**: Shows process information (docker compose top)
    - `r`: Refresh
+   - `?`: Show help view
    - `Esc`/`q`: Back to process list
 
 8. **Stats View**: Shows container resource usage statistics
    - `r`: Refresh
+   - `?`: Show help view
    - `Esc`/`q`: Back to process list
 
 9. **Network List View**: Shows Docker networks with ID, name, driver, scope, and container count
@@ -127,6 +139,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
     - `↓`/`j`: Scroll down
     - `G`: Jump to end
     - `g`: Jump to start
+    - `?`: Show help view
     - `Esc`/`q`: Back to file browser
 
 12. **Inspect View**: Shows full container configuration in JSON format
@@ -134,7 +147,21 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
     - `↓`/`j`: Scroll down
     - `G`: Jump to end
     - `g`: Jump to start
+    - `?`: Show help view
     - `Esc`/`q`: Back to container list
+
+13. **Help View**: Displays all available keyboard shortcuts for the current view
+    - `↑`/`k`: Scroll up
+    - `↓`/`j`: Scroll down
+    - `Esc`/`q`: Back to previous view
+
+14. **Command Mode**: Vim-style command line interface
+    - `:q` or `:quit`: Quit with confirmation
+    - `:q!` or `:quit!`: Force quit without confirmation
+    - `↑`/`↓`: Navigate command history
+    - `←`/`→`: Move cursor in command line
+    - `Enter`: Execute command
+    - `Esc`: Cancel command mode
 
 ## Development Guidelines
 
@@ -183,7 +210,6 @@ go build -o dcv
 - **Multiple selections** - Perform batch operations
 - **Color themes** - Customizable color schemes
 - **Export logs** - Save logs to file
-- **Log search** - The `/` search in log view is marked as "not implemented yet"
 
 ### Monitoring Improvements
 - **Real-time stats update** - Currently stats view doesn't auto-refresh
