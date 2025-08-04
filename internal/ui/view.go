@@ -290,7 +290,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case TopView:
 		return m.renderTopView(availableHeight)
 	case StatsView:
-		return m.renderStatsView(availableHeight)
+		return m.statsViewModel.render(m, availableHeight)
 	case ComposeProjectListView:
 		return m.composeProjectListViewModel.render(m, availableHeight)
 	case DockerContainerListView:

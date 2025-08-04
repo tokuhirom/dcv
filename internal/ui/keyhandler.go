@@ -218,9 +218,7 @@ func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowStatsView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = StatsView
-	m.loading = true
-	return m, loadStats(m.dockerClient)
+	return m, m.statsViewModel.Show(m)
 }
 
 func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
