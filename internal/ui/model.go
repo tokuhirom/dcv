@@ -94,7 +94,6 @@ type Model struct {
 	// Docker client
 	dockerClient *docker.Client
 
-
 	dockerContainerListViewModel DockerContainerListViewModel
 	logViewModel                 LogViewModel
 	commandExecutionViewModel    CommandExecutionViewModel
@@ -133,7 +132,6 @@ type Model struct {
 	containerName string
 	isDindLog     bool
 	hostContainer string
-
 
 	// Search state
 	searchMode       bool

@@ -107,7 +107,7 @@ func (m *DindProcessListViewModel) HandleShowLog(model *Model) tea.Cmd {
 	if len(m.dindContainers) == 0 || m.selectedDindContainer >= len(m.dindContainers) {
 		return nil
 	}
-	
+
 	container := m.dindContainers[m.selectedDindContainer]
 	return model.logViewModel.ShowDindLog(model, m.currentDindContainerID, container)
 }
