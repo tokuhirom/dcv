@@ -32,7 +32,8 @@ func (m *Model) renderDindList(availableHeight int) string {
 			}
 			return normalStyle
 		}).
-		Headers("CONTAINER ID", "IMAGE", "STATUS", "NAMES")
+		Headers("CONTAINER ID", "IMAGE", "STATUS", "NAMES").
+		Height(availableHeight)
 
 	for _, container := range m.dindContainers {
 		// Truncate container ID
