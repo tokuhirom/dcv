@@ -635,10 +635,7 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 			m.err = fmt.Errorf("%s", helpText)
 			return m, nil
 		}
-		m.previousView = m.currentView
-		m.currentView = HelpView
-		m.helpScrollY = 0
-		return m, nil
+		return m, m.helpViewModel.Show(m, m.currentView)
 
 	case "set": // TODO: deprecate this
 		// Handle set commands (e.g., :set showAll)
