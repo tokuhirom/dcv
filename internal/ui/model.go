@@ -118,7 +118,6 @@ type Model struct {
 	dockerImages        []models.DockerImage
 	selectedDockerImage int
 
-
 	// Docker volumes state
 	dockerVolumes        []models.DockerVolume
 	selectedDockerVolume int
