@@ -876,30 +876,19 @@ func (m *Model) PrevInspectSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // Help view handlers
 func (m *Model) ShowHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.previousView = m.currentView
-	m.currentView = HelpView
-	m.helpScrollY = 0
-	return m, nil
+	return m, m.helpViewModel.Show(m, m.currentView)
 }
 
 func (m *Model) ScrollHelpUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.helpScrollY > 0 {
-		m.helpScrollY--
-	}
-	return m, nil
+	return m, m.helpViewModel.HandleScrollUp()
 }
 
 func (m *Model) ScrollHelpDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Will be calculated based on help content height
-	// For now, just increment
-	m.helpScrollY++
-	return m, nil
+	return m, m.helpViewModel.HandleScrollDown()
 }
 
 func (m *Model) BackFromHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = m.previousView
-	m.helpScrollY = 0
-	return m, nil
+	return m, m.helpViewModel.HandleBack(m)
 }
 
 func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

@@ -16,13 +16,14 @@ import (
 )
 
 type CommandExecutionViewModel struct {
-	cmd       *exec.Cmd
-	output    []string
-	scrollY   int
-	done      bool
-	exitCode  int
-	cmdString string
-	reader    *bufio.Reader
+	cmd          *exec.Cmd
+	output       []string
+	scrollY      int
+	done         bool
+	exitCode     int
+	cmdString    string
+	reader       *bufio.Reader
+	previousView ViewType
 }
 
 func (m *CommandExecutionViewModel) render(model *Model) string {
@@ -147,13 +148,13 @@ func (m *CommandExecutionViewModel) HandleBack(model *Model) tea.Cmd {
 	}
 
 	// Go back to previous view
-	model.currentView = model.previousView
+	model.currentView = m.previousView
 	model.loading = true
 
 	// TODO: CommandExecutionModelView でここを管理するのは微妙｡refresh してもらう旨だけ､メッセージ送ればよろしいかもしれず｡
 
 	// Reload data for the previous view
-	switch model.previousView {
+	switch m.previousView {
 	case ComposeProcessListView:
 		return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
 	case DockerContainerListView:
@@ -237,7 +238,7 @@ func executeContainerCommand(client *docker.Client, containerID string, operatio
 }
 
 func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previousView ViewType, containerID string, operation string) tea.Cmd {
-	model.previousView = previousView
+	m.previousView = previousView
 	model.currentView = CommandExecutionView
 	m.output = []string{}
 	m.scrollY = 0
@@ -248,7 +249,7 @@ func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previo
 }
 
 func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, operation string) tea.Cmd {
-	model.previousView = model.currentView
+	m.previousView = model.currentView
 	model.currentView = CommandExecutionView
 	m.output = []string{}
 	m.scrollY = 0

@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m *Model) renderHelpView(availableHeight int) string {
+type HelpViewModel struct {
+	scrollY      int
+	previousView ViewType
+}
+
+func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	// Get key configurations based on previous view
@@ -16,43 +22,43 @@ func (m *Model) renderHelpView(availableHeight int) string {
 
 	switch m.previousView {
 	case ComposeProcessListView:
-		configs = m.processListViewHandlers
+		configs = model.processListViewHandlers
 		viewName = "Compose Process List"
 	case LogView:
-		configs = m.logViewHandlers
+		configs = model.logViewHandlers
 		viewName = "Log View"
 	case DindProcessListView:
-		configs = m.dindListViewHandlers
+		configs = model.dindListViewHandlers
 		viewName = "Docker in Docker"
 	case TopView:
-		configs = m.topViewHandlers
+		configs = model.topViewHandlers
 		viewName = "Process Info"
 	case StatsView:
-		configs = m.statsViewHandlers
+		configs = model.statsViewHandlers
 		viewName = "Container Stats"
 	case ComposeProjectListView:
-		configs = m.projectListViewHandlers
+		configs = model.projectListViewHandlers
 		viewName = "Project List"
 	case DockerContainerListView:
-		configs = m.dockerListViewHandlers
+		configs = model.dockerListViewHandlers
 		viewName = "Docker Containers"
 	case ImageListView:
-		configs = m.imageListViewHandlers
+		configs = model.imageListViewHandlers
 		viewName = "Docker Images"
 	case NetworkListView:
-		configs = m.networkListViewHandlers
+		configs = model.networkListViewHandlers
 		viewName = "Docker Networks"
 	case VolumeListView:
-		configs = m.volumeListViewHandlers
+		configs = model.volumeListViewHandlers
 		viewName = "Docker Volumes"
 	case FileBrowserView:
-		configs = m.fileBrowserHandlers
+		configs = model.fileBrowserHandlers
 		viewName = "File Browser"
 	case FileContentView:
-		configs = m.fileContentHandlers
+		configs = model.fileContentHandlers
 		viewName = "File Content"
 	case InspectView:
-		configs = m.inspectViewHandlers
+		configs = model.inspectViewHandlers
 		viewName = "Inspect"
 	}
 
@@ -80,18 +86,18 @@ func (m *Model) renderHelpView(availableHeight int) string {
 	if maxScroll < 0 {
 		maxScroll = 0
 	}
-	if m.helpScrollY > maxScroll {
-		m.helpScrollY = maxScroll
+	if m.scrollY > maxScroll {
+		m.scrollY = maxScroll
 	}
 
 	// Render key bindings
 	visibleConfigs := configs
-	if m.helpScrollY > 0 && m.helpScrollY < len(configs) {
-		endIdx := m.helpScrollY + visibleLines - 5
+	if m.scrollY > 0 && m.scrollY < len(configs) {
+		endIdx := m.scrollY + visibleLines - 5
 		if endIdx > len(configs) {
 			endIdx = len(configs)
 		}
-		visibleConfigs = configs[m.helpScrollY:endIdx]
+		visibleConfigs = configs[m.scrollY:endIdx]
 	}
 
 	for _, config := range visibleConfigs {
@@ -129,4 +135,29 @@ func (m *Model) renderHelpView(availableHeight int) string {
 	s.WriteString(footer)
 
 	return s.String()
+}
+
+func (m *HelpViewModel) Show(model *Model, previousView ViewType) tea.Cmd {
+	m.previousView = previousView
+	model.currentView = HelpView
+	m.scrollY = 0
+	return nil
+}
+
+func (m *HelpViewModel) HandleScrollUp() tea.Cmd {
+	if m.scrollY > 0 {
+		m.scrollY--
+	}
+	return nil
+}
+
+func (m *HelpViewModel) HandleScrollDown() tea.Cmd {
+	m.scrollY++
+	return nil
+}
+
+func (m *HelpViewModel) HandleBack(model *Model) tea.Cmd {
+	model.currentView = m.previousView
+	m.scrollY = 0
+	return nil
 }

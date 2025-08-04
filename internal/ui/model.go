@@ -111,6 +111,7 @@ type Model struct {
 	dindProcessListViewModel     DindProcessListViewModel
 	imageListViewModel           ImageListViewModel
 	fileContentViewModel         FileContentViewModel
+	helpViewModel                HelpViewModel
 
 	// Docker images state
 	dockerImages        []models.DockerImage
@@ -213,10 +214,6 @@ type Model struct {
 	helpViewHandlers        []KeyConfig
 	commandExecKeymap       map[string]KeyHandler
 	commandExecHandlers     []KeyConfig
-
-	// Help view state
-	previousView ViewType
-	helpScrollY  int
 
 	// Command-line mode state
 	commandMode        bool
