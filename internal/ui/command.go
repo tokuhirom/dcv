@@ -35,26 +35,26 @@ func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, 
 		// Execute command
 		return m.executeCommand(model)
 
-	case tea.KeyBackspace:
+	case tea.KeyBackspace, tea.KeyCtrlH:
 		if len(m.commandBuffer) > 1 && m.commandCursorPos > 1 {
 			m.commandBuffer = m.commandBuffer[:m.commandCursorPos-1] + m.commandBuffer[m.commandCursorPos:]
 			m.commandCursorPos--
 		}
 		return model, nil
 
-	case tea.KeyLeft:
+	case tea.KeyLeft, tea.KeyCtrlB:
 		if m.commandCursorPos > 1 {
 			m.commandCursorPos--
 		}
 		return model, nil
 
-	case tea.KeyRight:
+	case tea.KeyRight, tea.KeyCtrlF:
 		if m.commandCursorPos < len(m.commandBuffer) {
 			m.commandCursorPos++
 		}
 		return model, nil
 
-	case tea.KeyUp:
+	case tea.KeyUp, tea.KeyCtrlP:
 		// Navigate command history
 		if m.commandHistoryIdx > 0 {
 			m.commandHistoryIdx--
@@ -65,7 +65,7 @@ func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, 
 		}
 		return model, nil
 
-	case tea.KeyDown:
+	case tea.KeyDown, tea.KeyCtrlN:
 		// Navigate command history
 		if m.commandHistoryIdx < len(m.commandHistory)-1 {
 			m.commandHistoryIdx++

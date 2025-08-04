@@ -208,6 +208,7 @@ func (m *Model) Init() tea.Cmd {
 	}
 }
 
+// TODO: move to keyhandler.go
 func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case CommandExecutionView:
