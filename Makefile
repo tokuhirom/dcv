@@ -48,12 +48,7 @@ test:
 # Format code with goimports (fallback to go fmt if goimports fails)
 fmt:
 	@echo "Running code formatter..."
-	@if command -v goimports >/dev/null 2>&1 && goimports -w . 2>/dev/null; then \
-		echo "Formatted with goimports"; \
-	else \
-		echo "goimports not available, using go fmt"; \
-		go fmt ./...; \
-	fi
+	golangci-lint fmt .
 
 # Install development dependencies
 dev-deps:
