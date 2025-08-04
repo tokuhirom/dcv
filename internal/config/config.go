@@ -38,7 +38,7 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to get config path: %w", err)
 	}
 
-	// Start with default config
+	// HandleStart with default config
 	cfg := Default()
 
 	// If we couldn't determine config path, return default

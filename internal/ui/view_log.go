@@ -8,6 +8,17 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+type LogViewModel struct {
+}
+
+func (m LogViewModel) Clear(model *Model, containerName string) {
+	model.containerName = containerName
+	model.isDindLog = false
+	model.currentView = LogView
+	model.logs = []string{}
+	model.logScrollY = 0
+}
+
 func (m *Model) renderLogView(availableHeight int) string {
 	var s strings.Builder
 

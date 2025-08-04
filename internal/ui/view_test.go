@@ -322,7 +322,7 @@ func TestDockerContainerListView(t *testing.T) {
 			width:       80,
 			height:      24,
 			currentView: DockerContainerListView,
-			dockerListViewModel: DockerListViewModel{
+			dockerContainerListViewModel: DockerContainerListViewModel{
 				selectedDockerContainer: 0,
 				dockerContainers: []models.DockerContainer{
 					{ID: "abc123def456", Names: "nginx", Image: "nginx:latest", Status: "Up 2 hours", Ports: "80/tcp"},
@@ -358,7 +358,7 @@ func TestDockerContainerListView(t *testing.T) {
 			height:      24,
 			currentView: DockerContainerListView,
 			showAll:     true,
-			dockerListViewModel: DockerListViewModel{
+			dockerContainerListViewModel: DockerContainerListViewModel{
 				dockerContainers: []models.DockerContainer{},
 			},
 		}
@@ -375,7 +375,7 @@ func TestDockerContainerListView(t *testing.T) {
 			width:       80,
 			height:      24,
 			currentView: DockerContainerListView,
-			dockerListViewModel: DockerListViewModel{
+			dockerContainerListViewModel: DockerContainerListViewModel{
 				dockerContainers: []models.DockerContainer{},
 			},
 		}

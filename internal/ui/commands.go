@@ -80,7 +80,7 @@ func newLogReader(client *docker.Client, serviceName string, isDind bool, hostSe
 		slog.Bool("isDind", lr.isDind),
 		slog.String("hostContainer", lr.hostContainer))
 
-	// Start reading logs in background
+	// HandleStart reading logs in background
 	go lr.readLogs()
 
 	return lr, nil
