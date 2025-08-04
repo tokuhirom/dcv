@@ -110,7 +110,11 @@ type Model struct {
 	currentDindHost        string // Container name (for display)
 	currentDindContainerID string // Service name (for docker compose exec)
 
-	dockerListViewModel DockerListViewModel
+	dockerContainerListViewModel DockerContainerListViewModel
+	logViewModel                 LogViewModel
+	commandExecutionViewModel    CommandExecutionViewModel
+	fileBrowserViewModel         FileBrowserViewModel
+	inspectViewModel             InspectViewModel
 
 	// Docker images state
 	dockerImages        []models.DockerImage
@@ -594,7 +598,7 @@ func executeCommandWithStreaming(client *docker.Client, projectName string, oper
 			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
 		}
 
-		// Start the command
+		// HandleStart the command
 		if err := cmd.Start(); err != nil {
 			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
 		}
@@ -632,43 +636,6 @@ func streamCommandFromReader(m *Model) tea.Cmd {
 		// Remove trailing newline
 		line = strings.TrimRight(line, "\n\r")
 		return commandExecOutputMsg{line: line}
-	}
-}
-
-func executeContainerCommand(client *docker.Client, containerID string, operation string) tea.Cmd {
-	return func() tea.Msg {
-		// Create the command based on operation
-		var cmd *exec.Cmd
-		switch operation {
-		case "start":
-			cmd = exec.Command("docker", "start", containerID)
-		case "stop":
-			cmd = exec.Command("docker", "stop", containerID)
-		case "restart":
-			cmd = exec.Command("docker", "restart", containerID)
-		case "kill":
-			cmd = exec.Command("docker", "kill", containerID)
-		default:
-			return errorMsg{err: fmt.Errorf("unknown operation: %s", operation)}
-		}
-
-		// Create pipes for stdout and stderr
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			return errorMsg{err: fmt.Errorf("failed to create stdout pipe: %w", err)}
-		}
-		stderr, err := cmd.StderrPipe()
-		if err != nil {
-			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
-		}
-
-		// Start the command
-		if err := cmd.Start(); err != nil {
-			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
-		}
-
-		// Store the command reference and output channel
-		return commandExecStartedMsg{cmd: cmd, stdout: stdout, stderr: stderr}
 	}
 }
 
@@ -794,16 +761,6 @@ func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
 		return executeCommandMsg{
 			containerID: containerID,
 			command:     command,
-		}
-	}
-}
-
-func loadInspect(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		content, err := client.InspectContainer(containerID)
-		return inspectLoadedMsg{
-			content: content,
-			err:     err,
 		}
 	}
 }

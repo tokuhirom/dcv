@@ -5,8 +5,15 @@ import (
 	"regexp"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/models"
 )
+
+type InspectViewModel struct {
+}
 
 // renderInspectView renders the container inspect view
 func (m *Model) renderInspectView(availableHeight int) string {
@@ -146,4 +153,20 @@ func (m *Model) highlightInspectLine(originalLine, styledLine string, highlightS
 	}
 
 	return styledLine
+}
+
+func loadInspect(client *docker.Client, containerID string) tea.Cmd {
+	return func() tea.Msg {
+		content, err := client.InspectContainer(containerID)
+		return inspectLoadedMsg{
+			content: content,
+			err:     err,
+		}
+	}
+}
+
+func (m InspectViewModel) InspectContainer(model *Model, container models.DockerContainer) tea.Cmd {
+	model.inspectContainerID = container.ID
+	model.loading = true
+	return loadInspect(model.dockerClient, container.ID)
 }

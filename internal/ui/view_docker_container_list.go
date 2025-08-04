@@ -3,18 +3,19 @@ package ui
 import (
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
-type DockerListViewModel struct {
+type DockerContainerListViewModel struct {
 	dockerContainers        []models.DockerContainer
 	selectedDockerContainer int
 }
 
-func (m *DockerListViewModel) renderDockerList(availableHeight int) string {
+func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) string {
 	var s strings.Builder
 
 	// Container list
@@ -96,4 +97,96 @@ func (m *DockerListViewModel) renderDockerList(availableHeight int) string {
 	s.WriteString(t.Render() + "\n")
 
 	return s.String()
+}
+
+func (m *DockerContainerListViewModel) HandleUp(_ *Model) tea.Cmd {
+	if m.selectedDockerContainer > 0 {
+		m.selectedDockerContainer--
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleDown(*Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers)-1 {
+		m.selectedDockerContainer++
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleLog(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		model.logViewModel.Clear(model, container.Names)
+		return streamLogs(model.dockerClient, container.ID, false, "")
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleKill(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, DockerContainerListView, container.ID, "kill")
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleStop(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, DockerContainerListView, container.ID, "stop")
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleStart(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, DockerContainerListView, container.ID, "start")
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleRestart(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, DockerContainerListView, container.ID, "restart")
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
+	// Delete the selected Docker container
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, DockerContainerListView, container.ID, "rm")
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.fileBrowserViewModel.Load(model, container)
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
+
+	// Execute shell in the selected Docker container
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		// Default to /bin/sh as it's most commonly available
+		return executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
+	// Inspect the selected Docker container
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.inspectViewModel.InspectContainer(model, container)
+	}
+	return nil
 }

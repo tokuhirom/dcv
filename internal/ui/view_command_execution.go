@@ -2,12 +2,18 @@ package ui
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/tokuhirom/dcv/internal/docker"
 )
+
+type CommandExecutionViewModel struct {
+}
 
 func (m *Model) renderCommandExecutionView() string {
 	if m.width == 0 || m.height == 0 {
@@ -144,4 +150,54 @@ func (m *Model) BackFromCommandExec(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.loading = false
 		return m, nil
 	}
+}
+
+func executeContainerCommand(client *docker.Client, containerID string, operation string) tea.Cmd {
+	return func() tea.Msg {
+		// Create the command based on operation
+		var cmd *exec.Cmd
+		switch operation {
+		case "start":
+			cmd = exec.Command("docker", "start", containerID)
+		case "stop":
+			cmd = exec.Command("docker", "stop", containerID)
+		case "restart":
+			cmd = exec.Command("docker", "restart", containerID)
+		case "kill":
+			cmd = exec.Command("docker", "kill", containerID)
+		case "rm":
+			cmd = exec.Command("docker", "rm", containerID)
+		default:
+			return errorMsg{err: fmt.Errorf("unknown operation: %s", operation)}
+		}
+
+		// Create pipes for stdout and stderr
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stdout pipe: %w", err)}
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
+		}
+
+		// HandleStart the command
+		if err := cmd.Start(); err != nil {
+			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
+		}
+
+		// Store the command reference and output channel
+		return commandExecStartedMsg{cmd: cmd, stdout: stdout, stderr: stderr}
+	}
+}
+
+func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previousView ViewType, containerID string, operation string) tea.Cmd {
+	model.previousView = previousView
+	model.currentView = CommandExecutionView
+	model.commandExecOutput = []string{}
+	model.commandExecScrollY = 0
+	model.commandExecDone = false
+	model.commandExecCmdString = fmt.Sprintf("docker %s %s", operation, containerID)
+
+	return executeContainerCommand(model.dockerClient, containerID, operation)
 }

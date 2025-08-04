@@ -4,9 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+
+	"github.com/tokuhirom/dcv/internal/models"
 )
+
+type FileBrowserViewModel struct {
+}
 
 // renderFileBrowser renders the file browser view
 func (m *Model) renderFileBrowser(availableHeight int) string {
@@ -64,4 +70,14 @@ func (m *Model) renderFileBrowser(availableHeight int) string {
 	content.WriteString("\n")
 
 	return content.String()
+}
+
+func (m *FileBrowserViewModel) Load(model *Model, container models.DockerContainer) tea.Cmd {
+	model.browsingContainerID = container.ID
+	model.browsingContainerName = container.Names
+	model.currentPath = "/"
+	model.pathHistory = []string{"/"}
+	model.currentView = FileBrowserView
+	model.loading = true
+	return loadContainerFiles(model.dockerClient, container.ID, "/")
 }

@@ -111,7 +111,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
-		{[]string{"f"}, "browse files", m.CmdFileBrowser},
+		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"I"}, "inspect", m.ShowDockerInspect},
 		{[]string{"r"}, "refresh", m.Refresh},

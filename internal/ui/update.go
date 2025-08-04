@@ -109,7 +109,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case commandExecutedMsg:
-		// Start polling for logs after command is set
+		// HandleStart polling for logs after command is set
 		return m, pollForLogs()
 
 	case topLoadedMsg:
@@ -178,10 +178,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.dockerListViewModel.dockerContainers = msg.containers
+		m.dockerContainerListViewModel.dockerContainers = msg.containers
 		m.err = nil
-		if len(m.dockerListViewModel.dockerContainers) > 0 && m.dockerListViewModel.selectedDockerContainer >= len(m.dockerListViewModel.dockerContainers) {
-			m.dockerListViewModel.selectedDockerContainer = 0
+		if len(m.dockerContainerListViewModel.dockerContainers) > 0 && m.dockerContainerListViewModel.selectedDockerContainer >= len(m.dockerContainerListViewModel.dockerContainers) {
+			m.dockerContainerListViewModel.selectedDockerContainer = 0
 		}
 		return m, nil
 
@@ -273,7 +273,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case commandExecStartedMsg:
 		m.commandExecCmd = msg.cmd
 		m.commandExecReader = bufio.NewReader(io.MultiReader(msg.stdout, msg.stderr))
-		// Start reading output
+		// HandleStart reading output
 		return m, streamCommandFromReader(m)
 
 	case commandExecOutputMsg:
