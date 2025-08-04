@@ -182,7 +182,7 @@ func TestImageListViewModel_Operations(t *testing.T) {
 
 		// Toggle back
 		model.loading = false
-		cmd = vm.HandleToggleAll(model)
+		_ = vm.HandleToggleAll(model)
 		assert.False(t, vm.showAll)
 		assert.True(t, model.loading)
 	})
