@@ -24,7 +24,7 @@ func TestView(t *testing.T) {
 			contains: []string{"Loading..."},
 		},
 		{
-			name: "process list with composeContainers",
+			name: "process list with containers",
 			model: Model{
 				currentView: ComposeProcessListView,
 				width:       80,
@@ -87,14 +87,16 @@ func TestView(t *testing.T) {
 		{
 			name: "log view",
 			model: Model{
-				currentView:   LogView,
-				width:         80,
-				Height:        24,
-				containerName: "web-1",
-				logs: []string{
-					"Starting web server...",
-					"Listening on port 80",
-					"Request received",
+				currentView: LogView,
+				width:       80,
+				Height:      24,
+				logViewModel: LogViewModel{
+					containerName: "web-1",
+					logs: []string{
+						"Starting web server...",
+						"Listening on port 80",
+						"Request received",
+					},
 				},
 			},
 			contains: []string{
@@ -107,13 +109,17 @@ func TestView(t *testing.T) {
 		{
 			name: "log view in search mode",
 			model: Model{
-				currentView:     LogView,
-				width:           80,
-				Height:          24,
-				containerName:   "web-1",
-				searchMode:      true,
-				searchText:      "error",
-				searchCursorPos: 5,
+				currentView: LogView,
+				width:       80,
+				Height:      24,
+				logViewModel: LogViewModel{
+					containerName: "web-1",
+					SearchViewModel: SearchViewModel{
+						searchMode:      true,
+						searchText:      "error",
+						searchCursorPos: 5,
+					},
+				},
 			},
 			contains: []string{
 				"/error", // Search prompt in footer
@@ -197,30 +203,32 @@ func TestRenderProcessList(t *testing.T) {
 
 func TestRenderLogView(t *testing.T) {
 	m := Model{
-		currentView:   LogView,
-		width:         80,
-		Height:        10,
-		containerName: "web-1",
-		logs: []string{
-			"Line 1",
-			"Line 2",
-			"Line 3",
-			"Line 4",
-			"Line 5",
+		currentView: LogView,
+		width:       80,
+		Height:      10,
+		logViewModel: LogViewModel{
+			containerName: "web-1",
+			logs: []string{
+				"Line 1",
+				"Line 2",
+				"Line 3",
+				"Line 4",
+				"Line 5",
+			},
+			logScrollY: 0,
 		},
-		logScrollY: 0,
 	}
 
 	// Calculate available Height
 	availableHeight := m.Height - 2
-	view := m.renderLogView(availableHeight)
+	view := m.logViewModel.render(&m, availableHeight)
 
 	// Should show logs
 	assert.Contains(t, view, "Line 1")
 
 	// Test scrolling
-	m.logScrollY = 2
-	view = m.renderLogView(availableHeight)
+	m.logViewModel.logScrollY = 2
+	view = m.logViewModel.render(&m, availableHeight)
 	assert.NotContains(t, view, "Line 1")
 	assert.Contains(t, view, "Line 3")
 }
@@ -258,7 +266,7 @@ func TestRenderDindList(t *testing.T) {
 	// The title is in viewTitle(), not renderDindList()
 	// Check that dind containers are listed correctly
 
-	// Check composeContainers are listed
+	// Check containers are listed
 	assert.Contains(t, view, "abc123def456") // First 12 chars
 	assert.Contains(t, view, "def456ghi789") // First 12 chars
 	assert.Contains(t, view, "alpine:latest")

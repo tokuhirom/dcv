@@ -38,6 +38,8 @@ func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleUp()
 	case InspectView:
 		return m, m.inspectViewModel.HandleUp(m)
 	case DockerContainerListView:
@@ -61,6 +63,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleDown(m)
 	case InspectView:
 		return m, m.inspectViewModel.HandleDown(m)
 	case DockerContainerListView:
@@ -80,6 +84,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleGoToEnd(m)
 	case InspectView:
 		return m, m.inspectViewModel.HandleGoToEnd(m)
 	case CommandExecutionView:
@@ -93,6 +99,8 @@ func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdGoToStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleGoToStart()
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleGoToStart()
 	case InspectView:
@@ -104,83 +112,15 @@ func (m *Model) CmdGoToStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-// Log view navigation handlers
-func (m *Model) ScrollLogUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.logScrollY > 0 {
-		m.logScrollY--
+func (m *Model) CmdFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleFilter()
+	default:
+		slog.Info("Unhandled filter command in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
 	}
-	return m, nil
-}
-
-func (m *Model) ScrollLogDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	maxScroll := len(m.logs) - (m.Height - 4)
-	if m.logScrollY < maxScroll && maxScroll > 0 {
-		m.logScrollY++
-	}
-	return m, nil
-}
-
-func (m *Model) GoToLogEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	maxScroll := len(m.logs) - (m.Height - 4)
-	if maxScroll > 0 {
-		m.logScrollY = maxScroll
-	}
-	return m, nil
-}
-
-func (m *Model) GoToLogStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.logScrollY = 0
-	return m, nil
-}
-
-func (m *Model) StartSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.searchMode = true
-	m.searchText = ""
-	m.searchCursorPos = 0
-	m.searchResults = nil
-	m.currentSearchIdx = 0
-	return m, nil
-}
-
-func (m *Model) StartFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.filterMode = true
-	m.filterText = ""
-	m.filterCursorPos = 0
-	m.filteredLogs = nil
-	return m, nil
-}
-
-func (m *Model) NextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if len(m.searchResults) > 0 {
-		m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.searchResults)
-		// Jump to the line
-		if m.currentSearchIdx < len(m.searchResults) {
-			targetLine := m.searchResults[m.currentSearchIdx]
-			m.logScrollY = targetLine - m.Height/2 + 3 // Center the result
-			if m.logScrollY < 0 {
-				m.logScrollY = 0
-			}
-		}
-	}
-	return m, nil
-}
-
-func (m *Model) PrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if len(m.searchResults) > 0 {
-		m.currentSearchIdx--
-		if m.currentSearchIdx < 0 {
-			m.currentSearchIdx = len(m.searchResults) - 1
-		}
-		// Jump to the line
-		if m.currentSearchIdx < len(m.searchResults) {
-			targetLine := m.searchResults[m.currentSearchIdx]
-			m.logScrollY = targetLine - m.Height/2 + 3 // Center the result
-			if m.logScrollY < 0 {
-				m.logScrollY = 0
-			}
-		}
-	}
-	return m, nil
 }
 
 func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -255,16 +195,6 @@ func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			slog.String("view", m.currentView.String()))
 		return m, nil
 	}
-}
-
-func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	stopLogReader()
-	if m.isDindLog {
-		m.currentView = DindProcessListView
-		return m, loadDindContainers(m.dockerClient, m.dindProcessListViewModel.currentDindContainerID)
-	}
-	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 // Docker container handlers
@@ -595,6 +525,8 @@ func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleBack(m)
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleBack(m)
 	case HelpView:
@@ -684,6 +616,8 @@ func (m *Model) ShowDockerInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleSearch()
 	case InspectView:
 		return m, m.inspectViewModel.HandleSearch()
 	default:
@@ -695,6 +629,8 @@ func (m *Model) CmdSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdNextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleNextSearchResult(m)
 	case InspectView:
 		return m, m.inspectViewModel.HandleNextSearchResult(m)
 	default:
@@ -706,6 +642,8 @@ func (m *Model) CmdNextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdPrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandlePrevSearchResult(m)
 	case InspectView:
 		return m, m.inspectViewModel.HandlePrevSearchResult(m)
 	default:
@@ -715,8 +653,7 @@ func (m *Model) CmdPrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-// Help view handlers
-func (m *Model) ShowHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.helpViewModel.Show(m, m.currentView)
 }
 

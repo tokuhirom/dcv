@@ -69,8 +69,8 @@ func TestHandleKeyPress(t *testing.T) {
 			key:      tea.KeyMsg{Type: tea.KeyEnter},
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m Model) {
-				assert.Equal(t, "web-1", m.containerName)
-				assert.False(t, m.isDindLog)
+				assert.Equal(t, "web-1", m.logViewModel.containerName)
+				assert.False(t, m.logViewModel.isDindLog)
 			},
 		},
 		{
@@ -105,8 +105,10 @@ func TestHandleKeyPress(t *testing.T) {
 		{
 			name: "escape from log view",
 			model: Model{
-				currentView:   LogView,
-				containerName: "web-1",
+				currentView: LogView,
+				logViewModel: LogViewModel{
+					containerName: "web-1",
+				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyEsc},
 			wantView: ComposeProcessListView,
@@ -116,13 +118,15 @@ func TestHandleKeyPress(t *testing.T) {
 			model: Model{
 				currentView: LogView,
 				Height:      10,
-				logs:        []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
-				logScrollY:  0,
+				logViewModel: LogViewModel{
+					logs:       []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
+					logScrollY: 0,
+				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")},
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m Model) {
-				assert.Equal(t, 1, m.logScrollY)
+				assert.Equal(t, 1, m.logViewModel.logScrollY)
 			},
 		},
 		{
@@ -130,13 +134,15 @@ func TestHandleKeyPress(t *testing.T) {
 			model: Model{
 				currentView: LogView,
 				Height:      5,
-				logs:        []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
-				logScrollY:  0,
+				logViewModel: LogViewModel{
+					logs:       []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
+					logScrollY: 0,
+				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")},
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m Model) {
-				assert.Equal(t, 9, m.logScrollY) // 10 logs - (5 Height - 4 ui elements) = 9
+				assert.Equal(t, 9, m.logViewModel.logScrollY) // 10 logs - (5 Height - 4 ui elements) = 9
 			},
 		},
 		{
@@ -147,8 +153,8 @@ func TestHandleKeyPress(t *testing.T) {
 			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")},
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m Model) {
-				assert.True(t, m.searchMode)
-				assert.Equal(t, "", m.searchText)
+				assert.True(t, m.logViewModel.searchMode)
+				assert.Equal(t, "", m.logViewModel.searchText)
 			},
 		},
 		{
@@ -189,9 +195,13 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "type in search mode",
 			model: Model{
-				searchMode:      true,
-				searchText:      "err",
-				searchCursorPos: 3, // at end of "err"
+				logViewModel: LogViewModel{
+					SearchViewModel: SearchViewModel{
+						searchMode:      true,
+						searchText:      "err",
+						searchCursorPos: 3, // at end of "err"
+					},
+				},
 			},
 			key:            tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("o")},
 			wantSearchMode: true,
@@ -200,9 +210,13 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "backspace in search mode",
 			model: Model{
-				searchMode:      true,
-				searchText:      "error",
-				searchCursorPos: 5, // at end of "error"
+				logViewModel: LogViewModel{
+					SearchViewModel: SearchViewModel{
+						searchMode:      true,
+						searchText:      "error",
+						searchCursorPos: 5, // at end of "error"
+					},
+				},
 			},
 			key:            tea.KeyMsg{Type: tea.KeyBackspace},
 			wantSearchMode: true,
@@ -211,8 +225,12 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "escape search mode",
 			model: Model{
-				searchMode: true,
-				searchText: "error",
+				logViewModel: LogViewModel{
+					SearchViewModel: SearchViewModel{
+						searchMode: true,
+						searchText: "error",
+					},
+				},
 			},
 			key:            tea.KeyMsg{Type: tea.KeyEsc},
 			wantSearchMode: false,
@@ -221,8 +239,12 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "enter to confirm search",
 			model: Model{
-				searchMode: true,
-				searchText: "error",
+				logViewModel: LogViewModel{
+					SearchViewModel: SearchViewModel{
+						searchMode: true,
+						searchText: "error",
+					},
+				},
 			},
 			key:            tea.KeyMsg{Type: tea.KeyEnter},
 			wantSearchMode: false,
@@ -235,11 +257,11 @@ func TestHandleSearchMode(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
 
-			newModel, _ := tt.model.handleSearchMode(tt.key)
+			newModel, _ := tt.model.handleSearchMode(tt.key, &tt.model.logViewModel.SearchViewModel)
 			m := *newModel.(*Model)
 
-			assert.Equal(t, tt.wantSearchMode, m.searchMode)
-			assert.Equal(t, tt.wantSearchText, m.searchText)
+			assert.Equal(t, tt.wantSearchMode, m.logViewModel.searchMode)
+			assert.Equal(t, tt.wantSearchText, m.logViewModel.searchText)
 		})
 	}
 }
@@ -268,9 +290,9 @@ func TestHandleDindListKeys(t *testing.T) {
 	newModel, cmd := m.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEnter})
 	m = *newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView)
-	assert.Equal(t, "test-2", m.containerName)
-	assert.Equal(t, "dind-1", m.hostContainer)
-	assert.True(t, m.isDindLog)
+	assert.Equal(t, "test-2", m.logViewModel.containerName)
+	assert.Equal(t, "dind-1", m.logViewModel.hostContainer)
+	assert.True(t, m.logViewModel.isDindLog)
 	assert.NotNil(t, cmd)
 
 	// Test escape
@@ -310,15 +332,15 @@ func TestUpdateMessages(t *testing.T) {
 	m.Height = 10
 	newModel, cmd := m.Update(logLineMsg{line: "[Log reader stopped]"})
 	m = *newModel.(*Model)
-	assert.Contains(t, m.logs, "[Log reader stopped]")
+	assert.Contains(t, m.logViewModel.logs, "[Log reader stopped]")
 	assert.Nil(t, cmd) // Status messages don't trigger continued polling
 
 	// Test log lines message (for actual log streaming)
-	m.logs = []string{} // Reset logs
+	m.logViewModel.logs = []string{} // Reset logs
 	newModel, cmd = m.Update(logLinesMsg{lines: []string{"log line 1", "log line 2"}})
 	m = *newModel.(*Model)
-	assert.Contains(t, m.logs, "log line 1")
-	assert.Contains(t, m.logs, "log line 2")
+	assert.Contains(t, m.logViewModel.logs, "log line 1")
+	assert.Contains(t, m.logViewModel.logs, "log line 2")
 	assert.NotNil(t, cmd) // Should continue streaming
 
 	// Test dind composeContainers loaded
@@ -369,19 +391,21 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	assert.True(t, m.quitConfirmation)
 	assert.Nil(t, cmd) // No command yet, just showing confirmation
 
-	// From log view - should go back
+	// From log view - should now show quit confirmation
 	model = Model{currentView: LogView}
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = *newModel.(*Model)
-	assert.Equal(t, ComposeProcessListView, m.currentView)
-	assert.NotNil(t, cmd) // Should load composeContainers
+	assert.Equal(t, LogView, m.currentView) // View should not change
+	assert.True(t, m.quitConfirmation)
+	assert.Nil(t, cmd)
 
-	// From dind view - should go back
+	// From dind view - should now show quit confirmation
 	model = Model{currentView: DindProcessListView}
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = *newModel.(*Model)
-	assert.Equal(t, ComposeProcessListView, m.currentView)
-	assert.NotNil(t, cmd) // Should load composeContainers
+	assert.Equal(t, DindProcessListView, m.currentView) // View should not change
+	assert.True(t, m.quitConfirmation)
+	assert.Nil(t, cmd)
 }
 
 func TestFileBrowserParentDirectory(t *testing.T) {

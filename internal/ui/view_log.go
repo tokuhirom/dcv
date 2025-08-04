@@ -13,39 +13,60 @@ import (
 )
 
 type LogViewModel struct {
+	SearchViewModel
+	FilterViewModel
+
+	logs          []string
+	logScrollY    int
+	containerName string
+	isDindLog     bool
+	hostContainer string
 }
 
-func (m LogViewModel) Clear(model *Model, containerName string) {
-	model.containerName = containerName
-	model.isDindLog = false
+func (m *LogViewModel) Clear(model *Model, containerName string) {
 	model.currentView = LogView
-	model.logs = []string{}
-	model.logScrollY = 0
+
+	m.containerName = containerName
+	m.isDindLog = false
+	m.logs = []string{}
+	m.logScrollY = 0
 }
 
-func (m LogViewModel) StreamLogs(model *Model, process models.ComposeContainer, isDind bool, hostService string) tea.Cmd {
-	model.containerName = process.Name
-	model.isDindLog = false
+func (m *LogViewModel) StreamLogs(model *Model, process models.ComposeContainer, isDind bool, hostService string) tea.Cmd {
 	model.currentView = LogView
-	model.logs = []string{}
-	model.logScrollY = 0
+
+	m.containerName = process.Name
+	m.isDindLog = false
+	m.logs = []string{}
+	m.logScrollY = 0
 	return streamLogs(model.dockerClient, process.ID, isDind, hostService)
 }
 
-func (m LogViewModel) ShowDindLog(model *Model, dindContainerID string, container models.DockerContainer) tea.Cmd {
-	model.containerName = container.Names
-	model.hostContainer = model.dindProcessListViewModel.currentDindHost
-	model.isDindLog = true
+func (m *LogViewModel) ShowDindLog(model *Model, dindContainerID string, container models.DockerContainer) tea.Cmd {
 	model.currentView = LogView
-	model.logs = []string{}
-	model.logScrollY = 0
+
+	m.containerName = container.Names
+	m.hostContainer = model.dindProcessListViewModel.currentDindHost
+	m.isDindLog = true
+	m.logs = []string{}
+	m.logScrollY = 0
 	return streamLogs(model.dockerClient, container.Names, true, dindContainerID)
 }
 
-func (m *Model) renderLogView(availableHeight int) string {
+func (m *LogViewModel) HandleBack(model *Model) tea.Cmd {
+	stopLogReader()
+	if m.isDindLog {
+		model.currentView = DindProcessListView
+		return loadDindContainers(model.dockerClient, model.dindProcessListViewModel.currentDindContainerID)
+	}
+	model.currentView = ComposeProcessListView
+	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+}
+
+func (m *LogViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
-	if m.loading && len(m.logs) == 0 {
+	if model.loading && len(m.logs) == 0 {
 		s.WriteString("Loading logs...\n")
 		return s.String()
 	}
@@ -119,7 +140,7 @@ func (m *Model) renderLogView(availableHeight int) string {
 	return s.String()
 }
 
-func (m *Model) highlightLine(line string, style lipgloss.Style) string {
+func (m *LogViewModel) highlightLine(line string, style lipgloss.Style) string {
 	if m.searchText == "" {
 		return line
 	}
@@ -179,7 +200,7 @@ func (m *Model) highlightLine(line string, style lipgloss.Style) string {
 	return line
 }
 
-func (m *Model) highlightFilterMatch(line string, style lipgloss.Style) string {
+func (m *LogViewModel) highlightFilterMatch(line string, style lipgloss.Style) string {
 	if m.filterText == "" {
 		return line
 	}
@@ -214,6 +235,176 @@ func (m *Model) highlightFilterMatch(line string, style lipgloss.Style) string {
 	}
 
 	return result.String()
+}
+
+func (m *LogViewModel) HandleUp() tea.Cmd {
+	if m.logScrollY > 0 {
+		m.logScrollY--
+	}
+	return nil
+}
+
+func (m *LogViewModel) HandleDown(model *Model) tea.Cmd {
+	maxScroll := len(m.logs) - (model.Height - 4)
+	if m.logScrollY < maxScroll && maxScroll > 0 {
+		m.logScrollY++
+	}
+	return nil
+}
+
+func (m *LogViewModel) HandleGoToEnd(model *Model) tea.Cmd {
+	maxScroll := len(m.logs) - (model.Height - 4)
+	if maxScroll > 0 {
+		m.logScrollY = maxScroll
+	}
+	return nil
+}
+
+func (m *LogViewModel) HandleGoToStart() tea.Cmd {
+	m.logScrollY = 0
+	return nil
+}
+
+func (m *LogViewModel) HandleSearch() tea.Cmd {
+	m.searchMode = true
+	m.searchText = ""
+	m.searchCursorPos = 0
+	m.searchResults = nil
+	m.currentSearchIdx = 0
+	return nil
+}
+
+func (m *LogViewModel) HandleFilter() tea.Cmd {
+	m.filterMode = true
+	m.filterText = ""
+	m.filterCursorPos = 0
+	m.filteredLogs = nil
+	return nil
+}
+
+func (m *LogViewModel) HandleNextSearchResult(model *Model) tea.Cmd {
+	if len(m.searchResults) > 0 {
+		m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.searchResults)
+		// Jump to the line
+		if m.currentSearchIdx < len(m.searchResults) {
+			targetLine := m.searchResults[m.currentSearchIdx]
+			m.logScrollY = targetLine - model.Height/2 + 3 // Center the result
+			if m.logScrollY < 0 {
+				m.logScrollY = 0
+			}
+		}
+	}
+	return nil
+}
+
+func (m *LogViewModel) HandlePrevSearchResult(model *Model) tea.Cmd {
+	if len(m.searchResults) > 0 {
+		m.currentSearchIdx--
+		if m.currentSearchIdx < 0 {
+			m.currentSearchIdx = len(m.searchResults) - 1
+		}
+		// Jump to the line
+		if m.currentSearchIdx < len(m.searchResults) {
+			targetLine := m.searchResults[m.currentSearchIdx]
+			m.logScrollY = targetLine - model.Height/2 + 3 // Center the result
+			if m.logScrollY < 0 {
+				m.logScrollY = 0
+			}
+		}
+	}
+	return nil
+}
+
+func (m *LogViewModel) performFilter() {
+	m.filteredLogs = nil
+	if m.filterText == "" {
+		return
+	}
+
+	filterText := strings.ToLower(m.filterText)
+
+	for _, line := range m.logs {
+		lineToSearch := strings.ToLower(line)
+		if strings.Contains(lineToSearch, filterText) {
+			m.filteredLogs = append(m.filteredLogs, line)
+		}
+	}
+
+	// Reset scroll position when filter changes
+	m.logScrollY = 0
+}
+
+func (m *LogViewModel) LogLine(model *Model, line string) {
+	m.logs = append(m.logs, line)
+	// Keep only last 10000 lines to prevent unbounded memory growth
+	if len(m.logs) > 10000 {
+		m.logs = m.logs[len(m.logs)-10000:]
+	}
+	// Auto-scroll to bottom
+	maxScroll := len(m.logs) - (model.Height - 4)
+	if maxScroll > 0 {
+		m.logScrollY = maxScroll
+	}
+}
+
+func (m *LogViewModel) LogLines(model *Model, lines []string) {
+	m.logs = append(m.logs, lines...)
+	// Keep only last 10000 lines to prevent unbounded memory growth
+	if len(m.logs) > 10000 {
+		m.logs = m.logs[len(m.logs)-10000:]
+	}
+
+	// If we're in filter mode, update filtered logs
+	if m.filterMode && m.filterText != "" {
+		m.performFilter()
+	} else {
+		// Auto-scroll to bottom only when not filtering
+		maxScroll := len(m.logs) - (model.Height - 4)
+		if maxScroll > 0 {
+			m.logScrollY = maxScroll
+		}
+	}
+}
+
+func (m *LogViewModel) FilterDeleteLastChar() {
+	updated := m.FilterViewModel.FilterDeleteLastChar()
+	if updated {
+		m.performFilter()
+	}
+}
+
+func (m *LogViewModel) Title() string {
+	title := ""
+	if m.isDindLog {
+		title = fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainer)
+	} else {
+		title = fmt.Sprintf("Logs: %s", m.containerName)
+	}
+
+	// Add search or filter status to title
+	if m.filterMode && m.filterText != "" {
+		filterCount := len(m.filteredLogs)
+		title += fmt.Sprintf(" - Filter: '%s' (%d/%d lines)", m.filterText, filterCount, len(m.logs))
+	} else if len(m.searchResults) > 0 {
+		var statusParts []string
+		if m.searchIgnoreCase {
+			statusParts = append(statusParts, "i")
+		}
+		if m.searchRegex {
+			statusParts = append(statusParts, "r")
+		}
+
+		statusStr := ""
+		if len(statusParts) > 0 {
+			statusStr = fmt.Sprintf(" [%s]", strings.Join(statusParts, ""))
+		}
+
+		title += fmt.Sprintf(" - Search: %d/%d%s", m.currentSearchIdx+1, len(m.searchResults), statusStr)
+	} else if m.searchText != "" && !m.searchMode {
+		title += " - No matches found"
+	}
+
+	return title
 }
 
 func streamLogs(client *docker.Client, serviceName string, isDind bool, hostService string) tea.Cmd {

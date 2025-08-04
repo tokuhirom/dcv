@@ -140,8 +140,8 @@ func TestViewSwitching(t *testing.T) {
 	m = *newModel.(*Model)
 
 	assert.Equal(t, LogView, m.currentView)
-	assert.Equal(t, "web-1", m.containerName)
-	assert.False(t, m.isDindLog)
+	assert.Equal(t, "web-1", m.logViewModel.containerName)
+	assert.False(t, m.logViewModel.isDindLog)
 	assert.NotNil(t, cmd)
 
 	// Test going back with ESC
@@ -168,15 +168,15 @@ func TestSearchMode(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.currentView = LogView
-	m.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
+	m.logViewModel.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
 
 	// Enter search mode
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")}
 	newModel, _ := m.Update(msg)
 	m = *newModel.(*Model)
 
-	assert.True(t, m.searchMode)
-	assert.Equal(t, "", m.searchText)
+	assert.True(t, m.logViewModel.searchMode)
+	assert.Equal(t, "", m.logViewModel.searchText)
 
 	// Type search text
 	for _, r := range "error" {
@@ -185,14 +185,14 @@ func TestSearchMode(t *testing.T) {
 		m = *newModel.(*Model)
 	}
 
-	assert.Equal(t, "error", m.searchText)
+	assert.Equal(t, "error", m.logViewModel.searchText)
 
 	// Exit search mode with ESC
 	msg = tea.KeyMsg{Type: tea.KeyEsc}
 	newModel, _ = m.Update(msg)
 	m = *newModel.(*Model)
 
-	assert.False(t, m.searchMode)
+	assert.False(t, m.logViewModel.searchMode)
 }
 
 func TestErrorHandling(t *testing.T) {
@@ -221,16 +221,16 @@ func TestQuitBehavior(t *testing.T) {
 			expectView:  ComposeProcessListView,
 		},
 		{
-			name:        "quit from log view returns to process list",
+			name:        "quit from log view shows confirmation",
 			currentView: LogView,
 			expectQuit:  false,
-			expectView:  ComposeProcessListView,
+			expectView:  LogView, // View should not change
 		},
 		{
-			name:        "quit from dind view returns to process list",
+			name:        "quit from dind view shows confirmation",
 			currentView: DindProcessListView,
 			expectQuit:  false,
-			expectView:  ComposeProcessListView,
+			expectView:  DindProcessListView, // View should not change
 		},
 	}
 
@@ -246,15 +246,10 @@ func TestQuitBehavior(t *testing.T) {
 
 			assert.Equal(t, tt.expectView, m.currentView)
 
-			if tt.currentView == ComposeProcessListView {
-				// Should show quit confirmation
-				assert.True(t, m.quitConfirmation)
-				assert.Nil(t, cmd)
-			} else {
-				// Should return to process list
-				assert.Equal(t, ComposeProcessListView, m.currentView)
-				assert.NotNil(t, cmd) // Should have a command to reload processes
-			}
+			// All views now show quit confirmation when 'q' is pressed
+			assert.True(t, m.quitConfirmation)
+			assert.Equal(t, tt.currentView, m.currentView) // View should not change
+			assert.Nil(t, cmd)
 		})
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"os/exec"
-	"regexp"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -118,14 +117,8 @@ type Model struct {
 	browsingContainerName string
 	pathHistory           []string
 
-	// Log view state
-	logs          []string
-	logScrollY    int
-	containerName string
-	isDindLog     bool
-	hostContainer string
-
 	// Search state
+	// TODO: remove this part.
 	searchMode       bool
 	searchText       string
 	searchIgnoreCase bool
@@ -133,12 +126,6 @@ type Model struct {
 	searchResults    []int // Line indices of search results
 	currentSearchIdx int   // Current position in searchResults
 	searchCursorPos  int   // Cursor position in search text
-
-	// Filter state
-	filterMode      bool
-	filterText      string
-	filterCursorPos int
-	filteredLogs    []string // Logs that match the filter
 
 	// Error state
 	err error
@@ -186,77 +173,13 @@ type Model struct {
 	commandExecHandlers             []KeyConfig
 
 	// Command-line mode state
-	commandMode        bool
-	commandBuffer      string
-	commandHistory     []string
-	commandHistoryIdx  int
-	commandCursorPos   int
-	quitConfirmation   bool
-	quitConfirmMessage string
-}
-
-func (m *Model) performSearch() {
-	m.searchResults = nil
-	if m.searchText == "" {
-		return
-	}
-
-	searchText := m.searchText
-	if m.searchIgnoreCase && !m.searchRegex {
-		searchText = strings.ToLower(searchText)
-	}
-
-	for i, line := range m.logs {
-		lineToSearch := line
-		if m.searchIgnoreCase && !m.searchRegex {
-			lineToSearch = strings.ToLower(line)
-		}
-
-		match := false
-		if m.searchRegex {
-			pattern := searchText
-			if m.searchIgnoreCase {
-				pattern = "(?i)" + pattern
-			}
-			if re, err := regexp.Compile(pattern); err == nil {
-				match = re.MatchString(line)
-			}
-		} else {
-			match = strings.Contains(lineToSearch, searchText)
-		}
-
-		if match {
-			m.searchResults = append(m.searchResults, i)
-		}
-	}
-
-	// If we have results, jump to the first one
-	if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) {
-		targetLine := m.searchResults[m.currentSearchIdx]
-		m.logScrollY = targetLine - m.Height/2 + 3
-		if m.logScrollY < 0 {
-			m.logScrollY = 0
-		}
-	}
-}
-
-func (m *Model) performFilter() {
-	m.filteredLogs = nil
-	if m.filterText == "" {
-		return
-	}
-
-	filterText := strings.ToLower(m.filterText)
-
-	for _, line := range m.logs {
-		lineToSearch := strings.ToLower(line)
-		if strings.Contains(lineToSearch, filterText) {
-			m.filteredLogs = append(m.filteredLogs, line)
-		}
-	}
-
-	// Reset scroll position when filter changes
-	m.logScrollY = 0
+	// TODO: implement CommandViewModel
+	commandMode       bool
+	commandBuffer     string
+	commandHistory    []string
+	commandHistoryIdx int
+	commandCursorPos  int
+	quitConfirmation  bool
 }
 
 // NewModel creates a new model with initial state

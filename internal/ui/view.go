@@ -86,38 +86,32 @@ func (m *Model) View() string {
 
 	if m.quitConfirmation {
 		// Show quit confirmation dialog
-		footer = errorStyle.Render(m.quitConfirmMessage)
-	} else if m.filterMode && m.currentView == LogView {
-		// Show filter prompt
-		cursor := " "
-		if m.filterCursorPos < len(m.filterText) {
-			cursor = string(m.filterText[m.filterCursorPos])
-		}
-
-		// Build filter line with cursor
-		before := m.filterText[:m.filterCursorPos]
-		after := ""
-		if m.filterCursorPos < len(m.filterText) {
-			after = m.filterText[m.filterCursorPos+1:]
-		}
-
-		cursorStyle := lipgloss.NewStyle().
-			Background(lipgloss.Color("226")).
-			Foreground(lipgloss.Color("235"))
-
-		footer = "Filter: " + before + cursorStyle.Render(cursor) + after + " (ESC to clear)"
-	} else if m.searchMode && (m.currentView == LogView || m.currentView == InspectView) {
+		footer = errorStyle.Render("Really quit? (y/n)")
+	} else if m.currentView == LogView && m.logViewModel.filterMode {
+		footer = m.logViewModel.RenderCmdLine()
+	} else if (m.currentView == LogView && m.logViewModel.searchMode) || (m.currentView == InspectView && m.inspectViewModel.searchMode) {
 		// Show search prompt
+		var searchText string
+		var searchCursorPos int
+
+		if m.currentView == LogView {
+			searchText = m.logViewModel.searchText
+			searchCursorPos = m.logViewModel.searchCursorPos
+		} else {
+			searchText = m.inspectViewModel.searchText
+			searchCursorPos = m.inspectViewModel.searchCursorPos
+		}
+
 		cursor := " "
-		if m.searchCursorPos < len(m.searchText) {
-			cursor = string(m.searchText[m.searchCursorPos])
+		if searchCursorPos < len(searchText) {
+			cursor = string(searchText[searchCursorPos])
 		}
 
 		// Build search line with cursor
-		before := m.searchText[:m.searchCursorPos]
+		before := searchText[:searchCursorPos]
 		after := ""
-		if m.searchCursorPos < len(m.searchText) {
-			after = m.searchText[m.searchCursorPos+1:]
+		if searchCursorPos < len(searchText) {
+			after = searchText[searchCursorPos+1:]
 		}
 
 		cursorStyle := lipgloss.NewStyle().
@@ -174,37 +168,7 @@ func (m *Model) viewTitle() string {
 		}
 		return "Docker Compose"
 	case LogView:
-		title := ""
-		if m.isDindLog {
-			title = fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainer)
-		} else {
-			title = fmt.Sprintf("Logs: %s", m.containerName)
-		}
-
-		// Add search or filter status to title
-		if m.filterMode && m.filterText != "" {
-			filterCount := len(m.filteredLogs)
-			title += fmt.Sprintf(" - Filter: '%s' (%d/%d lines)", m.filterText, filterCount, len(m.logs))
-		} else if len(m.searchResults) > 0 {
-			statusParts := []string{}
-			if m.searchIgnoreCase {
-				statusParts = append(statusParts, "i")
-			}
-			if m.searchRegex {
-				statusParts = append(statusParts, "r")
-			}
-
-			statusStr := ""
-			if len(statusParts) > 0 {
-				statusStr = fmt.Sprintf(" [%s]", strings.Join(statusParts, ""))
-			}
-
-			title += fmt.Sprintf(" - Search: %d/%d%s", m.currentSearchIdx+1, len(m.searchResults), statusStr)
-		} else if m.searchText != "" && !m.searchMode {
-			title += " - No matches found"
-		}
-
-		return title
+		return m.logViewModel.Title()
 	case DindProcessListView:
 		return fmt.Sprintf("Docker in Docker: %s", m.dindProcessListViewModel.currentDindHost)
 	case TopView:
@@ -257,7 +221,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case ComposeProcessListView:
 		return m.composeProcessListViewModel.render(m, availableHeight)
 	case LogView:
-		return m.renderLogView(availableHeight)
+		return m.logViewModel.render(m, availableHeight)
 	case DindProcessListView:
 		return m.dindProcessListViewModel.render(m, availableHeight)
 	case TopView:

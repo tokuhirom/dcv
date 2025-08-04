@@ -12,8 +12,12 @@ func TestFilterMode(t *testing.T) {
 	t.Run("start_filter_mode", func(t *testing.T) {
 		m := &Model{
 			currentView: LogView,
-			logs:        []string{"line1", "error: something", "line3", "error: another"},
-			filterMode:  false,
+			logViewModel: LogViewModel{
+				logs: []string{"line1", "error: something", "line3", "error: another"},
+				FilterViewModel: FilterViewModel{
+					filterMode: false,
+				},
+			},
 		}
 		m.initializeKeyHandlers()
 
@@ -21,19 +25,24 @@ func TestFilterMode(t *testing.T) {
 		newModel, _ := m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("f")})
 		m = newModel.(*Model)
 
-		assert.True(t, m.filterMode)
-		assert.Equal(t, "", m.filterText)
-		assert.Equal(t, 0, m.filterCursorPos)
+		assert.True(t, m.logViewModel.filterMode)
+		assert.Equal(t, "", m.logViewModel.filterText)
+		assert.Equal(t, 0, m.logViewModel.filterCursorPos)
 	})
 
 	t.Run("filter_logs", func(t *testing.T) {
 		m := &Model{
-			currentView:     LogView,
-			logs:            []string{"line1", "error: something", "line3", "error: another", "info: test"},
-			filterMode:      true,
-			filterText:      "",
-			filterCursorPos: 0,
+			currentView: LogView,
+			logViewModel: LogViewModel{
+				logs: []string{"line1", "error: something", "line3", "error: another", "info: test"},
+				FilterViewModel: FilterViewModel{
+					filterMode:      true,
+					filterText:      "",
+					filterCursorPos: 0,
+				},
+			},
 		}
+		m.initializeKeyHandlers()
 
 		// Type "error"
 		for _, ch := range "error" {
@@ -41,58 +50,73 @@ func TestFilterMode(t *testing.T) {
 			m = newModel.(*Model)
 		}
 
-		assert.Equal(t, "error", m.filterText)
-		assert.Equal(t, 2, len(m.filteredLogs))
-		assert.Equal(t, "error: something", m.filteredLogs[0])
-		assert.Equal(t, "error: another", m.filteredLogs[1])
+		assert.Equal(t, "error", m.logViewModel.filterText)
+		assert.Equal(t, 2, len(m.logViewModel.filteredLogs))
+		assert.Equal(t, "error: something", m.logViewModel.filteredLogs[0])
+		assert.Equal(t, "error: another", m.logViewModel.filteredLogs[1])
 	})
 
 	t.Run("exit_filter_mode_enter", func(t *testing.T) {
 		m := &Model{
-			currentView:  LogView,
-			logs:         []string{"line1", "error: something", "line3"},
-			filterMode:   true,
-			filterText:   "error",
-			filteredLogs: []string{"error: something"},
+			currentView: LogView,
+			logViewModel: LogViewModel{
+				logs: []string{"line1", "error: something", "line3"},
+				FilterViewModel: FilterViewModel{
+					filterMode:   true,
+					filterText:   "error",
+					filteredLogs: []string{"error: something"},
+				},
+			},
 		}
+		m.initializeKeyHandlers()
 
 		// Press Enter to exit filter mode
 		newModel, _ := m.handleFilterMode(tea.KeyMsg{Type: tea.KeyEnter})
 		m = newModel.(*Model)
 
-		assert.False(t, m.filterMode)
-		assert.Equal(t, "error", m.filterText) // Filter text is preserved
-		assert.Equal(t, 1, len(m.filteredLogs))
+		assert.False(t, m.logViewModel.filterMode)
+		assert.Equal(t, "error", m.logViewModel.filterText) // Filter text is preserved
+		assert.Equal(t, 1, len(m.logViewModel.filteredLogs))
 	})
 
 	t.Run("exit_filter_mode_escape", func(t *testing.T) {
 		m := &Model{
-			currentView:  LogView,
-			logs:         []string{"line1", "error: something", "line3"},
-			filterMode:   true,
-			filterText:   "error",
-			filteredLogs: []string{"error: something"},
-			logScrollY:   5,
+			currentView: LogView,
+			logViewModel: LogViewModel{
+				logs:       []string{"line1", "error: something", "line3"},
+				logScrollY: 5,
+				FilterViewModel: FilterViewModel{
+					filterMode:   true,
+					filterText:   "error",
+					filteredLogs: []string{"error: something"},
+				},
+			},
 		}
+		m.initializeKeyHandlers()
 
 		// Press Escape to exit filter mode and clear filter
 		newModel, _ := m.handleFilterMode(tea.KeyMsg{Type: tea.KeyEsc})
 		m = newModel.(*Model)
 
-		assert.False(t, m.filterMode)
-		assert.Equal(t, "", m.filterText) // Filter text is cleared
-		assert.Nil(t, m.filteredLogs)     // Filtered logs are cleared
-		assert.Equal(t, 0, m.logScrollY)  // Scroll is reset
+		assert.False(t, m.logViewModel.filterMode)
+		assert.Equal(t, "", m.logViewModel.filterText) // Filter text is cleared
+		assert.Nil(t, m.logViewModel.filteredLogs)     // Filtered logs are cleared
+		assert.Equal(t, 0, m.logViewModel.logScrollY)  // Scroll is reset
 	})
 
 	t.Run("case_insensitive_filter", func(t *testing.T) {
 		m := &Model{
-			currentView:     LogView,
-			logs:            []string{"ERROR: big", "error: small", "Error: mixed", "info: test"},
-			filterMode:      true,
-			filterText:      "",
-			filterCursorPos: 0,
+			currentView: LogView,
+			logViewModel: LogViewModel{
+				logs: []string{"ERROR: big", "error: small", "Error: mixed", "info: test"},
+				FilterViewModel: FilterViewModel{
+					filterMode:      true,
+					filterText:      "",
+					filterCursorPos: 0,
+				},
+			},
 		}
+		m.initializeKeyHandlers()
 
 		// Type "error" - should match all case variations
 		for _, ch := range "error" {
@@ -100,18 +124,22 @@ func TestFilterMode(t *testing.T) {
 			m = newModel.(*Model)
 		}
 
-		assert.Equal(t, 3, len(m.filteredLogs))
-		assert.Contains(t, m.filteredLogs, "ERROR: big")
-		assert.Contains(t, m.filteredLogs, "error: small")
-		assert.Contains(t, m.filteredLogs, "Error: mixed")
+		assert.Equal(t, 3, len(m.logViewModel.filteredLogs))
+		assert.Contains(t, m.logViewModel.filteredLogs, "ERROR: big")
+		assert.Contains(t, m.logViewModel.filteredLogs, "error: small")
+		assert.Contains(t, m.logViewModel.filteredLogs, "Error: mixed")
 	})
 }
 
 func TestFilterHighlight(t *testing.T) {
 	// Test the highlight logic works correctly
 	m := &Model{
-		filterText: "error",
-		filterMode: true,
+		logViewModel: LogViewModel{
+			FilterViewModel: FilterViewModel{
+				filterText: "error",
+				filterMode: true,
+			},
+		},
 	}
 
 	// Test case-insensitive matching
@@ -128,7 +156,7 @@ func TestFilterHighlight(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.line, func(t *testing.T) {
-			searchStr := strings.ToLower(m.filterText)
+			searchStr := strings.ToLower(m.logViewModel.filterText)
 			lineToSearch := strings.ToLower(tc.line)
 			hasMatch := strings.Contains(lineToSearch, searchStr)
 			assert.Equal(t, tc.expected, hasMatch, "Match result for: %s", tc.line)

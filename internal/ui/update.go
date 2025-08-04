@@ -57,36 +57,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case logLineMsg:
-		m.logs = append(m.logs, msg.line)
-		// Keep only last 10000 lines to prevent unbounded memory growth
-		if len(m.logs) > 10000 {
-			m.logs = m.logs[len(m.logs)-10000:]
-		}
-		// Auto-scroll to bottom
-		maxScroll := len(m.logs) - (m.Height - 4)
-		if maxScroll > 0 {
-			m.logScrollY = maxScroll
-		}
+		m.logViewModel.LogLine(m, msg.line)
 		// Don't continue polling for single lines (e.g., "[Log reader stopped]")
 		return m, nil
 
 	case logLinesMsg:
-		m.logs = append(m.logs, msg.lines...)
-		// Keep only last 10000 lines to prevent unbounded memory growth
-		if len(m.logs) > 10000 {
-			m.logs = m.logs[len(m.logs)-10000:]
-		}
-
-		// If we're in filter mode, update filtered logs
-		if m.filterMode && m.filterText != "" {
-			m.performFilter()
-		} else {
-			// Auto-scroll to bottom only when not filtering
-			maxScroll := len(m.logs) - (m.Height - 4)
-			if maxScroll > 0 {
-				m.logScrollY = maxScroll
-			}
-		}
+		m.logViewModel.LogLines(m, msg.lines)
 		// Continue polling for more logs with a small delay
 		return m, tea.Tick(time.Millisecond*50, func(time.Time) tea.Msg {
 			return pollForLogs()()
@@ -330,12 +306,14 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	// Handle search mode
-	if m.searchMode {
-		return m.handleSearchMode(msg)
+	if m.currentView == LogView && m.logViewModel.searchMode {
+		return m.handleSearchMode(msg, &m.logViewModel.SearchViewModel)
+	} else if m.currentView == InspectView && m.inspectViewModel.searchMode {
+		return m.handleSearchMode(msg, &m.inspectViewModel.SearchViewModel)
 	}
 
 	// Handle filter mode
-	if m.filterMode {
+	if m.currentView == LogView && m.logViewModel.filterMode {
 		return m.handleFilterMode(msg)
 	}
 
@@ -349,22 +327,12 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	// Handle quit globally
 	if msg.String() == "q" {
-		// For 'q' key, show confirmation dialog
-		if m.currentView == ComposeProjectListView || m.currentView == ComposeProcessListView {
-			m.quitConfirmation = true
-			m.quitConfirmMessage = "Really quit? (y/n)"
-			return m, nil
-		}
-		// For other views, go back
-		if m.currentView == LogView {
-			stopLogReader()
-		}
-		m.currentView = ComposeProcessListView
-		m.err = nil
-		return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
+		m.quitConfirmation = true
+		return m, nil
 	}
 
 	// Handle ctrl+c for immediate quit
+	// TODO: CmdInterrupt for LogView
 	if msg.String() == "ctrl+c" {
 		if m.currentView == LogView {
 			stopLogReader()
@@ -405,6 +373,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case CommandExecutionView:
 		return m.handleCommandExecutionKeys(msg)
 	default:
+		// TODO: support some key shortcuts like '1', '2', '3', '4', '5'.
 		return m, nil
 	}
 }
@@ -436,57 +405,55 @@ func (m *Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleSearchMode(msg tea.KeyMsg, searchViewModel *SearchViewModel) (tea.Model, tea.Cmd) {
+	performSearch := func() {
+		switch m.currentView {
+		case LogView:
+			m.logViewModel.PerformSearch(m, m.logViewModel.logs, func(scrollY int) { m.logViewModel.logScrollY = scrollY })
+		case InspectView:
+			m.inspectViewModel.PerformSearch(m, strings.Split(m.inspectViewModel.inspectContent, "\n"), func(scrollY int) { m.inspectViewModel.inspectScrollY = scrollY })
+		}
+	}
+
 	switch msg.Type {
 	case tea.KeyEsc:
-		m.searchMode = false
-		m.searchText = ""
-		m.searchResults = nil
-		m.currentSearchIdx = 0
-		m.searchCursorPos = 0
+		searchViewModel.InputEscape()
 		return m, nil
 
 	case tea.KeyEnter:
-		m.searchMode = false
-		m.performSearch()
+		searchViewModel.searchMode = false
+		performSearch()
 		return m, nil
 
 	case tea.KeyBackspace:
-		if m.searchCursorPos > 0 && len(m.searchText) > 0 {
-			m.searchText = m.searchText[:m.searchCursorPos-1] + m.searchText[m.searchCursorPos:]
-			m.searchCursorPos--
-			m.performSearch()
+		updated := searchViewModel.DeleteLastChar()
+		if updated {
+			performSearch()
 		}
 		return m, nil
 
 	case tea.KeyLeft:
-		if m.searchCursorPos > 0 {
-			m.searchCursorPos--
-		}
+		searchViewModel.CursorLeft()
 		return m, nil
 
 	case tea.KeyRight:
-		if m.searchCursorPos < len(m.searchText) {
-			m.searchCursorPos++
-		}
+		searchViewModel.CursorRight()
 		return m, nil
 
 	case tea.KeyCtrlI:
-		m.searchIgnoreCase = !m.searchIgnoreCase
-		m.performSearch()
+		searchViewModel.ToggleIgnoreCase()
+		performSearch()
 		return m, nil
 
 	case tea.KeyCtrlR:
-		m.searchRegex = !m.searchRegex
-		m.performSearch()
+		searchViewModel.ToggleRegex()
+		performSearch()
 		return m, nil
 
 	default:
 		if msg.Type == tea.KeyRunes {
-			// Insert at cursor position
-			m.searchText = m.searchText[:m.searchCursorPos] + msg.String() + m.searchText[m.searchCursorPos:]
-			m.searchCursorPos += len(msg.String())
-			m.performSearch()
+			searchViewModel.AppendString(msg.String())
+			performSearch()
 		}
 		return m, nil
 	}
@@ -570,7 +537,6 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "n", "N", "esc":
 		// Cancel quit
 		m.quitConfirmation = false
-		m.quitConfirmMessage = ""
 		return m, nil
 	}
 	return m, nil
@@ -600,7 +566,6 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 	case "q", "quit":
 		// Show quit confirmation
 		m.quitConfirmation = true
-		m.quitConfirmMessage = "Really quit? (y/n)"
 		return m, nil
 
 	case "q!", "quit!":
@@ -667,8 +632,10 @@ func (m *Model) refreshCurrentView() tea.Cmd {
 		if m.browsingContainerID != "" {
 			return loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
 		}
+		return nil
+	default:
+		return nil
 	}
-	return nil
 }
 
 func (m *Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -744,42 +711,16 @@ func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
-	case tea.KeyEsc:
-		m.filterMode = false
-		m.filterText = ""
-		m.filteredLogs = nil
-		m.filterCursorPos = 0
-		m.logScrollY = 0
+	// Check if ESC was pressed to clear filter
+	if msg.Type == tea.KeyEsc {
+		m.logViewModel.ClearFilter()
+		m.logViewModel.logScrollY = 0 // Reset scroll position when clearing filter
 		return m, nil
-	case tea.KeyEnter:
-		m.filterMode = false
-		m.performFilter()
-		return m, nil
-	case tea.KeyBackspace:
-		if m.filterCursorPos > 0 && len(m.filterText) > 0 {
-			m.filterText = m.filterText[:m.filterCursorPos-1] + m.filterText[m.filterCursorPos:]
-			m.filterCursorPos--
-			m.performFilter()
-		}
-		return m, nil
-	case tea.KeyLeft:
-		if m.filterCursorPos > 0 {
-			m.filterCursorPos--
-		}
-		return m, nil
-	case tea.KeyRight:
-		if m.filterCursorPos < len(m.filterText) {
-			m.filterCursorPos++
-		}
-		return m, nil
-	default:
-		if msg.Type == tea.KeyRunes {
-			// Insert at cursor position
-			m.filterText = m.filterText[:m.filterCursorPos] + msg.String() + m.filterText[m.filterCursorPos:]
-			m.filterCursorPos += len(msg.String())
-			m.performFilter()
-		}
+	}
+
+	perform := m.logViewModel.HandleKey(msg)
+	if perform {
+		m.logViewModel.performFilter()
 	}
 	return m, nil
 }
@@ -858,9 +799,10 @@ func (m *Model) handleInspectSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.searchText = m.searchText[:m.searchCursorPos] + runes + m.searchText[m.searchCursorPos:]
 		m.searchCursorPos += len(runes)
 		return m, nil
-	}
 
-	return m, nil
+	default:
+		return m, nil
+	}
 }
 
 func (m *Model) handleHelpKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
