@@ -176,7 +176,7 @@ func TestLogView_Navigation(t *testing.T) {
 			isDindLog:   false,
 		}
 
-		_, cmd := model.BackFromLogView(tea.KeyMsg{})
+		_, cmd := model.CmdBack(tea.KeyMsg{})
 		assert.NotNil(t, cmd) // Returns loadProcesses command
 		assert.Equal(t, ComposeProcessListView, model.currentView)
 	})
@@ -190,7 +190,7 @@ func TestLogView_Navigation(t *testing.T) {
 			},
 		}
 
-		_, cmd := model.BackFromLogView(tea.KeyMsg{})
+		_, cmd := model.CmdBack(tea.KeyMsg{})
 		assert.NotNil(t, cmd) // Returns loadDindContainers command
 		assert.Equal(t, DindProcessListView, model.currentView)
 	})
@@ -590,7 +590,7 @@ func TestLogView_Integration(t *testing.T) {
 		assert.Equal(t, 3, len(model.logs))
 
 		// Go back to process list
-		_, _ = model.BackFromLogView(tea.KeyMsg{})
+		_, _ = model.CmdBack(tea.KeyMsg{})
 		assert.Equal(t, ComposeProcessListView, model.currentView)
 	})
 }

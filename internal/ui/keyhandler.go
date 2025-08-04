@@ -257,16 +257,6 @@ func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	stopLogReader()
-	if m.isDindLog {
-		m.currentView = DindProcessListView
-		return m, loadDindContainers(m.dockerClient, m.dindProcessListViewModel.currentDindContainerID)
-	}
-	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
-}
-
 // Docker container handlers
 func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
@@ -595,6 +585,8 @@ func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case LogView:
+		return m, m.logViewModel.HandleBack(m)
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleBack(m)
 	case HelpView:
