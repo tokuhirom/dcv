@@ -5,17 +5,24 @@ import (
 )
 
 func (m *Model) initializeKeyHandlers() {
+	m.globalHandlers = []KeyConfig{
+		{[]string{"q"}, "quit", m.CmdQuit},
+		{[]string{":"}, "command mode", m.CmdCommandMode},
+
+		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
+		{[]string{"2"}, "project list", m.ShowProjectList},
+		{[]string{"3"}, "docker images", m.ShowImageList},
+		{[]string{"4"}, "docker networks", m.ShowNetworkList},
+		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
+	}
+	m.globalKeymap = m.createKeymap(m.globalHandlers)
+
 	// Process List View
 	m.processListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"d"}, "dind composeContainers", m.ShowDindProcessList},
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"I"}, "inspect", m.CmdInspect},
@@ -58,11 +65,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.SelectDownDindContainer},
 		{[]string{"enter"}, "view logs", m.ShowDindLog},
 		{[]string{"r"}, "refresh", m.Refresh},
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -71,11 +73,6 @@ func (m *Model) initializeKeyHandlers() {
 	// Top View
 	m.topViewHandlers = []KeyConfig{
 		{[]string{"r"}, "refresh", m.Refresh},
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -84,11 +81,6 @@ func (m *Model) initializeKeyHandlers() {
 	// Stats View
 	m.statsViewHandlers = []KeyConfig{
 		{[]string{"r"}, "refresh", m.Refresh},
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -100,10 +92,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "select project", m.SelectProject},
 		{[]string{"r"}, "refresh", m.Refresh},
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
@@ -124,10 +112,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
 		{[]string{"D"}, "remove", m.CmdRemove},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -142,11 +126,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"a"}, "toggle all", m.ToggleAllImages},
 		{[]string{"D"}, "remove", m.DeleteImage},
 		{[]string{"F"}, "force remove", m.ForceDeleteImage},
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -159,11 +138,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "inspect", m.ShowNetworkInspect},
 		{[]string{"r"}, "refresh", m.Refresh},
 		{[]string{"D"}, "remove", m.DeleteNetwork},
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -177,11 +151,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"r"}, "refresh", m.Refresh},
 		{[]string{"D"}, "remove", m.DeleteVolume},
 		{[]string{"F"}, "force remove", m.ForceDeleteVolume},
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}

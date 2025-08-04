@@ -140,6 +140,9 @@ type Model struct {
 	// Command line options
 	projectName string // TODO: Make this a part of the model?
 
+	globalKeymap   map[string]KeyHandler
+	globalHandlers []KeyConfig
+
 	// Key handler maps and configurations for all views
 	processListViewKeymap           map[string]KeyHandler
 	processListViewHandlers         []KeyConfig
