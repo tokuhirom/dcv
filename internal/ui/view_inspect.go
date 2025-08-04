@@ -183,10 +183,10 @@ func (m *InspectViewModel) InspectContainer(model *Model, containerID string) te
 
 func (m *InspectViewModel) HandleBack(model *Model) tea.Cmd {
 	// ClearSearch search state when leaving inspect view
-	model.searchMode = false
-	model.searchText = ""
-	model.searchResults = nil
-	model.currentSearchIdx = 0
+	m.searchMode = false
+	m.searchText = ""
+	m.searchResults = nil
+	m.currentSearchIdx = 0
 
 	// Check if we were inspecting an image
 	if m.inspectImageID != "" {
