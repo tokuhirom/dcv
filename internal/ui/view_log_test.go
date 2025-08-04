@@ -24,7 +24,7 @@ func TestLogView_Rendering(t *testing.T) {
 				logs:       []string{"Line 1", "Line 2", "Line 3"},
 				logScrollY: 0,
 				width:      100,
-				height:     10,
+				Height:     10,
 			},
 			height:   10,
 			expected: []string{"Line 1", "Line 2", "Line 3"},
@@ -35,7 +35,7 @@ func TestLogView_Rendering(t *testing.T) {
 				logs:       []string{},
 				logScrollY: 0,
 				width:      100,
-				height:     10,
+				Height:     10,
 			},
 			height:   10,
 			expected: []string{"No logs available"},
@@ -46,7 +46,7 @@ func TestLogView_Rendering(t *testing.T) {
 				logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"},
 				logScrollY: 1,
 				width:      100,
-				height:     5,
+				Height:     5,
 			},
 			height:   3,
 			expected: []string{"Line 2", "Line 3", "Line 4"},
@@ -57,7 +57,7 @@ func TestLogView_Rendering(t *testing.T) {
 				logs:    []string{},
 				loading: true,
 				width:   100,
-				height:  10,
+				Height:  10,
 			},
 			height:   10,
 			expected: []string{"Loading logs..."},
@@ -69,7 +69,7 @@ func TestLogView_Rendering(t *testing.T) {
 				searchText: "error",
 				logScrollY: 0,
 				width:      100,
-				height:     10,
+				Height:     10,
 			},
 			height:   10,
 			expected: []string{"error", "info", "error"},
@@ -83,7 +83,7 @@ func TestLogView_Rendering(t *testing.T) {
 				filteredLogs: []string{"Error: something went wrong", "Error: another issue"},
 				logScrollY:   0,
 				width:        100,
-				height:       10,
+				Height:       10,
 			},
 			height: 10,
 			expected: []string{
@@ -109,7 +109,7 @@ func TestLogView_Navigation(t *testing.T) {
 		model := &Model{
 			logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10"},
 			logScrollY: 0,
-			height:     8, // 8 - 4 = 4 visible lines, maxScroll = 10 - 4 = 6
+			Height:     8, // 8 - 4 = 4 visible lines, maxScroll = 10 - 4 = 6
 		}
 
 		_, cmd := model.ScrollLogDown(tea.KeyMsg{})
@@ -132,7 +132,7 @@ func TestLogView_Navigation(t *testing.T) {
 		model := &Model{
 			logs:       []string{"Line 1", "Line 2", "Line 3"},
 			logScrollY: 2,
-			height:     10,
+			Height:     10,
 		}
 
 		_, cmd := model.ScrollLogUp(tea.KeyMsg{})
@@ -160,13 +160,13 @@ func TestLogView_Navigation(t *testing.T) {
 		model := &Model{
 			logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"},
 			logScrollY: 0,
-			height:     7, // View height (7 - 4 = 3 visible lines)
+			Height:     7, // View Height (7 - 4 = 3 visible lines)
 		}
 
 		_, cmd := model.GoToLogEnd(tea.KeyMsg{})
 		assert.Nil(t, cmd)
 		// Should position so last line is visible
-		// maxScroll = 5 logs - (7 height - 4 ui) = 5 - 3 = 2
+		// maxScroll = 5 logs - (7 Height - 4 ui) = 5 - 3 = 2
 		assert.Equal(t, 2, model.logScrollY)
 	})
 
@@ -203,7 +203,7 @@ func TestLogView_Search(t *testing.T) {
 			searchText: "Error",
 			logScrollY: 0,
 			width:      100,
-			height:     10,
+			Height:     10,
 		}
 
 		// Verify search would highlight Error
@@ -218,13 +218,13 @@ func TestLogView_Search(t *testing.T) {
 			searchResults:    []int{1, 3}, // Lines with matches
 			currentSearchIdx: 0,
 			logScrollY:       0,
-			height:           9, // 9 - 4 = 5 visible lines
+			Height:           9, // 9 - 4 = 5 visible lines
 		}
 
 		_, cmd := model.NextSearchResult(tea.KeyMsg{})
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, model.currentSearchIdx)
-		// Should scroll to center line 3: targetLine - height/2 + 3 = 3 - 9/2 + 3 = 3 - 4 + 3 = 2
+		// Should scroll to center line 3: targetLine - Height/2 + 3 = 3 - 9/2 + 3 = 3 - 4 + 3 = 2
 		assert.Equal(t, 2, model.logScrollY)
 
 		// Wrap around
@@ -240,7 +240,7 @@ func TestLogView_Search(t *testing.T) {
 			searchResults:    []int{1, 3},
 			currentSearchIdx: 1,
 			logScrollY:       0,
-			height:           9,
+			Height:           9,
 		}
 
 		_, cmd := model.PrevSearchResult(tea.KeyMsg{})
@@ -255,7 +255,7 @@ func TestLogView_AutoScroll(t *testing.T) {
 		model := &Model{
 			logs:        []string{"Line 1", "Line 2", "Line 3"},
 			logScrollY:  0,
-			height:      10,
+			Height:      10,
 			currentView: LogView,
 		}
 
@@ -268,7 +268,7 @@ func TestLogView_AutoScroll(t *testing.T) {
 		m := newModel.(*Model)
 
 		// Should auto-scroll to bottom
-		// 10 total lines - (10 height - 4) = 10 - 6 = 4
+		// 10 total lines - (10 Height - 4) = 10 - 6 = 4
 		assert.Equal(t, 4, m.logScrollY)
 	})
 }
@@ -317,7 +317,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("Clear resets log view state", func(t *testing.T) {
+	t.Run("ClearSearch resets log view state", func(t *testing.T) {
 		model := &Model{
 			currentView:   ComposeProcessListView,
 			logs:          []string{"old", "logs"},
@@ -365,7 +365,7 @@ func TestLogView_Update(t *testing.T) {
 		model := &Model{
 			currentView: LogView,
 			loading:     true,
-			height:      10,
+			Height:      10,
 			logScrollY:  0,
 			logs:        []string{},
 		}
@@ -382,7 +382,7 @@ func TestLogView_Update(t *testing.T) {
 		assert.Nil(t, m.err)
 		assert.Equal(t, 12, len(m.logs))
 		// Should auto-scroll to end
-		// maxScroll = 12 lines - (10 height - 4) = 12 - 6 = 6
+		// maxScroll = 12 lines - (10 Height - 4) = 12 - 6 = 6
 		assert.Equal(t, 6, m.logScrollY)
 		assert.NotNil(t, cmd) // Should return pollLogsContinue command
 	})
@@ -390,7 +390,7 @@ func TestLogView_Update(t *testing.T) {
 	t.Run("handles logLineMsg", func(t *testing.T) {
 		model := &Model{
 			currentView: LogView,
-			height:      10,
+			Height:      10,
 			logScrollY:  0,
 			logs:        []string{"Line 1", "Line 2"},
 		}
@@ -417,7 +417,7 @@ func TestLogView_FilterMode(t *testing.T) {
 			filteredLogs: []string{"ERROR: Database connection failed", "ERROR: Invalid request"},
 			logScrollY:   0,
 			width:        100,
-			height:       10,
+			Height:       10,
 		}
 
 		result := model.renderLogView(10)
@@ -437,7 +437,7 @@ func TestLogView_FilterMode(t *testing.T) {
 			filteredLogs: []string{},
 			logScrollY:   0,
 			width:        100,
-			height:       10,
+			Height:       10,
 		}
 
 		result := model.renderLogView(10)
@@ -452,7 +452,7 @@ func TestLogView_EmptyLogs(t *testing.T) {
 			logs:       []string{},
 			logScrollY: 0,
 			width:      100,
-			height:     10,
+			Height:     10,
 		}
 
 		// Test all navigation operations
@@ -479,7 +479,7 @@ func TestLogView_EmptyLogs(t *testing.T) {
 }
 
 func TestLogView_ScrollIndicator(t *testing.T) {
-	t.Run("shows scroll indicator when logs exceed height", func(t *testing.T) {
+	t.Run("shows scroll indicator when logs exceed Height", func(t *testing.T) {
 		logs := make([]string, 20)
 		for i := 0; i < 20; i++ {
 			logs[i] = fmt.Sprintf("Log line %d", i+1)
@@ -489,7 +489,7 @@ func TestLogView_ScrollIndicator(t *testing.T) {
 			logs:       logs,
 			logScrollY: 5,
 			width:      100,
-			height:     10, // 10 - 4 = 6 visible lines
+			Height:     10, // 10 - 4 = 6 visible lines
 		}
 
 		result := model.renderLogView(6)
@@ -506,7 +506,7 @@ func TestLogView_ScrollIndicator(t *testing.T) {
 			filterText:   "Error",
 			logScrollY:   0,
 			width:        100,
-			height:       5, // 5 - 4 = 1 visible line
+			Height:       5, // 5 - 4 = 1 visible line
 		}
 
 		result := model.renderLogView(1)
@@ -525,7 +525,7 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 			filterMode: false,
 			logScrollY: 0,
 			width:      100,
-			height:     10,
+			Height:     10,
 		}
 
 		result := model.renderLogView(10)
@@ -544,7 +544,7 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 			filterMode:       false,
 			logScrollY:       0,
 			width:            100,
-			height:           10,
+			Height:           10,
 		}
 
 		result := model.renderLogView(10)
@@ -568,7 +568,7 @@ func TestLogView_Integration(t *testing.T) {
 		model := &Model{
 			currentView: ComposeProcessListView,
 			width:       100,
-			height:      20,
+			Height:      20,
 		}
 		vm := &LogViewModel{}
 

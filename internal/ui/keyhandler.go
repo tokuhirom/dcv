@@ -38,6 +38,8 @@ func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case InspectView:
+		return m, m.inspectViewModel.HandleUp(m)
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleUp(m)
 	case ComposeProjectListView:
@@ -59,6 +61,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case InspectView:
+		return m, m.inspectViewModel.HandleDown(m)
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleDown(m)
 	case ComposeProjectListView:
@@ -76,6 +80,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case InspectView:
+		return m, m.inspectViewModel.HandleGoToEnd(m)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleGoToEnd(m)
 	default:
@@ -89,6 +95,8 @@ func (m *Model) CmdGoToStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleGoToStart()
+	case InspectView:
+		return m, m.inspectViewModel.HandleGoToStart()
 	default:
 		slog.Info("Unhandled go to start in current view",
 			slog.String("view", m.currentView.String()))
@@ -105,7 +113,7 @@ func (m *Model) ScrollLogUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ScrollLogDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	maxScroll := len(m.logs) - (m.height - 4)
+	maxScroll := len(m.logs) - (m.Height - 4)
 	if m.logScrollY < maxScroll && maxScroll > 0 {
 		m.logScrollY++
 	}
@@ -113,7 +121,7 @@ func (m *Model) ScrollLogDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) GoToLogEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	maxScroll := len(m.logs) - (m.height - 4)
+	maxScroll := len(m.logs) - (m.Height - 4)
 	if maxScroll > 0 {
 		m.logScrollY = maxScroll
 	}
@@ -148,7 +156,7 @@ func (m *Model) NextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Jump to the line
 		if m.currentSearchIdx < len(m.searchResults) {
 			targetLine := m.searchResults[m.currentSearchIdx]
-			m.logScrollY = targetLine - m.height/2 + 3 // Center the result
+			m.logScrollY = targetLine - m.Height/2 + 3 // Center the result
 			if m.logScrollY < 0 {
 				m.logScrollY = 0
 			}
@@ -166,7 +174,7 @@ func (m *Model) PrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Jump to the line
 		if m.currentSearchIdx < len(m.searchResults) {
 			targetLine := m.searchResults[m.currentSearchIdx]
-			m.logScrollY = targetLine - m.height/2 + 3 // Center the result
+			m.logScrollY = targetLine - m.Height/2 + 3 // Center the result
 			if m.logScrollY < 0 {
 				m.logScrollY = 0
 			}
@@ -627,11 +635,11 @@ func (m *Model) ScrollFileUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ScrollFileDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.fileContentViewModel.HandleScrollDown(m.height)
+	return m, m.fileContentViewModel.HandleScrollDown(m.Height)
 }
 
 func (m *Model) GoToFileEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.fileContentViewModel.HandleGoToEnd(m.height)
+	return m, m.fileContentViewModel.HandleGoToEnd(m.Height)
 }
 
 func (m *Model) GoToFileStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -674,76 +682,37 @@ func (m *Model) ShowDockerInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) ScrollInspectUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.inspectScrollY > 0 {
-		m.inspectScrollY--
+func (m *Model) CmdSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case InspectView:
+		return m, m.inspectViewModel.HandleSearch()
+	default:
+		slog.Info("Unhandled :search command in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
 	}
-	return m, nil
 }
 
-func (m *Model) ScrollInspectDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	lines := strings.Split(m.inspectContent, "\n")
-	maxScroll := len(lines) - (m.height - 5)
-	if m.inspectScrollY < maxScroll && maxScroll > 0 {
-		m.inspectScrollY++
+func (m *Model) CmdNextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case InspectView:
+		return m, m.inspectViewModel.HandleNextSearchResult(m)
+	default:
+		slog.Info("Unhandled next search result command in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
 	}
-	return m, nil
 }
 
-func (m *Model) GoToInspectEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	lines := strings.Split(m.inspectContent, "\n")
-	maxScroll := len(lines) - (m.height - 5)
-	if maxScroll > 0 {
-		m.inspectScrollY = maxScroll
+func (m *Model) CmdPrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case InspectView:
+		return m, m.inspectViewModel.HandlePrevSearchResult(m)
+	default:
+		slog.Info("Unhandled previous search result command in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
 	}
-	return m, nil
-}
-
-func (m *Model) GoToInspectStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.inspectScrollY = 0
-	return m, nil
-}
-
-func (m *Model) StartInspectSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.searchMode = true
-	m.searchText = ""
-	m.searchCursorPos = 0
-	m.searchResults = nil
-	m.currentSearchIdx = 0
-	return m, nil
-}
-
-func (m *Model) NextInspectSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if len(m.searchResults) > 0 {
-		m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.searchResults)
-		// Jump to the line
-		if m.currentSearchIdx < len(m.searchResults) {
-			targetLine := m.searchResults[m.currentSearchIdx]
-			m.inspectScrollY = targetLine - m.height/2 + 3 // Center the result
-			if m.inspectScrollY < 0 {
-				m.inspectScrollY = 0
-			}
-		}
-	}
-	return m, nil
-}
-
-func (m *Model) PrevInspectSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if len(m.searchResults) > 0 {
-		m.currentSearchIdx--
-		if m.currentSearchIdx < 0 {
-			m.currentSearchIdx = len(m.searchResults) - 1
-		}
-		// Jump to the line
-		if m.currentSearchIdx < len(m.searchResults) {
-			targetLine := m.searchResults[m.currentSearchIdx]
-			m.inspectScrollY = targetLine - m.height/2 + 3 // Center the result
-			if m.inspectScrollY < 0 {
-				m.inspectScrollY = 0
-			}
-		}
-	}
-	return m, nil
 }
 
 // Help view handlers

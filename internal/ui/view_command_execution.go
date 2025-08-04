@@ -27,12 +27,12 @@ type CommandExecutionViewModel struct {
 }
 
 func (m *CommandExecutionViewModel) render(model *Model) string {
-	if model.width == 0 || model.height == 0 {
+	if model.width == 0 || model.Height == 0 {
 		return "Loading..."
 	}
 
 	// Create viewport
-	vp := viewport.New(model.width, model.height-4)
+	vp := viewport.New(model.width, model.Height-4)
 
 	// Build content
 	var content strings.Builder
@@ -104,7 +104,7 @@ func (m *CommandExecutionViewModel) HandleUp() tea.Cmd {
 }
 
 func (m *CommandExecutionViewModel) HandleDown(model *Model) tea.Cmd {
-	maxScroll := len(m.output) - (model.height - 6)
+	maxScroll := len(m.output) - (model.Height - 6)
 	if m.scrollY < maxScroll && maxScroll > 0 {
 		m.scrollY++
 	}
@@ -112,7 +112,7 @@ func (m *CommandExecutionViewModel) HandleDown(model *Model) tea.Cmd {
 }
 
 func (m *CommandExecutionViewModel) HandleGoToEnd(model *Model) tea.Cmd {
-	maxScroll := len(m.output) - (model.height - 6)
+	maxScroll := len(m.output) - (model.Height - 6)
 	if maxScroll > 0 {
 		m.scrollY = maxScroll
 	}
@@ -267,7 +267,7 @@ func (m *CommandExecutionViewModel) ExecStarted(cmd *exec.Cmd, stdout io.ReadClo
 func (m *CommandExecutionViewModel) ExecOutput(model *Model, line string) tea.Cmd {
 	m.output = append(m.output, line)
 	// Auto-scroll to bottom
-	maxScroll := len(m.output) - (model.height - 6)
+	maxScroll := len(m.output) - (model.Height - 6)
 	if maxScroll > 0 && m.scrollY == maxScroll-1 {
 		m.scrollY = maxScroll
 	}

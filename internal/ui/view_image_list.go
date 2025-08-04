@@ -31,7 +31,7 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 	// Create table
 	t := table.New().
 		Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE").
-		Height(availableHeight).
+		Height(availableHeight - 2).
 		Width(model.width).
 		Offset(m.selectedDockerImage)
 
@@ -160,12 +160,7 @@ func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 	}
 
 	image := m.dockerImages[m.selectedDockerImage]
-	model.inspectImageID = image.ID
-	model.inspectContainerID = "" // Clear container ID
-	model.inspectNetworkID = ""
-	model.inspectVolumeID = ""
-	model.loading = true
-	return loadImageInspect(model.dockerClient, image.ID)
+	return model.inspectViewModel.InspectImage(model, image)
 }
 
 // HandleBack returns to the compose process list view

@@ -118,14 +118,6 @@ type Model struct {
 	browsingContainerName string
 	pathHistory           []string
 
-	// Inspect view state
-	inspectContent     string
-	inspectScrollY     int
-	inspectContainerID string
-	inspectImageID     string
-	inspectNetworkID   string
-	inspectVolumeID    string
-
 	// Log view state
 	logs          []string
 	logScrollY    int
@@ -153,7 +145,7 @@ type Model struct {
 
 	// Window dimensions
 	width  int
-	height int
+	Height int
 
 	// Loading state
 	loading bool
@@ -241,57 +233,9 @@ func (m *Model) performSearch() {
 	// If we have results, jump to the first one
 	if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) {
 		targetLine := m.searchResults[m.currentSearchIdx]
-		m.logScrollY = targetLine - m.height/2 + 3
+		m.logScrollY = targetLine - m.Height/2 + 3
 		if m.logScrollY < 0 {
 			m.logScrollY = 0
-		}
-	}
-}
-
-func (m *Model) performInspectSearch() {
-	m.searchResults = nil
-	if m.searchText == "" {
-		return
-	}
-
-	// Split inspect content into lines for searching
-	lines := strings.Split(m.inspectContent, "\n")
-
-	searchText := m.searchText
-	if m.searchIgnoreCase && !m.searchRegex {
-		searchText = strings.ToLower(searchText)
-	}
-
-	for i, line := range lines {
-		lineToSearch := line
-		if m.searchIgnoreCase && !m.searchRegex {
-			lineToSearch = strings.ToLower(line)
-		}
-
-		match := false
-		if m.searchRegex {
-			pattern := searchText
-			if m.searchIgnoreCase {
-				pattern = "(?i)" + pattern
-			}
-			if re, err := regexp.Compile(pattern); err == nil {
-				match = re.MatchString(line)
-			}
-		} else {
-			match = strings.Contains(lineToSearch, searchText)
-		}
-
-		if match {
-			m.searchResults = append(m.searchResults, i)
-		}
-	}
-
-	// If we have results, jump to the first one
-	if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) {
-		targetLine := m.searchResults[m.currentSearchIdx]
-		m.inspectScrollY = targetLine - m.height/2 + 3
-		if m.inspectScrollY < 0 {
-			m.inspectScrollY = 0
 		}
 	}
 }
@@ -641,26 +585,6 @@ func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
 		return executeCommandMsg{
 			containerID: containerID,
 			command:     command,
-		}
-	}
-}
-
-func loadImageInspect(client *docker.Client, imageID string) tea.Cmd {
-	return func() tea.Msg {
-		content, err := client.InspectImage(imageID)
-		return inspectLoadedMsg{
-			content: content,
-			err:     err,
-		}
-	}
-}
-
-func loadNetworkInspect(client *docker.Client, networkID string) tea.Cmd {
-	return func() tea.Msg {
-		content, err := client.InspectNetwork(networkID)
-		return inspectLoadedMsg{
-			content: content,
-			err:     err,
 		}
 	}
 }

@@ -211,13 +211,13 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Inspect View
 	m.inspectViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "scroll up", m.ScrollInspectUp},
-		{[]string{"down", "j"}, "scroll down", m.ScrollInspectDown},
-		{[]string{"G"}, "go to end", m.GoToInspectEnd},
-		{[]string{"g"}, "go to start", m.GoToInspectStart},
-		{[]string{"/"}, "search", m.StartInspectSearch},
-		{[]string{"n"}, "next match", m.NextInspectSearchResult},
-		{[]string{"N"}, "prev match", m.PrevInspectSearchResult},
+		{[]string{"up", "k"}, "scroll up", m.CmdUp},
+		{[]string{"down", "j"}, "scroll down", m.CmdDown},
+		{[]string{"G"}, "go to end", m.CmdGoToEnd},
+		{[]string{"g"}, "go to start", m.CmdGoToStart},
+		{[]string{"/"}, "search", m.CmdSearch},
+		{[]string{"n"}, "next match", m.CmdNextSearchResult},
+		{[]string{"N"}, "prev match", m.CmdPrevSearchResult},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}

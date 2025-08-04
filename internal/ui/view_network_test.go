@@ -45,7 +45,7 @@ func TestNetworkListView(t *testing.T) {
 					selectedDockerNetwork: 1,
 				},
 				width:  120,
-				height: 30,
+				Height: 30,
 			},
 			expected: []string{
 				"NETWORK ID",
@@ -67,7 +67,7 @@ func TestNetworkListView(t *testing.T) {
 					dockerNetworks: []models.DockerNetwork{},
 				},
 				width:  120,
-				height: 30,
+				Height: 30,
 			},
 			expected: []string{
 				"No networks found",
@@ -107,7 +107,7 @@ func TestRenderNetworkList(t *testing.T) {
 
 	m := &Model{}
 
-	// Test rendering with sufficient height
+	// Test rendering with sufficient Height
 	output := vm.render(m, 10)
 
 	assert.Contains(t, output, "NETWORK ID")

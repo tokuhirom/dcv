@@ -92,7 +92,7 @@ func TestComposeProjectListViewModel_Rendering(t *testing.T) {
 			model := &Model{
 				composeProjectListViewModel: tt.viewModel,
 				width:                       100,
-				height:                      tt.height,
+				Height:                      tt.height,
 			}
 
 			result := tt.viewModel.render(model, tt.height-4)

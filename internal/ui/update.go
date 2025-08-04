@@ -21,7 +21,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
-		m.height = msg.Height
+		m.Height = msg.Height
 		return m, nil
 
 	case processesLoadedMsg:
@@ -63,7 +63,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.logs = m.logs[len(m.logs)-10000:]
 		}
 		// Auto-scroll to bottom
-		maxScroll := len(m.logs) - (m.height - 4)
+		maxScroll := len(m.logs) - (m.Height - 4)
 		if maxScroll > 0 {
 			m.logScrollY = maxScroll
 		}
@@ -82,7 +82,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.performFilter()
 		} else {
 			// Auto-scroll to bottom only when not filtering
-			maxScroll := len(m.logs) - (m.height - 4)
+			maxScroll := len(m.logs) - (m.Height - 4)
 			if maxScroll > 0 {
 				m.logScrollY = maxScroll
 			}
@@ -250,9 +250,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.inspectContent = msg.content
-		m.inspectScrollY = 0
 		m.err = nil
+
+		m.inspectViewModel.Set(msg.content)
 		m.currentView = InspectView
 		return m, nil
 
@@ -808,7 +808,7 @@ func (m *Model) handleInspectSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyEnter:
 		m.searchMode = false
-		m.performInspectSearch()
+		m.inspectViewModel.performInspectSearch(m)
 		return m, nil
 
 	case tea.KeyBackspace:
