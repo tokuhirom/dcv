@@ -289,6 +289,8 @@ func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleLog(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleLog(m)
 	default:
 		slog.Info("Unhandled :log command in current view",
 			slog.String("view", m.currentView.String()))

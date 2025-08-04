@@ -32,18 +32,18 @@ func TestView(t *testing.T) {
 				loading:     false,
 				composeProcessListViewModel: ComposeProcessListViewModel{
 					composeContainers: []models.ComposeContainer{
-					{
-						Name:    "web-1",
-						Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
-						Service: "web",
-						State:   "running",
-					},
-					{
-						Name:    "dind-1",
-						Command: "dockerd",
-						Service: "dind",
-						State:   "running",
-					},
+						{
+							Name:    "web-1",
+							Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
+							Service: "web",
+							State:   "running",
+						},
+						{
+							Name:    "dind-1",
+							Command: "dockerd",
+							Service: "dind",
+							State:   "running",
+						},
 					},
 				},
 			},
@@ -263,10 +263,10 @@ func TestRenderDindList(t *testing.T) {
 
 func TestViewWithNoContainers(t *testing.T) {
 	m := Model{
-		currentView:       ComposeProcessListView,
-		width:             80,
-		height:            24,
-		loading:           false,
+		currentView: ComposeProcessListView,
+		width:       80,
+		height:      24,
+		loading:     false,
 		composeProcessListViewModel: ComposeProcessListViewModel{
 			composeContainers: []models.ComposeContainer{},
 		},
