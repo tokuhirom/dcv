@@ -29,17 +29,11 @@ func (m *Model) Refresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // Common selection handlers for different views
 func (m *Model) SelectUpDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDindContainer > 0 {
-		m.selectedDindContainer--
-	}
-	return m, nil
+	return m, m.dindProcessListViewModel.HandleSelectUp()
 }
 
 func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDindContainer < len(m.dindContainers)-1 {
-		m.selectedDindContainer++
-	}
-	return m, nil
+	return m, m.dindProcessListViewModel.HandleSelectDown()
 }
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -178,17 +172,7 @@ func (m *Model) PrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDindContainer < len(m.dindContainers) {
-		container := m.dindContainers[m.selectedDindContainer]
-		m.containerName = container.Names
-		m.hostContainer = m.currentDindHost
-		m.isDindLog = true
-		m.currentView = LogView
-		m.logs = []string{}
-		m.logScrollY = 0
-		return m, streamLogs(m.dockerClient, container.Names, true, m.currentDindContainerID)
-	}
-	return m, nil
+	return m, m.dindProcessListViewModel.HandleShowLog(m)
 }
 
 func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -270,15 +254,14 @@ func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	stopLogReader()
 	if m.isDindLog {
 		m.currentView = DindProcessListView
-		return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
+		return m, loadDindContainers(m.dockerClient, m.dindProcessListViewModel.currentDindContainerID)
 	}
 	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 func (m *Model) BackToDindList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+	return m, m.dindProcessListViewModel.HandleBack(m)
 }
 
 // Docker container handlers

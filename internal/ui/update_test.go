@@ -91,7 +91,7 @@ func TestHandleKeyPress(t *testing.T) {
 			wantView:    DindProcessListView,
 			wantLoading: true,
 			checkFunc: func(t *testing.T, m Model) {
-				assert.Equal(t, "dind-1", m.currentDindHost)
+				assert.Equal(t, "dind-1", m.dindProcessListViewModel.currentDindHost)
 			},
 		},
 		{
@@ -246,13 +246,15 @@ func TestHandleSearchMode(t *testing.T) {
 
 func TestHandleDindListKeys(t *testing.T) {
 	model := Model{
-		currentView:     DindProcessListView,
-		currentDindHost: "dind-1",
-		dindContainers: []models.DockerContainer{
-			{ID: "abc123", Names: "test-1"},
-			{ID: "def456", Names: "test-2"},
+		currentView: DindProcessListView,
+		dindProcessListViewModel: DindProcessListViewModel{
+			currentDindHost: "dind-1",
+			dindContainers: []models.DockerContainer{
+				{ID: "abc123", Names: "test-1"},
+				{ID: "def456", Names: "test-2"},
+			},
+			selectedDindContainer: 0,
 		},
-		selectedDindContainer: 0,
 	}
 	// Initialize key handlers
 	model.initializeKeyHandlers()
@@ -260,7 +262,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	// Test navigation
 	newModel, _ := model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyDown})
 	m := *newModel.(*Model)
-	assert.Equal(t, 1, m.selectedDindContainer)
+	assert.Equal(t, 1, m.dindProcessListViewModel.selectedDindContainer)
 
 	// Test entering log view
 	newModel, cmd := m.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEnter})
@@ -325,7 +327,7 @@ func TestUpdateMessages(t *testing.T) {
 	}
 	newModel, _ = m.Update(dindContainersLoadedMsg{containers: containers})
 	m = *newModel.(*Model)
-	assert.Equal(t, containers, m.dindContainers)
+	assert.Equal(t, containers, m.dindProcessListViewModel.dindContainers)
 	assert.False(t, m.loading)
 }
 

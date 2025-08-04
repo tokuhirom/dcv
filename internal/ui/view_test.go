@@ -122,17 +122,19 @@ func TestView(t *testing.T) {
 		{
 			name: "dind process list",
 			model: Model{
-				currentView:     DindProcessListView,
-				width:           80,
-				height:          24,
-				loading:         false,
-				currentDindHost: "dind-1",
-				dindContainers: []models.DockerContainer{
-					{
-						ID:     "abc123def456",
-						Image:  "alpine:latest",
-						Names:  "test-container",
-						Status: "Up 2 minutes",
+				currentView: DindProcessListView,
+				width:       80,
+				height:      24,
+				loading:     false,
+				dindProcessListViewModel: DindProcessListViewModel{
+					currentDindHost: "dind-1",
+					dindContainers: []models.DockerContainer{
+						{
+							ID:     "abc123def456",
+							Image:  "alpine:latest",
+							Names:  "test-container",
+							Status: "Up 2 minutes",
+						},
 					},
 				},
 			},
@@ -225,31 +227,33 @@ func TestRenderLogView(t *testing.T) {
 
 func TestRenderDindList(t *testing.T) {
 	m := Model{
-		currentView:     DindProcessListView,
-		width:           80,
-		height:          24,
-		loading:         false,
-		currentDindHost: "dind-1",
-		dindContainers: []models.DockerContainer{
-			{
-				ID:     "abc123def456789",
-				Image:  "alpine:latest",
-				Names:  "test-1",
-				Status: "Up 5 minutes",
+		currentView: DindProcessListView,
+		width:       80,
+		height:      24,
+		loading:     false,
+		dindProcessListViewModel: DindProcessListViewModel{
+			currentDindHost: "dind-1",
+			dindContainers: []models.DockerContainer{
+				{
+					ID:     "abc123def456789",
+					Image:  "alpine:latest",
+					Names:  "test-1",
+					Status: "Up 5 minutes",
+				},
+				{
+					ID:     "def456ghi789012",
+					Image:  "nginx:latest",
+					Names:  "test-2",
+					Status: "Up 3 minutes",
+				},
 			},
-			{
-				ID:     "def456ghi789012",
-				Image:  "nginx:latest",
-				Names:  "test-2",
-				Status: "Up 3 minutes",
-			},
+			selectedDindContainer: 1,
 		},
-		selectedDindContainer: 1,
 	}
 
 	// Calculate available height
 	availableHeight := m.height - 2
-	view := m.renderDindList(availableHeight)
+	view := m.dindProcessListViewModel.render(&m, availableHeight)
 
 	// The title is in viewTitle(), not renderDindList()
 	// Check that dind containers are listed correctly

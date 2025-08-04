@@ -94,11 +94,6 @@ type Model struct {
 	// Docker client
 	dockerClient *docker.Client
 
-	// Dind state
-	dindContainers         []models.DockerContainer
-	selectedDindContainer  int
-	currentDindHost        string // Container name (for display)
-	currentDindContainerID string // Service name (for docker compose exec)
 
 	dockerContainerListViewModel DockerContainerListViewModel
 	logViewModel                 LogViewModel

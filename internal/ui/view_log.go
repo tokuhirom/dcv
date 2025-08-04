@@ -32,6 +32,16 @@ func (m LogViewModel) StreamLogs(model *Model, process models.ComposeContainer, 
 	return streamLogs(model.dockerClient, process.ID, isDind, hostService)
 }
 
+func (m LogViewModel) ShowDindLog(model *Model, dindContainerID string, container models.DockerContainer) tea.Cmd {
+	model.containerName = container.Names
+	model.hostContainer = model.dindProcessListViewModel.currentDindHost
+	model.isDindLog = true
+	model.currentView = LogView
+	model.logs = []string{}
+	model.logScrollY = 0
+	return streamLogs(model.dockerClient, container.Names, true, dindContainerID)
+}
+
 func (m *Model) renderLogView(availableHeight int) string {
 	var s strings.Builder
 

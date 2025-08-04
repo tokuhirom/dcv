@@ -11,10 +11,16 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// DindProcessListViewModel manages the state and rendering of the Docker-in-Docker process list view
 type DindProcessListViewModel struct {
+	dindContainers         []models.DockerContainer
+	selectedDindContainer  int
+	currentDindHost        string // Container name (for display)
+	currentDindContainerID string // Service name (for docker compose exec)
 }
 
-func (m *Model) renderDindList(availableHeight int) string {
+// render renders the dind process list view
+func (m *DindProcessListViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.dindContainers) == 0 {
@@ -71,12 +77,59 @@ func (m *Model) renderDindList(availableHeight int) string {
 	return s.String()
 }
 
+// Load switches to the dind process list view and loads containers
 func (m *DindProcessListViewModel) Load(model *Model, container models.ComposeContainer) tea.Cmd {
-	model.currentDindHost = container.Name
-	model.currentDindContainerID = container.ID
+	m.currentDindHost = container.Name
+	m.currentDindContainerID = container.ID
 	model.currentView = DindProcessListView
 	model.loading = true
 	return loadDindContainers(model.dockerClient, container.ID)
+}
+
+// HandleSelectUp moves selection up in the dind container list
+func (m *DindProcessListViewModel) HandleSelectUp() tea.Cmd {
+	if m.selectedDindContainer > 0 {
+		m.selectedDindContainer--
+	}
+	return nil
+}
+
+// HandleSelectDown moves selection down in the dind container list
+func (m *DindProcessListViewModel) HandleSelectDown() tea.Cmd {
+	if m.selectedDindContainer < len(m.dindContainers)-1 {
+		m.selectedDindContainer++
+	}
+	return nil
+}
+
+// HandleShowLog shows logs for the selected dind container
+func (m *DindProcessListViewModel) HandleShowLog(model *Model) tea.Cmd {
+	if len(m.dindContainers) == 0 || m.selectedDindContainer >= len(m.dindContainers) {
+		return nil
+	}
+	
+	container := m.dindContainers[m.selectedDindContainer]
+	return model.logViewModel.ShowDindLog(model, m.currentDindContainerID, container)
+}
+
+// HandleBack returns to the compose process list view
+func (m *DindProcessListViewModel) HandleBack(model *Model) tea.Cmd {
+	model.currentView = ComposeProcessListView
+	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+}
+
+// HandleRefresh reloads the dind container list
+func (m *DindProcessListViewModel) HandleRefresh(model *Model) tea.Cmd {
+	model.loading = true
+	return loadDindContainers(model.dockerClient, m.currentDindContainerID)
+}
+
+// Loaded updates the dind container list after loading
+func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
+	m.dindContainers = containers
+	if len(m.dindContainers) > 0 && m.selectedDindContainer >= len(m.dindContainers) {
+		m.selectedDindContainer = 0
+	}
 }
 
 func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {

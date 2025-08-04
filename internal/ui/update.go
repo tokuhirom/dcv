@@ -52,11 +52,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.dindContainers = msg.containers
+		m.dindProcessListViewModel.Loaded(msg.containers)
 		m.err = nil
-		if len(m.dindContainers) > 0 && m.selectedDindContainer >= len(m.dindContainers) {
-			m.selectedDindContainer = 0
-		}
 		return m, nil
 
 	case logLineMsg:
@@ -279,7 +276,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case ComposeProcessListView:
 			return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 		case DindProcessListView:
-			return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
+			return m, loadDindContainers(m.dockerClient, m.dindProcessListViewModel.currentDindContainerID)
 		case LogView:
 			// Logs are continuously streamed, no need to refresh
 			return m, nil
@@ -665,9 +662,7 @@ func (m *Model) refreshCurrentView() tea.Cmd {
 	case ComposeProjectListView:
 		return loadProjects(m.dockerClient)
 	case DindProcessListView:
-		if m.currentDindContainerID != "" {
-			return loadDindContainers(m.dockerClient, m.currentDindContainerID)
-		}
+		return m.dindProcessListViewModel.HandleRefresh(m)
 	case FileBrowserView:
 		if m.browsingContainerID != "" {
 			return loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
