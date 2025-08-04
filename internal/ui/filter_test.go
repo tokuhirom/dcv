@@ -12,8 +12,12 @@ func TestFilterMode(t *testing.T) {
 	t.Run("start_filter_mode", func(t *testing.T) {
 		m := &Model{
 			currentView: LogView,
-			logs:        []string{"line1", "error: something", "line3", "error: another"},
-			filterMode:  false,
+			logViewModel: LogViewModel{
+				logs: []string{"line1", "error: something", "line3", "error: another"},
+				FilterViewModel: FilterViewModel{
+					filterMode: false,
+				},
+			},
 		}
 		m.initializeKeyHandlers()
 
@@ -21,9 +25,9 @@ func TestFilterMode(t *testing.T) {
 		newModel, _ := m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("f")})
 		m = newModel.(*Model)
 
-		assert.True(t, m.filterMode)
-		assert.Equal(t, "", m.filterText)
-		assert.Equal(t, 0, m.filterCursorPos)
+		assert.True(t, m.logViewModel.filterMode)
+		assert.Equal(t, "", m.logViewModel.filterText)
+		assert.Equal(t, 0, m.logViewModel.filterCursorPos)
 	})
 
 	t.Run("filter_logs", func(t *testing.T) {
