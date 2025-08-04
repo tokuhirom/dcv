@@ -1,7 +1,10 @@
 package ui
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os/exec"
 	"strings"
 
@@ -13,37 +16,44 @@ import (
 )
 
 type CommandExecutionViewModel struct {
+	cmd       *exec.Cmd
+	output    []string
+	scrollY   int
+	done      bool
+	exitCode  int
+	cmdString string
+	reader    *bufio.Reader
 }
 
-func (m *Model) renderCommandExecutionView() string {
-	if m.width == 0 || m.height == 0 {
+func (m *CommandExecutionViewModel) render(model *Model) string {
+	if model.width == 0 || model.height == 0 {
 		return "Loading..."
 	}
 
 	// Create viewport
-	vp := viewport.New(m.width, m.height-4)
+	vp := viewport.New(model.width, model.height-4)
 
 	// Build content
 	var content strings.Builder
 
 	// Show command
 	content.WriteString(lipgloss.NewStyle().Bold(true).Render("Executing: "))
-	content.WriteString(m.commandExecCmdString)
+	content.WriteString(m.cmdString)
 	content.WriteString("\n\n")
 
 	// Show output
-	for _, line := range m.commandExecOutput {
+	for _, line := range m.output {
 		content.WriteString(line)
 		content.WriteString("\n")
 	}
 
 	// Show status
-	if m.commandExecDone {
+	if m.done {
 		content.WriteString("\n")
-		if m.commandExecExitCode == 0 {
+		if m.exitCode == 0 {
 			content.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("✓ Command completed successfully"))
 		} else {
-			content.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(fmt.Sprintf("✗ Command failed with exit code %d", m.commandExecExitCode)))
+			content.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(fmt.Sprintf("✗ Command failed with exit code %d", m.exitCode)))
 		}
 	} else {
 		content.WriteString("\n")
@@ -51,27 +61,27 @@ func (m *Model) renderCommandExecutionView() string {
 	}
 
 	vp.SetContent(content.String())
-	vp.YOffset = m.commandExecScrollY
+	vp.YOffset = m.scrollY
 
 	// Header
 	header := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("7")).
 		Background(lipgloss.Color("4")).
-		Width(m.width).
+		Width(model.width).
 		Padding(0, 1).
 		Render("Command Execution")
 
 	// Footer
 	var footerText string
-	if m.commandExecDone {
+	if m.done {
 		footerText = "Press ESC or q to go back"
 	} else {
 		footerText = "Press Ctrl+C to cancel, ESC or q to go back"
 	}
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("7")).
-		Width(m.width).
+		Width(model.width).
 		Padding(0, 1).
 		Align(lipgloss.Center).
 		Render(footerText)
@@ -85,70 +95,105 @@ func (m *Model) renderCommandExecutionView() string {
 }
 
 // Command execution view key handlers
-func (m *Model) ScrollCommandExecUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.commandExecScrollY > 0 {
-		m.commandExecScrollY--
+func (m *CommandExecutionViewModel) HandleUp() tea.Cmd {
+	if m.scrollY > 0 {
+		m.scrollY--
 	}
-	return m, nil
+	return nil
 }
 
-func (m *Model) ScrollCommandExecDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	maxScroll := len(m.commandExecOutput) - (m.height - 6)
-	if m.commandExecScrollY < maxScroll && maxScroll > 0 {
-		m.commandExecScrollY++
+func (m *CommandExecutionViewModel) HandleDown(model *Model) tea.Cmd {
+	maxScroll := len(m.output) - (model.height - 6)
+	if m.scrollY < maxScroll && maxScroll > 0 {
+		m.scrollY++
 	}
-	return m, nil
+	return nil
 }
 
-func (m *Model) GoToCommandExecEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	maxScroll := len(m.commandExecOutput) - (m.height - 6)
+func (m *CommandExecutionViewModel) HandleGoToEnd(model *Model) tea.Cmd {
+	maxScroll := len(m.output) - (model.height - 6)
 	if maxScroll > 0 {
-		m.commandExecScrollY = maxScroll
+		m.scrollY = maxScroll
 	}
-	return m, nil
+	return nil
 }
 
-func (m *Model) GoToCommandExecStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.commandExecScrollY = 0
-	return m, nil
+func (m *CommandExecutionViewModel) HandleGoToStart() tea.Cmd {
+	m.scrollY = 0
+	return nil
 }
 
-func (m *Model) CancelCommandExec(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.commandExecCmd != nil && !m.commandExecDone {
+func (m *CommandExecutionViewModel) HandleCancel() tea.Cmd {
+	if m.cmd != nil && !m.done {
 		// Kill the process
-		if err := m.commandExecCmd.Process.Kill(); err != nil {
-			m.commandExecOutput = append(m.commandExecOutput, fmt.Sprintf("Error cancelling command: %v", err))
+		if err := m.cmd.Process.Kill(); err != nil {
+			m.output = append(m.output, fmt.Sprintf("Error cancelling command: %v", err))
 		} else {
-			m.commandExecOutput = append(m.commandExecOutput, "Command cancelled by user")
+			m.output = append(m.output, "Command cancelled by user")
 		}
-		m.commandExecDone = true
-		m.commandExecExitCode = -1
+		m.done = true
+		m.exitCode = -1
 	}
-	return m, nil
+	return nil
 }
 
-func (m *Model) BackFromCommandExec(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// If command is still running, cancel it first
-	if m.commandExecCmd != nil && !m.commandExecDone {
-		if err := m.commandExecCmd.Process.Kill(); err != nil {
+func (m *CommandExecutionViewModel) HandleBack(model *Model) tea.Cmd {
+	// If the command is still running, cancel it first
+	if m.cmd != nil && !m.done {
+		if err := m.cmd.Process.Kill(); err != nil {
 			// Log error but continue
-			m.err = err
+			model.err = err
 		}
 	}
 
 	// Go back to previous view
-	m.currentView = m.previousView
-	m.loading = true
+	model.currentView = model.previousView
+	model.loading = true
+
+	// TODO: CommandExecutionModelView でここを管理するのは微妙｡refresh してもらう旨だけ､メッセージ送ればよろしいかもしれず｡
 
 	// Reload data for the previous view
-	switch m.previousView {
+	switch model.previousView {
 	case ComposeProcessListView:
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		return loadProcesses(model.dockerClient, model.projectName, model.showAll)
 	case DockerContainerListView:
-		return m, loadDockerContainers(m.dockerClient, m.showAll)
+		return loadDockerContainers(model.dockerClient, model.showAll)
 	default:
-		m.loading = false
-		return m, nil
+		model.loading = false
+		return nil
+	}
+}
+
+func executeComposeCommandWithStreaming(client *docker.Client, projectName string, operation string) tea.Cmd {
+	return func() tea.Msg {
+		// Create the command based on operation
+		var cmd *exec.Cmd
+		switch operation {
+		case "up":
+			cmd = exec.Command("docker", "compose", "-p", projectName, "up", "-d")
+		case "down":
+			cmd = exec.Command("docker", "compose", "-p", projectName, "down")
+		default:
+			return errorMsg{err: fmt.Errorf("unknown operation: %s", operation)}
+		}
+
+		// Create pipes for stdout and stderr
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stdout pipe: %w", err)}
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
+		}
+
+		// HandleStart the command
+		if err := cmd.Start(); err != nil {
+			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
+		}
+
+		// Store the command reference and output channel
+		return commandExecStartedMsg{cmd: cmd, stdout: stdout, stderr: stderr}
 	}
 }
 
@@ -194,10 +239,72 @@ func executeContainerCommand(client *docker.Client, containerID string, operatio
 func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previousView ViewType, containerID string, operation string) tea.Cmd {
 	model.previousView = previousView
 	model.currentView = CommandExecutionView
-	model.commandExecOutput = []string{}
-	model.commandExecScrollY = 0
-	model.commandExecDone = false
-	model.commandExecCmdString = fmt.Sprintf("docker %s %s", operation, containerID)
+	m.output = []string{}
+	m.scrollY = 0
+	m.done = false
+	m.cmdString = fmt.Sprintf("docker %s %s", operation, containerID)
 
 	return executeContainerCommand(model.dockerClient, containerID, operation)
+}
+
+func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, operation string) tea.Cmd {
+	model.previousView = model.currentView
+	model.currentView = CommandExecutionView
+	m.output = []string{}
+	m.scrollY = 0
+	m.done = false
+	m.cmdString = fmt.Sprintf("docker compose -p %s up -d", model.projectName)
+	return executeComposeCommandWithStreaming(model.dockerClient, model.projectName, operation)
+}
+
+func (m *CommandExecutionViewModel) ExecStarted(cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) tea.Cmd {
+	m.cmd = cmd
+	m.reader = bufio.NewReader(io.MultiReader(stdout, stderr))
+	return streamCommandFromReader(m)
+}
+
+func (m *CommandExecutionViewModel) ExecOutput(model *Model, line string) tea.Cmd {
+	m.output = append(m.output, line)
+	// Auto-scroll to bottom
+	maxScroll := len(m.output) - (model.height - 6)
+	if maxScroll > 0 && m.scrollY == maxScroll-1 {
+		m.scrollY = maxScroll
+	}
+	// Continue reading output
+	return streamCommandFromReader(m)
+}
+
+func (m *CommandExecutionViewModel) Complete(code int) {
+	m.done = true
+	m.exitCode = code
+}
+
+func streamCommandFromReader(m *CommandExecutionViewModel) tea.Cmd {
+	return func() tea.Msg {
+		if m.reader == nil || m.cmd == nil {
+			return commandExecCompleteMsg{exitCode: 1}
+		}
+
+		// Read one line
+		line, err := m.reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				// Command finished, wait for exit code
+				exitCode := 0
+				if waitErr := m.cmd.Wait(); waitErr != nil {
+					var exitErr *exec.ExitError
+					if errors.As(waitErr, &exitErr) {
+						exitCode = exitErr.ExitCode()
+					}
+				}
+				return commandExecCompleteMsg{exitCode: exitCode}
+			}
+			// Other error, treat as completion
+			return commandExecCompleteMsg{exitCode: 1}
+		}
+
+		// Remove trailing newline
+		line = strings.TrimRight(line, "\n\r")
+		return commandExecOutputMsg{line: line}
+	}
 }
