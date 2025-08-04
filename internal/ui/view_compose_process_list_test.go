@@ -16,10 +16,10 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 	t.Run("displays no containers message when empty", func(t *testing.T) {
 		// Create model with empty container list
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{}
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{}
 
 		// Test the render function directly
-		output := m.renderComposeProcessList(20)
+		output := m.composeProcessListViewModel.render(m, 20)
 		assert.Contains(t, output, "No containers found")
 		assert.Contains(t, output, "Press u to start services")
 		assert.Contains(t, output, "or p to switch to project list")
@@ -28,7 +28,7 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 	t.Run("displays container list table", func(t *testing.T) {
 		// Create model with test containers
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{
 				Service: "web",
 				Image:   "nginx:latest",
@@ -63,12 +63,12 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 				},
 			},
 		}
-		m.selectedContainer = 0
+		m.composeProcessListViewModel.selectedContainer = 0
 		m.width = 120
 		m.height = 30
 
 		// Test the render function
-		output := m.renderComposeProcessList(20)
+		output := m.composeProcessListViewModel.render(m, 20)
 
 		// Check for table headers
 		assert.Contains(t, output, "SERVICE")
@@ -85,7 +85,7 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 
 	t.Run("displays dind indicator", func(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{
 				Service: "dind",
 				Name:    "project-dind-1",
@@ -95,7 +95,7 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 		}
 		m.width = 120
 
-		output := m.renderComposeProcessList(20)
+		output := m.composeProcessListViewModel.render(m, 20)
 
 		// Check for dind indicator (⬢ symbol)
 		assert.Contains(t, output, "⬢")
@@ -104,7 +104,7 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 
 	t.Run("truncates long values", func(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{
 				Service: "service",
 				Image:   "verylongimagenamethatneedstruncationbecauseitistoolong",
@@ -140,7 +140,7 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 		}
 		m.width = 120
 
-		output := m.renderComposeProcessList(20)
+		output := m.composeProcessListViewModel.render(m, 20)
 
 		// Check that image is truncated with ellipsis
 		assert.Contains(t, output, "...")
@@ -149,7 +149,7 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 
 	t.Run("highlights running vs stopped containers", func(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{
 				Service: "running-service",
 				Image:   "nginx:latest",
@@ -165,7 +165,7 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 		m.width = 120
 
 		// The render function applies different styles to Up vs Exited containers
-		output := m.renderComposeProcessList(20)
+		output := m.composeProcessListViewModel.render(m, 20)
 		assert.Contains(t, output, "Up")         // GetStatus() returns "Up" for running
 		assert.Contains(t, output, "Exited (0)") // GetStatus() returns "Exited (0)" for exited with code 0
 	})
@@ -175,37 +175,37 @@ func TestComposeProcessListView_Navigation(t *testing.T) {
 	t.Run("navigation with direct key handler calls", func(t *testing.T) {
 		// Create model with multiple containers
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{Service: "service1", Image: "image1", State: "running"},
 			{Service: "service2", Image: "image2", State: "running"},
 			{Service: "service3", Image: "image3", State: "running"},
 		}
-		m.selectedContainer = 0
+		m.composeProcessListViewModel.selectedContainer = 0
 		m.initializeKeyHandlers()
 
 		// Test moving down
-		_, _ = m.SelectDownContainer(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 1, m.selectedContainer)
+		m.composeProcessListViewModel.HandleDown()
+		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
 
 		// Test moving down again
-		_, _ = m.SelectDownContainer(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 2, m.selectedContainer)
+		m.composeProcessListViewModel.HandleDown()
+		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
 
 		// Test moving down at the end (should stay at 2)
-		_, _ = m.SelectDownContainer(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 2, m.selectedContainer)
+		m.composeProcessListViewModel.HandleDown()
+		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
 
 		// Test moving up
-		_, _ = m.SelectUpContainer(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 1, m.selectedContainer)
+		m.composeProcessListViewModel.HandleUp()
+		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
 
 		// Test moving up again
-		_, _ = m.SelectUpContainer(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 0, m.selectedContainer)
+		m.composeProcessListViewModel.HandleUp()
+		assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
 
 		// Test moving up at the beginning (should stay at 0)
-		_, _ = m.SelectUpContainer(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 0, m.selectedContainer)
+		m.composeProcessListViewModel.HandleUp()
+		assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
 	})
 }
 
@@ -276,34 +276,34 @@ func TestComposeProcessListView_KeyHandlers(t *testing.T) {
 func TestComposeProcessListView_Update(t *testing.T) {
 	t.Run("handles container selection bounds", func(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{Service: "service1"},
 			{Service: "service2"},
 		}
-		m.selectedContainer = 0
+		m.composeProcessListViewModel.selectedContainer = 0
 		m.initializeKeyHandlers()
 
 		// Try to move up from first item
-		_, cmd := m.SelectUpContainer(tea.KeyMsg{})
+		cmd := m.composeProcessListViewModel.HandleUp()
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, m.selectedContainer)
+		assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
 
 		// Move to last item
-		m.selectedContainer = 1
+		m.composeProcessListViewModel.selectedContainer = 1
 
 		// Try to move down from last item
-		_, cmd = m.SelectDownContainer(tea.KeyMsg{})
+		cmd = m.composeProcessListViewModel.HandleDown()
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, m.selectedContainer)
+		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
 	})
 
 	t.Run("handles empty container list", func(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{}
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{}
 		m.initializeKeyHandlers()
 
 		// Try operations on empty list
-		_, cmd := m.KillContainer(tea.KeyMsg{})
+		_, cmd := m.CmdKill(tea.KeyMsg{})
 		assert.Nil(t, cmd) // Should not crash
 	})
 }
@@ -311,7 +311,7 @@ func TestComposeProcessListView_Update(t *testing.T) {
 func TestComposeProcessListView_FullOutput(t *testing.T) {
 	t.Run("renders complete view", func(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{
 				Service: "web",
 				Image:   "nginx:latest",
@@ -350,23 +350,23 @@ func TestComposeProcessListView_FullOutput(t *testing.T) {
 func TestComposeProcessListView_ServiceOperations(t *testing.T) {
 	t.Run("toggle show all containers", func(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
-		m.showAll = false
+		m.composeProcessListViewModel.showAll = false
 		m.initializeKeyHandlers()
 
 		// Toggle show all
 		_, cmd := m.CmdToggleAll(tea.KeyMsg{})
 		assert.NotNil(t, cmd) // Should return a command to refresh
-		assert.True(t, m.showAll)
+		assert.True(t, m.composeProcessListViewModel.showAll)
 
 		// Toggle back
 		_, cmd = m.CmdToggleAll(tea.KeyMsg{})
 		assert.NotNil(t, cmd)
-		assert.False(t, m.showAll)
+		assert.False(t, m.composeProcessListViewModel.showAll)
 	})
 
 	t.Run("dind container detection", func(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
-		m.composeContainers = []models.ComposeContainer{
+		m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{
 				Service: "regular",
 				Name:    "project-regular-1",
@@ -385,9 +385,9 @@ func TestComposeProcessListView_ServiceOperations(t *testing.T) {
 		}
 
 		// Check that IsDind method works correctly
-		assert.False(t, m.composeContainers[0].IsDind())
-		assert.True(t, m.composeContainers[1].IsDind())
-		assert.True(t, m.composeContainers[2].IsDind())
+		assert.False(t, m.composeProcessListViewModel.composeContainers[0].IsDind())
+		assert.True(t, m.composeProcessListViewModel.composeContainers[1].IsDind())
+		assert.True(t, m.composeProcessListViewModel.composeContainers[2].IsDind())
 	})
 }
 

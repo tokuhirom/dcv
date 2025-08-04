@@ -40,12 +40,12 @@ func TestCommandRegistry(t *testing.T) {
 
 	// Test that some common commands exist
 	commonCommands := []string{
-		"select-up-container",
-		"select-down-container",
-		"show-compose-log",
+		"cmd-up",
+		"cmd-down",
+		"cmd-log",
 		"refresh",
-		"kill-container",
-		"stop-container",
+		"cmd-kill",
+		"cmd-stop",
 	}
 
 	for _, cmd := range commonCommands {
@@ -57,9 +57,9 @@ func TestCommandRegistry(t *testing.T) {
 
 	// Test aliases
 	aliases := map[string]string{
-		"up":   "select-up-container",
-		"down": "select-down-container",
-		"logs": "show-compose-log",
+		"up":   "cmd-up",
+		"down": "cmd-down",
+		"logs": "cmd-log",
 	}
 
 	for alias, target := range aliases {
@@ -82,18 +82,18 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 	// Create a model and initialize it
 	model := NewModel(ComposeProcessListView, "")
 	model.initializeKeyHandlers()
-	model.composeContainers = []models.ComposeContainer{
+	model.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 		{Name: "container1"},
 		{Name: "container2"},
 		{Name: "container3"},
 	}
-	model.selectedContainer = 1
+	model.composeProcessListViewModel.selectedContainer = 1
 
 	// Test executing a navigation command
-	t.Run("select-down-container", func(t *testing.T) {
-		newModel, _ := model.executeKeyHandlerCommand("select-down-container")
+	t.Run("cmd-down", func(t *testing.T) {
+		newModel, _ := model.executeKeyHandlerCommand("cmd-down")
 		m := newModel.(*Model)
-		assert.Equal(t, 2, m.selectedContainer)
+		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
 	})
 
 	// Test executing an unknown command
@@ -106,10 +106,10 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 
 	// Test executing alias
 	t.Run("down-alias", func(t *testing.T) {
-		model.selectedContainer = 0
+		model.composeProcessListViewModel.selectedContainer = 0
 		newModel, _ := model.executeKeyHandlerCommand("down")
 		m := newModel.(*Model)
-		assert.Equal(t, 1, m.selectedContainer)
+		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
 	})
 }
 
@@ -125,15 +125,15 @@ func TestGetAvailableCommands(t *testing.T) {
 	hasSelectUp := false
 	hasShowLog := false
 	for _, cmd := range commands {
-		if cmd == "select-up-container" {
+		if cmd == "cmd-up" {
 			hasSelectUp = true
 		}
-		if cmd == "show-compose-log" {
+		if cmd == "cmd-log" {
 			hasShowLog = true
 		}
 	}
-	assert.True(t, hasSelectUp, "Should have select-up-container command")
-	assert.True(t, hasShowLog, "Should have show-compose-log command")
+	assert.True(t, hasSelectUp, "Should have cmd-up command")
+	assert.True(t, hasShowLog, "Should have cmd-log command")
 }
 
 func TestGetCommandSuggestions(t *testing.T) {
@@ -143,19 +143,19 @@ func TestGetCommandSuggestions(t *testing.T) {
 
 	// Test prefix matching
 	t.Run("prefix-match", func(t *testing.T) {
-		suggestions := model.getCommandSuggestions("select-")
+		suggestions := model.getCommandSuggestions("cmd-")
 		assert.Greater(t, len(suggestions), 0)
 		for _, s := range suggestions {
-			assert.Contains(t, s, "select-")
+			assert.Contains(t, s, "cmd-")
 		}
 	})
 
 	// Test substring matching
 	t.Run("substring-match", func(t *testing.T) {
-		suggestions := model.getCommandSuggestions("container")
+		suggestions := model.getCommandSuggestions("log")
 		assert.Greater(t, len(suggestions), 0)
 		for _, s := range suggestions {
-			assert.Contains(t, s, "container")
+			assert.Contains(t, s, "log")
 		}
 	})
 
