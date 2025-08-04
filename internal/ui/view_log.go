@@ -407,6 +407,11 @@ func (m *LogViewModel) Title() string {
 	return title
 }
 
+func (m *LogViewModel) HandleCancel() tea.Cmd {
+	stopLogReader()
+	return nil
+}
+
 func streamLogs(client *docker.Client, serviceName string, isDind bool, hostService string) tea.Cmd {
 	return streamLogsReal(client, serviceName, isDind, hostService)
 }

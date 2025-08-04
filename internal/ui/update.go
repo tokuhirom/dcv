@@ -331,15 +331,6 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Handle ctrl+c for immediate quit
-	// TODO: CmdInterrupt for LogView
-	if msg.String() == "ctrl+c" {
-		if m.currentView == LogView {
-			stopLogReader()
-		}
-		return m, tea.Quit
-	}
-
 	// Handle view-specific keys
 	switch m.currentView {
 	case ComposeProcessListView:

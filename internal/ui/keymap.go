@@ -48,6 +48,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"f"}, "filter", m.CmdFilter},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
+		{[]string{"ctrl+c"}, "cancel", m.CmdCancel},
 	}
 	m.logViewKeymap = m.createKeymap(m.logViewHandlers)
 
