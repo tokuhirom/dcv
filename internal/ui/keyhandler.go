@@ -54,6 +54,10 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	slog.Info("CmdDown called",
+		slog.String("view", m.currentView.String()),
+		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
+
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleDown(m)

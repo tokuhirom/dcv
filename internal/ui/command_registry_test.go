@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -106,9 +107,37 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 
 	// Test executing alias
 	t.Run("down-alias", func(t *testing.T) {
-		model.composeProcessListViewModel.selectedContainer = 0
-		newModel, _ := model.executeKeyHandlerCommand("down")
+		// Create a fresh model for this test
+		testModel := NewModel(ComposeProcessListView, "")
+		testModel.initializeKeyHandlers()
+		testModel.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
+			{Name: "container1"},
+			{Name: "container2"},
+			{Name: "container3"},
+		}
+		testModel.composeProcessListViewModel.selectedContainer = 0
+
+		// Check that "down" command exists and what handler it has
+		if cmd, exists := commandRegistry["down"]; exists {
+			t.Logf("Found 'down' command with description: %s, ViewMask: %v", cmd.Description, cmd.ViewMask)
+			// List all commands that have "down" in their name
+			for name, regCmd := range commandRegistry {
+				if strings.Contains(name, "down") {
+					t.Logf("Command '%s' has ViewMask: %v", name, regCmd.ViewMask)
+				}
+			}
+		}
+
+		t.Logf("Before: selectedContainer=%d, numContainers=%d",
+			testModel.composeProcessListViewModel.selectedContainer,
+			len(testModel.composeProcessListViewModel.composeContainers))
+
+		newModel, cmd := testModel.executeKeyHandlerCommand("down")
 		m := newModel.(*Model)
+
+		t.Logf("After: selectedContainer=%d, cmd=%v",
+			m.composeProcessListViewModel.selectedContainer, cmd)
+
 		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
 	})
 }
