@@ -57,36 +57,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case logLineMsg:
-		m.logs = append(m.logs, msg.line)
-		// Keep only last 10000 lines to prevent unbounded memory growth
-		if len(m.logs) > 10000 {
-			m.logs = m.logs[len(m.logs)-10000:]
-		}
-		// Auto-scroll to bottom
-		maxScroll := len(m.logs) - (m.Height - 4)
-		if maxScroll > 0 {
-			m.logScrollY = maxScroll
-		}
+		m.logViewModel.LogLine(m, msg.line)
 		// Don't continue polling for single lines (e.g., "[Log reader stopped]")
 		return m, nil
 
 	case logLinesMsg:
-		m.logs = append(m.logs, msg.lines...)
-		// Keep only last 10000 lines to prevent unbounded memory growth
-		if len(m.logs) > 10000 {
-			m.logs = m.logs[len(m.logs)-10000:]
-		}
-
-		// If we're in filter mode, update filtered logs
-		if m.filterMode && m.filterText != "" {
-			m.performFilter()
-		} else {
-			// Auto-scroll to bottom only when not filtering
-			maxScroll := len(m.logs) - (m.Height - 4)
-			if maxScroll > 0 {
-				m.logScrollY = maxScroll
-			}
-		}
+		m.logViewModel.LogLines(m, msg.lines)
 		// Continue polling for more logs with a small delay
 		return m, tea.Tick(time.Millisecond*50, func(time.Time) tea.Msg {
 			return pollForLogs()()
@@ -330,12 +306,12 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	// Handle search mode
-	if m.searchMode {
+	if (m.currentView == LogView && m.logViewModel.searchMode) || (m.currentView == InspectView && m.inspectViewModel.searchMode) {
 		return m.handleSearchMode(msg)
 	}
 
 	// Handle filter mode
-	if m.filterMode {
+	if m.currentView == LogView && m.logViewModel.filterMode {
 		return m.handleFilterMode(msg)
 	}
 
@@ -437,6 +413,14 @@ func (m *Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	performSearch := func() {
+		if m.currentView == LogView {
+			m.logViewModel.PerformSearch(m, m.logViewModel.logs, func(scrollY int) { m.logViewModel.logScrollY = scrollY })
+		} else if m.currentView == InspectView {
+			m.inspectViewModel.PerformSearch(m, strings.Split(m.inspectViewModel.inspectContent, "\n"), func(scrollY int) { m.inspectViewModel.inspectScrollY = scrollY })
+		}
+	}
+
 	switch msg.Type {
 	case tea.KeyEsc:
 		m.searchMode = false
@@ -448,14 +432,14 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyEnter:
 		m.searchMode = false
-		m.performSearch()
+		performSearch()
 		return m, nil
 
 	case tea.KeyBackspace:
 		if m.searchCursorPos > 0 && len(m.searchText) > 0 {
 			m.searchText = m.searchText[:m.searchCursorPos-1] + m.searchText[m.searchCursorPos:]
 			m.searchCursorPos--
-			m.performSearch()
+			performSearch()
 		}
 		return m, nil
 
@@ -473,12 +457,12 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyCtrlI:
 		m.searchIgnoreCase = !m.searchIgnoreCase
-		m.performSearch()
+		performSearch()
 		return m, nil
 
 	case tea.KeyCtrlR:
 		m.searchRegex = !m.searchRegex
-		m.performSearch()
+		performSearch()
 		return m, nil
 
 	default:
@@ -486,7 +470,7 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			// Insert at cursor position
 			m.searchText = m.searchText[:m.searchCursorPos] + msg.String() + m.searchText[m.searchCursorPos:]
 			m.searchCursorPos += len(msg.String())
-			m.performSearch()
+			performSearch()
 		}
 		return m, nil
 	}
@@ -746,39 +730,26 @@ func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.Type {
 	case tea.KeyEsc:
-		m.filterMode = false
-		m.filterText = ""
-		m.filteredLogs = nil
-		m.filterCursorPos = 0
-		m.logScrollY = 0
+		m.logViewModel.ClearFilter()
 		return m, nil
 	case tea.KeyEnter:
-		m.filterMode = false
-		m.performFilter()
+		m.logViewModel.filterMode = false
+		m.logViewModel.performFilter()
 		return m, nil
 	case tea.KeyBackspace:
-		if m.filterCursorPos > 0 && len(m.filterText) > 0 {
-			m.filterText = m.filterText[:m.filterCursorPos-1] + m.filterText[m.filterCursorPos:]
-			m.filterCursorPos--
-			m.performFilter()
-		}
+		m.logViewModel.FilterDeleteLastChar()
 		return m, nil
 	case tea.KeyLeft:
-		if m.filterCursorPos > 0 {
-			m.filterCursorPos--
-		}
+		m.logViewModel.FilterCursorLeft()
 		return m, nil
 	case tea.KeyRight:
-		if m.filterCursorPos < len(m.filterText) {
-			m.filterCursorPos++
-		}
+		m.logViewModel.FilterCursorRight()
 		return m, nil
 	default:
 		if msg.Type == tea.KeyRunes {
 			// Insert at cursor position
-			m.filterText = m.filterText[:m.filterCursorPos] + msg.String() + m.filterText[m.filterCursorPos:]
-			m.filterCursorPos += len(msg.String())
-			m.performFilter()
+			m.logViewModel.AppendString(msg.String())
+			m.logViewModel.performFilter()
 		}
 	}
 	return m, nil

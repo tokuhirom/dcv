@@ -31,23 +31,23 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"D"}, "remove", m.CmdRemove},
 		{[]string{"u"}, "up -d", m.DeployProject},
 		{[]string{"x"}, "down", m.DownProject},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 	}
 	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
 
 	// Log View
 	m.logViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "scroll up", m.ScrollLogUp},
-		{[]string{"down", "j"}, "scroll down", m.ScrollLogDown},
-		{[]string{"G"}, "go to end", m.GoToLogEnd},
-		{[]string{"g"}, "go to start", m.GoToLogStart},
-		{[]string{"/"}, "search", m.StartSearch},
-		{[]string{"f"}, "filter", m.StartFilter},
-		{[]string{"n"}, "next match", m.NextSearchResult},
-		{[]string{"N"}, "prev match", m.PrevSearchResult},
+		{[]string{"up", "k"}, "scroll up", m.CmdUp},
+		{[]string{"down", "j"}, "scroll down", m.CmdDown},
+		{[]string{"G"}, "go to end", m.CmdGoToEnd},
+		{[]string{"g"}, "go to start", m.CmdGoToStart},
+		{[]string{"/"}, "search", m.CmdSearch},
+		{[]string{"n"}, "next match", m.CmdNextSearchResult},
+		{[]string{"N"}, "prev match", m.CmdPrevSearchResult},
+		{[]string{"f"}, "filter", m.CmdFilter},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.logViewKeymap = m.createKeymap(m.logViewHandlers)
 
@@ -63,7 +63,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 
@@ -76,7 +76,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.topViewKeymap = m.createKeymap(m.topViewHandlers)
 
@@ -89,7 +89,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.statsViewKeymap = m.createKeymap(m.statsViewHandlers)
 
@@ -103,7 +103,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
 
@@ -128,7 +128,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
 
@@ -147,7 +147,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.imageListViewKeymap = m.createKeymap(m.imageListViewHandlers)
 
@@ -164,7 +164,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.networkListViewKeymap = m.createKeymap(m.networkListViewHandlers)
 
@@ -182,7 +182,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.volumeListViewKeymap = m.createKeymap(m.volumeListViewHandlers)
 
@@ -194,7 +194,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"u"}, "parent directory", m.GoToParentDirectory},
 		{[]string{"r"}, "refresh", m.Refresh},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.fileBrowserKeymap = m.createKeymap(m.fileBrowserHandlers)
 
@@ -205,7 +205,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"G"}, "go to end", m.GoToFileEnd},
 		{[]string{"g"}, "go to start", m.GoToFileStart},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.fileContentKeymap = m.createKeymap(m.fileContentHandlers)
 
@@ -219,7 +219,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"n"}, "next match", m.CmdNextSearchResult},
 		{[]string{"N"}, "prev match", m.CmdPrevSearchResult},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.inspectViewKeymap = m.createKeymap(m.inspectViewHandlers)
 
@@ -239,7 +239,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"g"}, "go to start", m.CmdGoToStart},
 		{[]string{"ctrl+c"}, "cancel", m.CmdCancel},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
-		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.commandExecKeymap = m.createKeymap(m.commandExecHandlers)
 
