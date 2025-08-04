@@ -4,11 +4,18 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 )
 
-func (m *Model) renderStatsView(availableHeight int) string {
+// StatsViewModel manages the state and rendering of the stats view
+type StatsViewModel struct {
+	stats []ContainerStats
+}
+
+// render renders the stats view
+func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.stats) == 0 {
@@ -39,10 +46,11 @@ func (m *Model) renderStatsView(availableHeight int) string {
 		// Color CPU usage
 		cpu := stat.CPUPerc
 		if cpuVal := strings.TrimSuffix(cpu, "%"); cpuVal != "" {
-			if val, err := fmt.Sscanf(cpuVal, "%f", new(float64)); err == nil && val > 0 {
-				if *new(float64) > 80.0 {
+			var cpuPercent float64
+			if _, err := fmt.Sscanf(cpuVal, "%f", &cpuPercent); err == nil {
+				if cpuPercent > 80.0 {
 					cpu = errorStyle.Render(cpu)
-				} else if *new(float64) > 50.0 {
+				} else if cpuPercent > 50.0 {
 					cpu = searchStyle.Render(cpu)
 				}
 			}
@@ -54,4 +62,28 @@ func (m *Model) renderStatsView(availableHeight int) string {
 	s.WriteString(t.Render() + "\n")
 
 	return s.String()
+}
+
+// Show switches to the stats view
+func (m *StatsViewModel) Show(model *Model) tea.Cmd {
+	model.currentView = StatsView
+	model.loading = true
+	return loadStats(model.dockerClient)
+}
+
+// HandleRefresh reloads the stats
+func (m *StatsViewModel) HandleRefresh(model *Model) tea.Cmd {
+	model.loading = true
+	return loadStats(model.dockerClient)
+}
+
+// HandleBack returns to the compose process list view
+func (m *StatsViewModel) HandleBack(model *Model) tea.Cmd {
+	model.currentView = ComposeProcessListView
+	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+}
+
+// Loaded updates the stats list after loading
+func (m *StatsViewModel) Loaded(stats []ContainerStats) {
+	m.stats = stats
 }

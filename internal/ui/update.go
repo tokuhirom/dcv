@@ -153,7 +153,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.stats = msg.stats
+		m.statsViewModel.Loaded(msg.stats)
 		m.err = nil
 		return m, nil
 
@@ -290,7 +290,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case TopView:
 			return m, loadTop(m.dockerClient, m.projectName, m.topService)
 		case StatsView:
-			return m, loadStats(m.dockerClient)
+			return m, m.statsViewModel.HandleRefresh(m)
 		case ComposeProjectListView:
 			return m, loadProjects(m.dockerClient)
 		case DockerContainerListView:

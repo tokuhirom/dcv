@@ -113,6 +113,7 @@ type Model struct {
 	fileContentViewModel         FileContentViewModel
 	helpViewModel                HelpViewModel
 	networkListViewModel         NetworkListViewModel
+	statsViewModel               StatsViewModel
 
 	// Docker images state
 	dockerImages        []models.DockerImage
@@ -148,9 +149,6 @@ type Model struct {
 	// Top view state
 	topOutput  string
 	topService string
-
-	// Stats view state
-	stats []ContainerStats
 
 	// Search state
 	searchMode       bool
