@@ -174,13 +174,12 @@ type Model struct {
 
 	// Command-line mode state
 	// TODO: implement CommandViewModel
-	commandMode        bool
-	commandBuffer      string
-	commandHistory     []string
-	commandHistoryIdx  int
-	commandCursorPos   int
-	quitConfirmation   bool
-	quitConfirmMessage string
+	commandMode       bool
+	commandBuffer     string
+	commandHistory    []string
+	commandHistoryIdx int
+	commandCursorPos  int
+	quitConfirmation  bool
 }
 
 // NewModel creates a new model with initial state

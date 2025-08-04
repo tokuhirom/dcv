@@ -86,7 +86,7 @@ func (m *Model) View() string {
 
 	if m.quitConfirmation {
 		// Show quit confirmation dialog
-		footer = errorStyle.Render(m.quitConfirmMessage)
+		footer = errorStyle.Render("Really quit? (y/n)")
 	} else if m.currentView == LogView && m.logViewModel.filterMode {
 		footer = m.logViewModel.FilterViewModel.RenderCmdLine()
 	} else if (m.currentView == LogView && m.logViewModel.searchMode) || (m.currentView == InspectView && m.inspectViewModel.searchMode) {

@@ -327,19 +327,8 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	// Handle quit globally
 	if msg.String() == "q" {
-		// For 'q' key, show confirmation dialog
-		if m.currentView == ComposeProjectListView || m.currentView == ComposeProcessListView {
-			m.quitConfirmation = true
-			m.quitConfirmMessage = "Really quit? (y/n)"
-			return m, nil
-		}
-		// For other views, go back
-		if m.currentView == LogView {
-			stopLogReader()
-		}
-		m.currentView = ComposeProcessListView
-		m.err = nil
-		return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
+		m.quitConfirmation = true
+		return m, nil
 	}
 
 	// Handle ctrl+c for immediate quit
@@ -545,7 +534,6 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "n", "N", "esc":
 		// Cancel quit
 		m.quitConfirmation = false
-		m.quitConfirmMessage = ""
 		return m, nil
 	}
 	return m, nil
@@ -575,7 +563,6 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 	case "q", "quit":
 		// Show quit confirmation
 		m.quitConfirmation = true
-		m.quitConfirmMessage = "Really quit? (y/n)"
 		return m, nil
 
 	case "q!", "quit!":
