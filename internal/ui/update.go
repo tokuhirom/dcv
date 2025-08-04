@@ -134,6 +134,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
 		case NetworkListView:
 			return m, m.networkListViewModel.HandleRefresh(m)
+		case VolumeListView:
+			return m, m.volumeListViewModel.HandleRefresh(m)
 		default:
 			return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 		}
@@ -187,11 +189,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.dockerImages = msg.images
+		m.imageListViewModel.Loaded(msg.images)
 		m.err = nil
-		if len(m.dockerImages) > 0 && m.selectedDockerImage >= len(m.dockerImages) {
-			m.selectedDockerImage = 0
-		}
 		return m, nil
 
 	case dockerNetworksLoadedMsg:
@@ -210,11 +209,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.dockerVolumes = msg.volumes
+		m.volumeListViewModel.Loaded(msg.volumes)
 		m.err = nil
-		if len(m.dockerVolumes) > 0 && m.selectedDockerVolume >= len(m.dockerVolumes) {
-			m.selectedDockerVolume = 0
-		}
 		return m, nil
 
 	case containerFilesLoadedMsg:
@@ -300,7 +296,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case NetworkListView:
 			return m, m.networkListViewModel.HandleRefresh(m)
 		case VolumeListView:
-			return m, loadDockerVolumes(m.dockerClient)
+			return m, m.volumeListViewModel.HandleRefresh(m)
 		case FileBrowserView:
 			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
 		case FileContentView:
@@ -665,7 +661,7 @@ func (m *Model) refreshCurrentView() tea.Cmd {
 	case NetworkListView:
 		return loadDockerNetworks(m.dockerClient)
 	case VolumeListView:
-		return loadDockerVolumes(m.dockerClient)
+		return m.volumeListViewModel.HandleRefresh(m)
 	case ComposeProjectListView:
 		return loadProjects(m.dockerClient)
 	case DindProcessListView:

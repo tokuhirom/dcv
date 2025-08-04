@@ -486,63 +486,35 @@ func (m *Model) GetStyledHelpText() string {
 
 // Image list handlers
 func (m *Model) SelectUpImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerImage > 0 {
-		m.selectedDockerImage--
-	}
-	return m, nil
+	return m, m.imageListViewModel.HandleSelectUp()
 }
 
 func (m *Model) SelectDownImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerImage < len(m.dockerImages)-1 {
-		m.selectedDockerImage++
-	}
-	return m, nil
+	return m, m.imageListViewModel.HandleSelectDown()
 }
 
 func (m *Model) ShowImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ImageListView
-	m.loading = true
-	return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
+	return m, m.imageListViewModel.Show(m)
 }
 
 func (m *Model) ToggleAllImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.imageListViewModel.showAll = !m.imageListViewModel.showAll
-	m.loading = true
-	return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
+	return m, m.imageListViewModel.HandleToggleAll(m)
 }
 
 func (m *Model) DeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerImage < len(m.dockerImages) {
-		image := m.dockerImages[m.selectedDockerImage]
-		m.loading = true
-		return m, removeImage(m.dockerClient, image.GetRepoTag(), false)
-	}
-	return m, nil
+	return m, m.imageListViewModel.HandleDelete(m)
 }
 
 func (m *Model) ForceDeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerImage < len(m.dockerImages) {
-		image := m.dockerImages[m.selectedDockerImage]
-		m.loading = true
-		return m, removeImage(m.dockerClient, image.GetRepoTag(), true)
-	}
-	return m, nil
+	return m, m.imageListViewModel.HandleForceDelete(m)
 }
 
 func (m *Model) BackFromImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+	return m, m.imageListViewModel.HandleBack(m)
 }
 
 func (m *Model) ShowImageInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerImage < len(m.dockerImages) {
-		image := m.dockerImages[m.selectedDockerImage]
-		m.inspectImageID = image.ID
-		m.inspectContainerID = "" // Clear container ID
-		m.loading = true
-		return m, loadImageInspect(m.dockerClient, image.ID)
-	}
-	return m, nil
+	return m, m.imageListViewModel.HandleInspect(m)
 }
 
 // Network list handlers

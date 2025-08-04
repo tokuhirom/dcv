@@ -9,22 +9,18 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
-func (m Model) renderVolumeList() string {
+// VolumeListViewModel manages the state and rendering of the Docker volume list view
+type VolumeListViewModel struct {
+	dockerVolumes        []models.DockerVolume
+	selectedDockerVolume int
+}
+
+// render renders the volume list view
+func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 	s := strings.Builder{}
-	s.WriteString(titleStyle.Render("📦 Docker Volumes"))
-	s.WriteString("\n\n")
-
-	if m.loading {
-		s.WriteString("Loading volumes...")
-		return s.String()
-	}
-
-	if m.err != nil {
-		s.WriteString(errorStyle.Render(fmt.Sprintf("Error: %s", m.err.Error())))
-		return s.String()
-	}
 
 	if len(m.dockerVolumes) == 0 {
 		s.WriteString("No volumes found.\n")
@@ -75,7 +71,7 @@ func (m Model) renderVolumeList() string {
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(min(len(rows), m.height-8)),
+		table.WithHeight(min(len(rows), model.height-8)),
 	)
 
 	tableStyle := table.DefaultStyles()
@@ -103,6 +99,96 @@ func (m Model) renderVolumeList() string {
 	return s.String()
 }
 
+// Show switches to the volume list view
+func (m *VolumeListViewModel) Show(model *Model) tea.Cmd {
+	model.currentView = VolumeListView
+	model.loading = true
+	m.selectedDockerVolume = 0
+	model.err = nil
+	return loadDockerVolumes(model.dockerClient)
+}
+
+// HandleSelectUp moves selection up in the volume list
+func (m *VolumeListViewModel) HandleSelectUp() tea.Cmd {
+	if m.selectedDockerVolume > 0 {
+		m.selectedDockerVolume--
+	}
+	return nil
+}
+
+// HandleSelectDown moves selection down in the volume list
+func (m *VolumeListViewModel) HandleSelectDown() tea.Cmd {
+	if m.selectedDockerVolume < len(m.dockerVolumes)-1 {
+		m.selectedDockerVolume++
+	}
+	return nil
+}
+
+// HandleInspect shows the inspect view for the selected volume
+func (m *VolumeListViewModel) HandleInspect(model *Model) tea.Cmd {
+	if len(m.dockerVolumes) == 0 || m.selectedDockerVolume >= len(m.dockerVolumes) {
+		return nil
+	}
+
+	volume := m.dockerVolumes[m.selectedDockerVolume]
+	model.loading = true
+	model.err = nil
+	model.inspectVolumeID = volume.Name
+	model.inspectImageID = ""
+	model.inspectContainerID = ""
+	model.inspectNetworkID = ""
+	model.currentView = InspectView
+
+	return inspectVolume(model.dockerClient, volume.Name)
+}
+
+// HandleDelete removes the selected volume
+func (m *VolumeListViewModel) HandleDelete(model *Model) tea.Cmd {
+	if len(m.dockerVolumes) == 0 || m.selectedDockerVolume >= len(m.dockerVolumes) {
+		return nil
+	}
+
+	volume := m.dockerVolumes[m.selectedDockerVolume]
+	model.loading = true
+	model.err = nil
+
+	return removeVolume(model.dockerClient, volume.Name, false)
+}
+
+// HandleForceDelete forcefully removes the selected volume
+func (m *VolumeListViewModel) HandleForceDelete(model *Model) tea.Cmd {
+	if len(m.dockerVolumes) == 0 || m.selectedDockerVolume >= len(m.dockerVolumes) {
+		return nil
+	}
+
+	volume := m.dockerVolumes[m.selectedDockerVolume]
+	model.loading = true
+	model.err = nil
+
+	return removeVolume(model.dockerClient, volume.Name, true)
+}
+
+// HandleBack returns to the compose process list view
+func (m *VolumeListViewModel) HandleBack(model *Model) tea.Cmd {
+	model.currentView = ComposeProcessListView
+	model.err = nil
+	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+}
+
+// HandleRefresh reloads the volume list
+func (m *VolumeListViewModel) HandleRefresh(model *Model) tea.Cmd {
+	model.loading = true
+	return loadDockerVolumes(model.dockerClient)
+}
+
+// Loaded updates the volume list after loading
+func (m *VolumeListViewModel) Loaded(volumes []models.DockerVolume) {
+	m.dockerVolumes = volumes
+	if len(m.dockerVolumes) > 0 && m.selectedDockerVolume >= len(m.dockerVolumes) {
+		m.selectedDockerVolume = 0
+	}
+}
+
 // formatBytes formats bytes into human-readable format
 func formatBytes(bytes int64) string {
 	const unit = 1024
@@ -121,5 +207,22 @@ func loadDockerVolumes(dockerClient *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		volumes, err := dockerClient.ListVolumes()
 		return dockerVolumesLoadedMsg{volumes: volumes, err: err}
+	}
+}
+
+func inspectVolume(dockerClient *docker.Client, volumeID string) tea.Cmd {
+	return func() tea.Msg {
+		output, err := dockerClient.InspectVolume(volumeID)
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return inspectLoadedMsg{content: output}
+	}
+}
+
+func removeVolume(dockerClient *docker.Client, volumeName string, force bool) tea.Cmd {
+	return func() tea.Msg {
+		err := dockerClient.RemoveVolume(volumeName, force)
+		return serviceActionCompleteMsg{err: err}
 	}
 }
