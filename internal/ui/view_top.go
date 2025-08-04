@@ -2,7 +2,19 @@ package ui
 
 import (
 	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
+
+type TopViewModel struct {
+}
+
+func (m TopViewModel) Load(model *Model, projectName string, service string) tea.Cmd {
+	model.topService = service
+	model.currentView = TopView
+	model.loading = true
+	return loadTop(model.dockerClient, projectName, service)
+}
 
 func (m *Model) renderTopView(availableHeight int) string {
 	var s strings.Builder

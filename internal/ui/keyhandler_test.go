@@ -166,7 +166,7 @@ func TestGetHelpText(t *testing.T) {
 		},
 		{
 			name:    "dind process list view",
-			view:    DindComposeProcessListView,
+			view:    DindProcessListView,
 			hasHelp: true,
 		},
 		{

@@ -354,12 +354,12 @@ func TestComposeProcessListView_ServiceOperations(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Toggle show all
-		_, cmd := m.ToggleAllContainers(tea.KeyMsg{})
+		_, cmd := m.CmdToggleAll(tea.KeyMsg{})
 		assert.NotNil(t, cmd) // Should return a command to refresh
 		assert.True(t, m.showAll)
 
 		// Toggle back
-		_, cmd = m.ToggleAllContainers(tea.KeyMsg{})
+		_, cmd = m.CmdToggleAll(tea.KeyMsg{})
 		assert.NotNil(t, cmd)
 		assert.False(t, m.showAll)
 	})

@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/docker"
-	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type InspectViewModel struct {
@@ -165,8 +164,8 @@ func loadInspect(client *docker.Client, containerID string) tea.Cmd {
 	}
 }
 
-func (m InspectViewModel) InspectContainer(model *Model, container models.DockerContainer) tea.Cmd {
-	model.inspectContainerID = container.ID
+func (m InspectViewModel) InspectContainer(model *Model, containerID string) tea.Cmd {
+	model.inspectContainerID = containerID
 	model.loading = true
-	return loadInspect(model.dockerClient, container.ID)
+	return loadInspect(model.dockerClient, containerID)
 }

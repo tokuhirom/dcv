@@ -34,7 +34,7 @@ type ViewType int
 const (
 	ComposeProcessListView ViewType = iota
 	LogView
-	DindComposeProcessListView
+	DindProcessListView
 	TopView
 	StatsView
 	ComposeProjectListView
@@ -55,7 +55,7 @@ func (view ViewType) String() string {
 		return "Compose Process List"
 	case LogView:
 		return "Log View"
-	case DindComposeProcessListView:
+	case DindProcessListView:
 		return "Docker in Docker"
 	case TopView:
 		return "Process Info"
@@ -94,11 +94,6 @@ type Model struct {
 	// Docker client
 	dockerClient *docker.Client
 
-	// Process list state
-	composeContainers []models.ComposeContainer
-	selectedContainer int
-	showAll           bool // Toggle to show all composeContainers including stopped ones
-
 	// Dind state
 	dindContainers         []models.DockerContainer
 	selectedDindContainer  int
@@ -112,6 +107,9 @@ type Model struct {
 	inspectViewModel             InspectViewModel
 	composeProjectListViewModel  ComposeProjectListViewModel
 	composeProcessListViewModel  ComposeProcessListViewModel
+	topViewModel                 TopViewModel
+	dindProcessListViewModel     DindProcessListViewModel
+	imageListViewModel           ImageListViewModel
 
 	// Docker images state
 	dockerImages        []models.DockerImage
@@ -186,7 +184,7 @@ type Model struct {
 	loading bool
 
 	// Command line options
-	projectName string
+	projectName string // TODO: Make this a part of the model?
 
 	// Key handler maps and configurations for all views
 	processListViewKeymap   map[string]KeyHandler
@@ -373,14 +371,14 @@ func (m *Model) Init() tea.Cmd {
 		)
 	case DockerContainerListView:
 		return tea.Batch(
-			loadDockerContainers(m.dockerClient, m.showAll),
+			loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll),
 			tea.WindowSize(),
 		)
 	default:
 		// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
 		// we'll switch to the project list view in the update
 		return tea.Batch(
-			loadProcesses(m.dockerClient, m.projectName, m.showAll),
+			loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll),
 			tea.WindowSize(),
 		)
 	}
@@ -520,20 +518,6 @@ func loadProcesses(client *docker.Client, projectName string, showAll bool) tea.
 	}
 }
 
-func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		containers, err := client.ListDindContainers(containerID)
-		return dindContainersLoadedMsg{
-			containers: containers,
-			err:        err,
-		}
-	}
-}
-
-func streamLogs(client *docker.Client, serviceName string, isDind bool, hostService string) tea.Cmd {
-	return streamLogsReal(client, serviceName, isDind, hostService)
-}
-
 func loadTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
 	return func() tea.Msg {
 		output, err := client.Compose(projectName).GetContainerTop(serviceName)
@@ -616,16 +600,6 @@ func loadProjects(client *docker.Client) tea.Cmd {
 		return projectsLoadedMsg{
 			projects: projects,
 			err:      err,
-		}
-	}
-}
-
-func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
-	return func() tea.Msg {
-		containers, err := client.ListAllContainers(showAll)
-		return dockerContainersLoadedMsg{
-			containers: containers,
-			err:        err,
 		}
 	}
 }

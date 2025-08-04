@@ -7,8 +7,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
-
-	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type FileBrowserViewModel struct {
@@ -72,12 +70,12 @@ func (m *Model) renderFileBrowser(availableHeight int) string {
 	return content.String()
 }
 
-func (m *FileBrowserViewModel) Load(model *Model, container models.DockerContainer) tea.Cmd {
-	model.browsingContainerID = container.ID
-	model.browsingContainerName = container.Names
+func (m *FileBrowserViewModel) Load(model *Model, containerID, containerName string) tea.Cmd {
+	model.browsingContainerID = containerID
+	model.browsingContainerName = containerName
 	model.currentPath = "/"
 	model.pathHistory = []string{"/"}
 	model.currentView = FileBrowserView
 	model.loading = true
-	return loadContainerFiles(model.dockerClient, container.ID, "/")
+	return loadContainerFiles(model.dockerClient, containerID, "/")
 }

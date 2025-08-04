@@ -27,21 +27,6 @@ func (m *Model) Refresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-// Common navigation handlers
-func (m *Model) SelectUpContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer > 0 {
-		m.selectedContainer--
-	}
-	return m, nil
-}
-
-func (m *Model) SelectDownContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers)-1 {
-		m.selectedContainer++
-	}
-	return m, nil
-}
-
 // Common selection handlers for different views
 func (m *Model) SelectUpDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDindContainer > 0 {
@@ -63,6 +48,8 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.dockerContainerListViewModel.HandleUp(m)
 	case ComposeProjectListView:
 		return m, m.composeProjectListViewModel.HandleUp(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleUp()
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleUp()
 	default:
@@ -78,6 +65,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.dockerContainerListViewModel.HandleDown(m)
 	case ComposeProjectListView:
 		return m, m.composeProjectListViewModel.HandleDown(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleDown()
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleDown(m)
 	default:
@@ -188,20 +177,6 @@ func (m *Model) PrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View-specific handlers
-func (m *Model) ShowComposeLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		process := m.composeContainers[m.selectedContainer]
-		m.containerName = process.Name
-		m.isDindLog = false
-		m.currentView = LogView
-		m.logs = []string{}
-		m.logScrollY = 0
-		return m, streamLogs(m.dockerClient, process.ID, false, "")
-	}
-	return m, nil
-}
-
 func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedDindContainer < len(m.dindContainers) {
 		container := m.dindContainers[m.selectedDindContainer]
@@ -217,29 +192,29 @@ func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		if container.IsDind() {
-			m.currentDindHost = container.Name
-			m.currentDindContainerID = container.ID
-			m.currentView = DindComposeProcessListView
-			m.loading = true
-			return m, loadDindContainers(m.dockerClient, container.ID)
-		}
+	switch m.currentView {
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleDindProcessList(m)
+	default:
+		slog.Info("Unhandled Dind process list command in current view",
+			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
 }
 
 func (m *Model) ShowDockerContainerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = DockerContainerListView
-	m.loading = true
-	return m, loadDockerContainers(m.dockerClient, m.showAll)
+	return m, m.dockerContainerListViewModel.Show(m)
 }
 
-func (m *Model) ToggleAllContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.showAll = !m.showAll
-	m.loading = true
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleToggleAll(m)
+	default:
+		slog.Info("Unhandled toggle all command in current view",
+			slog.String("view", m.currentView.String()))
+	}
+	return m, nil
 }
 
 func (m *Model) ShowStatsView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -248,58 +223,18 @@ func (m *Model) ShowStatsView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadStats(m.dockerClient)
 }
 
-func (m *Model) ShowTopView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		m.topService = container.Service
-		m.currentView = TopView
-		m.loading = true
-		return m, loadTop(m.dockerClient, m.projectName, container.Service)
-	}
-	return m, nil
-}
-
-func (m *Model) KillContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return m, m.commandExecutionViewModel.ExecuteContainerCommand(m, m.currentView, container.ID, "kill")
-	}
-	return m, nil
-}
-
-func (m *Model) StopContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return m, m.commandExecutionViewModel.ExecuteContainerCommand(m, m.currentView, container.ID, "stop")
-	}
-	return m, nil
-}
-
-func (m *Model) UpService(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return m, m.commandExecutionViewModel.ExecuteContainerCommand(m, m.currentView, container.ID, "start")
-	}
-	return m, nil
-}
-
-func (m *Model) RestartContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return m, m.commandExecutionViewModel.ExecuteContainerCommand(m, m.currentView, container.ID, "restart")
+func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleTop(m)
+	default:
+		slog.Info("Unhandled top command in current view",
+			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
 }
 
 func (m *Model) DeleteContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		// Only allow removing stopped composeContainers
-		if !strings.Contains(container.GetStatus(), "Up") && !strings.Contains(container.State, "running") {
-			m.loading = true
-			return m, removeService(m.dockerClient, container.ID)
-		}
-	}
 	return m, nil
 }
 
@@ -331,22 +266,22 @@ func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 // Back navigation handlers
 func (m *Model) BackToProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	stopLogReader()
 	if m.isDindLog {
-		m.currentView = DindComposeProcessListView
+		m.currentView = DindProcessListView
 		return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
 	}
 	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 func (m *Model) BackToDindList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 // Docker container handlers
@@ -362,15 +297,17 @@ func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ToggleAllDockerContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.showAll = !m.showAll
+	m.dockerContainerListViewModel.showAll = !m.dockerContainerListViewModel.showAll
 	m.loading = true
-	return m, loadDockerContainers(m.dockerClient, m.showAll)
+	return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
 }
 
 func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleKill(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleKill(m)
 	default:
 		slog.Info("Unhandled :kill command in current view",
 			slog.String("view", m.currentView.String()))
@@ -382,6 +319,8 @@ func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleStop(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleStop(m)
 	default:
 		slog.Info("Unhandled :stop command in current view",
 			slog.String("view", m.currentView.String()))
@@ -393,6 +332,8 @@ func (m *Model) CmdStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleStart(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleStart(m)
 	default:
 		slog.Info("Unhandled :start command in current view",
 			slog.String("view", m.currentView.String()))
@@ -404,6 +345,8 @@ func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleRestart(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleRestart(m)
 	default:
 		slog.Info("Unhandled :restart command in current view",
 			slog.String("view", m.currentView.String()))
@@ -411,10 +354,12 @@ func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdRemove(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleDelete(m)
+		return m, m.dockerContainerListViewModel.HandleRemove(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleRemove(m)
 	default:
 		slog.Info("Unhandled :delete command in current view",
 			slog.String("view", m.currentView.String()))
@@ -424,7 +369,7 @@ func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) BackFromDockerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 // renderHelpText generates help text based on key configurations and screen width
@@ -497,7 +442,7 @@ func (m *Model) GetHelpText() string {
 		configs = m.processListViewHandlers
 	case LogView:
 		configs = m.logViewHandlers
-	case DindComposeProcessListView:
+	case DindProcessListView:
 		configs = m.dindListViewHandlers
 	case TopView:
 		configs = m.topViewHandlers
@@ -557,13 +502,13 @@ func (m *Model) SelectDownImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) ShowImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ImageListView
 	m.loading = true
-	return m, loadDockerImages(m.dockerClient, m.showAll)
+	return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
 }
 
 func (m *Model) ToggleAllImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.showAll = !m.showAll
+	m.imageListViewModel.showAll = !m.imageListViewModel.showAll
 	m.loading = true
-	return m, loadDockerImages(m.dockerClient, m.showAll)
+	return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
 }
 
 func (m *Model) DeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -586,7 +531,7 @@ func (m *Model) ForceDeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) BackFromImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 func (m *Model) ShowImageInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -649,28 +594,15 @@ func (m *Model) ShowNetworkInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) BackFromNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-}
-
-// File browser handlers
-func (m *Model) ShowFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		m.browsingContainerID = container.ID
-		m.browsingContainerName = container.Name
-		m.currentPath = "/"
-		m.pathHistory = []string{"/"}
-		m.currentView = FileBrowserView
-		m.loading = true
-		return m, loadContainerFiles(m.dockerClient, container.ID, "/")
-	}
-	return m, nil
+	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleFileBrowse(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleFileBrowse(m)
 	default:
 		slog.Info("Unhandled :filebrowser command in current view",
 			slog.String("view", m.currentView.String()))
@@ -754,12 +686,12 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		for _, container := range m.dockerContainerListViewModel.dockerContainers {
 			if container.ID == m.browsingContainerID {
 				m.currentView = DockerContainerListView
-				return m, loadDockerContainers(m.dockerClient, m.showAll)
+				return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
 			}
 		}
 		// Default to compose process list
 		m.currentView = ComposeProcessListView
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleBack(m)
 	case ComposeProcessListView:
@@ -811,20 +743,12 @@ func (m *Model) BackFromFileContent(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// Execute command handlers
-func (m *Model) ExecuteShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		// Default to /bin/sh as it's most commonly available
-		return m, executeInteractiveCommand(container.ID, []string{"/bin/sh"})
-	}
-	return m, nil
-}
-
 func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleShell(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleShell(m)
 	default:
 		slog.Info("Unhandled :shell command in current view",
 			slog.String("view", m.currentView.String()))
@@ -833,14 +757,15 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // Inspect handlers
-func (m *Model) ShowInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		m.inspectContainerID = container.ID
-		m.loading = true
-		return m, loadInspect(m.dockerClient, container.ID)
+func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleInspect(m)
+	default:
+		slog.Info("Unhandled :inspect command in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
 	}
-	return m, nil
 }
 
 func (m *Model) ShowDockerInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -994,24 +919,6 @@ func (m *Model) BackFromHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// Pause/Unpause handlers
-func (m *Model) PauseContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		// Check if container is already paused
-		if strings.Contains(container.State, "paused") {
-			// Container is paused, so unpause it
-			m.loading = true
-			return m, unpauseService(m.dockerClient, container.ID)
-		} else {
-			// Container is running, so pause it
-			m.loading = true
-			return m, pauseService(m.dockerClient, container.ID)
-		}
-	}
-	return m, nil
-}
-
 func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
@@ -1029,6 +936,21 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 				return m, pauseService(m.dockerClient, container.ID)
 			}
 		}
+	case ComposeProcessListView:
+		if m.composeProcessListViewModel.selectedContainer < len(m.composeProcessListViewModel.composeContainers) {
+			container := m.composeProcessListViewModel.composeContainers[m.composeProcessListViewModel.selectedContainer]
+			// Check if container is already paused
+			if strings.Contains(container.State, "paused") {
+				// Container is paused, so unpause it
+				m.loading = true
+				return m, unpauseService(m.dockerClient, container.ID)
+			} else {
+				// Container is running, so pause it
+				m.loading = true
+				return m, pauseService(m.dockerClient, container.ID)
+			}
+		}
+		return m, nil
 	default:
 		slog.Info("Unhandled :pause command in current view",
 			slog.String("view", m.currentView.String()))

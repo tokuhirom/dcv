@@ -158,7 +158,7 @@ func TestViewSwitching(t *testing.T) {
 	newModel, cmd = m.Update(msg)
 	m = *newModel.(*Model)
 
-	assert.Equal(t, DindComposeProcessListView, m.currentView)
+	assert.Equal(t, DindProcessListView, m.currentView)
 	assert.Equal(t, "dind-1", m.currentDindHost)
 	assert.True(t, m.loading)
 	assert.NotNil(t, cmd)
@@ -228,7 +228,7 @@ func TestQuitBehavior(t *testing.T) {
 		},
 		{
 			name:        "quit from dind view returns to process list",
-			currentView: DindComposeProcessListView,
+			currentView: DindProcessListView,
 			expectQuit:  false,
 			expectView:  ComposeProcessListView,
 		},

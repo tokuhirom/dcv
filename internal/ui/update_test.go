@@ -80,7 +80,7 @@ func TestHandleKeyPress(t *testing.T) {
 				selectedContainer: 0,
 			},
 			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")},
-			wantView:    DindComposeProcessListView,
+			wantView:    DindProcessListView,
 			wantLoading: true,
 			checkFunc: func(t *testing.T, m Model) {
 				assert.Equal(t, "dind-1", m.currentDindHost)
@@ -238,7 +238,7 @@ func TestHandleSearchMode(t *testing.T) {
 
 func TestHandleDindListKeys(t *testing.T) {
 	model := Model{
-		currentView:     DindComposeProcessListView,
+		currentView:     DindProcessListView,
 		currentDindHost: "dind-1",
 		dindContainers: []models.DockerContainer{
 			{ID: "abc123", Names: "test-1"},
@@ -264,7 +264,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	assert.NotNil(t, cmd)
 
 	// Test escape
-	model.currentView = DindComposeProcessListView
+	model.currentView = DindProcessListView
 	newModel, _ = model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEsc})
 	m = *newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView)
@@ -364,7 +364,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	assert.NotNil(t, cmd) // Should load composeContainers
 
 	// From dind view - should go back
-	model = Model{currentView: DindComposeProcessListView}
+	model = Model{currentView: DindProcessListView}
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = *newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView)

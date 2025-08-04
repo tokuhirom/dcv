@@ -21,7 +21,7 @@ func (m *Model) renderHelpView(availableHeight int) string {
 	case LogView:
 		configs = m.logViewHandlers
 		viewName = "Log View"
-	case DindComposeProcessListView:
+	case DindProcessListView:
 		configs = m.dindListViewHandlers
 		viewName = "Docker in Docker"
 	case TopView:

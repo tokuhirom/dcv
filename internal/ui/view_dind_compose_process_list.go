@@ -3,9 +3,15 @@ package ui
 import (
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/models"
 )
+
+type DindProcessListViewModel struct {
+}
 
 func (m *Model) renderDindList(availableHeight int) string {
 	var s strings.Builder
@@ -62,4 +68,22 @@ func (m *Model) renderDindList(availableHeight int) string {
 	s.WriteString(t.Render() + "\n\n")
 
 	return s.String()
+}
+
+func (m *DindProcessListViewModel) Load(model *Model, container models.ComposeContainer) tea.Cmd {
+	model.currentDindHost = container.Name
+	model.currentDindContainerID = container.ID
+	model.currentView = DindProcessListView
+	model.loading = true
+	return loadDindContainers(model.dockerClient, container.ID)
+}
+
+func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {
+	return func() tea.Msg {
+		containers, err := client.ListDindContainers(containerID)
+		return dindContainersLoadedMsg{
+			containers: containers,
+			err:        err,
+		}
+	}
 }

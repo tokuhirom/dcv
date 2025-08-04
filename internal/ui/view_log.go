@@ -5,7 +5,10 @@ import (
 	"regexp"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type LogViewModel struct {
@@ -17,6 +20,15 @@ func (m LogViewModel) Clear(model *Model, containerName string) {
 	model.currentView = LogView
 	model.logs = []string{}
 	model.logScrollY = 0
+}
+
+func (m LogViewModel) StreamLogs(model *Model, process models.ComposeContainer, isDind bool, hostService string) tea.Cmd {
+	model.containerName = process.Name
+	model.isDindLog = false
+	model.currentView = LogView
+	model.logs = []string{}
+	model.logScrollY = 0
+	return streamLogs(model.dockerClient, process.ID, isDind, hostService)
 }
 
 func (m *Model) renderLogView(availableHeight int) string {
@@ -191,4 +203,8 @@ func (m *Model) highlightFilterMatch(line string, style lipgloss.Style) string {
 	}
 
 	return result.String()
+}
+
+func streamLogs(client *docker.Client, serviceName string, isDind bool, hostService string) tea.Cmd {
+	return streamLogsReal(client, serviceName, isDind, hostService)
 }

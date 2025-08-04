@@ -120,7 +120,7 @@ func TestView(t *testing.T) {
 		{
 			name: "dind process list",
 			model: Model{
-				currentView:     DindComposeProcessListView,
+				currentView:     DindProcessListView,
 				width:           80,
 				height:          24,
 				loading:         false,
@@ -221,7 +221,7 @@ func TestRenderLogView(t *testing.T) {
 
 func TestRenderDindList(t *testing.T) {
 	m := Model{
-		currentView:     DindComposeProcessListView,
+		currentView:     DindProcessListView,
 		width:           80,
 		height:          24,
 		loading:         false,
