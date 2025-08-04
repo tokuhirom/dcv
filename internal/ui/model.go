@@ -112,14 +112,11 @@ type Model struct {
 	imageListViewModel           ImageListViewModel
 	fileContentViewModel         FileContentViewModel
 	helpViewModel                HelpViewModel
+	networkListViewModel         NetworkListViewModel
 
 	// Docker images state
 	dockerImages        []models.DockerImage
 	selectedDockerImage int
-
-	// Docker networks state
-	dockerNetworks        []models.DockerNetwork
-	selectedDockerNetwork int
 
 	// Docker volumes state
 	dockerVolumes        []models.DockerVolume
