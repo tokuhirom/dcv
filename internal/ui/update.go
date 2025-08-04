@@ -332,6 +332,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	// Handle ctrl+c for immediate quit
+	// TODO: CmdInterrupt for LogView
 	if msg.String() == "ctrl+c" {
 		if m.currentView == LogView {
 			stopLogReader()
@@ -372,6 +373,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case CommandExecutionView:
 		return m.handleCommandExecutionKeys(msg)
 	default:
+		// TODO: support some key shortcuts like '1', '2', '3', '4', '5'.
 		return m, nil
 	}
 }
@@ -405,9 +407,10 @@ func (m *Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleSearchMode(msg tea.KeyMsg, searchViewModel *SearchViewModel) (tea.Model, tea.Cmd) {
 	performSearch := func() {
-		if m.currentView == LogView {
+		switch m.currentView {
+		case LogView:
 			m.logViewModel.PerformSearch(m, m.logViewModel.logs, func(scrollY int) { m.logViewModel.logScrollY = scrollY })
-		} else if m.currentView == InspectView {
+		case InspectView:
 			m.inspectViewModel.PerformSearch(m, strings.Split(m.inspectViewModel.inspectContent, "\n"), func(scrollY int) { m.inspectViewModel.inspectScrollY = scrollY })
 		}
 	}
@@ -710,12 +713,12 @@ func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Check if ESC was pressed to clear filter
 	if msg.Type == tea.KeyEsc {
-		m.logViewModel.FilterViewModel.ClearFilter()
+		m.logViewModel.ClearFilter()
 		m.logViewModel.logScrollY = 0 // Reset scroll position when clearing filter
 		return m, nil
 	}
 
-	perform := m.logViewModel.FilterViewModel.HandleKey(msg)
+	perform := m.logViewModel.HandleKey(msg)
 	if perform {
 		m.logViewModel.performFilter()
 	}

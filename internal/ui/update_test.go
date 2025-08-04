@@ -391,19 +391,21 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	assert.True(t, m.quitConfirmation)
 	assert.Nil(t, cmd) // No command yet, just showing confirmation
 
-	// From log view - should go back
+	// From log view - should now show quit confirmation
 	model = Model{currentView: LogView}
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = *newModel.(*Model)
-	assert.Equal(t, ComposeProcessListView, m.currentView)
-	assert.NotNil(t, cmd) // Should load composeContainers
+	assert.Equal(t, LogView, m.currentView) // View should not change
+	assert.True(t, m.quitConfirmation)
+	assert.Nil(t, cmd)
 
-	// From dind view - should go back
+	// From dind view - should now show quit confirmation
 	model = Model{currentView: DindProcessListView}
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = *newModel.(*Model)
-	assert.Equal(t, ComposeProcessListView, m.currentView)
-	assert.NotNil(t, cmd) // Should load composeContainers
+	assert.Equal(t, DindProcessListView, m.currentView) // View should not change
+	assert.True(t, m.quitConfirmation)
+	assert.Nil(t, cmd)
 }
 
 func TestFileBrowserParentDirectory(t *testing.T) {

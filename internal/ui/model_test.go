@@ -221,16 +221,16 @@ func TestQuitBehavior(t *testing.T) {
 			expectView:  ComposeProcessListView,
 		},
 		{
-			name:        "quit from log view returns to process list",
+			name:        "quit from log view shows confirmation",
 			currentView: LogView,
 			expectQuit:  false,
-			expectView:  ComposeProcessListView,
+			expectView:  LogView, // View should not change
 		},
 		{
-			name:        "quit from dind view returns to process list",
+			name:        "quit from dind view shows confirmation",
 			currentView: DindProcessListView,
 			expectQuit:  false,
-			expectView:  ComposeProcessListView,
+			expectView:  DindProcessListView, // View should not change
 		},
 	}
 
@@ -246,15 +246,10 @@ func TestQuitBehavior(t *testing.T) {
 
 			assert.Equal(t, tt.expectView, m.currentView)
 
-			if tt.currentView == ComposeProcessListView {
-				// Should show quit confirmation
-				assert.True(t, m.quitConfirmation)
-				assert.Nil(t, cmd)
-			} else {
-				// Should return to process list
-				assert.Equal(t, ComposeProcessListView, m.currentView)
-				assert.NotNil(t, cmd) // Should have a command to reload processes
-			}
+			// All views now show quit confirmation when 'q' is pressed
+			assert.True(t, m.quitConfirmation)
+			assert.Equal(t, tt.currentView, m.currentView) // View should not change
+			assert.Nil(t, cmd)
 		})
 	}
 }
