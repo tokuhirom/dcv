@@ -1,12 +1,9 @@
 package ui
 
 import (
-	"fmt"
 	"reflect"
 	"runtime"
 	"strings"
-
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 // CommandHandler represents a function that can be executed via command line
@@ -202,29 +199,6 @@ func getShortCommandName(methodName string) string {
 	// This avoids conflicts with CmdUp/CmdDown
 
 	return ""
-}
-
-// executeKeyHandlerCommand executes a command by name
-func (m *Model) executeKeyHandlerCommand(cmdName string) (tea.Model, tea.Cmd) {
-	cmd, exists := commandRegistry[cmdName]
-	if !exists {
-		m.err = fmt.Errorf("unknown command: %s", cmdName)
-		return m, nil
-	}
-
-	// Check if command is available in current view
-	if cmd.ViewMask != 0 && cmd.ViewMask != m.currentView {
-		// Try to find a similar command for the current view
-		currentViewCmd := m.findCommandForCurrentView(cmdName)
-		if currentViewCmd != nil {
-			return currentViewCmd.Handler(tea.KeyMsg{})
-		}
-		m.err = fmt.Errorf("command '%s' is not available in current view", cmdName)
-		return m, nil
-	}
-
-	// Execute the command
-	return cmd.Handler(tea.KeyMsg{})
 }
 
 // findCommandForCurrentView tries to find a similar command for the current view
