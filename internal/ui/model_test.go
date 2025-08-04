@@ -237,6 +237,7 @@ func TestQuitBehavior(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewModel(ComposeProcessListView, "")
+			m.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 			m.currentView = tt.currentView
 			m.loading = false
 

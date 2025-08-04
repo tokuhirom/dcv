@@ -386,6 +386,7 @@ func TestBoundaryConditions(t *testing.T) {
 func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	// From process list - should show quit confirmation
 	model := Model{currentView: ComposeProcessListView}
+	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m := *newModel.(*Model)
 	assert.True(t, m.quitConfirmation)
@@ -393,6 +394,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 
 	// From log view - should now show quit confirmation
 	model = Model{currentView: LogView}
+	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = *newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView) // View should not change
@@ -401,6 +403,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 
 	// From dind view - should now show quit confirmation
 	model = Model{currentView: DindProcessListView}
+	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	m = *newModel.(*Model)
 	assert.Equal(t, DindProcessListView, m.currentView) // View should not change

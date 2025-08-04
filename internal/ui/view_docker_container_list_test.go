@@ -186,14 +186,17 @@ func TestDockerContainerListView_KeyHandlers(t *testing.T) {
 		m := createTestModel(DockerContainerListView)
 		m.initializeKeyHandlers()
 
-		// Check view switching handlers exist
+		// Check view-specific handlers
 		hasBackSwitch := false
-		hasImageSwitch := false
-		hasProjectSwitch := false
 		for _, config := range m.dockerContainerListViewHandlers {
 			if config.Description == "back" {
 				hasBackSwitch = true
 			}
+		}
+		// Check global handlers for view switching
+		hasImageSwitch := false
+		hasProjectSwitch := false
+		for _, config := range m.globalHandlers {
 			if strings.Contains(config.Description, "images") {
 				hasImageSwitch = true
 			}
