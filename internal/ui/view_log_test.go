@@ -317,7 +317,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("Clear resets log view state", func(t *testing.T) {
+	t.Run("ClearSearch resets log view state", func(t *testing.T) {
 		model := &Model{
 			currentView:   ComposeProcessListView,
 			logs:          []string{"old", "logs"},

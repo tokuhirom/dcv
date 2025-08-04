@@ -10,7 +10,7 @@ type SearchViewModel struct {
 	searchCursorPos  int   // Cursor position in search text
 }
 
-func (m *SearchViewModel) Clear() {
+func (m *SearchViewModel) ClearSearch() {
 	m.searchMode = true
 	m.searchText = ""
 	m.searchCursorPos = 0

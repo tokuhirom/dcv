@@ -182,7 +182,7 @@ func (m *InspectViewModel) InspectContainer(model *Model, containerID string) te
 }
 
 func (m *InspectViewModel) HandleBack(model *Model) tea.Cmd {
-	// Clear search state when leaving inspect view
+	// ClearSearch search state when leaving inspect view
 	model.searchMode = false
 	model.searchText = ""
 	model.searchResults = nil
@@ -252,7 +252,7 @@ func (m *InspectViewModel) HandleGoToStart() tea.Cmd {
 }
 
 func (m *InspectViewModel) HandleSearch() tea.Cmd {
-	m.SearchViewModel.Clear()
+	m.ClearSearch()
 	return nil
 }
 
@@ -375,7 +375,7 @@ func (m *InspectViewModel) Title() string {
 
 func (m *InspectViewModel) InspectImage(model *Model, image models.DockerImage) tea.Cmd {
 	m.inspectImageID = image.ID
-	m.inspectContainerID = "" // Clear container ID
+	m.inspectContainerID = "" // ClearSearch container ID
 	m.inspectNetworkID = ""
 	m.inspectVolumeID = ""
 	model.loading = true
@@ -394,8 +394,8 @@ func loadImageInspect(client *docker.Client, imageID string) tea.Cmd {
 
 func (m *InspectViewModel) InspectNetwork(model *Model, network models.DockerNetwork) tea.Cmd {
 	m.inspectNetworkID = network.ID
-	m.inspectContainerID = "" // Clear container ID
-	m.inspectImageID = ""     // Clear image ID
+	m.inspectContainerID = "" // ClearSearch container ID
+	m.inspectImageID = ""     // ClearSearch image ID
 	model.loading = true
 	return loadNetworkInspect(model.dockerClient, network.ID)
 }
