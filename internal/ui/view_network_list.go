@@ -4,11 +4,20 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
-// renderNetworkList renders the network list view
-func (m *Model) renderNetworkList(availableHeight int) string {
+// NetworkListViewModel manages the state and rendering of the network list view
+type NetworkListViewModel struct {
+	dockerNetworks        []models.DockerNetwork
+	selectedDockerNetwork int
+}
+
+// render renders the network list view
+func (m *NetworkListViewModel) render(model *Model, availableHeight int) string {
 	var content strings.Builder
 
 	if len(m.dockerNetworks) == 0 {
@@ -67,6 +76,77 @@ func (m *Model) renderNetworkList(availableHeight int) string {
 	}
 
 	return content.String()
+}
+
+// Show switches to the network list view
+func (m *NetworkListViewModel) Show(model *Model) tea.Cmd {
+	model.currentView = NetworkListView
+	model.loading = true
+	return loadDockerNetworks(model.dockerClient)
+}
+
+// HandleSelectUp moves the selection up
+func (m *NetworkListViewModel) HandleSelectUp() tea.Cmd {
+	if m.selectedDockerNetwork > 0 {
+		m.selectedDockerNetwork--
+	}
+	return nil
+}
+
+// HandleSelectDown moves the selection down
+func (m *NetworkListViewModel) HandleSelectDown() tea.Cmd {
+	if m.selectedDockerNetwork < len(m.dockerNetworks)-1 {
+		m.selectedDockerNetwork++
+	}
+	return nil
+}
+
+// HandleDelete removes the selected network
+func (m *NetworkListViewModel) HandleDelete(model *Model) tea.Cmd {
+	if m.selectedDockerNetwork < len(m.dockerNetworks) {
+		network := m.dockerNetworks[m.selectedDockerNetwork]
+		// Don't allow removing default networks
+		if network.Name == "bridge" || network.Name == "host" || network.Name == "none" {
+			model.err = fmt.Errorf("cannot remove default network: %s", network.Name)
+			return nil
+		}
+		model.loading = true
+		return removeNetwork(model.dockerClient, network.ID)
+	}
+	return nil
+}
+
+// HandleInspect shows the inspect view for the selected network
+func (m *NetworkListViewModel) HandleInspect(model *Model) tea.Cmd {
+	if m.selectedDockerNetwork < len(m.dockerNetworks) {
+		network := m.dockerNetworks[m.selectedDockerNetwork]
+		model.inspectNetworkID = network.ID
+		model.inspectContainerID = "" // Clear container ID
+		model.inspectImageID = ""     // Clear image ID
+		model.loading = true
+		return loadNetworkInspect(model.dockerClient, network.ID)
+	}
+	return nil
+}
+
+// HandleBack returns to the compose process list view
+func (m *NetworkListViewModel) HandleBack(model *Model) tea.Cmd {
+	model.currentView = ComposeProcessListView
+	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+}
+
+// HandleRefresh reloads the network list
+func (m *NetworkListViewModel) HandleRefresh(model *Model) tea.Cmd {
+	model.loading = true
+	return loadDockerNetworks(model.dockerClient)
+}
+
+// Loaded updates the networks list after loading
+func (m *NetworkListViewModel) Loaded(networks []models.DockerNetwork) {
+	m.dockerNetworks = networks
+	if len(m.dockerNetworks) > 0 && m.selectedDockerNetwork >= len(m.dockerNetworks) {
+		m.selectedDockerNetwork = 0
+	}
 }
 
 // Helper functions

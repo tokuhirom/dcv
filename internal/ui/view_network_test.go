@@ -18,32 +18,34 @@ func TestNetworkListView(t *testing.T) {
 			name: "network list with multiple networks",
 			model: Model{
 				currentView: NetworkListView,
-				dockerNetworks: []models.DockerNetwork{
-					{
-						ID:       "58c772315063",
-						Name:     "blog4_default",
-						Driver:   "bridge",
-						Scope:    "local",
-						Internal: false,
+				networkListViewModel: NetworkListViewModel{
+					dockerNetworks: []models.DockerNetwork{
+						{
+							ID:       "58c772315063",
+							Name:     "blog4_default",
+							Driver:   "bridge",
+							Scope:    "local",
+							Internal: false,
+						},
+						{
+							ID:       "0e4dfb157d47",
+							Name:     "bridge",
+							Driver:   "bridge",
+							Scope:    "local",
+							Internal: false,
+						},
+						{
+							ID:       "c65e5d9416a7",
+							Name:     "dcv-development",
+							Driver:   "bridge",
+							Scope:    "local",
+							Internal: true,
+						},
 					},
-					{
-						ID:       "0e4dfb157d47",
-						Name:     "bridge",
-						Driver:   "bridge",
-						Scope:    "local",
-						Internal: false,
-					},
-					{
-						ID:       "c65e5d9416a7",
-						Name:     "dcv-development",
-						Driver:   "bridge",
-						Scope:    "local",
-						Internal: true,
-					},
+					selectedDockerNetwork: 1,
 				},
-				selectedDockerNetwork: 1,
-				width:                 120,
-				height:                30,
+				width:  120,
+				height: 30,
 			},
 			expected: []string{
 				"NETWORK ID",
@@ -60,10 +62,12 @@ func TestNetworkListView(t *testing.T) {
 		{
 			name: "empty network list",
 			model: Model{
-				currentView:    NetworkListView,
-				dockerNetworks: []models.DockerNetwork{},
-				width:          120,
-				height:         30,
+				currentView: NetworkListView,
+				networkListViewModel: NetworkListViewModel{
+					dockerNetworks: []models.DockerNetwork{},
+				},
+				width:  120,
+				height: 30,
 			},
 			expected: []string{
 				"No networks found",
@@ -88,7 +92,7 @@ func TestNetworkListView(t *testing.T) {
 }
 
 func TestRenderNetworkList(t *testing.T) {
-	m := &Model{
+	vm := &NetworkListViewModel{
 		dockerNetworks: []models.DockerNetwork{
 			{
 				ID:       "abc123",
@@ -101,8 +105,10 @@ func TestRenderNetworkList(t *testing.T) {
 		selectedDockerNetwork: 0,
 	}
 
+	m := &Model{}
+
 	// Test rendering with sufficient height
-	output := m.renderNetworkList(10)
+	output := vm.render(m, 10)
 
 	assert.Contains(t, output, "NETWORK ID")
 	assert.Contains(t, output, "NAME")

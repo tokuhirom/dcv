@@ -549,54 +549,27 @@ func (m *Model) ShowImageInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // Network list handlers
 func (m *Model) SelectUpNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerNetwork > 0 {
-		m.selectedDockerNetwork--
-	}
-	return m, nil
+	return m, m.networkListViewModel.HandleSelectUp()
 }
 
 func (m *Model) SelectDownNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerNetwork < len(m.dockerNetworks)-1 {
-		m.selectedDockerNetwork++
-	}
-	return m, nil
+	return m, m.networkListViewModel.HandleSelectDown()
 }
 
 func (m *Model) ShowNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = NetworkListView
-	m.loading = true
-	return m, loadDockerNetworks(m.dockerClient)
+	return m, m.networkListViewModel.Show(m)
 }
 
 func (m *Model) DeleteNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerNetwork < len(m.dockerNetworks) {
-		network := m.dockerNetworks[m.selectedDockerNetwork]
-		// Don't allow removing default networks
-		if network.Name == "bridge" || network.Name == "host" || network.Name == "none" {
-			m.err = fmt.Errorf("cannot remove default network: %s", network.Name)
-			return m, nil
-		}
-		m.loading = true
-		return m, removeNetwork(m.dockerClient, network.ID)
-	}
-	return m, nil
+	return m, m.networkListViewModel.HandleDelete(m)
 }
 
 func (m *Model) ShowNetworkInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerNetwork < len(m.dockerNetworks) {
-		network := m.dockerNetworks[m.selectedDockerNetwork]
-		m.inspectNetworkID = network.ID
-		m.inspectContainerID = "" // Clear container ID
-		m.inspectImageID = ""     // Clear image ID
-		m.loading = true
-		return m, loadNetworkInspect(m.dockerClient, network.ID)
-	}
-	return m, nil
+	return m, m.networkListViewModel.HandleInspect(m)
 }
 
 func (m *Model) BackFromNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+	return m, m.networkListViewModel.HandleBack(m)
 }
 
 func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
