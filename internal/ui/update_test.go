@@ -115,7 +115,7 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "scroll down in log view",
 			model: Model{
 				currentView: LogView,
-				height:      10,
+				Height:      10,
 				logs:        []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
 				logScrollY:  0,
 			},
@@ -129,14 +129,14 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "jump to end in log view",
 			model: Model{
 				currentView: LogView,
-				height:      5,
+				Height:      5,
 				logs:        []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
 				logScrollY:  0,
 			},
 			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")},
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m Model) {
-				assert.Equal(t, 9, m.logScrollY) // 10 logs - (5 height - 4 ui elements) = 9
+				assert.Equal(t, 9, m.logScrollY) // 10 logs - (5 Height - 4 ui elements) = 9
 			},
 		},
 		{
@@ -287,7 +287,7 @@ func TestUpdateMessages(t *testing.T) {
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 	m := *newModel.(*Model)
 	assert.Equal(t, 100, m.width)
-	assert.Equal(t, 30, m.height)
+	assert.Equal(t, 30, m.Height)
 
 	// Test composeContainers loaded message
 	processes := []models.ComposeContainer{
@@ -307,7 +307,7 @@ func TestUpdateMessages(t *testing.T) {
 
 	// Test log line message (for status messages like "[Log reader stopped]")
 	m.currentView = LogView
-	m.height = 10
+	m.Height = 10
 	newModel, cmd := m.Update(logLineMsg{line: "[Log reader stopped]"})
 	m = *newModel.(*Model)
 	assert.Contains(t, m.logs, "[Log reader stopped]")

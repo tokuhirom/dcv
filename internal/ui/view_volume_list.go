@@ -71,7 +71,7 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(min(len(rows), model.height-8)),
+		table.WithHeight(min(len(rows), model.Height-8)),
 	)
 
 	tableStyle := table.DefaultStyles()
@@ -133,13 +133,7 @@ func (m *VolumeListViewModel) HandleInspect(model *Model) tea.Cmd {
 	volume := m.dockerVolumes[m.selectedDockerVolume]
 	model.loading = true
 	model.err = nil
-	model.inspectVolumeID = volume.Name
-	model.inspectImageID = ""
-	model.inspectContainerID = ""
-	model.inspectNetworkID = ""
-	model.currentView = InspectView
-
-	return inspectVolume(model.dockerClient, volume.Name)
+	return model.inspectViewModel.InspectVolume(model, volume)
 }
 
 // HandleDelete removes the selected volume
@@ -207,16 +201,6 @@ func loadDockerVolumes(dockerClient *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		volumes, err := dockerClient.ListVolumes()
 		return dockerVolumesLoadedMsg{volumes: volumes, err: err}
-	}
-}
-
-func inspectVolume(dockerClient *docker.Client, volumeID string) tea.Cmd {
-	return func() tea.Msg {
-		output, err := dockerClient.InspectVolume(volumeID)
-		if err != nil {
-			return errorMsg{err: err}
-		}
-		return inspectLoadedMsg{content: output}
 	}
 }
 

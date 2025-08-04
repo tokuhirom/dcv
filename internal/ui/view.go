@@ -48,7 +48,7 @@ var (
 
 // View returns the view for the current model
 func (m *Model) View() string {
-	if m.width == 0 || m.height == 0 {
+	if m.width == 0 || m.Height == 0 {
 		return "Loading..."
 	}
 
@@ -56,19 +56,19 @@ func (m *Model) View() string {
 	title := m.viewTitle()
 	titleHeight := lipgloss.Height(titleStyle.Render(title))
 
-	// Calculate available height for body content
+	// Calculate available Height for body content
 	// Layout: title (with margin) + body + footer
 	titleRendered := titleStyle.Render(title)
 	actualTitleHeight := lipgloss.Height(titleRendered)
 	footerHeight := 1
 
-	// Available height = total height - title height - footer height
-	availableBodyHeight := m.height - actualTitleHeight - footerHeight
+	// Available Height = total Height - title Height - footer Height
+	availableBodyHeight := m.Height - actualTitleHeight - footerHeight
 	if availableBodyHeight < 1 {
 		availableBodyHeight = 1
 	}
 
-	// Get body content with available height
+	// Get body content with available Height
 	body := m.viewBody(availableBodyHeight)
 	bodyHeight := strings.Count(body, "\n") + 1
 
@@ -152,8 +152,8 @@ func (m *Model) View() string {
 	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for spacing
 
 	// Add padding if needed to push footer to bottom
-	if totalContentHeight < m.height {
-		padding := m.height - totalContentHeight
+	if totalContentHeight < m.Height {
+		padding := m.Height - totalContentHeight
 		body = body + strings.Repeat("\n", padding)
 	}
 
@@ -232,34 +232,7 @@ func (m *Model) viewTitle() string {
 	case FileContentView:
 		return fmt.Sprintf("File: %s [%s]", filepath.Base(m.fileContentViewModel.contentPath), m.browsingContainerName)
 	case InspectView:
-		base := ""
-		if m.inspectImageID != "" {
-			base = fmt.Sprintf("Image Inspect: %s", m.inspectImageID)
-		} else if m.inspectNetworkID != "" {
-			base = fmt.Sprintf("Network Inspect: %s", m.inspectNetworkID)
-		} else if m.inspectVolumeID != "" {
-			base = fmt.Sprintf("Volume Inspect: %s", m.inspectVolumeID)
-		} else {
-			base = fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
-		}
-
-		// Add search status if applicable
-		if m.searchText != "" && !m.searchMode {
-			searchInfo := fmt.Sprintf(" | Search: %s", m.searchText)
-			if len(m.searchResults) > 0 {
-				searchInfo += fmt.Sprintf(" (%d/%d)", m.currentSearchIdx+1, len(m.searchResults))
-			} else {
-				searchInfo += " (no matches)"
-			}
-			if m.searchIgnoreCase {
-				searchInfo += " [i]"
-			}
-			if m.searchRegex {
-				searchInfo += " [re]"
-			}
-			base += searchInfo
-		}
-		return base
+		return m.inspectViewModel.Title()
 	case HelpView:
 		return "Help"
 	case CommandExecutionView:
@@ -306,7 +279,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case FileContentView:
 		return m.fileContentViewModel.render(m, availableHeight)
 	case InspectView:
-		return m.renderInspectView(availableHeight)
+		return m.inspectViewModel.render(availableHeight)
 	case HelpView:
 		return m.helpViewModel.render(m, availableHeight)
 	case CommandExecutionView:

@@ -120,11 +120,7 @@ func (m *NetworkListViewModel) HandleDelete(model *Model) tea.Cmd {
 func (m *NetworkListViewModel) HandleInspect(model *Model) tea.Cmd {
 	if m.selectedDockerNetwork < len(m.dockerNetworks) {
 		network := m.dockerNetworks[m.selectedDockerNetwork]
-		model.inspectNetworkID = network.ID
-		model.inspectContainerID = "" // Clear container ID
-		model.inspectImageID = ""     // Clear image ID
-		model.loading = true
-		return loadNetworkInspect(model.dockerClient, network.ID)
+		return model.inspectViewModel.InspectNetwork(model, network)
 	}
 	return nil
 }

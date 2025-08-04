@@ -160,12 +160,7 @@ func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 	}
 
 	image := m.dockerImages[m.selectedDockerImage]
-	model.inspectImageID = image.ID
-	model.inspectContainerID = "" // Clear container ID
-	model.inspectNetworkID = ""
-	model.inspectVolumeID = ""
-	model.loading = true
-	return loadImageInspect(model.dockerClient, image.ID)
+	return model.inspectViewModel.InspectImage(model, image)
 }
 
 // HandleBack returns to the compose process list view

@@ -19,7 +19,7 @@ func createTestModel(currentView ViewType) *Model {
 		currentView:          currentView,
 		dockerClient:         docker.NewClient(),
 		width:                80,
-		height:               24,
+		Height:               24,
 		dockerListViewKeymap: make(map[string]KeyHandler),
 	}
 }
@@ -256,7 +256,7 @@ func TestDockerContainerListView_FullOutput(t *testing.T) {
 			},
 		}
 		m.width = 120
-		m.height = 30
+		m.Height = 30
 		m.initializeKeyHandlers()
 
 		tm := teatest.NewTestModel(

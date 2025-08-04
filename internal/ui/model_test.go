@@ -75,7 +75,7 @@ func TestWindowSizeMsg(t *testing.T) {
 	m = *newModel.(*Model)
 
 	assert.Equal(t, 80, m.width)
-	assert.Equal(t, 24, m.height)
+	assert.Equal(t, 24, m.Height)
 	assert.Nil(t, cmd)
 }
 

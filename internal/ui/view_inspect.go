@@ -7,15 +7,25 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tokuhirom/dcv/internal/models"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 type InspectViewModel struct {
+	SearchViewModel
+
+	// Inspect view state
+	inspectContent     string
+	inspectScrollY     int
+	inspectContainerID string
+	inspectImageID     string
+	inspectNetworkID   string
+	inspectVolumeID    string
 }
 
-// renderInspectView renders the container inspect view
-func (m *Model) renderInspectView(availableHeight int) string {
+// render renders the container inspect view
+func (m *InspectViewModel) render(availableHeight int) string {
 	var content strings.Builder
 
 	// Split content into lines for scrolling
@@ -105,8 +115,8 @@ func (m *Model) renderInspectView(availableHeight int) string {
 	return content.String()
 }
 
-// highlightInspectLine highlights search matches in a line that may already have JSON syntax highlighting
-func (m *Model) highlightInspectLine(originalLine, styledLine string, highlightStyle lipgloss.Style) string {
+// HighlightInspectLine highlights search matches in a line that may already have JSON syntax highlighting
+func (m *InspectViewModel) highlightInspectLine(originalLine, styledLine string, highlightStyle lipgloss.Style) string {
 	if m.searchText == "" {
 		return styledLine
 	}
@@ -164,13 +174,13 @@ func loadInspect(client *docker.Client, containerID string) tea.Cmd {
 	}
 }
 
-func (m InspectViewModel) InspectContainer(model *Model, containerID string) tea.Cmd {
-	model.inspectContainerID = containerID
+func (m *InspectViewModel) InspectContainer(model *Model, containerID string) tea.Cmd {
+	m.inspectContainerID = containerID
 	model.loading = true
 	return loadInspect(model.dockerClient, containerID)
 }
 
-func (m InspectViewModel) HandleBack(model *Model) tea.Cmd {
+func (m *InspectViewModel) HandleBack(model *Model) tea.Cmd {
 	// Clear search state when leaving inspect view
 	model.searchMode = false
 	model.searchText = ""
@@ -178,29 +188,29 @@ func (m InspectViewModel) HandleBack(model *Model) tea.Cmd {
 	model.currentSearchIdx = 0
 
 	// Check if we were inspecting an image
-	if model.inspectImageID != "" {
+	if m.inspectImageID != "" {
 		model.currentView = ImageListView
-		model.inspectImageID = ""
+		m.inspectImageID = ""
 		return nil
 	}
 
 	// Check if we were inspecting a network
-	if model.inspectNetworkID != "" {
+	if m.inspectNetworkID != "" {
 		model.currentView = NetworkListView
-		model.inspectNetworkID = ""
+		m.inspectNetworkID = ""
 		return nil
 	}
 
 	// Check if we were inspecting a volume
-	if model.inspectVolumeID != "" {
+	if m.inspectVolumeID != "" {
 		model.currentView = VolumeListView
-		model.inspectVolumeID = ""
+		m.inspectVolumeID = ""
 		return nil
 	}
 
 	// Check where we came from based on the container ID
 	for _, container := range model.dockerContainerListViewModel.dockerContainers {
-		if container.ID == model.inspectContainerID {
+		if container.ID == m.inspectContainerID {
 			model.currentView = DockerContainerListView
 			return nil
 		}
@@ -208,4 +218,212 @@ func (m InspectViewModel) HandleBack(model *Model) tea.Cmd {
 	// Default to compose process list
 	model.currentView = ComposeProcessListView
 	return nil
+}
+
+func (m *InspectViewModel) HandleUp(model *Model) tea.Cmd {
+	if m.inspectScrollY > 0 {
+		m.inspectScrollY--
+	}
+	return nil
+}
+
+func (m *InspectViewModel) HandleDown(model *Model) tea.Cmd {
+	lines := strings.Split(m.inspectContent, "\n")
+	maxScroll := len(lines) - (model.Height - 5)
+	if m.inspectScrollY < maxScroll && maxScroll > 0 {
+		m.inspectScrollY++
+	}
+	return nil
+}
+
+func (m *InspectViewModel) HandleGoToEnd(model *Model) tea.Cmd {
+	lines := strings.Split(m.inspectContent, "\n")
+	maxScroll := len(lines) - (model.Height - 5)
+	if maxScroll > 0 {
+		m.inspectScrollY = maxScroll
+	}
+	return nil
+}
+
+func (m *InspectViewModel) HandleGoToStart() tea.Cmd {
+	m.inspectScrollY = 0
+	return nil
+}
+
+func (m *InspectViewModel) HandleSearch() tea.Cmd {
+	m.SearchViewModel.Clear()
+	return nil
+}
+
+func (m *InspectViewModel) HandleNextSearchResult(model *Model) tea.Cmd {
+	if len(m.searchResults) > 0 {
+		m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.searchResults)
+		// Jump to the line
+		if m.currentSearchIdx < len(m.searchResults) {
+			targetLine := m.searchResults[m.currentSearchIdx]
+			m.inspectScrollY = targetLine - model.Height/2 + 3 // Center the result
+			if m.inspectScrollY < 0 {
+				m.inspectScrollY = 0
+			}
+		}
+	}
+	return nil
+}
+
+func (m *InspectViewModel) HandlePrevSearchResult(model *Model) tea.Cmd {
+	if len(m.searchResults) > 0 {
+		m.currentSearchIdx--
+		if m.currentSearchIdx < 0 {
+			m.currentSearchIdx = len(m.searchResults) - 1
+		}
+		// Jump to the line
+		if m.currentSearchIdx < len(m.searchResults) {
+			targetLine := m.searchResults[m.currentSearchIdx]
+			m.inspectScrollY = targetLine - model.Height/2 + 3 // Center the result
+			if m.inspectScrollY < 0 {
+				m.inspectScrollY = 0
+			}
+		}
+	}
+	return nil
+}
+
+func (m *InspectViewModel) performInspectSearch(model *Model) {
+	m.searchResults = nil
+	if m.searchText == "" {
+		return
+	}
+
+	// Split inspect content into lines for searching
+	lines := strings.Split(m.inspectContent, "\n")
+
+	searchText := m.searchText
+	if m.searchIgnoreCase && !m.searchRegex {
+		searchText = strings.ToLower(searchText)
+	}
+
+	for i, line := range lines {
+		lineToSearch := line
+		if m.searchIgnoreCase && !m.searchRegex {
+			lineToSearch = strings.ToLower(line)
+		}
+
+		match := false
+		if m.searchRegex {
+			pattern := searchText
+			if m.searchIgnoreCase {
+				pattern = "(?i)" + pattern
+			}
+			if re, err := regexp.Compile(pattern); err == nil {
+				match = re.MatchString(line)
+			}
+		} else {
+			match = strings.Contains(lineToSearch, searchText)
+		}
+
+		if match {
+			m.searchResults = append(m.searchResults, i)
+		}
+	}
+
+	// If we have results, jump to the first one
+	if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) {
+		targetLine := m.searchResults[m.currentSearchIdx]
+		m.inspectScrollY = targetLine - model.Height/2 + 3
+		if m.inspectScrollY < 0 {
+			m.inspectScrollY = 0
+		}
+	}
+}
+
+func (m *InspectViewModel) Set(content string) {
+	m.inspectContent = content
+	m.inspectScrollY = 0
+}
+
+func (m *InspectViewModel) Title() string {
+	base := ""
+	if m.inspectImageID != "" {
+		base = fmt.Sprintf("Image Inspect: %s", m.inspectImageID)
+	} else if m.inspectNetworkID != "" {
+		base = fmt.Sprintf("Network Inspect: %s", m.inspectNetworkID)
+	} else if m.inspectVolumeID != "" {
+		base = fmt.Sprintf("Volume Inspect: %s", m.inspectVolumeID)
+	} else {
+		base = fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
+	}
+
+	// Add search status if applicable
+	if m.searchText != "" && !m.searchMode {
+		searchInfo := fmt.Sprintf(" | Search: %s", m.searchText)
+		if len(m.searchResults) > 0 {
+			searchInfo += fmt.Sprintf(" (%d/%d)", m.currentSearchIdx+1, len(m.searchResults))
+		} else {
+			searchInfo += " (no matches)"
+		}
+		if m.searchIgnoreCase {
+			searchInfo += " [i]"
+		}
+		if m.searchRegex {
+			searchInfo += " [re]"
+		}
+		base += searchInfo
+	}
+	return base
+}
+
+func (m *InspectViewModel) InspectImage(model *Model, image models.DockerImage) tea.Cmd {
+	m.inspectImageID = image.ID
+	m.inspectContainerID = "" // Clear container ID
+	m.inspectNetworkID = ""
+	m.inspectVolumeID = ""
+	model.loading = true
+	return loadImageInspect(model.dockerClient, image.ID)
+}
+
+func loadImageInspect(client *docker.Client, imageID string) tea.Cmd {
+	return func() tea.Msg {
+		content, err := client.InspectImage(imageID)
+		return inspectLoadedMsg{
+			content: content,
+			err:     err,
+		}
+	}
+}
+
+func (m *InspectViewModel) InspectNetwork(model *Model, network models.DockerNetwork) tea.Cmd {
+	m.inspectNetworkID = network.ID
+	m.inspectContainerID = "" // Clear container ID
+	m.inspectImageID = ""     // Clear image ID
+	model.loading = true
+	return loadNetworkInspect(model.dockerClient, network.ID)
+}
+
+func loadNetworkInspect(client *docker.Client, networkID string) tea.Cmd {
+	return func() tea.Msg {
+		content, err := client.InspectNetwork(networkID)
+		return inspectLoadedMsg{
+			content: content,
+			err:     err,
+		}
+	}
+}
+
+func (m *InspectViewModel) InspectVolume(model *Model, volume models.DockerVolume) tea.Cmd {
+	m.inspectVolumeID = volume.Name
+	m.inspectImageID = ""
+	m.inspectContainerID = ""
+	m.inspectNetworkID = ""
+	model.currentView = InspectView
+	return inspectVolume(model.dockerClient, volume.Name)
+}
+
+func inspectVolume(dockerClient *docker.Client, volumeID string) tea.Cmd {
+	return func() tea.Msg {
+		output, err := dockerClient.InspectVolume(volumeID)
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return inspectLoadedMsg{content: output}
+	}
 }

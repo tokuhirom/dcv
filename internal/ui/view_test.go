@@ -19,7 +19,7 @@ func TestView(t *testing.T) {
 			name: "loading state",
 			model: Model{
 				width:  0,
-				height: 0,
+				Height: 0,
 			},
 			contains: []string{"Loading..."},
 		},
@@ -28,7 +28,7 @@ func TestView(t *testing.T) {
 			model: Model{
 				currentView: ComposeProcessListView,
 				width:       80,
-				height:      24,
+				Height:      24,
 				loading:     false,
 				composeProcessListViewModel: ComposeProcessListViewModel{
 					composeContainers: []models.ComposeContainer{
@@ -63,7 +63,7 @@ func TestView(t *testing.T) {
 			model: Model{
 				currentView: ComposeProcessListView,
 				width:       80,
-				height:      24,
+				Height:      24,
 				loading:     false,
 				err:         assert.AnError,
 			},
@@ -76,7 +76,7 @@ func TestView(t *testing.T) {
 			model: Model{
 				currentView: ComposeProcessListView,
 				width:       80,
-				height:      24,
+				Height:      24,
 				loading:     false,
 				err:         &mockError{msg: "no configuration file provided"},
 			},
@@ -89,7 +89,7 @@ func TestView(t *testing.T) {
 			model: Model{
 				currentView:   LogView,
 				width:         80,
-				height:        24,
+				Height:        24,
 				containerName: "web-1",
 				logs: []string{
 					"Starting web server...",
@@ -109,7 +109,7 @@ func TestView(t *testing.T) {
 			model: Model{
 				currentView:     LogView,
 				width:           80,
-				height:          24,
+				Height:          24,
 				containerName:   "web-1",
 				searchMode:      true,
 				searchText:      "error",
@@ -124,7 +124,7 @@ func TestView(t *testing.T) {
 			model: Model{
 				currentView: DindProcessListView,
 				width:       80,
-				height:      24,
+				Height:      24,
 				loading:     false,
 				dindProcessListViewModel: DindProcessListViewModel{
 					currentDindHost: "dind-1",
@@ -168,7 +168,7 @@ func TestRenderProcessList(t *testing.T) {
 	m := Model{
 		currentView: ComposeProcessListView,
 		width:       80,
-		height:      24,
+		Height:      24,
 		loading:     false,
 		composeProcessListViewModel: ComposeProcessListViewModel{
 			composeContainers: []models.ComposeContainer{
@@ -183,8 +183,8 @@ func TestRenderProcessList(t *testing.T) {
 		},
 	}
 
-	// Calculate available height (height - title - footer)
-	availableHeight := m.height - 2
+	// Calculate available Height (Height - title - footer)
+	availableHeight := m.Height - 2
 	view := m.composeProcessListViewModel.render(&m, availableHeight)
 
 	// Check that the selected row is highlighted
@@ -199,7 +199,7 @@ func TestRenderLogView(t *testing.T) {
 	m := Model{
 		currentView:   LogView,
 		width:         80,
-		height:        10,
+		Height:        10,
 		containerName: "web-1",
 		logs: []string{
 			"Line 1",
@@ -211,8 +211,8 @@ func TestRenderLogView(t *testing.T) {
 		logScrollY: 0,
 	}
 
-	// Calculate available height
-	availableHeight := m.height - 2
+	// Calculate available Height
+	availableHeight := m.Height - 2
 	view := m.renderLogView(availableHeight)
 
 	// Should show logs
@@ -229,7 +229,7 @@ func TestRenderDindList(t *testing.T) {
 	m := Model{
 		currentView: DindProcessListView,
 		width:       80,
-		height:      24,
+		Height:      24,
 		loading:     false,
 		dindProcessListViewModel: DindProcessListViewModel{
 			currentDindHost: "dind-1",
@@ -251,8 +251,8 @@ func TestRenderDindList(t *testing.T) {
 		},
 	}
 
-	// Calculate available height
-	availableHeight := m.height - 2
+	// Calculate available Height
+	availableHeight := m.Height - 2
 	view := m.dindProcessListViewModel.render(&m, availableHeight)
 
 	// The title is in viewTitle(), not renderDindList()
@@ -269,15 +269,15 @@ func TestViewWithNoContainers(t *testing.T) {
 	m := Model{
 		currentView: ComposeProcessListView,
 		width:       80,
-		height:      24,
+		Height:      24,
 		loading:     false,
 		composeProcessListViewModel: ComposeProcessListViewModel{
 			composeContainers: []models.ComposeContainer{},
 		},
 	}
 
-	// Calculate available height
-	availableHeight := m.height - 2
+	// Calculate available Height
+	availableHeight := m.Height - 2
 	view := m.composeProcessListViewModel.render(&m, availableHeight)
 	assert.Contains(t, view, "No containers found")
 	assert.Contains(t, view, "Press u to start services or p to switch to project list")
@@ -287,7 +287,7 @@ func TestTableRendering(t *testing.T) {
 	m := Model{
 		currentView: ComposeProcessListView,
 		width:       80,
-		height:      24,
+		Height:      24,
 		loading:     false,
 		composeProcessListViewModel: ComposeProcessListViewModel{
 			composeContainers: []models.ComposeContainer{
@@ -301,8 +301,8 @@ func TestTableRendering(t *testing.T) {
 		},
 	}
 
-	// Calculate available height
-	availableHeight := m.height - 2
+	// Calculate available Height
+	availableHeight := m.Height - 2
 	view := m.composeProcessListViewModel.render(&m, availableHeight)
 
 	// Check for table borders
@@ -332,7 +332,7 @@ func TestDockerContainerListView(t *testing.T) {
 	t.Run("docker_list_with_containers", func(t *testing.T) {
 		m := &Model{
 			width:       80,
-			height:      24,
+			Height:      24,
 			currentView: DockerContainerListView,
 			dockerContainerListViewModel: DockerContainerListViewModel{
 				selectedDockerContainer: 0,
@@ -367,7 +367,7 @@ func TestDockerContainerListView(t *testing.T) {
 	t.Run("docker_list_show_all", func(t *testing.T) {
 		m := &Model{
 			width:       80,
-			height:      24,
+			Height:      24,
 			currentView: DockerContainerListView,
 			dockerContainerListViewModel: DockerContainerListViewModel{
 				dockerContainers: []models.DockerContainer{},
@@ -385,7 +385,7 @@ func TestDockerContainerListView(t *testing.T) {
 	t.Run("docker_list_empty", func(t *testing.T) {
 		m := &Model{
 			width:       80,
-			height:      24,
+			Height:      24,
 			currentView: DockerContainerListView,
 			dockerContainerListViewModel: DockerContainerListViewModel{
 				dockerContainers: []models.DockerContainer{},
@@ -403,7 +403,7 @@ func TestFileBrowserTableView(t *testing.T) {
 	t.Run("file_browser_with_files", func(t *testing.T) {
 		m := &Model{
 			width:                 80,
-			height:                24,
+			Height:                24,
 			currentView:           FileBrowserView,
 			browsingContainerName: "web-1",
 			currentPath:           "/app",
@@ -463,7 +463,7 @@ func TestFileBrowserTableView(t *testing.T) {
 	t.Run("file_browser_empty_directory", func(t *testing.T) {
 		m := &Model{
 			width:                 80,
-			height:                24,
+			Height:                24,
 			currentView:           FileBrowserView,
 			browsingContainerName: "web-1",
 			currentPath:           "/empty",

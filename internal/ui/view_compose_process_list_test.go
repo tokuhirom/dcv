@@ -65,7 +65,7 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 		}
 		m.composeProcessListViewModel.selectedContainer = 0
 		m.width = 120
-		m.height = 30
+		m.Height = 30
 
 		// Test the render function
 		output := m.composeProcessListViewModel.render(m, 20)
@@ -319,7 +319,7 @@ func TestComposeProcessListView_FullOutput(t *testing.T) {
 			},
 		}
 		m.width = 120
-		m.height = 30
+		m.Height = 30
 		m.projectName = "test-project"
 		m.initializeKeyHandlers()
 
