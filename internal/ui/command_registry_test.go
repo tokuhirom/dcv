@@ -92,14 +92,14 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 
 	// Test executing a navigation command
 	t.Run("cmd-down", func(t *testing.T) {
-		newModel, _ := model.executeKeyHandlerCommand("cmd-down")
+		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(&model, "cmd-down")
 		m := newModel.(*Model)
 		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
 	})
 
 	// Test executing an unknown command
 	t.Run("unknown-command", func(t *testing.T) {
-		newModel, _ := model.executeKeyHandlerCommand("unknown-command")
+		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(&model, "unknown-command")
 		m := newModel.(*Model)
 		assert.NotNil(t, m.err)
 		assert.Contains(t, m.err.Error(), "unknown command")
@@ -132,7 +132,7 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 			testModel.composeProcessListViewModel.selectedContainer,
 			len(testModel.composeProcessListViewModel.composeContainers))
 
-		newModel, cmd := testModel.executeKeyHandlerCommand("down")
+		newModel, cmd := testModel.commandViewModel.executeKeyHandlerCommand(&testModel, "down")
 		m := newModel.(*Model)
 
 		t.Logf("After: selectedContainer=%d, cmd=%v",

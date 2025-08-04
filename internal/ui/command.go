@@ -1,0 +1,199 @@
+package ui
+
+import (
+	"fmt"
+	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+type CommandViewModel struct {
+	commandMode       bool
+	commandBuffer     string
+	commandHistory    []string
+	commandHistoryIdx int
+	commandCursorPos  int
+}
+
+func (m *CommandViewModel) Start() {
+	m.commandMode = true
+	m.commandBuffer = ":"
+	m.commandCursorPos = 1
+}
+
+func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyEsc:
+		// Exit command mode
+		m.commandMode = false
+		m.commandBuffer = ""
+		m.commandCursorPos = 0
+		return model, nil
+
+	case tea.KeyEnter:
+		// Execute command
+		return m.executeCommand(model)
+
+	case tea.KeyBackspace:
+		if len(m.commandBuffer) > 1 && m.commandCursorPos > 1 {
+			m.commandBuffer = m.commandBuffer[:m.commandCursorPos-1] + m.commandBuffer[m.commandCursorPos:]
+			m.commandCursorPos--
+		}
+		return model, nil
+
+	case tea.KeyLeft:
+		if m.commandCursorPos > 1 {
+			m.commandCursorPos--
+		}
+		return model, nil
+
+	case tea.KeyRight:
+		if m.commandCursorPos < len(m.commandBuffer) {
+			m.commandCursorPos++
+		}
+		return model, nil
+
+	case tea.KeyUp:
+		// Navigate command history
+		if m.commandHistoryIdx > 0 {
+			m.commandHistoryIdx--
+			if m.commandHistoryIdx < len(m.commandHistory) {
+				m.commandBuffer = ":" + m.commandHistory[m.commandHistoryIdx]
+				m.commandCursorPos = len(m.commandBuffer)
+			}
+		}
+		return model, nil
+
+	case tea.KeyDown:
+		// Navigate command history
+		if m.commandHistoryIdx < len(m.commandHistory)-1 {
+			m.commandHistoryIdx++
+			m.commandBuffer = ":" + m.commandHistory[m.commandHistoryIdx]
+			m.commandCursorPos = len(m.commandBuffer)
+		} else if m.commandHistoryIdx == len(m.commandHistory)-1 {
+			m.commandHistoryIdx++
+			m.commandBuffer = ":"
+			m.commandCursorPos = 1
+		}
+		return model, nil
+
+	default:
+		if msg.Type == tea.KeyRunes {
+			// Insert character at cursor position
+			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + msg.String() + m.commandBuffer[m.commandCursorPos:]
+			m.commandCursorPos += len(msg.String())
+		}
+		return model, nil
+	}
+}
+
+func (m *CommandViewModel) executeCommand(model *Model) (tea.Model, tea.Cmd) {
+	command := strings.TrimSpace(m.commandBuffer[1:]) // Remove leading ':'
+
+	// Add to command history
+	if command != "" && (len(m.commandHistory) == 0 || m.commandHistory[len(m.commandHistory)-1] != command) {
+		m.commandHistory = append(m.commandHistory, command)
+	}
+	m.commandHistoryIdx = len(m.commandHistory)
+
+	// Exit command mode
+	m.commandMode = false
+	m.commandBuffer = ""
+	m.commandCursorPos = 0
+
+	// Parse and execute command
+	parts := strings.Fields(command)
+	if len(parts) == 0 {
+		return model, nil
+	}
+
+	switch parts[0] {
+	case "q", "quit":
+		// Show quit confirmation
+		model.quitConfirmation = true
+		return model, nil
+
+	case "q!", "quit!":
+		// Force quit without confirmation
+		return model, tea.Quit
+
+	case "h", "help":
+		// Show help
+		if len(parts) > 1 && parts[1] == "commands" {
+			// Show available commands
+			model.err = nil
+			commands := model.getAvailableCommands()
+			helpText := "Available commands in current view:\n"
+			for _, cmd := range commands {
+				if handler, exists := commandRegistry[cmd]; exists {
+					helpText += fmt.Sprintf("  :%s - %s\n", cmd, handler.Description)
+				}
+			}
+			model.err = fmt.Errorf("%s", helpText)
+			return model, nil
+		}
+		return model, model.helpViewModel.Show(model, model.currentView)
+
+	case "set": // TODO: deprecate this
+		// Handle set commands (e.g., :set showAll)
+		if len(parts) > 1 {
+			switch parts[1] {
+			case "all", "showAll":
+				model.composeProcessListViewModel.showAll = true
+				return model, model.refreshCurrentView()
+			case "noall", "noshowAll":
+				model.composeProcessListViewModel.showAll = false
+				return model, model.refreshCurrentView()
+			}
+		}
+		return model, nil
+
+	default:
+		// Try to execute as a key handler command
+		return m.executeKeyHandlerCommand(model, parts[0])
+	}
+}
+
+// executeKeyHandlerCommand executes a command by name
+func (m *CommandViewModel) executeKeyHandlerCommand(model *Model, cmdName string) (tea.Model, tea.Cmd) {
+	cmd, exists := commandRegistry[cmdName]
+	if !exists {
+		model.err = fmt.Errorf("unknown command: %s", cmdName)
+		return model, nil
+	}
+
+	// Check if command is available in current view
+	if cmd.ViewMask != 0 && cmd.ViewMask != model.currentView {
+		// Try to find a similar command for the current view
+		currentViewCmd := model.findCommandForCurrentView(cmdName)
+		if currentViewCmd != nil {
+			return currentViewCmd.Handler(tea.KeyMsg{})
+		}
+		model.err = fmt.Errorf("command '%s' is not available in current view", cmdName)
+		return model, nil
+	}
+
+	// Execute the command
+	return cmd.Handler(tea.KeyMsg{})
+}
+
+func (m *CommandViewModel) RenderCmdLine() string {
+	cursor := " "
+	if m.commandCursorPos < len(m.commandBuffer) {
+		cursor = string(m.commandBuffer[m.commandCursorPos])
+	}
+
+	// Build command line with cursor
+	before := m.commandBuffer[:m.commandCursorPos]
+	after := ""
+	if m.commandCursorPos < len(m.commandBuffer) {
+		after = m.commandBuffer[m.commandCursorPos+1:]
+	}
+
+	cursorStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("226")).
+		Foreground(lipgloss.Color("235"))
+
+	return before + cursorStyle.Render(cursor) + after
+}

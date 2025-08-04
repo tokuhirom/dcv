@@ -296,8 +296,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle command mode first
-	if m.commandMode {
-		return m.handleCommandMode(msg)
+	if m.commandViewModel.commandMode {
+		return m.commandViewModel.HandleKeys(m, msg)
 	}
 
 	// Handle quit confirmation dialog
@@ -319,9 +319,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	// Handle ':' to enter command mode
 	if msg.String() == ":" {
-		m.commandMode = true
-		m.commandBuffer = ":"
-		m.commandCursorPos = 1
+		m.commandViewModel.Start()
 		return m, nil
 	}
 
@@ -329,15 +327,6 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if msg.String() == "q" {
 		m.quitConfirmation = true
 		return m, nil
-	}
-
-	// Handle ctrl+c for immediate quit
-	// TODO: CmdInterrupt for LogView
-	if msg.String() == "ctrl+c" {
-		if m.currentView == LogView {
-			stopLogReader()
-		}
-		return m, tea.Quit
 	}
 
 	// Handle view-specific keys
@@ -459,72 +448,6 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg, searchViewModel *SearchViewMode
 	}
 }
 
-func (m *Model) handleCommandMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
-	case tea.KeyEsc:
-		// Exit command mode
-		m.commandMode = false
-		m.commandBuffer = ""
-		m.commandCursorPos = 0
-		return m, nil
-
-	case tea.KeyEnter:
-		// Execute command
-		return m.executeCommand()
-
-	case tea.KeyBackspace:
-		if len(m.commandBuffer) > 1 && m.commandCursorPos > 1 {
-			m.commandBuffer = m.commandBuffer[:m.commandCursorPos-1] + m.commandBuffer[m.commandCursorPos:]
-			m.commandCursorPos--
-		}
-		return m, nil
-
-	case tea.KeyLeft:
-		if m.commandCursorPos > 1 {
-			m.commandCursorPos--
-		}
-		return m, nil
-
-	case tea.KeyRight:
-		if m.commandCursorPos < len(m.commandBuffer) {
-			m.commandCursorPos++
-		}
-		return m, nil
-
-	case tea.KeyUp:
-		// Navigate command history
-		if m.commandHistoryIdx > 0 {
-			m.commandHistoryIdx--
-			if m.commandHistoryIdx < len(m.commandHistory) {
-				m.commandBuffer = ":" + m.commandHistory[m.commandHistoryIdx]
-				m.commandCursorPos = len(m.commandBuffer)
-			}
-		}
-		return m, nil
-
-	case tea.KeyDown:
-		// Navigate command history
-		if m.commandHistoryIdx < len(m.commandHistory)-1 {
-			m.commandHistoryIdx++
-			m.commandBuffer = ":" + m.commandHistory[m.commandHistoryIdx]
-			m.commandCursorPos = len(m.commandBuffer)
-		} else if m.commandHistoryIdx == len(m.commandHistory)-1 {
-			m.commandHistoryIdx++
-			m.commandBuffer = ":"
-			m.commandCursorPos = 1
-		}
-		return m, nil
-
-	default:
-		if msg.Type == tea.KeyRunes {
-			// Insert character at cursor position
-			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + msg.String() + m.commandBuffer[m.commandCursorPos:]
-			m.commandCursorPos += len(msg.String())
-		}
-		return m, nil
-	}
-}
-
 func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "y", "Y":
@@ -540,76 +463,6 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	return m, nil
-}
-
-func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
-	command := strings.TrimSpace(m.commandBuffer[1:]) // Remove leading ':'
-
-	// Add to command history
-	if command != "" && (len(m.commandHistory) == 0 || m.commandHistory[len(m.commandHistory)-1] != command) {
-		m.commandHistory = append(m.commandHistory, command)
-	}
-	m.commandHistoryIdx = len(m.commandHistory)
-
-	// Exit command mode
-	m.commandMode = false
-	m.commandBuffer = ""
-	m.commandCursorPos = 0
-
-	// Parse and execute command
-	parts := strings.Fields(command)
-	if len(parts) == 0 {
-		return m, nil
-	}
-
-	switch parts[0] {
-	case "q", "quit":
-		// Show quit confirmation
-		m.quitConfirmation = true
-		return m, nil
-
-	case "q!", "quit!":
-		// Force quit without confirmation
-		if m.currentView == LogView {
-			stopLogReader()
-		}
-		return m, tea.Quit
-
-	case "h", "help":
-		// Show help
-		if len(parts) > 1 && parts[1] == "commands" {
-			// Show available commands
-			m.err = nil
-			commands := m.getAvailableCommands()
-			helpText := "Available commands in current view:\n"
-			for _, cmd := range commands {
-				if handler, exists := commandRegistry[cmd]; exists {
-					helpText += fmt.Sprintf("  :%s - %s\n", cmd, handler.Description)
-				}
-			}
-			m.err = fmt.Errorf("%s", helpText)
-			return m, nil
-		}
-		return m, m.helpViewModel.Show(m, m.currentView)
-
-	case "set": // TODO: deprecate this
-		// Handle set commands (e.g., :set showAll)
-		if len(parts) > 1 {
-			switch parts[1] {
-			case "all", "showAll":
-				m.composeProcessListViewModel.showAll = true
-				return m, m.refreshCurrentView()
-			case "noall", "noshowAll":
-				m.composeProcessListViewModel.showAll = false
-				return m, m.refreshCurrentView()
-			}
-		}
-		return m, nil
-
-	default:
-		// Try to execute as a key handler command
-		return m.executeKeyHandlerCommand(parts[0])
-	}
 }
 
 func (m *Model) refreshCurrentView() tea.Cmd {

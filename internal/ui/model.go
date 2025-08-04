@@ -173,13 +173,9 @@ type Model struct {
 	commandExecHandlers             []KeyConfig
 
 	// Command-line mode state
-	// TODO: implement CommandViewModel
-	commandMode       bool
-	commandBuffer     string
-	commandHistory    []string
-	commandHistoryIdx int
-	commandCursorPos  int
-	quitConfirmation  bool
+	commandViewModel CommandViewModel
+
+	quitConfirmation bool
 }
 
 // NewModel creates a new model with initial state
@@ -226,6 +222,8 @@ func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleCancel()
+	case LogView:
+		return m, m.logViewModel.HandleCancel()
 	default:
 		slog.Info("Cancel command not implemented for current view",
 			slog.String("current_view", m.currentView.String()))

@@ -119,25 +119,8 @@ func (m *Model) View() string {
 			Foreground(lipgloss.Color("235"))
 
 		footer = "/" + before + cursorStyle.Render(cursor) + after
-	} else if m.commandMode {
-		// Show command line
-		cursor := " "
-		if m.commandCursorPos < len(m.commandBuffer) {
-			cursor = string(m.commandBuffer[m.commandCursorPos])
-		}
-
-		// Build command line with cursor
-		before := m.commandBuffer[:m.commandCursorPos]
-		after := ""
-		if m.commandCursorPos < len(m.commandBuffer) {
-			after = m.commandBuffer[m.commandCursorPos+1:]
-		}
-
-		cursorStyle := lipgloss.NewStyle().
-			Background(lipgloss.Color("226")).
-			Foreground(lipgloss.Color("235"))
-
-		footer = before + cursorStyle.Render(cursor) + after
+	} else if m.commandViewModel.commandMode {
+		footer = m.commandViewModel.RenderCmdLine()
 	} else {
 		// Show help hint
 		footer = helpStyle.Render("Press ? for help")
