@@ -1,9 +1,7 @@
 package ui
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"log/slog"
 	"os/exec"
 	"strings"
@@ -271,24 +269,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case commandExecStartedMsg:
-		m.commandExecCmd = msg.cmd
-		m.commandExecReader = bufio.NewReader(io.MultiReader(msg.stdout, msg.stderr))
 		// HandleStart reading output
-		return m, streamCommandFromReader(m)
+		return m, m.commandExecutionViewModel.ExecStarted(msg.cmd, msg.stdout, msg.stderr)
 
 	case commandExecOutputMsg:
-		m.commandExecOutput = append(m.commandExecOutput, msg.line)
-		// Auto-scroll to bottom
-		maxScroll := len(m.commandExecOutput) - (m.height - 6)
-		if maxScroll > 0 && m.commandExecScrollY == maxScroll-1 {
-			m.commandExecScrollY = maxScroll
-		}
-		// Continue reading output
-		return m, streamCommandFromReader(m)
+		return m, m.commandExecutionViewModel.ExecOutput(m, msg.line)
 
 	case commandExecCompleteMsg:
-		m.commandExecDone = true
-		m.commandExecExitCode = msg.exitCode
+		m.commandExecutionViewModel.Complete(msg.exitCode)
 		return m, nil
 
 	case RefreshMsg:

@@ -232,12 +232,12 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Command Execution View
 	m.commandExecHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "scroll up", m.ScrollCommandExecUp},
-		{[]string{"down", "j"}, "scroll down", m.ScrollCommandExecDown},
-		{[]string{"G"}, "go to end", m.GoToCommandExecEnd},
-		{[]string{"g"}, "go to start", m.GoToCommandExecStart},
-		{[]string{"ctrl+c"}, "cancel", m.CancelCommandExec},
-		{[]string{"esc", "q"}, "back", m.BackFromCommandExec},
+		{[]string{"up", "k"}, "scroll up", m.CmdUp},
+		{[]string{"down", "j"}, "scroll down", m.CmdDown},
+		{[]string{"G"}, "go to end", m.CmdGoToEnd},
+		{[]string{"g"}, "go to start", m.CmdGoToStart},
+		{[]string{"ctrl+c"}, "cancel", m.CmdCancel},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.commandExecKeymap = m.createKeymap(m.commandExecHandlers)

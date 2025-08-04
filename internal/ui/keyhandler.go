@@ -75,6 +75,8 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleUp(m)
+	case CommandExecutionView:
+		return m, m.commandExecutionViewModel.HandleUp()
 	default:
 		slog.Info("Unhandled key up in current view",
 			slog.String("view", m.currentView.String()))
@@ -86,8 +88,32 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleDown(m)
+	case CommandExecutionView:
+		return m, m.commandExecutionViewModel.HandleDown(m)
 	default:
 		slog.Info("Unhandled key down in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
+	}
+}
+
+func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case CommandExecutionView:
+		return m, m.commandExecutionViewModel.HandleGoToEnd(m)
+	default:
+		slog.Info("Unhandled go to end in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
+	}
+}
+
+func (m *Model) CmdGoToStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case CommandExecutionView:
+		return m, m.commandExecutionViewModel.HandleGoToStart()
+	default:
+		slog.Info("Unhandled go to start in current view",
 			slog.String("view", m.currentView.String()))
 		return m, nil
 	}
@@ -246,13 +272,7 @@ func (m *Model) ShowTopView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) KillContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		m.previousView = m.currentView
-		m.currentView = CommandExecutionView
-		m.commandExecOutput = []string{}
-		m.commandExecScrollY = 0
-		m.commandExecDone = false
-		m.commandExecCmdString = fmt.Sprintf("docker kill %s", container.ID)
-		return m, executeContainerCommand(m.dockerClient, container.ID, "kill")
+		return m, m.commandExecutionViewModel.ExecuteContainerCommand(m, m.currentView, container.ID, "kill")
 	}
 	return m, nil
 }
@@ -260,13 +280,7 @@ func (m *Model) KillContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) StopContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		m.previousView = m.currentView
-		m.currentView = CommandExecutionView
-		m.commandExecOutput = []string{}
-		m.commandExecScrollY = 0
-		m.commandExecDone = false
-		m.commandExecCmdString = fmt.Sprintf("docker stop %s", container.ID)
-		return m, executeContainerCommand(m.dockerClient, container.ID, "stop")
+		return m, m.commandExecutionViewModel.ExecuteContainerCommand(m, m.currentView, container.ID, "stop")
 	}
 	return m, nil
 }
@@ -274,13 +288,7 @@ func (m *Model) StopContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) UpService(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		m.previousView = m.currentView
-		m.currentView = CommandExecutionView
-		m.commandExecOutput = []string{}
-		m.commandExecScrollY = 0
-		m.commandExecDone = false
-		m.commandExecCmdString = fmt.Sprintf("docker start %s", container.ID)
-		return m, executeContainerCommand(m.dockerClient, container.ID, "start")
+		return m, m.commandExecutionViewModel.ExecuteContainerCommand(m, m.currentView, container.ID, "start")
 	}
 	return m, nil
 }
@@ -288,13 +296,7 @@ func (m *Model) UpService(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) RestartContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		m.previousView = m.currentView
-		m.currentView = CommandExecutionView
-		m.commandExecOutput = []string{}
-		m.commandExecScrollY = 0
-		m.commandExecDone = false
-		m.commandExecCmdString = fmt.Sprintf("docker restart %s", container.ID)
-		return m, executeContainerCommand(m.dockerClient, container.ID, "restart")
+		return m, m.commandExecutionViewModel.ExecuteContainerCommand(m, m.currentView, container.ID, "restart")
 	}
 	return m, nil
 }
@@ -312,23 +314,11 @@ func (m *Model) DeleteContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) DeployProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.previousView = m.currentView
-	m.currentView = CommandExecutionView
-	m.commandExecOutput = []string{}
-	m.commandExecScrollY = 0
-	m.commandExecDone = false
-	m.commandExecCmdString = fmt.Sprintf("docker compose -p %s up -d", m.projectName)
-	return m, executeCommandWithStreaming(m.dockerClient, m.projectName, "up")
+	return m, m.commandExecutionViewModel.ExecuteComposeCommand(m, "up")
 }
 
 func (m *Model) DownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.previousView = m.currentView
-	m.currentView = CommandExecutionView
-	m.commandExecOutput = []string{}
-	m.commandExecScrollY = 0
-	m.commandExecDone = false
-	m.commandExecCmdString = fmt.Sprintf("docker compose -p %s down", m.projectName)
-	return m, executeCommandWithStreaming(m.dockerClient, m.projectName, "down")
+	return m, m.commandExecutionViewModel.ExecuteComposeCommand(m, "down")
 }
 
 func (m *Model) ShowProjectList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -780,6 +770,8 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Default to compose process list
 		m.currentView = ComposeProcessListView
 		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	case CommandExecutionView:
+		return m, m.commandExecutionViewModel.HandleBack(m)
 	default:
 		slog.Info("Unhandled :back command in current view",
 			slog.String("view", m.currentView.String()))
