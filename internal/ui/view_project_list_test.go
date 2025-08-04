@@ -261,8 +261,8 @@ func TestComposeProjectListViewModel_KeyHandlers(t *testing.T) {
 	handlers := model.projectListViewHandlers
 	assert.Greater(t, len(handlers), 0, "Should have registered key handlers")
 
-	// Check specific handlers exist
-	expectedKeys := []string{"up", "down", "enter", "r", "?", "1", "3", "4", "5"}
+	// Check view-specific handlers
+	viewSpecificKeys := []string{"up", "down", "enter", "r", "?"}
 	registeredKeys := make(map[string]bool)
 
 	for _, h := range handlers {
@@ -271,8 +271,20 @@ func TestComposeProjectListViewModel_KeyHandlers(t *testing.T) {
 		}
 	}
 
-	for _, key := range expectedKeys {
-		assert.True(t, registeredKeys[key], "Key %s should be registered", key)
+	for _, key := range viewSpecificKeys {
+		assert.True(t, registeredKeys[key], "Key %s should be registered in view handlers", key)
+	}
+
+	// Check global handlers
+	globalKeys := []string{"1", "3", "4", "5"}
+	globalRegisteredKeys := make(map[string]bool)
+	for _, h := range model.globalHandlers {
+		for _, key := range h.Keys {
+			globalRegisteredKeys[key] = true
+		}
+	}
+	for _, key := range globalKeys {
+		assert.True(t, globalRegisteredKeys[key], "Key %s should be registered in global handlers", key)
 	}
 }
 

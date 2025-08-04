@@ -247,12 +247,11 @@ func TestComposeProcessListView_KeyHandlers(t *testing.T) {
 		m := createTestModel(ComposeProcessListView)
 		m.initializeKeyHandlers()
 
-		// Check view switching handlers exist
+		// Check view switching handlers exist in global handlers
 		hasDockerSwitch := false
 		hasProjectSwitch := false
 		hasImageSwitch := false
-		hasDindSwitch := false
-		for _, config := range m.processListViewHandlers {
+		for _, config := range m.globalHandlers {
 			if strings.Contains(config.Description, "docker ps") {
 				hasDockerSwitch = true
 			}
@@ -262,6 +261,10 @@ func TestComposeProcessListView_KeyHandlers(t *testing.T) {
 			if strings.Contains(config.Description, "images") {
 				hasImageSwitch = true
 			}
+		}
+		// Check dind handler in view-specific handlers
+		hasDindSwitch := false
+		for _, config := range m.processListViewHandlers {
 			if strings.Contains(config.Description, "dind") {
 				hasDindSwitch = true
 			}

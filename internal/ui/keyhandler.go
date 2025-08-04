@@ -20,6 +20,17 @@ type KeyConfig struct {
 	KeyHandler  KeyHandler
 }
 
+func (m *Model) CmdQuit(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.quitConfirmation = true
+	return m, nil
+}
+
+func (m *Model) CmdCommandMode(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Start command mode
+	m.commandViewModel.Start()
+	return m, nil
+}
+
 // Refresh sends a RefreshMsg to trigger a reload of the current view
 func (m *Model) Refresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, func() tea.Msg {

@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 type HelpViewModel struct {
@@ -17,121 +18,184 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	// Get key configurations based on previous view
-	var configs []KeyConfig
+	var viewConfigs []KeyConfig
 	viewName := ""
 
 	switch m.previousView {
 	case ComposeProcessListView:
-		configs = model.processListViewHandlers
+		viewConfigs = model.processListViewHandlers
 		viewName = "Compose Process List"
 	case LogView:
-		configs = model.logViewHandlers
+		viewConfigs = model.logViewHandlers
 		viewName = "Log View"
 	case DindProcessListView:
-		configs = model.dindListViewHandlers
+		viewConfigs = model.dindListViewHandlers
 		viewName = "Docker in Docker"
 	case TopView:
-		configs = model.topViewHandlers
+		viewConfigs = model.topViewHandlers
 		viewName = "Process Info"
 	case StatsView:
-		configs = model.statsViewHandlers
+		viewConfigs = model.statsViewHandlers
 		viewName = "Container Stats"
 	case ComposeProjectListView:
-		configs = model.projectListViewHandlers
+		viewConfigs = model.projectListViewHandlers
 		viewName = "Project List"
 	case DockerContainerListView:
-		configs = model.dockerContainerListViewHandlers
+		viewConfigs = model.dockerContainerListViewHandlers
 		viewName = "Docker Containers"
 	case ImageListView:
-		configs = model.imageListViewHandlers
+		viewConfigs = model.imageListViewHandlers
 		viewName = "Docker Images"
 	case NetworkListView:
-		configs = model.networkListViewHandlers
+		viewConfigs = model.networkListViewHandlers
 		viewName = "Docker Networks"
 	case VolumeListView:
-		configs = model.volumeListViewHandlers
+		viewConfigs = model.volumeListViewHandlers
 		viewName = "Docker Volumes"
 	case FileBrowserView:
-		configs = model.fileBrowserHandlers
+		viewConfigs = model.fileBrowserHandlers
 		viewName = "File Browser"
 	case FileContentView:
-		configs = model.fileContentHandlers
+		viewConfigs = model.fileContentHandlers
 		viewName = "File Content"
 	case InspectView:
-		configs = model.inspectViewHandlers
+		viewConfigs = model.inspectViewHandlers
 		viewName = "Inspect"
+	case HelpView:
+		viewConfigs = model.helpViewHandlers
+		viewName = "Help"
+	case CommandExecutionView:
+		viewConfigs = model.commandExecHandlers
+		viewName = "Command Execution"
 	}
 
 	// Show view name
 	s.WriteString(headerStyle.Render(fmt.Sprintf("Keyboard shortcuts for: %s", viewName)) + "\n\n")
 
-	// Column styles
-	keyStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("86")).
-		Bold(true)
-	cmdStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("214"))
+	// Build table rows
+	var allRows [][]string
 
-	// Column headers
-	headerKeyStr := keyStyle.Render(fmt.Sprintf("%-12s", "Key"))
-	headerCmdStr := cmdStyle.Render(fmt.Sprintf("%-25s", "Command"))
-	headerDescStr := normalStyle.Render("Description")
-	s.WriteString(fmt.Sprintf("%s %s %s\n", headerKeyStr, headerCmdStr, headerDescStr))
-	s.WriteString(strings.Repeat("─", 65) + "\n")
+	// Add global configs
+	if len(model.globalHandlers) > 0 {
+		// Add section header as a special row
+		for _, config := range model.globalHandlers {
+			if len(config.Keys) > 0 {
+				key := config.Keys[0]
+				if len(config.Keys) > 1 {
+					key = strings.Join(config.Keys, "/")
+				}
 
-	// Calculate max scroll
-	totalLines := len(configs) + 7      // title + view name + header + separator + margins
-	visibleLines := availableHeight - 6 // footer + header + margins
-	maxScroll := totalLines - visibleLines
+				// Get command name for this handler
+				cmdName := getCommandForHandler(config.KeyHandler)
+				if cmdName != "" {
+					cmdName = ":" + cmdName
+				}
+
+				allRows = append(allRows, []string{key, cmdName, config.Description})
+			}
+		}
+	}
+
+	// Add view-specific configs
+	if len(viewConfigs) > 0 {
+		// Add separator row if we have both
+		if len(model.globalHandlers) > 0 {
+			allRows = append(allRows, []string{"", "", ""})
+		}
+
+		// Add section header
+		allRows = append(allRows, []string{"", "", ""})
+
+		for _, config := range viewConfigs {
+			if len(config.Keys) > 0 {
+				key := config.Keys[0]
+				if len(config.Keys) > 1 {
+					key = strings.Join(config.Keys, "/")
+				}
+
+				// Get command name for this handler
+				cmdName := getCommandForHandler(config.KeyHandler)
+				if cmdName != "" {
+					cmdName = ":" + cmdName
+				}
+
+				allRows = append(allRows, []string{key, cmdName, config.Description})
+			}
+		}
+	}
+
+	// Calculate scrolling
+	visibleRows := availableHeight - 8 // Account for title, headers, footer
+	if visibleRows < 5 {
+		visibleRows = 5
+	}
+
+	// Adjust scroll position
+	maxScroll := len(allRows) - visibleRows
 	if maxScroll < 0 {
 		maxScroll = 0
 	}
 	if m.scrollY > maxScroll {
 		m.scrollY = maxScroll
 	}
-
-	// Render key bindings
-	visibleConfigs := configs
-	if m.scrollY > 0 && m.scrollY < len(configs) {
-		endIdx := m.scrollY + visibleLines - 5
-		if endIdx > len(configs) {
-			endIdx = len(configs)
-		}
-		visibleConfigs = configs[m.scrollY:endIdx]
+	if m.scrollY < 0 {
+		m.scrollY = 0
 	}
 
-	for _, config := range visibleConfigs {
-		if len(config.Keys) > 0 {
-			key := config.Keys[0]
-			if len(config.Keys) > 1 {
-				key = strings.Join(config.Keys, "/")
+	// Apply scrolling to rows
+	startIdx := m.scrollY
+	endIdx := startIdx + visibleRows
+	if endIdx > len(allRows) {
+		endIdx = len(allRows)
+	}
+
+	// Get visible rows
+	var visibleTableRows [][]string
+	if len(allRows) > 0 && startIdx < len(allRows) {
+		visibleTableRows = allRows[startIdx:endIdx]
+	}
+
+	// Create the table
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			// Header row
+			if row == 0 {
+				return headerStyle
 			}
 
-			// Get command name for this handler
-			cmdName := getCommandForHandler(config.KeyHandler)
-
-			// Format columns
-			keyStr := keyStyle.Render(fmt.Sprintf("%-12s", key))
-			cmdStr := ""
-			if cmdName != "" {
-				cmdStr = cmdStyle.Render(fmt.Sprintf("%-25s", ":"+cmdName))
-			} else {
-				cmdStr = fmt.Sprintf("%-25s", "")
+			// Regular rows
+			switch col {
+			case 0: // Key column
+				return lipgloss.NewStyle().
+					Foreground(lipgloss.Color("86")).
+					Bold(true).
+					Width(15)
+			case 1: // Command column
+				return lipgloss.NewStyle().
+					Foreground(lipgloss.Color("214")).
+					Width(30)
+			case 2: // Description column
+				newStyle := normalStyle
+				return newStyle.Width(40)
+			default:
+				return normalStyle
 			}
-			descStr := normalStyle.Render(config.Description)
+		}).
+		Headers("Key", "Command", "Description").
+		Rows(visibleTableRows...)
 
-			s.WriteString(fmt.Sprintf("%s %s %s\n", keyStr, cmdStr, descStr))
-		}
+	s.WriteString(t.String())
+
+	// Scroll indicator
+	if len(allRows) > visibleRows {
+		scrollInfo := fmt.Sprintf(" [Showing %d-%d of %d] ", startIdx+1, endIdx, len(allRows))
+		s.WriteString("\n" + helpStyle.Render(scrollInfo))
 	}
 
 	// Footer
 	footer := "\n" + helpStyle.Render("Press ESC or q to go back")
-	footerHeight := 2
-	contentHeight := availableHeight - footerHeight
-	currentHeight := strings.Count(s.String(), "\n") + 1
-	if currentHeight < contentHeight {
-		s.WriteString(strings.Repeat("\n", contentHeight-currentHeight))
-	}
 	s.WriteString(footer)
 
 	return s.String()

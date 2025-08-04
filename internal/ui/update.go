@@ -317,16 +317,9 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleFilterMode(msg)
 	}
 
-	// Handle ':' to enter command mode
-	if msg.String() == ":" {
-		m.commandViewModel.Start()
-		return m, nil
-	}
-
-	// Handle quit globally
-	if msg.String() == "q" {
-		m.quitConfirmation = true
-		return m, nil
+	handler, ok := m.globalKeymap[msg.String()]
+	if ok {
+		return handler(msg)
 	}
 
 	// Handle view-specific keys
