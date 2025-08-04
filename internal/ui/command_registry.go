@@ -171,7 +171,7 @@ func getShortCommandName(methodName string) string {
 		"ShowProjectList":           "projects",
 		"ShowDockerContainerList":   "ps",
 		"CmdHelp":                   "help",
-		"Refresh":                   "refresh",
+		"CmdRefresh":                "refresh",
 		"DeleteImage":               "rmi",
 		"DeleteNetwork":             "rmnet",
 		"DeleteVolume":              "rmvol",

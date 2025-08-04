@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"log/slog"
-	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -31,8 +30,8 @@ func (m *Model) CmdCommandMode(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// Refresh sends a RefreshMsg to trigger a reload of the current view
-func (m *Model) Refresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+// CmdRefresh sends a RefreshMsg to trigger a reload of the current view
+func (m *Model) CmdRefresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, func() tea.Msg {
 		return RefreshMsg{}
 	}
@@ -49,6 +48,8 @@ func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case FileBrowserView:
+		return m, m.fileBrowserViewModel.HandleUp()
 	case LogView:
 		return m, m.logViewModel.HandleUp()
 	case InspectView:
@@ -74,6 +75,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case FileBrowserView:
+		return m, m.fileBrowserViewModel.HandleDown()
 	case LogView:
 		return m, m.logViewModel.HandleDown(m)
 	case InspectView:
@@ -468,70 +471,12 @@ func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) SelectUpFile(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedFile > 0 {
-		m.selectedFile--
-	}
-	return m, nil
-}
-
-func (m *Model) SelectDownFile(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedFile < len(m.containerFiles)-1 {
-		m.selectedFile++
-	}
-	return m, nil
-}
-
 func (m *Model) OpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedFile < len(m.containerFiles) {
-		file := m.containerFiles[m.selectedFile]
-
-		if file.Name == "." {
-			return m, nil
-		}
-
-		if file.Name == ".." {
-			// Go up one directory
-			if m.currentPath != "/" {
-				m.currentPath = filepath.Dir(m.currentPath)
-				if len(m.pathHistory) > 1 {
-					m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
-				}
-			}
-			m.loading = true
-			m.selectedFile = 0
-			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
-		}
-
-		newPath := filepath.Join(m.currentPath, file.Name)
-
-		if file.IsDir {
-			// Navigate into directory
-			m.currentPath = newPath
-			m.pathHistory = append(m.pathHistory, newPath)
-			m.loading = true
-			m.selectedFile = 0
-			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, newPath)
-		} else {
-			// View file content
-			return m, m.fileContentViewModel.Load(m, m.browsingContainerID, newPath)
-		}
-	}
-	return m, nil
+	return m, m.fileBrowserViewModel.HandleOpenFileOrDirectory(m)
 }
 
 func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Go up one directory
-	if m.currentPath != "/" {
-		m.currentPath = filepath.Dir(m.currentPath)
-		if len(m.pathHistory) > 1 {
-			m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
-		}
-		m.loading = true
-		m.selectedFile = 0
-		return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
-	}
-	return m, nil
+	return m, m.fileBrowserViewModel.HandleGoToParentDirectory(m)
 }
 
 func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

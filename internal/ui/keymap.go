@@ -26,7 +26,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"I"}, "inspect", m.CmdInspect},
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
 		{[]string{"s"}, "stats", m.ShowStatsView},
 		{[]string{"t"}, "top", m.CmdTop},
@@ -64,7 +64,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.SelectUpDindContainer},
 		{[]string{"down", "j"}, "move down", m.SelectDownDindContainer},
 		{[]string{"enter"}, "view logs", m.ShowDindLog},
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -72,7 +72,7 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Top View
 	m.topViewHandlers = []KeyConfig{
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -80,7 +80,7 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Stats View
 	m.statsViewHandlers = []KeyConfig{
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -91,7 +91,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "select project", m.SelectProject},
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
@@ -104,7 +104,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"I"}, "inspect", m.ShowDockerInspect},
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.ToggleAllDockerContainers},
 		{[]string{"K"}, "kill", m.CmdKill},
 		{[]string{"S"}, "stop", m.CmdStop},
@@ -122,7 +122,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.SelectUpImage},
 		{[]string{"down", "j"}, "move down", m.SelectDownImage},
 		{[]string{"I"}, "inspect", m.ShowImageInspect},
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.ToggleAllImages},
 		{[]string{"D"}, "remove", m.DeleteImage},
 		{[]string{"F"}, "force remove", m.ForceDeleteImage},
@@ -136,7 +136,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.SelectUpNetwork},
 		{[]string{"down", "j"}, "move down", m.SelectDownNetwork},
 		{[]string{"enter"}, "inspect", m.ShowNetworkInspect},
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "remove", m.DeleteNetwork},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
@@ -148,7 +148,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.SelectUpVolume},
 		{[]string{"down", "j"}, "move down", m.SelectDownVolume},
 		{[]string{"enter"}, "inspect", m.ShowVolumeInspect},
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "remove", m.DeleteVolume},
 		{[]string{"F"}, "force remove", m.ForceDeleteVolume},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
@@ -158,11 +158,11 @@ func (m *Model) initializeKeyHandlers() {
 
 	// File Browser View
 	m.fileBrowserHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "move up", m.SelectUpFile},
-		{[]string{"down", "j"}, "move down", m.SelectDownFile},
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "open", m.OpenFileOrDirectory},
 		{[]string{"u"}, "parent directory", m.GoToParentDirectory},
-		{[]string{"r"}, "refresh", m.Refresh},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}

@@ -367,7 +367,7 @@ func TestComposeProjectListViewModel_Refresh(t *testing.T) {
 		loading: false,
 	}
 
-	// The project list view uses Refresh handler which calls loadProjects
+	// The project list view uses CmdRefresh handler which calls loadProjects
 	cmd := loadProjects(model.dockerClient)
 	msg := cmd()
 
