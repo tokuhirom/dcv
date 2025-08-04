@@ -114,11 +114,7 @@ type Model struct {
 	helpViewModel                HelpViewModel
 	networkListViewModel         NetworkListViewModel
 	statsViewModel               StatsViewModel
-
-
-	// Docker volumes state
-	dockerVolumes        []models.DockerVolume
-	selectedDockerVolume int
+	volumeListViewModel          VolumeListViewModel
 
 	// File browser state
 	containerFiles        []models.ContainerFile

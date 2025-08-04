@@ -300,7 +300,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case NetworkListView:
 		return m.networkListViewModel.render(m, availableHeight)
 	case VolumeListView:
-		return m.renderVolumeList()
+		return m.volumeListViewModel.render(m, availableHeight)
 	case FileBrowserView:
 		return m.renderFileBrowser(availableHeight)
 	case FileContentView:
