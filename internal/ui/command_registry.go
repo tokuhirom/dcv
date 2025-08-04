@@ -83,44 +83,48 @@ func (m *Model) registerCommands() {
 				// Convert to kebab-case command name (e.g., "SelectUpContainer" -> "select-up-container")
 				cmdName := toKebabCase(methodName)
 
+				// Create shorter aliases for common commands
+				shortName := getShortCommandName(methodName)
+
+				// Register with the full kebab-case name
 				commandRegistry[cmdName] = CommandHandler{
 					Handler:     handler.KeyHandler,
 					Description: handler.Description,
 					ViewMask:    viewHandlers.viewMask,
 				}
 
-				// Also map the handler to command name for help display
-				handlerToCommand[funcPtr] = cmdName
+				// Also register with short name if available
+				if shortName != "" && shortName != cmdName {
+					commandRegistry[shortName] = CommandHandler{
+						Handler:     handler.KeyHandler,
+						Description: handler.Description,
+						ViewMask:    viewHandlers.viewMask,
+					}
+				}
+
+				// Map the handler to command name for help display (use short name if available)
+				if shortName != "" {
+					handlerToCommand[funcPtr] = shortName
+				} else {
+					handlerToCommand[funcPtr] = cmdName
+				}
 			}
 		}
 	}
 
-	// Add some view-agnostic aliases for common commands
+	// Add additional aliases for common commands
 	aliases := map[string]string{
-		"up":       "cmd-up",
-		"down":     "cmd-down",
-		"select":   "cmd-log",
-		"enter":    "cmd-log",
-		"back":     "cmd-back",
-		"kill":     "cmd-kill",
-		"stop":     "cmd-stop",
-		"start":    "cmd-start",
-		"restart":  "cmd-restart",
-		"delete":   "cmd-remove",
-		"rm":       "cmd-remove",
-		"logs":     "cmd-log",
-		"top":      "show-top-view",
-		"stats":    "show-stats-view",
-		"images":   "show-image-list",
-		"networks": "show-network-list",
-		"volumes":  "show-volume-list",
-		"projects": "show-project-list",
-		"ps":       "show-docker-container-list",
-		"inspect":  "show-inspect",
-		"exec":     "execute-shell",
-		"files":    "show-file-browser",
-		"pause":    "pause-container",
-		"unpause":  "pause-container", // Toggle
+		"select":  "log",     // Alternative for entering log view
+		"enter":   "log",     // Alternative for entering log view
+		"delete":  "remove",  // Alternative for remove
+		"rm":      "remove",  // Short for remove
+		"logs":    "log",     // Alternative for log
+		"exec":    "shell",   // Alternative for shell
+		"unpause": "pause",   // Same as pause (it's a toggle)
+		"q":       "quit",    // Short for quit
+		"h":       "help",    // Short for help
+		"r":       "refresh", // Already registered but good to have as alias
+		"a":       "all",     // Short for toggle all
 	}
 
 	// Register aliases
@@ -141,6 +145,63 @@ func toKebabCase(s string) string {
 		result.WriteRune(r)
 	}
 	return strings.ToLower(result.String())
+}
+
+// getShortCommandName returns a shorter, more intuitive command name for common commands
+func getShortCommandName(methodName string) string {
+	// Map of method names to short command names
+	shortNames := map[string]string{
+		"CmdUp":                     "up",
+		"CmdDown":                   "down",
+		"CmdLog":                    "log",
+		"CmdBack":                   "back",
+		"CmdKill":                   "kill",
+		"CmdStop":                   "stop",
+		"CmdStart":                  "start",
+		"CmdRestart":                "restart",
+		"CmdRemove":                 "remove",
+		"CmdPause":                  "pause",
+		"CmdShell":                  "shell",
+		"CmdInspect":                "inspect",
+		"CmdFileBrowse":             "files",
+		"CmdToggleAll":              "all",
+		"CmdTop":                    "top",
+		"CmdCancel":                 "cancel",
+		"ShowStatsView":             "stats",
+		"ShowImageList":             "images",
+		"ShowNetworkList":           "networks",
+		"ShowVolumeList":            "volumes",
+		"ShowProjectList":           "projects",
+		"ShowDockerContainerList":   "ps",
+		"ShowHelp":                  "help",
+		"Refresh":                   "refresh",
+		"DeleteImage":               "rmi",
+		"DeleteNetwork":             "rmnet",
+		"DeleteVolume":              "rmvol",
+		"ToggleAllImages":           "all-images",
+		"ToggleAllDockerContainers": "all-containers",
+		"DeployProject":             "deploy",
+		"DownProject":               "compose-down",
+		"BackFromLogView":           "back",
+		"BackFromHelp":              "back",
+		"BackFromInspect":           "back",
+		"BackFromImageList":         "back",
+		"BackFromNetworkList":       "back",
+		"BackFromVolumeList":        "back",
+		"BackFromFileContent":       "back",
+		"BackFromDockerList":        "back",
+		"BackToProcessList":         "back",
+		"BackToDindList":            "back",
+	}
+
+	if short, exists := shortNames[methodName]; exists {
+		return short
+	}
+
+	// Don't create short names for Select* methods - they will use full names
+	// This avoids conflicts with CmdUp/CmdDown
+
+	return ""
 }
 
 // executeKeyHandlerCommand executes a command by name
