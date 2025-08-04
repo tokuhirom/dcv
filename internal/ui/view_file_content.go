@@ -4,22 +4,29 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-// renderFileContent renders the file content view
-func (m *Model) renderFileContent(availableHeight int) string {
+type FileContentViewModel struct {
+	content     string
+	contentPath string
+	scrollY     int
+}
+
+// render renders the file content view
+func (m *FileContentViewModel) render(model *Model, availableHeight int) string {
 	var content strings.Builder
 
-	if m.err != nil {
+	if model.err != nil {
 		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
-		return content.String() + errorStyle.Render(fmt.Sprintf("Error: %v", m.err))
+		return content.String() + errorStyle.Render(fmt.Sprintf("Error: %v", model.err))
 	}
 
 	// File content with line numbers
-	lines := strings.Split(m.fileContent, "\n")
+	lines := strings.Split(m.content, "\n")
 	viewHeight := availableHeight
-	startIdx := m.fileScrollY
+	startIdx := m.scrollY
 	endIdx := startIdx + viewHeight
 
 	if endIdx > len(lines) {
@@ -53,4 +60,49 @@ func (m *Model) renderFileContent(availableHeight int) string {
 	}
 
 	return content.String()
+}
+
+func (m *FileContentViewModel) Load(model *Model, containerID, path string) tea.Cmd {
+	model.currentView = FileContentView
+	model.loading = true
+	m.scrollY = 0
+	return loadFileContent(model.dockerClient, containerID, path)
+}
+
+func (m *FileContentViewModel) HandleScrollUp() tea.Cmd {
+	if m.scrollY > 0 {
+		m.scrollY--
+	}
+	return nil
+}
+
+func (m *FileContentViewModel) HandleScrollDown(height int) tea.Cmd {
+	lines := strings.Split(m.content, "\n")
+	maxScroll := len(lines) - (height - 5)
+	if m.scrollY < maxScroll && maxScroll > 0 {
+		m.scrollY++
+	}
+	return nil
+}
+
+func (m *FileContentViewModel) HandleGoToStart() tea.Cmd {
+	m.scrollY = 0
+	return nil
+}
+
+func (m *FileContentViewModel) HandleGoToEnd(height int) tea.Cmd {
+	lines := strings.Split(m.content, "\n")
+	maxScroll := len(lines) - (height - 5)
+	if maxScroll > 0 {
+		m.scrollY = maxScroll
+	}
+	return nil
+}
+
+func (m *FileContentViewModel) HandleBack(model *Model) tea.Cmd {
+	model.currentView = FileBrowserView
+	m.content = ""
+	m.contentPath = ""
+	m.scrollY = 0
+	return nil
 }

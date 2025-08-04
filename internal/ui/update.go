@@ -239,9 +239,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.fileContent = msg.content
-		m.fileContentPath = msg.path
-		m.fileScrollY = 0
+		m.fileContentViewModel.content = msg.content
+		m.fileContentViewModel.contentPath = msg.path
+		m.fileContentViewModel.scrollY = 0
 		m.err = nil
 		m.currentView = FileContentView
 		return m, nil
