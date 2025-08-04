@@ -117,16 +117,6 @@ type Model struct {
 	browsingContainerName string
 	pathHistory           []string
 
-	// Search state
-	// TODO: remove this part.
-	searchMode       bool
-	searchText       string
-	searchIgnoreCase bool
-	searchRegex      bool
-	searchResults    []int // Line indices of search results
-	currentSearchIdx int   // Current position in searchResults
-	searchCursorPos  int   // Cursor position in search text
-
 	// Error state
 	err error
 
@@ -221,6 +211,7 @@ func (m *Model) Init() tea.Cmd {
 	}
 }
 
+// TODO: move to keyhandler.go
 func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case CommandExecutionView:

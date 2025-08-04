@@ -195,6 +195,7 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "type in search mode",
 			model: Model{
+				currentView: LogView,
 				logViewModel: LogViewModel{
 					SearchViewModel: SearchViewModel{
 						searchMode:      true,
@@ -210,6 +211,7 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "backspace in search mode",
 			model: Model{
+				currentView: LogView,
 				logViewModel: LogViewModel{
 					SearchViewModel: SearchViewModel{
 						searchMode:      true,
@@ -225,6 +227,7 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "escape search mode",
 			model: Model{
+				currentView: LogView,
 				logViewModel: LogViewModel{
 					SearchViewModel: SearchViewModel{
 						searchMode: true,
@@ -239,6 +242,7 @@ func TestHandleSearchMode(t *testing.T) {
 		{
 			name: "enter to confirm search",
 			model: Model{
+				currentView: LogView,
 				logViewModel: LogViewModel{
 					SearchViewModel: SearchViewModel{
 						searchMode: true,

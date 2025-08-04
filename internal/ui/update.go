@@ -394,9 +394,12 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg, searchViewModel *SearchViewMode
 			m.logViewModel.PerformSearch(m, m.logViewModel.logs, func(scrollY int) { m.logViewModel.logScrollY = scrollY })
 		case InspectView:
 			m.inspectViewModel.PerformSearch(m, strings.Split(m.inspectViewModel.inspectContent, "\n"), func(scrollY int) { m.inspectViewModel.inspectScrollY = scrollY })
+		default:
+			panic("unhandled default case")
 		}
 	}
 
+	// TODO: support CtrlD/Del
 	switch msg.Type {
 	case tea.KeyEsc:
 		searchViewModel.InputEscape()
@@ -407,18 +410,18 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg, searchViewModel *SearchViewMode
 		performSearch()
 		return m, nil
 
-	case tea.KeyBackspace:
+	case tea.KeyBackspace, tea.KeyCtrlH:
 		updated := searchViewModel.DeleteLastChar()
 		if updated {
 			performSearch()
 		}
 		return m, nil
 
-	case tea.KeyLeft:
+	case tea.KeyLeft, tea.KeyCtrlB:
 		searchViewModel.CursorLeft()
 		return m, nil
 
-	case tea.KeyRight:
+	case tea.KeyRight, tea.KeyCtrlF:
 		searchViewModel.CursorRight()
 		return m, nil
 
@@ -572,83 +575,11 @@ func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleInspectKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Handle search mode
-	if m.searchMode {
-		return m.handleInspectSearchMode(msg)
-	}
-
 	handler, ok := m.inspectViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}
 	return m, nil
-}
-
-func (m *Model) handleInspectSearchMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
-	case tea.KeyCtrlC, tea.KeyEsc:
-		m.searchMode = false
-		m.searchText = ""
-		m.searchResults = nil
-		m.currentSearchIdx = 0
-		return m, nil
-
-	case tea.KeyEnter:
-		m.searchMode = false
-		m.inspectViewModel.performInspectSearch(m)
-		return m, nil
-
-	case tea.KeyBackspace:
-		if m.searchCursorPos > 0 {
-			m.searchText = m.searchText[:m.searchCursorPos-1] + m.searchText[m.searchCursorPos:]
-			m.searchCursorPos--
-		}
-		return m, nil
-
-	case tea.KeyDelete:
-		if m.searchCursorPos < len(m.searchText) {
-			m.searchText = m.searchText[:m.searchCursorPos] + m.searchText[m.searchCursorPos+1:]
-		}
-		return m, nil
-
-	case tea.KeyLeft:
-		if m.searchCursorPos > 0 {
-			m.searchCursorPos--
-		}
-		return m, nil
-
-	case tea.KeyRight:
-		if m.searchCursorPos < len(m.searchText) {
-			m.searchCursorPos++
-		}
-		return m, nil
-
-	case tea.KeyHome:
-		m.searchCursorPos = 0
-		return m, nil
-
-	case tea.KeyEnd:
-		m.searchCursorPos = len(m.searchText)
-		return m, nil
-
-	case tea.KeyCtrlI: // Tab - toggle case insensitive
-		m.searchIgnoreCase = !m.searchIgnoreCase
-		return m, nil
-
-	case tea.KeyCtrlR: // Toggle regex
-		m.searchRegex = !m.searchRegex
-		return m, nil
-
-	case tea.KeyRunes:
-		// Insert characters at cursor position
-		runes := string(msg.Runes)
-		m.searchText = m.searchText[:m.searchCursorPos] + runes + m.searchText[m.searchCursorPos:]
-		m.searchCursorPos += len(runes)
-		return m, nil
-
-	default:
-		return m, nil
-	}
 }
 
 func (m *Model) handleHelpKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {

@@ -183,10 +183,10 @@ func (m *InspectViewModel) InspectContainer(model *Model, containerID string) te
 
 func (m *InspectViewModel) HandleBack(model *Model) tea.Cmd {
 	// ClearSearch search state when leaving inspect view
-	model.searchMode = false
-	model.searchText = ""
-	model.searchResults = nil
-	model.currentSearchIdx = 0
+	m.searchMode = false
+	m.searchText = ""
+	m.searchResults = nil
+	m.currentSearchIdx = 0
 
 	// Check if we were inspecting an image
 	if m.inspectImageID != "" {
@@ -287,54 +287,6 @@ func (m *InspectViewModel) HandlePrevSearchResult(model *Model) tea.Cmd {
 		}
 	}
 	return nil
-}
-
-func (m *InspectViewModel) performInspectSearch(model *Model) {
-	m.searchResults = nil
-	if m.searchText == "" {
-		return
-	}
-
-	// Split inspect content into lines for searching
-	lines := strings.Split(m.inspectContent, "\n")
-
-	searchText := m.searchText
-	if m.searchIgnoreCase && !m.searchRegex {
-		searchText = strings.ToLower(searchText)
-	}
-
-	for i, line := range lines {
-		lineToSearch := line
-		if m.searchIgnoreCase && !m.searchRegex {
-			lineToSearch = strings.ToLower(line)
-		}
-
-		match := false
-		if m.searchRegex {
-			pattern := searchText
-			if m.searchIgnoreCase {
-				pattern = "(?i)" + pattern
-			}
-			if re, err := regexp.Compile(pattern); err == nil {
-				match = re.MatchString(line)
-			}
-		} else {
-			match = strings.Contains(lineToSearch, searchText)
-		}
-
-		if match {
-			m.searchResults = append(m.searchResults, i)
-		}
-	}
-
-	// If we have results, jump to the first one
-	if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) {
-		targetLine := m.searchResults[m.currentSearchIdx]
-		m.inspectScrollY = targetLine - model.Height/2 + 3
-		if m.inspectScrollY < 0 {
-			m.inspectScrollY = 0
-		}
-	}
 }
 
 func (m *InspectViewModel) Set(content string) {
