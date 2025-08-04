@@ -57,24 +57,12 @@ func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) SelectUpProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedProject > 0 {
-		m.selectedProject--
-	}
-	return m, nil
-}
-
-func (m *Model) SelectDownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedProject < len(m.projects)-1 {
-		m.selectedProject++
-	}
-	return m, nil
-}
-
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleUp(m)
+	case ComposeProjectListView:
+		return m, m.composeProjectListViewModel.HandleUp(m)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleUp()
 	default:
@@ -88,6 +76,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleDown(m)
+	case ComposeProjectListView:
+		return m, m.composeProjectListViewModel.HandleDown(m)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleDown(m)
 	default:
@@ -322,20 +312,20 @@ func (m *Model) DownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowProjectList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ProjectListView
+	m.currentView = ComposeProjectListView
 	m.loading = true
 	return m, loadProjects(m.dockerClient)
 }
 
 func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedProject < len(m.projects) {
-		project := m.projects[m.selectedProject]
-		m.projectName = project.Name
-		m.currentView = ComposeProcessListView
-		m.loading = true
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	switch m.currentView {
+	case ComposeProjectListView:
+		return m, m.composeProjectListViewModel.HandleSelectProject(m)
+	default:
+		slog.Info("Unhandled project selection in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
 	}
-	return m, nil
 }
 
 // Back navigation handlers
@@ -513,7 +503,7 @@ func (m *Model) GetHelpText() string {
 		configs = m.topViewHandlers
 	case StatsView:
 		configs = m.statsViewHandlers
-	case ProjectListView:
+	case ComposeProjectListView:
 		configs = m.projectListViewHandlers
 	case DockerContainerListView:
 		configs = m.dockerListViewHandlers
@@ -772,6 +762,9 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleBack(m)
+	case ComposeProcessListView:
+		m.currentView = ComposeProjectListView
+		return m, nil
 	default:
 		slog.Info("Unhandled :back command in current view",
 			slog.String("view", m.currentView.String()))

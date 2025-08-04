@@ -32,6 +32,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"u"}, "up -d", m.DeployProject},
 		{[]string{"x"}, "down", m.DownProject},
 		{[]string{"?"}, "help", m.ShowHelp},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 	}
 	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
 
@@ -94,8 +95,8 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Project List View
 	m.projectListViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "move up", m.SelectUpProject},
-		{[]string{"down", "j"}, "move down", m.SelectDownProject},
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "select project", m.SelectProject},
 		{[]string{"r"}, "refresh", m.Refresh},
 		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},

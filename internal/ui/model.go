@@ -37,7 +37,7 @@ const (
 	DindComposeProcessListView
 	TopView
 	StatsView
-	ProjectListView
+	ComposeProjectListView
 	DockerContainerListView
 	ImageListView
 	NetworkListView
@@ -61,7 +61,7 @@ func (view ViewType) String() string {
 		return "Process Info"
 	case StatsView:
 		return "Container Stats"
-	case ProjectListView:
+	case ComposeProjectListView:
 		return "Project List"
 	case DockerContainerListView:
 		return "Docker Containers"
@@ -99,10 +99,6 @@ type Model struct {
 	selectedContainer int
 	showAll           bool // Toggle to show all composeContainers including stopped ones
 
-	// Compose list state
-	projects        []models.ComposeProject
-	selectedProject int
-
 	// Dind state
 	dindContainers         []models.DockerContainer
 	selectedDindContainer  int
@@ -114,6 +110,8 @@ type Model struct {
 	commandExecutionViewModel    CommandExecutionViewModel
 	fileBrowserViewModel         FileBrowserViewModel
 	inspectViewModel             InspectViewModel
+	composeProjectListViewModel  ComposeProjectListViewModel
+	composeProcessListViewModel  ComposeProcessListViewModel
 
 	// Docker images state
 	dockerImages        []models.DockerImage
@@ -368,7 +366,7 @@ func (m *Model) Init() tea.Cmd {
 	m.initializeKeyHandlers()
 
 	switch m.currentView {
-	case ProjectListView:
+	case ComposeProjectListView:
 		return tea.Batch(
 			loadProjects(m.dockerClient),
 			tea.WindowSize(),
