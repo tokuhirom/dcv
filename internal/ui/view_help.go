@@ -30,7 +30,7 @@ func (m *Model) renderHelpView(availableHeight int) string {
 	case StatsView:
 		configs = m.statsViewHandlers
 		viewName = "Container Stats"
-	case ProjectListView:
+	case ComposeProjectListView:
 		configs = m.projectListViewHandlers
 		viewName = "Project List"
 	case DockerContainerListView:

@@ -32,7 +32,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Check if error is due to missing compose file
 			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
 				// Switch to project list view
-				m.currentView = ProjectListView
+				m.currentView = ComposeProjectListView
 				m.loading = true
 				return m, loadProjects(m.dockerClient)
 			}
@@ -162,12 +162,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
-		m.projects = msg.projects
-		m.err = nil
-		if len(m.projects) > 0 && m.selectedProject >= len(m.projects) {
-			m.selectedProject = 0
-		}
+		m.composeProjectListViewModel.Loaded(msg.projects)
 		return m, nil
 
 	case dockerContainersLoadedMsg:
@@ -296,7 +294,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, loadTop(m.dockerClient, m.projectName, m.topService)
 		case StatsView:
 			return m, loadStats(m.dockerClient)
-		case ProjectListView:
+		case ComposeProjectListView:
 			return m, loadProjects(m.dockerClient)
 		case DockerContainerListView:
 			return m, loadDockerContainers(m.dockerClient, m.showAll)
@@ -362,7 +360,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle quit globally
 	if msg.String() == "q" {
 		// For 'q' key, show confirmation dialog
-		if m.currentView == ProjectListView || m.currentView == ComposeProcessListView {
+		if m.currentView == ComposeProjectListView || m.currentView == ComposeProcessListView {
 			m.quitConfirmation = true
 			m.quitConfirmMessage = "Really quit? (y/n)"
 			return m, nil
@@ -396,7 +394,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleTopViewKeys(msg)
 	case StatsView:
 		return m.handleStatsViewKeys(msg)
-	case ProjectListView:
+	case ComposeProjectListView:
 		return m.handleProjectListKeys(msg)
 	case DockerContainerListView:
 		return m.handleDockerListKeys(msg)
@@ -674,7 +672,7 @@ func (m *Model) refreshCurrentView() tea.Cmd {
 		return loadDockerNetworks(m.dockerClient)
 	case VolumeListView:
 		return loadDockerVolumes(m.dockerClient)
-	case ProjectListView:
+	case ComposeProjectListView:
 		return loadProjects(m.dockerClient)
 	case DindComposeProcessListView:
 		if m.currentDindContainerID != "" {

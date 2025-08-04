@@ -211,7 +211,7 @@ func (m *Model) viewTitle() string {
 		return fmt.Sprintf("Process Info: %s", m.topService)
 	case StatsView:
 		return "Container Resource Usage"
-	case ProjectListView:
+	case ComposeProjectListView:
 		return "Docker Compose Projects"
 	case DockerContainerListView:
 		if m.showAll {
@@ -291,8 +291,8 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.renderTopView(availableHeight)
 	case StatsView:
 		return m.renderStatsView(availableHeight)
-	case ProjectListView:
-		return m.renderProjectList(availableHeight)
+	case ComposeProjectListView:
+		return m.composeProjectListViewModel.render(m, availableHeight)
 	case DockerContainerListView:
 		return m.dockerContainerListViewModel.renderDockerList(availableHeight)
 	case ImageListView:

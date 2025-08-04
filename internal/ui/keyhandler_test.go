@@ -181,7 +181,7 @@ func TestGetHelpText(t *testing.T) {
 		},
 		{
 			name:    "project list view",
-			view:    ProjectListView,
+			view:    ComposeProjectListView,
 			hasHelp: true,
 		},
 		{

@@ -34,7 +34,7 @@ func main() {
 	case "compose":
 		initialView = ui.ComposeProcessListView
 	case "projects":
-		initialView = ui.ProjectListView
+		initialView = ui.ComposeProjectListView
 	case "docker":
 		initialView = ui.DockerContainerListView
 	case "":

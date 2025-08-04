@@ -4,9 +4,21 @@ import (
 	"log/slog"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/tokuhirom/dcv/internal/models"
 )
+
+type ComposeProcessListViewModel struct {
+}
+
+func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeProject) tea.Cmd {
+	model.projectName = project.Name
+	model.currentView = ComposeProcessListView
+	model.loading = true
+	return loadProcesses(model.dockerClient, model.projectName, model.showAll)
+}
 
 func (m *Model) renderComposeProcessList(availableHeight int) string {
 	var s strings.Builder
