@@ -169,3 +169,43 @@ func (m InspectViewModel) InspectContainer(model *Model, containerID string) tea
 	model.loading = true
 	return loadInspect(model.dockerClient, containerID)
 }
+
+func (m InspectViewModel) HandleBack(model *Model) tea.Cmd {
+	// Clear search state when leaving inspect view
+	model.searchMode = false
+	model.searchText = ""
+	model.searchResults = nil
+	model.currentSearchIdx = 0
+
+	// Check if we were inspecting an image
+	if model.inspectImageID != "" {
+		model.currentView = ImageListView
+		model.inspectImageID = ""
+		return nil
+	}
+
+	// Check if we were inspecting a network
+	if model.inspectNetworkID != "" {
+		model.currentView = NetworkListView
+		model.inspectNetworkID = ""
+		return nil
+	}
+
+	// Check if we were inspecting a volume
+	if model.inspectVolumeID != "" {
+		model.currentView = VolumeListView
+		model.inspectVolumeID = ""
+		return nil
+	}
+
+	// Check where we came from based on the container ID
+	for _, container := range model.dockerContainerListViewModel.dockerContainers {
+		if container.ID == model.inspectContainerID {
+			model.currentView = DockerContainerListView
+			return nil
+		}
+	}
+	// Default to compose process list
+	model.currentView = ComposeProcessListView
+	return nil
+}

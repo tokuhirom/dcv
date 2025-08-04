@@ -40,7 +40,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		configs = model.projectListViewHandlers
 		viewName = "Project List"
 	case DockerContainerListView:
-		configs = model.dockerListViewHandlers
+		configs = model.dockerContainerListViewHandlers
 		viewName = "Docker Containers"
 	case ImageListView:
 		configs = model.imageListViewHandlers

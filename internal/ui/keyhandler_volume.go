@@ -18,10 +18,6 @@ func (m *Model) ShowVolumeList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.volumeListViewModel.Show(m)
 }
 
-func (m *Model) BackFromVolumeList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.volumeListViewModel.HandleBack(m)
-}
-
 // Action handlers
 func (m *Model) ShowVolumeInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.volumeListViewModel.HandleInspect(m)

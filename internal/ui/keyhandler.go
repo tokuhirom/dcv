@@ -249,11 +249,6 @@ func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-// Back navigation handlers
-func (m *Model) BackToProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.topViewModel.HandleBack(m)
-}
-
 func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	stopLogReader()
 	if m.isDindLog {
@@ -262,10 +257,6 @@ func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 	m.currentView = ComposeProcessListView
 	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
-}
-
-func (m *Model) BackToDindList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.dindProcessListViewModel.HandleBack(m)
 }
 
 // Docker container handlers
@@ -353,11 +344,6 @@ func (m *Model) CmdRemove(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) BackFromDockerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
-}
-
 // renderHelpText generates help text based on key configurations and screen width
 func renderHelpText(configs []KeyConfig, width int) string {
 	if len(configs) == 0 {
@@ -437,7 +423,7 @@ func (m *Model) GetHelpText() string {
 	case ComposeProjectListView:
 		configs = m.projectListViewHandlers
 	case DockerContainerListView:
-		configs = m.dockerListViewHandlers
+		configs = m.dockerContainerListViewHandlers
 	case ImageListView:
 		configs = m.imageListViewHandlers
 	case NetworkListView:
@@ -495,10 +481,6 @@ func (m *Model) ForceDeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.imageListViewModel.HandleForceDelete(m)
 }
 
-func (m *Model) BackFromImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.imageListViewModel.HandleBack(m)
-}
-
 func (m *Model) ShowImageInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.imageListViewModel.HandleInspect(m)
 }
@@ -522,10 +504,6 @@ func (m *Model) DeleteNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) ShowNetworkInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.networkListViewModel.HandleInspect(m)
-}
-
-func (m *Model) BackFromNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.networkListViewModel.HandleBack(m)
 }
 
 func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -609,24 +587,33 @@ func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case FileContentView:
+		return m, m.fileContentViewModel.HandleBack(m)
+	case HelpView:
+		return m, m.helpViewModel.HandleBack(m)
+	case InspectView:
+		return m, m.inspectViewModel.HandleBack(m)
+	case VolumeListView:
+		return m, m.volumeListViewModel.HandleBack(m)
+	case NetworkListView:
+		return m, m.networkListViewModel.HandleBack(m)
+	case ImageListView:
+		return m, m.imageListViewModel.HandleBack(m)
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleBack(m)
 	case FileBrowserView:
-		// TODO: care about the previous view...
-
-		// Check where we came from based on the container name prefix
-		for _, container := range m.dockerContainerListViewModel.dockerContainers {
-			if container.ID == m.browsingContainerID {
-				m.currentView = DockerContainerListView
-				return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
-			}
-		}
-		// Default to compose process list
-		m.currentView = ComposeProcessListView
-		return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+		return m, m.fileBrowserViewModel.HandleBack(m)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleBack(m)
 	case ComposeProcessListView:
 		m.currentView = ComposeProjectListView
 		return m, nil
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleBack(m)
+	case TopView:
+		return m, m.topViewModel.HandleBack(m)
+	case StatsView:
+		return m, m.statsViewModel.HandleBack(m)
 	default:
 		slog.Info("Unhandled :back command in current view",
 			slog.String("view", m.currentView.String()))
@@ -649,10 +636,6 @@ func (m *Model) GoToFileEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) GoToFileStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.fileContentViewModel.HandleGoToStart()
-}
-
-func (m *Model) BackFromFileContent(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.fileContentViewModel.HandleBack(m)
 }
 
 func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -721,46 +704,6 @@ func (m *Model) GoToInspectStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Clear search state when leaving inspect view
-	m.searchMode = false
-	m.searchText = ""
-	m.searchResults = nil
-	m.currentSearchIdx = 0
-
-	// Check if we were inspecting an image
-	if m.inspectImageID != "" {
-		m.currentView = ImageListView
-		m.inspectImageID = ""
-		return m, nil
-	}
-
-	// Check if we were inspecting a network
-	if m.inspectNetworkID != "" {
-		m.currentView = NetworkListView
-		m.inspectNetworkID = ""
-		return m, nil
-	}
-
-	// Check if we were inspecting a volume
-	if m.inspectVolumeID != "" {
-		m.currentView = VolumeListView
-		m.inspectVolumeID = ""
-		return m, nil
-	}
-
-	// Check where we came from based on the container ID
-	for _, container := range m.dockerContainerListViewModel.dockerContainers {
-		if container.ID == m.inspectContainerID {
-			m.currentView = DockerContainerListView
-			return m, nil
-		}
-	}
-	// Default to compose process list
-	m.currentView = ComposeProcessListView
-	return m, nil
-}
-
 func (m *Model) StartInspectSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.searchMode = true
 	m.searchText = ""
@@ -814,10 +757,6 @@ func (m *Model) ScrollHelpUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) ScrollHelpDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.helpViewModel.HandleScrollDown()
-}
-
-func (m *Model) BackFromHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.helpViewModel.HandleBack(m)
 }
 
 func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

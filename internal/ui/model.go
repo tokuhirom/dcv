@@ -162,36 +162,36 @@ type Model struct {
 	projectName string // TODO: Make this a part of the model?
 
 	// Key handler maps and configurations for all views
-	processListViewKeymap   map[string]KeyHandler
-	processListViewHandlers []KeyConfig
-	logViewKeymap           map[string]KeyHandler
-	logViewHandlers         []KeyConfig
-	dindListViewKeymap      map[string]KeyHandler
-	dindListViewHandlers    []KeyConfig
-	topViewKeymap           map[string]KeyHandler
-	topViewHandlers         []KeyConfig
-	statsViewKeymap         map[string]KeyHandler
-	statsViewHandlers       []KeyConfig
-	projectListViewKeymap   map[string]KeyHandler
-	projectListViewHandlers []KeyConfig
-	dockerListViewKeymap    map[string]KeyHandler
-	dockerListViewHandlers  []KeyConfig
-	imageListViewKeymap     map[string]KeyHandler
-	imageListViewHandlers   []KeyConfig
-	networkListViewKeymap   map[string]KeyHandler
-	networkListViewHandlers []KeyConfig
-	volumeListViewKeymap    map[string]KeyHandler
-	volumeListViewHandlers  []KeyConfig
-	fileBrowserKeymap       map[string]KeyHandler
-	fileBrowserHandlers     []KeyConfig
-	fileContentKeymap       map[string]KeyHandler
-	fileContentHandlers     []KeyConfig
-	inspectViewKeymap       map[string]KeyHandler
-	inspectViewHandlers     []KeyConfig
-	helpViewKeymap          map[string]KeyHandler
-	helpViewHandlers        []KeyConfig
-	commandExecKeymap       map[string]KeyHandler
-	commandExecHandlers     []KeyConfig
+	processListViewKeymap           map[string]KeyHandler
+	processListViewHandlers         []KeyConfig
+	logViewKeymap                   map[string]KeyHandler
+	logViewHandlers                 []KeyConfig
+	dindListViewKeymap              map[string]KeyHandler
+	dindListViewHandlers            []KeyConfig
+	topViewKeymap                   map[string]KeyHandler
+	topViewHandlers                 []KeyConfig
+	statsViewKeymap                 map[string]KeyHandler
+	statsViewHandlers               []KeyConfig
+	projectListViewKeymap           map[string]KeyHandler
+	projectListViewHandlers         []KeyConfig
+	dockerListViewKeymap            map[string]KeyHandler
+	dockerContainerListViewHandlers []KeyConfig
+	imageListViewKeymap             map[string]KeyHandler
+	imageListViewHandlers           []KeyConfig
+	networkListViewKeymap           map[string]KeyHandler
+	networkListViewHandlers         []KeyConfig
+	volumeListViewKeymap            map[string]KeyHandler
+	volumeListViewHandlers          []KeyConfig
+	fileBrowserKeymap               map[string]KeyHandler
+	fileBrowserHandlers             []KeyConfig
+	fileContentKeymap               map[string]KeyHandler
+	fileContentHandlers             []KeyConfig
+	inspectViewKeymap               map[string]KeyHandler
+	inspectViewHandlers             []KeyConfig
+	helpViewKeymap                  map[string]KeyHandler
+	helpViewHandlers                []KeyConfig
+	commandExecKeymap               map[string]KeyHandler
+	commandExecHandlers             []KeyConfig
 
 	// Command-line mode state
 	commandMode        bool

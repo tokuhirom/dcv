@@ -44,7 +44,7 @@ func (m *Model) registerCommands() {
 		{m.topViewHandlers, TopView},
 		{m.statsViewHandlers, StatsView},
 		{m.projectListViewHandlers, ComposeProjectListView},
-		{m.dockerListViewHandlers, DockerContainerListView},
+		{m.dockerContainerListViewHandlers, DockerContainerListView},
 		{m.imageListViewHandlers, ImageListView},
 		{m.networkListViewHandlers, NetworkListView},
 		{m.volumeListViewHandlers, VolumeListView},
