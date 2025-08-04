@@ -110,6 +110,7 @@ type Model struct {
 	topViewModel                 TopViewModel
 	dindProcessListViewModel     DindProcessListViewModel
 	imageListViewModel           ImageListViewModel
+	fileContentViewModel         FileContentViewModel
 
 	// Docker images state
 	dockerImages        []models.DockerImage
@@ -130,11 +131,6 @@ type Model struct {
 	browsingContainerID   string
 	browsingContainerName string
 	pathHistory           []string
-
-	// File content view state
-	fileContent     string
-	fileContentPath string
-	fileScrollY     int
 
 	// Inspect view state
 	inspectContent     string

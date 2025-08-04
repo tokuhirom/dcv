@@ -230,7 +230,7 @@ func (m *Model) viewTitle() string {
 	case FileBrowserView:
 		return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainerName, m.currentPath)
 	case FileContentView:
-		return fmt.Sprintf("File: %s [%s]", filepath.Base(m.fileContentPath), m.browsingContainerName)
+		return fmt.Sprintf("File: %s [%s]", filepath.Base(m.fileContentViewModel.contentPath), m.browsingContainerName)
 	case InspectView:
 		base := ""
 		if m.inspectImageID != "" {
@@ -304,7 +304,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case FileBrowserView:
 		return m.renderFileBrowser(availableHeight)
 	case FileContentView:
-		return m.renderFileContent(availableHeight)
+		return m.fileContentViewModel.render(m, availableHeight)
 	case InspectView:
 		return m.renderInspectView(availableHeight)
 	case HelpView:

@@ -658,8 +658,7 @@ func (m *Model) OpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, newPath)
 		} else {
 			// View file content
-			m.loading = true
-			return m, loadFileContent(m.dockerClient, m.browsingContainerID, newPath)
+			return m, m.fileContentViewModel.Load(m, m.browsingContainerID, newPath)
 		}
 	}
 	return m, nil
@@ -708,41 +707,23 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // File content handlers
 func (m *Model) ScrollFileUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.fileScrollY > 0 {
-		m.fileScrollY--
-	}
-	return m, nil
+	return m, m.fileContentViewModel.HandleScrollUp()
 }
 
 func (m *Model) ScrollFileDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	lines := strings.Split(m.fileContent, "\n")
-	maxScroll := len(lines) - (m.height - 5)
-	if m.fileScrollY < maxScroll && maxScroll > 0 {
-		m.fileScrollY++
-	}
-	return m, nil
+	return m, m.fileContentViewModel.HandleScrollDown(m.height)
 }
 
 func (m *Model) GoToFileEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	lines := strings.Split(m.fileContent, "\n")
-	maxScroll := len(lines) - (m.height - 5)
-	if maxScroll > 0 {
-		m.fileScrollY = maxScroll
-	}
-	return m, nil
+	return m, m.fileContentViewModel.HandleGoToEnd(m.height)
 }
 
 func (m *Model) GoToFileStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.fileScrollY = 0
-	return m, nil
+	return m, m.fileContentViewModel.HandleGoToStart()
 }
 
 func (m *Model) BackFromFileContent(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = FileBrowserView
-	m.fileContent = ""
-	m.fileContentPath = ""
-	m.fileScrollY = 0
-	return m, nil
+	return m, m.fileContentViewModel.HandleBack(m)
 }
 
 func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
