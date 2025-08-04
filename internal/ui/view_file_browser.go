@@ -79,3 +79,18 @@ func (m *FileBrowserViewModel) Load(model *Model, containerID, containerName str
 	model.loading = true
 	return loadContainerFiles(model.dockerClient, containerID, "/")
 }
+
+func (m *FileBrowserViewModel) HandleBack(model *Model) tea.Cmd {
+	// TODO: care about the previous view...
+
+	// Check where we came from based on the container name prefix
+	for _, container := range model.dockerContainerListViewModel.dockerContainers {
+		if container.ID == model.browsingContainerID {
+			model.currentView = DockerContainerListView
+			return loadDockerContainers(model.dockerClient, model.dockerContainerListViewModel.showAll)
+		}
+	}
+	// Default to compose process list
+	model.currentView = ComposeProcessListView
+	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+}

@@ -62,7 +62,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
-		{[]string{"esc"}, "back", m.BackToDindList},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
@@ -75,7 +75,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
-		{[]string{"esc", "q"}, "back", m.BackToProcessList},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.topViewKeymap = m.createKeymap(m.topViewHandlers)
@@ -88,7 +88,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
-		{[]string{"esc", "q"}, "back", m.BackToProcessList},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.statsViewKeymap = m.createKeymap(m.statsViewHandlers)
@@ -108,7 +108,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
 
 	// Docker Container List View
-	m.dockerListViewHandlers = []KeyConfig{
+	m.dockerContainerListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
@@ -127,10 +127,10 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
-		{[]string{"esc", "q"}, "back", m.BackFromDockerList},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
-	m.dockerListViewKeymap = m.createKeymap(m.dockerListViewHandlers)
+	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
 
 	// Image List View
 	m.imageListViewHandlers = []KeyConfig{
@@ -146,7 +146,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
-		{[]string{"esc", "q"}, "back", m.BackFromImageList},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.imageListViewKeymap = m.createKeymap(m.imageListViewHandlers)
@@ -163,7 +163,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
-		{[]string{"esc", "q"}, "back", m.BackFromNetworkList},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.networkListViewKeymap = m.createKeymap(m.networkListViewHandlers)
@@ -181,7 +181,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.ShowImageList},
 		{[]string{"4"}, "docker networks", m.ShowNetworkList},
 		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
-		{[]string{"esc", "q"}, "back", m.BackFromVolumeList},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.volumeListViewKeymap = m.createKeymap(m.volumeListViewHandlers)
@@ -204,7 +204,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "scroll down", m.ScrollFileDown},
 		{[]string{"G"}, "go to end", m.GoToFileEnd},
 		{[]string{"g"}, "go to start", m.GoToFileStart},
-		{[]string{"esc", "q"}, "back", m.BackFromFileContent},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.fileContentKeymap = m.createKeymap(m.fileContentHandlers)
@@ -218,7 +218,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"/"}, "search", m.StartInspectSearch},
 		{[]string{"n"}, "next match", m.NextInspectSearchResult},
 		{[]string{"N"}, "prev match", m.PrevInspectSearchResult},
-		{[]string{"esc", "q"}, "back", m.BackFromInspect},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.ShowHelp},
 	}
 	m.inspectViewKeymap = m.createKeymap(m.inspectViewHandlers)
@@ -227,7 +227,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.helpViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "scroll up", m.ScrollHelpUp},
 		{[]string{"down", "j"}, "scroll down", m.ScrollHelpDown},
-		{[]string{"esc", "q"}, "back", m.BackFromHelp},
+		{[]string{"esc", "q"}, "back", m.CmdBack},
 	}
 	m.helpViewKeymap = m.createKeymap(m.helpViewHandlers)
 

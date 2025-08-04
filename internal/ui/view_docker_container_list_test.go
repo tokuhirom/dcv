@@ -164,13 +164,13 @@ func TestDockerContainerListView_KeyHandlers(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Check that docker container view handlers are registered
-		assert.NotEmpty(t, m.dockerListViewHandlers)
+		assert.NotEmpty(t, m.dockerContainerListViewHandlers)
 		assert.NotEmpty(t, m.dockerListViewKeymap)
 
 		// Check specific handlers exist
 		hasKillHandler := false
 		hasToggleHandler := false
-		for _, config := range m.dockerListViewHandlers {
+		for _, config := range m.dockerContainerListViewHandlers {
 			if config.Description == "kill" {
 				hasKillHandler = true
 			}
@@ -190,7 +190,7 @@ func TestDockerContainerListView_KeyHandlers(t *testing.T) {
 		hasBackSwitch := false
 		hasImageSwitch := false
 		hasProjectSwitch := false
-		for _, config := range m.dockerListViewHandlers {
+		for _, config := range m.dockerContainerListViewHandlers {
 			if config.Description == "back" {
 				hasBackSwitch = true
 			}
