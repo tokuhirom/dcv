@@ -178,10 +178,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.dockerContainers = msg.containers
+		m.dockerListViewModel.dockerContainers = msg.containers
 		m.err = nil
-		if len(m.dockerContainers) > 0 && m.selectedDockerContainer >= len(m.dockerContainers) {
-			m.selectedDockerContainer = 0
+		if len(m.dockerListViewModel.dockerContainers) > 0 && m.dockerListViewModel.selectedDockerContainer >= len(m.dockerListViewModel.dockerContainers) {
+			m.dockerListViewModel.selectedDockerContainer = 0
 		}
 		return m, nil
 

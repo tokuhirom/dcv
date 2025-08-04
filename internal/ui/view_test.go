@@ -319,13 +319,15 @@ func TestTableRendering(t *testing.T) {
 func TestDockerContainerListView(t *testing.T) {
 	t.Run("docker_list_with_containers", func(t *testing.T) {
 		m := &Model{
-			width:                   80,
-			height:                  24,
-			currentView:             DockerContainerListView,
-			selectedDockerContainer: 0,
-			dockerContainers: []models.DockerContainer{
-				{ID: "abc123def456", Names: "nginx", Image: "nginx:latest", Status: "Up 2 hours", Ports: "80/tcp"},
-				{ID: "789012345678", Names: "redis", Image: "redis:alpine", Status: "Exited (0) 1 hour ago", Ports: ""},
+			width:       80,
+			height:      24,
+			currentView: DockerContainerListView,
+			dockerListViewModel: DockerListViewModel{
+				selectedDockerContainer: 0,
+				dockerContainers: []models.DockerContainer{
+					{ID: "abc123def456", Names: "nginx", Image: "nginx:latest", Status: "Up 2 hours", Ports: "80/tcp"},
+					{ID: "789012345678", Names: "redis", Image: "redis:alpine", Status: "Exited (0) 1 hour ago", Ports: ""},
+				},
 			},
 		}
 		m.initializeKeyHandlers()
@@ -352,11 +354,13 @@ func TestDockerContainerListView(t *testing.T) {
 
 	t.Run("docker_list_show_all", func(t *testing.T) {
 		m := &Model{
-			width:            80,
-			height:           24,
-			currentView:      DockerContainerListView,
-			showAll:          true,
-			dockerContainers: []models.DockerContainer{},
+			width:       80,
+			height:      24,
+			currentView: DockerContainerListView,
+			showAll:     true,
+			dockerListViewModel: DockerListViewModel{
+				dockerContainers: []models.DockerContainer{},
+			},
 		}
 		m.initializeKeyHandlers()
 
@@ -368,10 +372,12 @@ func TestDockerContainerListView(t *testing.T) {
 
 	t.Run("docker_list_empty", func(t *testing.T) {
 		m := &Model{
-			width:            80,
-			height:           24,
-			currentView:      DockerContainerListView,
-			dockerContainers: []models.DockerContainer{},
+			width:       80,
+			height:      24,
+			currentView: DockerContainerListView,
+			dockerListViewModel: DockerListViewModel{
+				dockerContainers: []models.DockerContainer{},
+			},
 		}
 		m.initializeKeyHandlers()
 

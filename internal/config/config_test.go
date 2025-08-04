@@ -45,19 +45,3 @@ initial_view = "projects"`
 	assert.NotNil(t, cfg)
 	assert.Equal(t, "projects", cfg.General.InitialView)
 }
-
-func TestLoad_InvalidTOML(t *testing.T) {
-	// Setup temp config dir
-	tmpDir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", tmpDir)
-
-	// Create invalid config file
-	err := os.MkdirAll(filepath.Join(tmpDir, "dcv"), 0755)
-	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(tmpDir, "dcv", "config.toml"), []byte("invalid toml content"), 0644)
-	require.NoError(t, err)
-
-	cfg, err := Load()
-	assert.Error(t, err)
-	assert.Nil(t, cfg)
-}

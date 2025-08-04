@@ -33,7 +33,10 @@ func Default() *Config {
 // Load loads configuration from file
 func Load() (*Config, error) {
 	// Get config file path
-	configPath := getConfigPath()
+	configPath, err := getConfigPath()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get config path: %w", err)
+	}
 
 	// Start with default config
 	cfg := Default()
@@ -67,12 +70,25 @@ func Load() (*Config, error) {
 }
 
 // getConfigPath returns the path where config file is located
-func getConfigPath() string {
+func getConfigPath() (string, error) {
 	// User config directory
-	configDir, err := os.UserConfigDir()
+	dir, err := configDir()
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("failed to get config directory: %w", err)
 	}
 
-	return filepath.Join(configDir, "dcv", "config.toml")
+	return filepath.Join(dir, "dcv", "config.toml"), nil
+}
+
+func configDir() (string, error) {
+	dir := os.Getenv("XDG_CONFIG_HOME")
+	if dir != "" {
+		return dir, nil
+	}
+
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get UserConfigDir: %w", err)
+	}
+	return configDir, nil
 }

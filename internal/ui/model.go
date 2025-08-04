@@ -50,6 +50,43 @@ const (
 	CommandExecutionView
 )
 
+func (view ViewType) String() string {
+	switch view {
+	case ComposeProcessListView:
+		return "Compose Process List"
+	case LogView:
+		return "Log View"
+	case DindComposeProcessListView:
+		return "Docker in Docker"
+	case TopView:
+		return "Process Info"
+	case StatsView:
+		return "Container Stats"
+	case ProjectListView:
+		return "Project List"
+	case DockerContainerListView:
+		return "Docker Containers"
+	case ImageListView:
+		return "Docker Images"
+	case NetworkListView:
+		return "Docker Networks"
+	case VolumeListView:
+		return "Docker Volumes"
+	case FileBrowserView:
+		return "File Browser"
+	case FileContentView:
+		return "File Content"
+	case InspectView:
+		return "Inspect"
+	case HelpView:
+		return "Help"
+	case CommandExecutionView:
+		return "Command Execution"
+	default:
+		return "Unknown View"
+	}
+}
+
 // Model represents the application state
 type Model struct {
 	// Current view
@@ -73,9 +110,7 @@ type Model struct {
 	currentDindHost        string // Container name (for display)
 	currentDindContainerID string // Service name (for docker compose exec)
 
-	// Docker composeContainers state (plain docker ps)
-	dockerContainers        []models.DockerContainer
-	selectedDockerContainer int
+	dockerListViewModel DockerListViewModel
 
 	// Docker images state
 	dockerImages        []models.DockerImage
@@ -323,6 +358,9 @@ func (m *Model) performFilter() {
 func NewModel(initialView ViewType, projectName string) Model {
 	client := docker.NewClient()
 
+	slog.Info("Creating new model",
+		slog.String("initial_view", initialView.String()))
+
 	return Model{
 		currentView:  initialView,
 		dockerClient: client,
@@ -335,19 +373,25 @@ func NewModel(initialView ViewType, projectName string) Model {
 func (m *Model) Init() tea.Cmd {
 	m.initializeKeyHandlers()
 
-	if m.currentView == ProjectListView {
+	switch m.currentView {
+	case ProjectListView:
 		return tea.Batch(
 			loadProjects(m.dockerClient),
 			tea.WindowSize(),
 		)
+	case DockerContainerListView:
+		return tea.Batch(
+			loadDockerContainers(m.dockerClient, m.showAll),
+			tea.WindowSize(),
+		)
+	default:
+		// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
+		// we'll switch to the project list view in the update
+		return tea.Batch(
+			loadProcesses(m.dockerClient, m.projectName, m.showAll),
+			tea.WindowSize(),
+		)
 	}
-
-	// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
-	// we'll switch to the project list view in the update
-	return tea.Batch(
-		loadProcesses(m.dockerClient, m.projectName, m.showAll),
-		tea.WindowSize(),
-	)
 }
 
 // Messages

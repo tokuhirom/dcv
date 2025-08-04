@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"strings"
 
@@ -70,18 +71,32 @@ func (m *Model) SelectDownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) SelectUpDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer > 0 {
-		m.selectedDockerContainer--
+func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		if m.dockerListViewModel.selectedDockerContainer > 0 {
+			m.dockerListViewModel.selectedDockerContainer--
+		}
+		return m, nil
+	default:
+		slog.Info("Unhandled key up in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
 	}
-	return m, nil
 }
 
-func (m *Model) SelectDownDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers)-1 {
-		m.selectedDockerContainer++
+func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers)-1 {
+			m.dockerListViewModel.selectedDockerContainer++
+		}
+		return m, nil
+	default:
+		slog.Info("Unhandled key down in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
 	}
-	return m, nil
 }
 
 // Log view navigation handlers
@@ -361,15 +376,21 @@ func (m *Model) BackToDindList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // Docker container handlers
-func (m *Model) ShowDockerLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		m.containerName = container.Names
-		m.isDindLog = false
-		m.currentView = LogView
-		m.logs = []string{}
-		m.logScrollY = 0
-		return m, streamLogs(m.dockerClient, container.ID, false, "")
+func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			m.containerName = container.Names
+			m.isDindLog = false
+			m.currentView = LogView
+			m.logs = []string{}
+			m.logScrollY = 0
+			return m, streamLogs(m.dockerClient, container.ID, false, "")
+		}
+	default:
+		slog.Info("Unhandled :log command in current view",
+			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
 }
@@ -380,70 +401,102 @@ func (m *Model) ToggleAllDockerContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadDockerContainers(m.dockerClient, m.showAll)
 }
 
-func (m *Model) KillDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		m.previousView = m.currentView
-		m.currentView = CommandExecutionView
-		m.commandExecOutput = []string{}
-		m.commandExecScrollY = 0
-		m.commandExecDone = false
-		m.commandExecCmdString = fmt.Sprintf("docker kill %s", container.ID)
-		return m, executeContainerCommand(m.dockerClient, container.ID, "kill")
-	}
-	return m, nil
-}
-
-func (m *Model) StopDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		m.previousView = m.currentView
-		m.currentView = CommandExecutionView
-		m.commandExecOutput = []string{}
-		m.commandExecScrollY = 0
-		m.commandExecDone = false
-		m.commandExecCmdString = fmt.Sprintf("docker stop %s", container.ID)
-		return m, executeContainerCommand(m.dockerClient, container.ID, "stop")
-	}
-	return m, nil
-}
-
-func (m *Model) StartDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		m.previousView = m.currentView
-		m.currentView = CommandExecutionView
-		m.commandExecOutput = []string{}
-		m.commandExecScrollY = 0
-		m.commandExecDone = false
-		m.commandExecCmdString = fmt.Sprintf("docker start %s", container.ID)
-		return m, executeContainerCommand(m.dockerClient, container.ID, "start")
-	}
-	return m, nil
-}
-
-func (m *Model) RestartDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		m.previousView = m.currentView
-		m.currentView = CommandExecutionView
-		m.commandExecOutput = []string{}
-		m.commandExecScrollY = 0
-		m.commandExecDone = false
-		m.commandExecCmdString = fmt.Sprintf("docker restart %s", container.ID)
-		return m, executeContainerCommand(m.dockerClient, container.ID, "restart")
-	}
-	return m, nil
-}
-
-func (m *Model) DeleteDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		// Only allow removing stopped composeContainers
-		if !strings.Contains(container.Status, "Up") && !strings.Contains(container.State, "running") {
-			m.loading = true
-			return m, removeService(m.dockerClient, container.ID)
+func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			m.previousView = m.currentView
+			m.currentView = CommandExecutionView
+			m.commandExecOutput = []string{}
+			m.commandExecScrollY = 0
+			m.commandExecDone = false
+			m.commandExecCmdString = fmt.Sprintf("docker kill %s", container.ID)
+			return m, executeContainerCommand(m.dockerClient, container.ID, "kill")
 		}
+	default:
+		slog.Info("Unhandled :kill command in current view",
+			slog.String("view", m.currentView.String()))
+	}
+	return m, nil
+}
+
+func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			m.previousView = m.currentView
+			m.currentView = CommandExecutionView
+			m.commandExecOutput = []string{}
+			m.commandExecScrollY = 0
+			m.commandExecDone = false
+			m.commandExecCmdString = fmt.Sprintf("docker stop %s", container.ID)
+			return m, executeContainerCommand(m.dockerClient, container.ID, "stop")
+		}
+	default:
+		slog.Info("Unhandled :stop command in current view",
+			slog.String("view", m.currentView.String()))
+	}
+	return m, nil
+}
+
+func (m *Model) CmdStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			m.previousView = m.currentView
+			m.currentView = CommandExecutionView
+			m.commandExecOutput = []string{}
+			m.commandExecScrollY = 0
+			m.commandExecDone = false
+			m.commandExecCmdString = fmt.Sprintf("docker start %s", container.ID)
+			return m, executeContainerCommand(m.dockerClient, container.ID, "start")
+		}
+	default:
+		slog.Info("Unhandled :start command in current view",
+			slog.String("view", m.currentView.String()))
+	}
+	return m, nil
+}
+
+func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		// Restart the selected Docker container
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			m.previousView = m.currentView
+			m.currentView = CommandExecutionView
+			m.commandExecOutput = []string{}
+			m.commandExecScrollY = 0
+			m.commandExecDone = false
+			m.commandExecCmdString = fmt.Sprintf("docker restart %s", container.ID)
+			return m, executeContainerCommand(m.dockerClient, container.ID, "restart")
+		}
+	default:
+		slog.Info("Unhandled :restart command in current view",
+			slog.String("view", m.currentView.String()))
+	}
+	return m, nil
+}
+
+func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		// Delete the selected Docker container
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			// Only allow removing stopped containers
+			if !strings.Contains(container.Status, "Up") && !strings.Contains(container.State, "running") {
+				m.loading = true
+				return m, removeService(m.dockerClient, container.ID)
+			}
+		}
+	default:
+		slog.Info("Unhandled :delete command in current view",
+			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
 }
@@ -693,16 +746,22 @@ func (m *Model) ShowFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) ShowDockerFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		m.browsingContainerID = container.ID
-		m.browsingContainerName = container.Names
-		m.currentPath = "/"
-		m.pathHistory = []string{"/"}
-		m.currentView = FileBrowserView
-		m.loading = true
-		return m, loadContainerFiles(m.dockerClient, container.ID, "/")
+func (m *Model) CmdFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			m.browsingContainerID = container.ID
+			m.browsingContainerName = container.Names
+			m.currentPath = "/"
+			m.pathHistory = []string{"/"}
+			m.currentView = FileBrowserView
+			m.loading = true
+			return m, loadContainerFiles(m.dockerClient, container.ID, "/")
+		}
+	default:
+		slog.Info("Unhandled :filebrowser command in current view",
+			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
 }
@@ -774,17 +833,26 @@ func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) BackFromFileBrowser(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Check where we came from based on the container name prefix
-	for _, container := range m.dockerContainers {
-		if container.ID == m.browsingContainerID {
-			m.currentView = DockerContainerListView
-			return m, loadDockerContainers(m.dockerClient, m.showAll)
+func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case FileBrowserView:
+		// TODO: care about the previous view...
+
+		// Check where we came from based on the container name prefix
+		for _, container := range m.dockerListViewModel.dockerContainers {
+			if container.ID == m.browsingContainerID {
+				m.currentView = DockerContainerListView
+				return m, loadDockerContainers(m.dockerClient, m.showAll)
+			}
 		}
+		// Default to compose process list
+		m.currentView = ComposeProcessListView
+		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	default:
+		slog.Info("Unhandled :back command in current view",
+			slog.String("view", m.currentView.String()))
 	}
-	// Default to compose process list
-	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	return m, nil
 }
 
 // File content handlers
@@ -836,11 +904,18 @@ func (m *Model) ExecuteShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) ExecuteDockerShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		// Default to /bin/sh as it's most commonly available
-		return m, executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		// Execute shell in the selected Docker container
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			// Default to /bin/sh as it's most commonly available
+			return m, executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+		}
+	default:
+		slog.Info("Unhandled :shell command in current view",
+			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
 }
@@ -857,11 +932,18 @@ func (m *Model) ShowInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowDockerInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		m.inspectContainerID = container.ID
-		m.loading = true
-		return m, loadInspect(m.dockerClient, container.ID)
+	switch m.currentView {
+	case DockerContainerListView:
+		// Inspect the selected Docker container
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			m.inspectContainerID = container.ID
+			m.loading = true
+			return m, loadInspect(m.dockerClient, container.ID)
+		}
+	default:
+		slog.Info("Unhandled :inspect command in current view",
+			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
 }
@@ -925,7 +1007,7 @@ func (m *Model) BackFromInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	// Check where we came from based on the container ID
-	for _, container := range m.dockerContainers {
+	for _, container := range m.dockerListViewModel.dockerContainers {
 		if container.ID == m.inspectContainerID {
 			m.currentView = DockerContainerListView
 			return m, nil
@@ -1024,19 +1106,26 @@ func (m *Model) PauseContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) PauseDockerContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		// Check if container is already paused
-		if strings.Contains(container.State, "paused") || strings.Contains(container.Status, "(Paused)") {
-			// Container is paused, so unpause it
-			m.loading = true
-			return m, unpauseService(m.dockerClient, container.ID)
-		} else {
-			// Container is running, so pause it
-			m.loading = true
-			return m, pauseService(m.dockerClient, container.ID)
+func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		// Pause/Unpause the selected Docker container
+		if m.dockerListViewModel.selectedDockerContainer < len(m.dockerListViewModel.dockerContainers) {
+			container := m.dockerListViewModel.dockerContainers[m.dockerListViewModel.selectedDockerContainer]
+			// Check if container is already paused
+			if strings.Contains(container.State, "paused") || strings.Contains(container.Status, "(Paused)") {
+				// Container is paused, so unpause it
+				m.loading = true
+				return m, unpauseService(m.dockerClient, container.ID)
+			} else {
+				// Container is running, so pause it
+				m.loading = true
+				return m, pauseService(m.dockerClient, container.ID)
+			}
 		}
+	default:
+		slog.Info("Unhandled :pause command in current view",
+			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
 }

@@ -5,17 +5,23 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
-func (m *Model) renderDockerList(availableHeight int) string {
+type DockerListViewModel struct {
+	dockerContainers        []models.DockerContainer
+	selectedDockerContainer int
+}
+
+func (m *DockerListViewModel) renderDockerList(availableHeight int) string {
 	var s strings.Builder
 
+	// Container list
 	if len(m.dockerContainers) == 0 {
 		s.WriteString("\nNo containers found.\n")
 		return s.String()
 	}
-
-	// Container list
 
 	// Define consistent styles for table cells
 	idStyle := lipgloss.NewStyle().Width(12)
@@ -49,7 +55,8 @@ func (m *Model) renderDockerList(availableHeight int) string {
 				return baseStyle
 			}
 		}).
-		Headers("CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES")
+		Headers("CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES").
+		Height(availableHeight)
 
 	for _, container := range m.dockerContainers {
 		// Truncate container ID
