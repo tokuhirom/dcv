@@ -22,9 +22,6 @@ func (m *Model) renderComposeProcessList(availableHeight int) string {
 		return s.String()
 	}
 
-	// Container list
-	s.WriteString("\n")
-
 	// Create table with fixed widths
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
@@ -38,7 +35,7 @@ func (m *Model) renderComposeProcessList(availableHeight int) string {
 		Headers("SERVICE", "IMAGE", "STATUS", "PORTS").
 		Height(availableHeight).
 		Width(m.width).
-		Offset(m.selectedDockerImage)
+		Offset(m.selectedContainer)
 
 	// Add rows with width control
 	for _, container := range m.composeContainers {

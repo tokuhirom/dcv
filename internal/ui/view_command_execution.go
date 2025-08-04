@@ -15,35 +15,35 @@ import (
 type CommandExecutionViewModel struct {
 }
 
-func (m *Model) renderCommandExecutionView() string {
-	if m.width == 0 || m.height == 0 {
+func (m *CommandExecutionViewModel) render(model *Model) string {
+	if model.width == 0 || model.height == 0 {
 		return "Loading..."
 	}
 
 	// Create viewport
-	vp := viewport.New(m.width, m.height-4)
+	vp := viewport.New(model.width, model.height-4)
 
 	// Build content
 	var content strings.Builder
 
 	// Show command
 	content.WriteString(lipgloss.NewStyle().Bold(true).Render("Executing: "))
-	content.WriteString(m.commandExecCmdString)
+	content.WriteString(model.commandExecCmdString)
 	content.WriteString("\n\n")
 
 	// Show output
-	for _, line := range m.commandExecOutput {
+	for _, line := range model.commandExecOutput {
 		content.WriteString(line)
 		content.WriteString("\n")
 	}
 
 	// Show status
-	if m.commandExecDone {
+	if model.commandExecDone {
 		content.WriteString("\n")
-		if m.commandExecExitCode == 0 {
+		if model.commandExecExitCode == 0 {
 			content.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("✓ Command completed successfully"))
 		} else {
-			content.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(fmt.Sprintf("✗ Command failed with exit code %d", m.commandExecExitCode)))
+			content.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(fmt.Sprintf("✗ Command failed with exit code %d", model.commandExecExitCode)))
 		}
 	} else {
 		content.WriteString("\n")
@@ -51,27 +51,27 @@ func (m *Model) renderCommandExecutionView() string {
 	}
 
 	vp.SetContent(content.String())
-	vp.YOffset = m.commandExecScrollY
+	vp.YOffset = model.commandExecScrollY
 
 	// Header
 	header := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("7")).
 		Background(lipgloss.Color("4")).
-		Width(m.width).
+		Width(model.width).
 		Padding(0, 1).
 		Render("Command Execution")
 
 	// Footer
 	var footerText string
-	if m.commandExecDone {
+	if model.commandExecDone {
 		footerText = "Press ESC or q to go back"
 	} else {
 		footerText = "Press Ctrl+C to cancel, ESC or q to go back"
 	}
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("7")).
-		Width(m.width).
+		Width(model.width).
 		Padding(0, 1).
 		Align(lipgloss.Center).
 		Render(footerText)

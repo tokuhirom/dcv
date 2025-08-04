@@ -310,7 +310,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case HelpView:
 		return m.renderHelpView(availableHeight)
 	case CommandExecutionView:
-		return m.renderCommandExecutionView()
+		return m.commandExecutionViewModel.render(m)
 	default:
 		return "Unknown view"
 	}
