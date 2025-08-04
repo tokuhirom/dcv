@@ -118,6 +118,7 @@ type Model struct {
 	pathHistory           []string
 
 	// Search state
+	// TODO: remove this part.
 	searchMode       bool
 	searchText       string
 	searchIgnoreCase bool
@@ -172,6 +173,7 @@ type Model struct {
 	commandExecHandlers             []KeyConfig
 
 	// Command-line mode state
+	// TODO: implement CommandViewModel
 	commandMode        bool
 	commandBuffer      string
 	commandHistory     []string

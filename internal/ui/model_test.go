@@ -140,8 +140,8 @@ func TestViewSwitching(t *testing.T) {
 	m = *newModel.(*Model)
 
 	assert.Equal(t, LogView, m.currentView)
-	assert.Equal(t, "web-1", m.containerName)
-	assert.False(t, m.isDindLog)
+	assert.Equal(t, "web-1", m.logViewModel.containerName)
+	assert.False(t, m.logViewModel.isDindLog)
 	assert.NotNil(t, cmd)
 
 	// Test going back with ESC
@@ -168,15 +168,15 @@ func TestSearchMode(t *testing.T) {
 	m := NewModel(ComposeProcessListView, "")
 	m.Init() // Initialize key handlers
 	m.currentView = LogView
-	m.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
+	m.logViewModel.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
 
 	// Enter search mode
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")}
 	newModel, _ := m.Update(msg)
 	m = *newModel.(*Model)
 
-	assert.True(t, m.searchMode)
-	assert.Equal(t, "", m.searchText)
+	assert.True(t, m.logViewModel.searchMode)
+	assert.Equal(t, "", m.logViewModel.searchText)
 
 	// Type search text
 	for _, r := range "error" {
@@ -185,14 +185,14 @@ func TestSearchMode(t *testing.T) {
 		m = *newModel.(*Model)
 	}
 
-	assert.Equal(t, "error", m.searchText)
+	assert.Equal(t, "error", m.logViewModel.searchText)
 
 	// Exit search mode with ESC
 	msg = tea.KeyMsg{Type: tea.KeyEsc}
 	newModel, _ = m.Update(msg)
 	m = *newModel.(*Model)
 
-	assert.False(t, m.searchMode)
+	assert.False(t, m.logViewModel.searchMode)
 }
 
 func TestErrorHandling(t *testing.T) {

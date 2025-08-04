@@ -89,18 +89,29 @@ func (m *Model) View() string {
 		footer = errorStyle.Render(m.quitConfirmMessage)
 	} else if m.currentView == LogView && m.logViewModel.filterMode {
 		footer = m.logViewModel.FilterViewModel.RenderCmdLine()
-	} else if m.searchMode && (m.currentView == LogView || m.currentView == InspectView) {
+	} else if (m.currentView == LogView && m.logViewModel.searchMode) || (m.currentView == InspectView && m.inspectViewModel.searchMode) {
 		// Show search prompt
+		var searchText string
+		var searchCursorPos int
+
+		if m.currentView == LogView {
+			searchText = m.logViewModel.searchText
+			searchCursorPos = m.logViewModel.searchCursorPos
+		} else {
+			searchText = m.inspectViewModel.searchText
+			searchCursorPos = m.inspectViewModel.searchCursorPos
+		}
+
 		cursor := " "
-		if m.searchCursorPos < len(m.searchText) {
-			cursor = string(m.searchText[m.searchCursorPos])
+		if searchCursorPos < len(searchText) {
+			cursor = string(searchText[searchCursorPos])
 		}
 
 		// Build search line with cursor
-		before := m.searchText[:m.searchCursorPos]
+		before := searchText[:searchCursorPos]
 		after := ""
-		if m.searchCursorPos < len(m.searchText) {
-			after = m.searchText[m.searchCursorPos+1:]
+		if searchCursorPos < len(searchText) {
+			after = searchText[searchCursorPos+1:]
 		}
 
 		cursorStyle := lipgloss.NewStyle().

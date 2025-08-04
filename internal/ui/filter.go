@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
 
 type FilterViewModel struct {
 	// Filter state
@@ -22,6 +25,12 @@ func (m *FilterViewModel) FilterDeleteLastChar() bool {
 func (m *FilterViewModel) FilterCursorLeft() {
 	if m.filterCursorPos > 0 {
 		m.filterCursorPos--
+	}
+}
+
+func (m *FilterViewModel) FilterCursorRight() {
+	if m.filterCursorPos < len(m.filterText) {
+		m.filterCursorPos++
 	}
 }
 
@@ -49,4 +58,34 @@ func (m *FilterViewModel) RenderCmdLine() string {
 		Foreground(lipgloss.Color("235"))
 
 	return "Filter: " + before + cursorStyle.Render(cursor) + after + " (ESC to clear)"
+}
+
+func (m *FilterViewModel) HandleKey(msg tea.KeyMsg) bool {
+	switch msg.Type {
+	case tea.KeyEsc:
+		m.ClearFilter()
+	case tea.KeyEnter:
+		m.filterMode = false
+		return true
+	case tea.KeyBackspace, tea.KeyCtrlH:
+		m.FilterDeleteLastChar()
+	case tea.KeyLeft, tea.KeyCtrlF:
+		m.FilterCursorLeft()
+	case tea.KeyRight, tea.KeyCtrlB:
+		m.FilterCursorRight()
+	default:
+		if msg.Type == tea.KeyRunes {
+			// Insert at the cursor position
+			m.AppendString(msg.String())
+			return true
+		}
+	}
+	return false
+}
+
+func (m *FilterViewModel) ClearFilter() {
+	m.filterMode = false
+	m.filterText = ""
+	m.filteredLogs = nil
+	m.filterCursorPos = 0
 }

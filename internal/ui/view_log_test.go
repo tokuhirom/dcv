@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/models"
@@ -21,10 +20,12 @@ func TestLogView_Rendering(t *testing.T) {
 		{
 			name: "displays logs",
 			model: &Model{
-				logs:       []string{"Line 1", "Line 2", "Line 3"},
-				logScrollY: 0,
-				width:      100,
-				Height:     10,
+				logViewModel: LogViewModel{
+					logs:       []string{"Line 1", "Line 2", "Line 3"},
+					logScrollY: 0,
+				},
+				width:  100,
+				Height: 10,
 			},
 			height:   10,
 			expected: []string{"Line 1", "Line 2", "Line 3"},
@@ -32,10 +33,12 @@ func TestLogView_Rendering(t *testing.T) {
 		{
 			name: "displays empty log message",
 			model: &Model{
-				logs:       []string{},
-				logScrollY: 0,
-				width:      100,
-				Height:     10,
+				logViewModel: LogViewModel{
+					logs:       []string{},
+					logScrollY: 0,
+				},
+				width:  100,
+				Height: 10,
 			},
 			height:   10,
 			expected: []string{"No logs available"},
@@ -43,10 +46,12 @@ func TestLogView_Rendering(t *testing.T) {
 		{
 			name: "handles scrolling",
 			model: &Model{
-				logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"},
-				logScrollY: 1,
-				width:      100,
-				Height:     5,
+				logViewModel: LogViewModel{
+					logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"},
+					logScrollY: 1,
+				},
+				width:  100,
+				Height: 5,
 			},
 			height:   3,
 			expected: []string{"Line 2", "Line 3", "Line 4"},
@@ -54,7 +59,9 @@ func TestLogView_Rendering(t *testing.T) {
 		{
 			name: "shows loading message",
 			model: &Model{
-				logs:    []string{},
+				logViewModel: LogViewModel{
+					logs: []string{},
+				},
 				loading: true,
 				width:   100,
 				Height:  10,
@@ -65,11 +72,15 @@ func TestLogView_Rendering(t *testing.T) {
 		{
 			name: "highlights search matches",
 			model: &Model{
-				logs:       []string{"This is an error message", "This is info", "Another error here"},
-				searchText: "error",
-				logScrollY: 0,
-				width:      100,
-				Height:     10,
+				logViewModel: LogViewModel{
+					logs:       []string{"This is an error message", "This is info", "Another error here"},
+					logScrollY: 0,
+					SearchViewModel: SearchViewModel{
+						searchText: "error",
+					},
+				},
+				width:  100,
+				Height: 10,
 			},
 			height:   10,
 			expected: []string{"error", "info", "error"},
@@ -77,13 +88,17 @@ func TestLogView_Rendering(t *testing.T) {
 		{
 			name: "filters logs when filter is active",
 			model: &Model{
-				logs:         []string{"Error: something went wrong", "Info: all good", "Error: another issue"},
-				filterText:   "Error",
-				filterMode:   true,
-				filteredLogs: []string{"Error: something went wrong", "Error: another issue"},
-				logScrollY:   0,
-				width:        100,
-				Height:       10,
+				logViewModel: LogViewModel{
+					logs:       []string{"Error: something went wrong", "Info: all good", "Error: another issue"},
+					logScrollY: 0,
+					FilterViewModel: FilterViewModel{
+						filterText:   "Error",
+						filterMode:   true,
+						filteredLogs: []string{"Error: something went wrong", "Error: another issue"},
+					},
+				},
+				width:  100,
+				Height: 10,
 			},
 			height: 10,
 			expected: []string{
@@ -95,7 +110,7 @@ func TestLogView_Rendering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.model.renderLogView(tt.height)
+			result := tt.model.logViewModel.render(tt.model, tt.height)
 
 			for _, expected := range tt.expected {
 				assert.Contains(t, result, expected, "Expected to find '%s' in output", expected)
@@ -105,92 +120,104 @@ func TestLogView_Rendering(t *testing.T) {
 }
 
 func TestLogView_Navigation(t *testing.T) {
-	t.Run("ScrollLogDown moves down one line", func(t *testing.T) {
+	t.Run("HandleDown moves down one line", func(t *testing.T) {
 		model := &Model{
-			logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10"},
-			logScrollY: 0,
-			Height:     8, // 8 - 4 = 4 visible lines, maxScroll = 10 - 4 = 6
+			logViewModel: LogViewModel{
+				logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10"},
+				logScrollY: 0,
+			},
+			Height: 8, // 8 - 4 = 4 visible lines, maxScroll = 10 - 4 = 6
 		}
 
-		_, cmd := model.ScrollLogDown(tea.KeyMsg{})
+		cmd := model.logViewModel.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, model.logScrollY)
+		assert.Equal(t, 1, model.logViewModel.logScrollY)
 
 		// Test boundary - should not scroll beyond maxScroll
-		model.logScrollY = 5
-		_, cmd = model.ScrollLogDown(tea.KeyMsg{})
+		model.logViewModel.logScrollY = 5
+		cmd = model.logViewModel.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 6, model.logScrollY) // Can scroll to maxScroll
+		assert.Equal(t, 6, model.logViewModel.logScrollY) // Can scroll to maxScroll
 
 		// Should not scroll beyond maxScroll
-		_, cmd = model.ScrollLogDown(tea.KeyMsg{})
+		cmd = model.logViewModel.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 6, model.logScrollY)
+		assert.Equal(t, 6, model.logViewModel.logScrollY)
 	})
 
-	t.Run("ScrollLogUp moves up one line", func(t *testing.T) {
+	t.Run("HandleUp moves up one line", func(t *testing.T) {
 		model := &Model{
-			logs:       []string{"Line 1", "Line 2", "Line 3"},
-			logScrollY: 2,
-			Height:     10,
+			logViewModel: LogViewModel{
+				logs:       []string{"Line 1", "Line 2", "Line 3"},
+				logScrollY: 2,
+			},
+			Height: 10,
 		}
 
-		_, cmd := model.ScrollLogUp(tea.KeyMsg{})
+		cmd := model.logViewModel.HandleUp()
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, model.logScrollY)
+		assert.Equal(t, 1, model.logViewModel.logScrollY)
 
 		// Test boundary
-		model.logScrollY = 0
-		_, cmd = model.ScrollLogUp(tea.KeyMsg{})
+		model.logViewModel.logScrollY = 0
+		cmd = model.logViewModel.HandleUp()
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, model.logScrollY, "Should not scroll above 0")
+		assert.Equal(t, 0, model.logViewModel.logScrollY, "Should not scroll above 0")
 	})
 
-	t.Run("GoToLogStart jumps to beginning", func(t *testing.T) {
+	t.Run("HandleGoToStart jumps to beginning", func(t *testing.T) {
 		model := &Model{
-			logScrollY: 100,
+			logViewModel: LogViewModel{
+				logScrollY: 100,
+			},
 		}
 
-		_, cmd := model.GoToLogStart(tea.KeyMsg{})
+		cmd := model.logViewModel.HandleGoToStart()
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, model.logScrollY)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
 	})
 
-	t.Run("GoToLogEnd jumps to last line", func(t *testing.T) {
+	t.Run("HandleGoToEnd jumps to last line", func(t *testing.T) {
 		model := &Model{
-			logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"},
-			logScrollY: 0,
-			Height:     7, // View Height (7 - 4 = 3 visible lines)
+			logViewModel: LogViewModel{
+				logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"},
+				logScrollY: 0,
+			},
+			Height: 7, // View Height (7 - 4 = 3 visible lines)
 		}
 
-		_, cmd := model.GoToLogEnd(tea.KeyMsg{})
+		cmd := model.logViewModel.HandleGoToEnd(model)
 		assert.Nil(t, cmd)
 		// Should position so last line is visible
 		// maxScroll = 5 logs - (7 Height - 4 ui) = 5 - 3 = 2
-		assert.Equal(t, 2, model.logScrollY)
+		assert.Equal(t, 2, model.logViewModel.logScrollY)
 	})
 
-	t.Run("BackFromLogView returns to process list", func(t *testing.T) {
+	t.Run("HandleBack returns to process list", func(t *testing.T) {
 		model := &Model{
 			currentView: LogView,
-			isDindLog:   false,
+			logViewModel: LogViewModel{
+				isDindLog: false,
+			},
 		}
 
-		_, cmd := model.CmdBack(tea.KeyMsg{})
+		cmd := model.logViewModel.HandleBack(model)
 		assert.NotNil(t, cmd) // Returns loadProcesses command
 		assert.Equal(t, ComposeProcessListView, model.currentView)
 	})
 
-	t.Run("BackFromLogView returns to dind list for dind logs", func(t *testing.T) {
+	t.Run("HandleBack returns to dind list for dind logs", func(t *testing.T) {
 		model := &Model{
 			currentView: LogView,
-			isDindLog:   true,
+			logViewModel: LogViewModel{
+				isDindLog: true,
+			},
 			dindProcessListViewModel: DindProcessListViewModel{
 				currentDindContainerID: "dind-container",
 			},
 		}
 
-		_, cmd := model.CmdBack(tea.KeyMsg{})
+		cmd := model.logViewModel.HandleBack(model)
 		assert.NotNil(t, cmd) // Returns loadDindContainers command
 		assert.Equal(t, DindProcessListView, model.currentView)
 	})
@@ -199,62 +226,76 @@ func TestLogView_Navigation(t *testing.T) {
 func TestLogView_Search(t *testing.T) {
 	t.Run("search finds matches", func(t *testing.T) {
 		model := &Model{
-			logs:       []string{"Error on line 1", "Info on line 2", "Error on line 3"},
-			searchText: "Error",
-			logScrollY: 0,
-			width:      100,
-			Height:     10,
+			logViewModel: LogViewModel{
+				logs:       []string{"Error on line 1", "Info on line 2", "Error on line 3"},
+				logScrollY: 0,
+				SearchViewModel: SearchViewModel{
+					searchText: "Error",
+				},
+			},
+			width:  100,
+			Height: 10,
 		}
 
 		// Verify search would highlight Error
-		result := model.renderLogView(10)
+		result := model.logViewModel.render(model, 10)
 		assert.Contains(t, result, "Error")
 	})
 
-	t.Run("NextSearchResult navigates to next result", func(t *testing.T) {
+	t.Run("HandleNextSearchResult navigates to next result", func(t *testing.T) {
 		model := &Model{
-			logs:             []string{"Line 1", "Error here", "Line 3", "Error there"},
-			searchText:       "Error",
-			searchResults:    []int{1, 3}, // Lines with matches
-			currentSearchIdx: 0,
-			logScrollY:       0,
-			Height:           9, // 9 - 4 = 5 visible lines
+			logViewModel: LogViewModel{
+				logs: []string{"Line 1", "Error here", "Line 3", "Error there"},
+				SearchViewModel: SearchViewModel{
+					searchText:       "Error",
+					searchResults:    []int{1, 3}, // Lines with matches
+					currentSearchIdx: 0,
+				},
+				logScrollY: 0,
+			},
+			Height: 9, // 9 - 4 = 5 visible lines
 		}
 
-		_, cmd := model.NextSearchResult(tea.KeyMsg{})
+		cmd := model.logViewModel.HandleNextSearchResult(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, model.currentSearchIdx)
+		assert.Equal(t, 1, model.logViewModel.currentSearchIdx)
 		// Should scroll to center line 3: targetLine - Height/2 + 3 = 3 - 9/2 + 3 = 3 - 4 + 3 = 2
-		assert.Equal(t, 2, model.logScrollY)
+		assert.Equal(t, 2, model.logViewModel.logScrollY)
 
 		// Wrap around
-		_, cmd = model.NextSearchResult(tea.KeyMsg{})
+		cmd = model.logViewModel.HandleNextSearchResult(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, model.currentSearchIdx)
+		assert.Equal(t, 0, model.logViewModel.currentSearchIdx)
 	})
 
-	t.Run("PrevSearchResult navigates to previous result", func(t *testing.T) {
+	t.Run("HandlePrevSearchResult navigates to previous result", func(t *testing.T) {
 		model := &Model{
-			logs:             []string{"Line 1", "Error here", "Line 3", "Error there"},
-			searchText:       "Error",
-			searchResults:    []int{1, 3},
-			currentSearchIdx: 1,
-			logScrollY:       0,
-			Height:           9,
+			logViewModel: LogViewModel{
+				logs: []string{"Line 1", "Error here", "Line 3", "Error there"},
+				SearchViewModel: SearchViewModel{
+					searchText:       "Error",
+					searchResults:    []int{1, 3},
+					currentSearchIdx: 1,
+				},
+				logScrollY: 0,
+			},
+			Height: 9,
 		}
 
-		_, cmd := model.PrevSearchResult(tea.KeyMsg{})
+		cmd := model.logViewModel.HandlePrevSearchResult(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, model.currentSearchIdx)
-		assert.Equal(t, 0, model.logScrollY)
+		assert.Equal(t, 0, model.logViewModel.currentSearchIdx)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
 	})
 }
 
 func TestLogView_AutoScroll(t *testing.T) {
 	t.Run("auto-scrolls to bottom when new logs arrive", func(t *testing.T) {
 		model := &Model{
-			logs:        []string{"Line 1", "Line 2", "Line 3"},
-			logScrollY:  0,
+			logViewModel: LogViewModel{
+				logs:       []string{"Line 1", "Line 2", "Line 3"},
+				logScrollY: 0,
+			},
 			Height:      10,
 			currentView: LogView,
 		}
@@ -269,7 +310,7 @@ func TestLogView_AutoScroll(t *testing.T) {
 
 		// Should auto-scroll to bottom
 		// 10 total lines - (10 Height - 4) = 10 - 6 = 4
-		assert.Equal(t, 4, m.logScrollY)
+		assert.Equal(t, 4, m.logViewModel.logScrollY)
 	})
 }
 
@@ -278,19 +319,18 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		model := &Model{
 			currentView: ComposeProcessListView,
 		}
-		vm := &LogViewModel{}
 		process := models.ComposeContainer{
 			ID:   "container1",
 			Name: "test-container",
 		}
 
-		cmd := vm.StreamLogs(model, process, false, "")
+		cmd := model.logViewModel.StreamLogs(model, process, false, "")
 
 		assert.Equal(t, LogView, model.currentView)
-		assert.Equal(t, "test-container", model.containerName)
-		assert.False(t, model.isDindLog)
-		assert.Equal(t, 0, model.logScrollY)
-		assert.Equal(t, 0, len(model.logs))
+		assert.Equal(t, "test-container", model.logViewModel.containerName)
+		assert.False(t, model.logViewModel.isDindLog)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
+		assert.Equal(t, 0, len(model.logViewModel.logs))
 		assert.NotNil(t, cmd)
 	})
 
@@ -301,63 +341,40 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 				currentDindHost: "host-container",
 			},
 		}
-		vm := &LogViewModel{}
 		container := models.DockerContainer{
 			ID:    "docker1",
 			Names: "/docker-test",
 		}
 
-		cmd := vm.ShowDindLog(model, "dind-container-id", container)
+		cmd := model.logViewModel.ShowDindLog(model, "dind-container-id", container)
 
 		assert.Equal(t, LogView, model.currentView)
-		assert.Equal(t, "/docker-test", model.containerName)
-		assert.Equal(t, "host-container", model.hostContainer)
-		assert.True(t, model.isDindLog)
-		assert.Equal(t, 0, model.logScrollY)
+		assert.Equal(t, "/docker-test", model.logViewModel.containerName)
+		assert.Equal(t, "host-container", model.logViewModel.hostContainer)
+		assert.True(t, model.logViewModel.isDindLog)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("ClearSearch resets log view state", func(t *testing.T) {
+	t.Run("Clear resets log view state", func(t *testing.T) {
 		model := &Model{
-			currentView:   ComposeProcessListView,
-			logs:          []string{"old", "logs"},
-			logScrollY:    5,
-			isDindLog:     true,
-			containerName: "old-container",
+			currentView: ComposeProcessListView,
+			logViewModel: LogViewModel{
+				logs:          []string{"old", "logs"},
+				logScrollY:    5,
+				isDindLog:     true,
+				containerName: "old-container",
+			},
 		}
-		vm := &LogViewModel{}
 
-		vm.Clear(model, "new-container")
+		model.logViewModel.Clear(model, "new-container")
 
 		assert.Equal(t, LogView, model.currentView)
-		assert.Equal(t, "new-container", model.containerName)
-		assert.False(t, model.isDindLog)
-		assert.Equal(t, 0, model.logScrollY)
-		assert.Equal(t, 0, len(model.logs))
+		assert.Equal(t, "new-container", model.logViewModel.containerName)
+		assert.False(t, model.logViewModel.isDindLog)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
+		assert.Equal(t, 0, len(model.logViewModel.logs))
 	})
-}
-
-func TestLogView_KeyHandlers(t *testing.T) {
-	model := NewModel(LogView, "")
-	model.initializeKeyHandlers()
-
-	// Verify key handlers are registered
-	handlers := model.logViewHandlers
-	assert.Greater(t, len(handlers), 0, "Should have registered key handlers")
-
-	// Check specific handlers exist
-	expectedKeys := []string{"up", "down", "g", "G", "/", "f", "n", "N", "esc", "?"}
-	registeredKeys := make(map[string]bool)
-
-	for _, h := range handlers {
-		for _, key := range h.Keys {
-			registeredKeys[key] = true
-		}
-	}
-
-	for _, key := range expectedKeys {
-		assert.True(t, registeredKeys[key], "Key %s should be registered", key)
-	}
 }
 
 func TestLogView_Update(t *testing.T) {
@@ -366,8 +383,10 @@ func TestLogView_Update(t *testing.T) {
 			currentView: LogView,
 			loading:     true,
 			Height:      10,
-			logScrollY:  0,
-			logs:        []string{},
+			logViewModel: LogViewModel{
+				logScrollY: 0,
+				logs:       []string{},
+			},
 		}
 
 		lines := []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10", "Line 11", "Line 12"}
@@ -380,10 +399,10 @@ func TestLogView_Update(t *testing.T) {
 
 		assert.True(t, m.loading) // logLinesMsg doesn't change loading state
 		assert.Nil(t, m.err)
-		assert.Equal(t, 12, len(m.logs))
+		assert.Equal(t, 12, len(m.logViewModel.logs))
 		// Should auto-scroll to end
 		// maxScroll = 12 lines - (10 Height - 4) = 12 - 6 = 6
-		assert.Equal(t, 6, m.logScrollY)
+		assert.Equal(t, 6, m.logViewModel.logScrollY)
 		assert.NotNil(t, cmd) // Should return pollLogsContinue command
 	})
 
@@ -391,8 +410,10 @@ func TestLogView_Update(t *testing.T) {
 		model := &Model{
 			currentView: LogView,
 			Height:      10,
-			logScrollY:  0,
-			logs:        []string{"Line 1", "Line 2"},
+			logViewModel: LogViewModel{
+				logScrollY: 0,
+				logs:       []string{"Line 1", "Line 2"},
+			},
 		}
 
 		msg := logLineMsg{
@@ -402,8 +423,8 @@ func TestLogView_Update(t *testing.T) {
 		newModel, cmd := model.Update(msg)
 		m := newModel.(*Model)
 
-		assert.Equal(t, 3, len(m.logs))
-		assert.Equal(t, "Line 3", m.logs[2])
+		assert.Equal(t, 3, len(m.logViewModel.logs))
+		assert.Equal(t, "Line 3", m.logViewModel.logs[2])
 		assert.Nil(t, cmd) // logLineMsg doesn't continue polling
 	})
 }
@@ -411,16 +432,20 @@ func TestLogView_Update(t *testing.T) {
 func TestLogView_FilterMode(t *testing.T) {
 	t.Run("filters logs based on filterText", func(t *testing.T) {
 		model := &Model{
-			logs:         []string{"ERROR: Database connection failed", "INFO: Server started", "ERROR: Invalid request", "DEBUG: Processing"},
-			filterText:   "ERROR",
-			filterMode:   true,
-			filteredLogs: []string{"ERROR: Database connection failed", "ERROR: Invalid request"},
-			logScrollY:   0,
-			width:        100,
-			Height:       10,
+			logViewModel: LogViewModel{
+				logs:       []string{"ERROR: Database connection failed", "INFO: Server started", "ERROR: Invalid request", "DEBUG: Processing"},
+				logScrollY: 0,
+				FilterViewModel: FilterViewModel{
+					filterText:   "ERROR",
+					filterMode:   true,
+					filteredLogs: []string{"ERROR: Database connection failed", "ERROR: Invalid request"},
+				},
+			},
+			width:  100,
+			Height: 10,
 		}
 
-		result := model.renderLogView(10)
+		result := model.logViewModel.render(model, 10)
 
 		// Should only show ERROR lines
 		assert.Contains(t, result, "ERROR: Database connection failed")
@@ -431,16 +456,20 @@ func TestLogView_FilterMode(t *testing.T) {
 
 	t.Run("shows no match message", func(t *testing.T) {
 		model := &Model{
-			logs:         []string{"Info: something", "Debug: another"},
-			filterText:   "error",
-			filterMode:   true,
-			filteredLogs: []string{},
-			logScrollY:   0,
-			width:        100,
-			Height:       10,
+			logViewModel: LogViewModel{
+				logs:       []string{"Info: something", "Debug: another"},
+				logScrollY: 0,
+				FilterViewModel: FilterViewModel{
+					filterText:   "error",
+					filterMode:   true,
+					filteredLogs: []string{},
+				},
+			},
+			width:  100,
+			Height: 10,
 		}
 
-		result := model.renderLogView(10)
+		result := model.logViewModel.render(model, 10)
 
 		assert.Contains(t, result, "No logs match the filter")
 	})
@@ -449,31 +478,33 @@ func TestLogView_FilterMode(t *testing.T) {
 func TestLogView_EmptyLogs(t *testing.T) {
 	t.Run("handles empty logs gracefully", func(t *testing.T) {
 		model := &Model{
-			logs:       []string{},
-			logScrollY: 0,
-			width:      100,
-			Height:     10,
+			logViewModel: LogViewModel{
+				logs:       []string{},
+				logScrollY: 0,
+			},
+			width:  100,
+			Height: 10,
 		}
 
 		// Test all navigation operations
-		_, cmd := model.ScrollLogDown(tea.KeyMsg{})
+		cmd := model.logViewModel.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, model.logScrollY)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
 
-		_, cmd = model.ScrollLogUp(tea.KeyMsg{})
+		cmd = model.logViewModel.HandleUp()
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, model.logScrollY)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
 
-		_, cmd = model.GoToLogEnd(tea.KeyMsg{})
+		cmd = model.logViewModel.HandleGoToEnd(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, model.logScrollY)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
 
-		_, cmd = model.GoToLogStart(tea.KeyMsg{})
+		cmd = model.logViewModel.HandleGoToStart()
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, model.logScrollY)
+		assert.Equal(t, 0, model.logViewModel.logScrollY)
 
 		// Should show empty message
-		result := model.renderLogView(10)
+		result := model.logViewModel.render(model, 10)
 		assert.Contains(t, result, "No logs available")
 	})
 }
@@ -486,13 +517,15 @@ func TestLogView_ScrollIndicator(t *testing.T) {
 		}
 
 		model := &Model{
-			logs:       logs,
-			logScrollY: 5,
-			width:      100,
-			Height:     10, // 10 - 4 = 6 visible lines
+			logViewModel: LogViewModel{
+				logs:       logs,
+				logScrollY: 5,
+			},
+			width:  100,
+			Height: 10, // 10 - 4 = 6 visible lines
 		}
 
-		result := model.renderLogView(6)
+		result := model.logViewModel.render(model, 6)
 
 		// Should show scroll indicator: [6-11/20]
 		assert.Contains(t, result, "[6-11/20]")
@@ -500,16 +533,20 @@ func TestLogView_ScrollIndicator(t *testing.T) {
 
 	t.Run("shows filtered count in scroll indicator", func(t *testing.T) {
 		model := &Model{
-			logs:         []string{"Error 1", "Info 1", "Error 2", "Info 2"},
-			filteredLogs: []string{"Error 1", "Error 2"},
-			filterMode:   true,
-			filterText:   "Error",
-			logScrollY:   0,
-			width:        100,
-			Height:       5, // 5 - 4 = 1 visible line
+			logViewModel: LogViewModel{
+				logs:       []string{"Error 1", "Info 1", "Error 2", "Info 2"},
+				logScrollY: 0,
+				FilterViewModel: FilterViewModel{
+					filteredLogs: []string{"Error 1", "Error 2"},
+					filterMode:   true,
+					filterText:   "Error",
+				},
+			},
+			width:  100,
+			Height: 5, // 5 - 4 = 1 visible line
 		}
 
-		result := model.renderLogView(1)
+		result := model.logViewModel.render(model, 1)
 
 		// Should show filtered indicator
 		assert.Contains(t, result, "(filtered from 4)")
@@ -519,16 +556,22 @@ func TestLogView_ScrollIndicator(t *testing.T) {
 func TestLogView_SearchHighlighting(t *testing.T) {
 	t.Run("highlights search text", func(t *testing.T) {
 		model := &Model{
-			logs:       []string{"This contains ERROR in the text"},
-			searchText: "ERROR",
-			searchMode: false,
-			filterMode: false,
-			logScrollY: 0,
-			width:      100,
-			Height:     10,
+			logViewModel: LogViewModel{
+				logs:       []string{"This contains ERROR in the text"},
+				logScrollY: 0,
+				SearchViewModel: SearchViewModel{
+					searchText: "ERROR",
+					searchMode: false,
+				},
+				FilterViewModel: FilterViewModel{
+					filterMode: false,
+				},
+			},
+			width:  100,
+			Height: 10,
 		}
 
-		result := model.renderLogView(10)
+		result := model.logViewModel.render(model, 10)
 
 		// Should contain the line with ERROR
 		assert.Contains(t, result, "ERROR")
@@ -536,18 +579,24 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 
 	t.Run("marks current search result", func(t *testing.T) {
 		model := &Model{
-			logs:             []string{"Line 1", "Error here", "Line 3"},
-			searchText:       "Error",
-			searchResults:    []int{1},
-			currentSearchIdx: 0,
-			searchMode:       false,
-			filterMode:       false,
-			logScrollY:       0,
-			width:            100,
-			Height:           10,
+			logViewModel: LogViewModel{
+				logs:       []string{"Line 1", "Error here", "Line 3"},
+				logScrollY: 0,
+				SearchViewModel: SearchViewModel{
+					searchText:       "Error",
+					searchResults:    []int{1},
+					currentSearchIdx: 0,
+					searchMode:       false,
+				},
+				FilterViewModel: FilterViewModel{
+					filterMode: false,
+				},
+			},
+			width:  100,
+			Height: 10,
 		}
 
-		result := model.renderLogView(10)
+		result := model.logViewModel.render(model, 10)
 
 		// Should mark the current search result with >
 		lines := strings.Split(result, "\n")
@@ -570,27 +619,26 @@ func TestLogView_Integration(t *testing.T) {
 			width:       100,
 			Height:      20,
 		}
-		vm := &LogViewModel{}
 
 		// Show logs for a container
 		process := models.ComposeContainer{
 			ID:   "test-container",
 			Name: "my-app",
 		}
-		cmd := vm.StreamLogs(model, process, false, "")
+		cmd := model.logViewModel.StreamLogs(model, process, false, "")
 		assert.NotNil(t, cmd)
 		assert.Equal(t, LogView, model.currentView)
-		assert.Equal(t, "my-app", model.containerName)
+		assert.Equal(t, "my-app", model.logViewModel.containerName)
 
 		// Simulate receiving logs
 		msg := logLinesMsg{
 			lines: []string{"Log 1", "Log 2", "Log 3"},
 		}
 		_, _ = model.Update(msg)
-		assert.Equal(t, 3, len(model.logs))
+		assert.Equal(t, 3, len(model.logViewModel.logs))
 
 		// Go back to process list
-		_, _ = model.CmdBack(tea.KeyMsg{})
+		_ = model.logViewModel.HandleBack(model)
 		assert.Equal(t, ComposeProcessListView, model.currentView)
 	})
 }

@@ -68,3 +68,46 @@ func (m *SearchViewModel) PerformSearch(model *Model, logs []string, updateScrol
 		updateScrollY(logScrollY)
 	}
 }
+
+func (m *SearchViewModel) InputEscape() {
+	m.searchMode = false
+	m.searchText = ""
+	m.searchResults = nil
+	m.currentSearchIdx = 0
+	m.searchCursorPos = 0
+}
+
+func (m *SearchViewModel) DeleteLastChar() bool {
+	if m.searchCursorPos > 0 && len(m.searchText) > 0 {
+		m.searchText = m.searchText[:m.searchCursorPos-1] + m.searchText[m.searchCursorPos:]
+		m.searchCursorPos--
+		return true
+	}
+	return false
+}
+
+func (m *SearchViewModel) CursorLeft() {
+	if m.searchCursorPos > 0 {
+		m.searchCursorPos--
+	}
+}
+
+func (m *SearchViewModel) CursorRight() {
+	if m.searchCursorPos < len(m.searchText) {
+		m.searchCursorPos++
+	}
+}
+
+func (m *SearchViewModel) ToggleIgnoreCase() {
+	m.searchIgnoreCase = !m.searchIgnoreCase
+}
+
+func (m *SearchViewModel) ToggleRegex() {
+	m.searchRegex = !m.searchRegex
+}
+
+func (m *SearchViewModel) AppendString(str string) {
+	// Insert at cursor position
+	m.searchText = m.searchText[:m.searchCursorPos] + str + m.searchText[m.searchCursorPos:]
+	m.searchCursorPos += len(str)
+}

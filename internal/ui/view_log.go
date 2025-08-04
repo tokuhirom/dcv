@@ -366,24 +366,10 @@ func (m *LogViewModel) LogLines(model *Model, lines []string) {
 	}
 }
 
-func (m *LogViewModel) ClearFilter() {
-	m.filterMode = false
-	m.filterText = ""
-	m.filteredLogs = nil
-	m.filterCursorPos = 0
-	m.logScrollY = 0
-}
-
 func (m *LogViewModel) FilterDeleteLastChar() {
 	updated := m.FilterViewModel.FilterDeleteLastChar()
 	if updated {
 		m.performFilter()
-	}
-}
-
-func (m *LogViewModel) FilterCursorRight() {
-	if m.filterCursorPos < len(m.filterText) {
-		m.filterCursorPos++
 	}
 }
 
