@@ -159,7 +159,7 @@ func TestViewSwitching(t *testing.T) {
 	m = *newModel.(*Model)
 
 	assert.Equal(t, DindProcessListView, m.currentView)
-	assert.Equal(t, "dind-1", m.currentDindHost)
+	assert.Equal(t, "dind-1", m.dindProcessListViewModel.currentDindHost)
 	assert.True(t, m.loading)
 	assert.NotNil(t, cmd)
 }
