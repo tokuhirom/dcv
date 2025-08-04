@@ -9,13 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
-var (
-	separatorStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("226")).
-		Bold(true).
-		Width(45)
-)
-
 type HelpViewModel struct {
 	scrollY      int
 	previousView ViewType
@@ -157,7 +150,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	// Get visible rows
-	visibleTableRows := [][]string{}
+	var visibleTableRows [][]string
 	if len(allRows) > 0 && startIdx < len(allRows) {
 		visibleTableRows = allRows[startIdx:endIdx]
 	}
