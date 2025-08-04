@@ -9,6 +9,13 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
+var (
+	separatorStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("226")).
+		Bold(true).
+		Width(45)
+)
+
 type HelpViewModel struct {
 	scrollY      int
 	previousView ViewType
@@ -78,8 +85,6 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	// Add global configs
 	if len(model.globalHandlers) > 0 {
 		// Add section header as a special row
-		allRows = append(allRows, []string{"═══ Global Keys ═══", "", ""})
-
 		for _, config := range model.globalHandlers {
 			if len(config.Keys) > 0 {
 				key := config.Keys[0]
@@ -106,7 +111,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		}
 
 		// Add section header
-		allRows = append(allRows, []string{"═══ View-Specific Keys ═══", "", ""})
+		allRows = append(allRows, []string{"", "", ""})
 
 		for _, config := range viewConfigs {
 			if len(config.Keys) > 0 {
@@ -167,15 +172,6 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 				return headerStyle
 			}
 
-			// Check if this is a section header
-			rowIdx := row - 1 // Account for header
-			if rowIdx < len(visibleTableRows) && strings.Contains(visibleTableRows[rowIdx][0], "═══") {
-				return lipgloss.NewStyle().
-					Foreground(lipgloss.Color("226")).
-					Bold(true).
-					Width(45) // Span across columns visually
-			}
-
 			// Regular rows
 			switch col {
 			case 0: // Key column
@@ -188,7 +184,8 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 					Foreground(lipgloss.Color("214")).
 					Width(30)
 			case 2: // Description column
-				return normalStyle.Copy().Width(40)
+				newStyle := normalStyle
+				return newStyle.Width(40)
 			default:
 				return normalStyle
 			}
