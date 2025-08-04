@@ -263,8 +263,7 @@ func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // Back navigation handlers
 func (m *Model) BackToProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ComposeProcessListView
-	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+	return m, m.topViewModel.HandleBack(m)
 }
 
 func (m *Model) BackFromLogView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

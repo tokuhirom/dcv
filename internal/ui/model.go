@@ -139,9 +139,6 @@ type Model struct {
 	isDindLog     bool
 	hostContainer string
 
-	// Top view state
-	topOutput  string
-	topService string
 
 	// Search state
 	searchMode       bool

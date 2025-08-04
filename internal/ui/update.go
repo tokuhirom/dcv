@@ -116,7 +116,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.topOutput = msg.output
+		m.topViewModel.Loaded(msg.output)
 		m.err = nil
 		return m, nil
 
@@ -284,7 +284,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Logs are continuously streamed, no need to refresh
 			return m, nil
 		case TopView:
-			return m, loadTop(m.dockerClient, m.projectName, m.topService)
+			return m, m.topViewModel.HandleRefresh(m)
 		case StatsView:
 			return m, m.statsViewModel.HandleRefresh(m)
 		case ComposeProjectListView:
