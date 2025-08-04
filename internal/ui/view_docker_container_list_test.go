@@ -28,17 +28,17 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 	t.Run("displays no containers message when empty", func(t *testing.T) {
 		// Create model with empty container list
 		m := createTestModel(DockerContainerListView)
-		m.dockerContainers = []models.DockerContainer{}
+		m.dockerListViewModel.dockerContainers = []models.DockerContainer{}
 
 		// Test the render function directly
-		output := m.renderDockerList(20)
+		output := m.dockerListViewModel.renderDockerList(20)
 		assert.Contains(t, output, "No containers found")
 	})
 
 	t.Run("displays container list table", func(t *testing.T) {
 		// Create model with test containers
 		m := createTestModel(DockerContainerListView)
-		m.dockerContainers = []models.DockerContainer{
+		m.dockerListViewModel.dockerContainers = []models.DockerContainer{
 			{
 				ID:     "abc123def456",
 				Image:  "nginx:latest",
@@ -54,10 +54,10 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 				Names:  "database",
 			},
 		}
-		m.selectedDockerContainer = 0
+		m.dockerListViewModel.selectedDockerContainer = 0
 
 		// Test the render function
-		output := m.renderDockerList(20)
+		output := m.dockerListViewModel.renderDockerList(20)
 
 		// Check for table headers
 		assert.Contains(t, output, "CONTAINER ID")
@@ -76,7 +76,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 
 	t.Run("truncates long values", func(t *testing.T) {
 		m := createTestModel(DockerContainerListView)
-		m.dockerContainers = []models.DockerContainer{
+		m.dockerListViewModel.dockerContainers = []models.DockerContainer{
 			{
 				ID:     "verylongcontaineridthatneedstruncation",
 				Image:  "verylongimagenamethatneedstruncationbecauseitistoolong",
@@ -86,7 +86,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 			},
 		}
 
-		output := m.renderDockerList(20)
+		output := m.dockerListViewModel.renderDockerList(20)
 
 		// Check that ID is truncated to 12 chars
 		assert.Contains(t, output, "verylongcont")
@@ -98,7 +98,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 
 	t.Run("highlights running containers", func(t *testing.T) {
 		m := createTestModel(DockerContainerListView)
-		m.dockerContainers = []models.DockerContainer{
+		m.dockerListViewModel.dockerContainers = []models.DockerContainer{
 			{
 				ID:     "abc123def456",
 				Image:  "nginx:latest",
@@ -114,7 +114,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 		}
 
 		// The render function applies different styles to Up vs Exited containers
-		output := m.renderDockerList(20)
+		output := m.dockerListViewModel.renderDockerList(20)
 		assert.Contains(t, output, "Up 2 hours")
 		assert.Contains(t, output, "Exited")
 	})
@@ -124,37 +124,37 @@ func TestDockerContainerListView_Navigation(t *testing.T) {
 	t.Run("navigation with direct key handler calls", func(t *testing.T) {
 		// Create model with multiple containers
 		m := createTestModel(DockerContainerListView)
-		m.dockerContainers = []models.DockerContainer{
+		m.dockerListViewModel.dockerContainers = []models.DockerContainer{
 			{ID: "container1", Image: "image1", Status: "Up", Names: "name1"},
 			{ID: "container2", Image: "image2", Status: "Up", Names: "name2"},
 			{ID: "container3", Image: "image3", Status: "Up", Names: "name3"},
 		}
-		m.selectedDockerContainer = 0
+		m.dockerListViewModel.selectedDockerContainer = 0
 		m.initializeKeyHandlers()
 
 		// Test moving down
-		_, _ = m.SelectDownDockerContainer(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 1, m.selectedDockerContainer)
+		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
+		assert.Equal(t, 1, m.dockerListViewModel.selectedDockerContainer)
 
 		// Test moving down again
-		_, _ = m.SelectDownDockerContainer(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 2, m.selectedDockerContainer)
+		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
+		assert.Equal(t, 2, m.dockerListViewModel.selectedDockerContainer)
 
 		// Test moving down at the end (should stay at 2)
-		_, _ = m.SelectDownDockerContainer(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 2, m.selectedDockerContainer)
+		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
+		assert.Equal(t, 2, m.dockerListViewModel.selectedDockerContainer)
 
 		// Test moving up
-		_, _ = m.SelectUpDockerContainer(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 1, m.selectedDockerContainer)
+		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
+		assert.Equal(t, 1, m.dockerListViewModel.selectedDockerContainer)
 
 		// Test moving up again
-		_, _ = m.SelectUpDockerContainer(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 0, m.selectedDockerContainer)
+		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
+		assert.Equal(t, 0, m.dockerListViewModel.selectedDockerContainer)
 
 		// Test moving up at the beginning (should stay at 0)
-		_, _ = m.SelectUpDockerContainer(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 0, m.selectedDockerContainer)
+		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
+		assert.Equal(t, 0, m.dockerListViewModel.selectedDockerContainer)
 	})
 }
 
@@ -210,34 +210,34 @@ func TestDockerContainerListView_KeyHandlers(t *testing.T) {
 func TestDockerContainerListView_Update(t *testing.T) {
 	t.Run("handles container selection bounds", func(t *testing.T) {
 		m := createTestModel(DockerContainerListView)
-		m.dockerContainers = []models.DockerContainer{
+		m.dockerListViewModel.dockerContainers = []models.DockerContainer{
 			{ID: "container1", Names: "test1"},
 			{ID: "container2", Names: "test2"},
 		}
-		m.selectedDockerContainer = 0
+		m.dockerListViewModel.selectedDockerContainer = 0
 		m.initializeKeyHandlers()
 
 		// Try to move up from first item
-		_, cmd := m.SelectUpDockerContainer(tea.KeyMsg{})
+		_, cmd := m.CmdUp(tea.KeyMsg{})
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, m.selectedDockerContainer)
+		assert.Equal(t, 0, m.dockerListViewModel.selectedDockerContainer)
 
 		// Move to last item
-		m.selectedDockerContainer = 1
+		m.dockerListViewModel.selectedDockerContainer = 1
 
 		// Try to move down from last item
-		_, cmd = m.SelectDownDockerContainer(tea.KeyMsg{})
+		_, cmd = m.CmdDown(tea.KeyMsg{})
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, m.selectedDockerContainer)
+		assert.Equal(t, 1, m.dockerListViewModel.selectedDockerContainer)
 	})
 
 	t.Run("handles empty container list", func(t *testing.T) {
 		m := createTestModel(DockerContainerListView)
-		m.dockerContainers = []models.DockerContainer{}
+		m.dockerListViewModel.dockerContainers = []models.DockerContainer{}
 		m.initializeKeyHandlers()
 
 		// Try operations on empty list
-		_, cmd := m.KillDockerContainer(tea.KeyMsg{})
+		_, cmd := m.CmdKill(tea.KeyMsg{})
 		assert.Nil(t, cmd) // Should not crash
 	})
 }
@@ -246,7 +246,7 @@ func TestDockerContainerListView_Update(t *testing.T) {
 func TestDockerContainerListView_FullOutput(t *testing.T) {
 	t.Run("renders complete view", func(t *testing.T) {
 		m := createTestModel(DockerContainerListView)
-		m.dockerContainers = []models.DockerContainer{
+		m.dockerListViewModel.dockerContainers = []models.DockerContainer{
 			{
 				ID:     "abc123def456",
 				Image:  "nginx:latest",

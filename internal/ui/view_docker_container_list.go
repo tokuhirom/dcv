@@ -17,6 +17,10 @@ func (m *DockerListViewModel) renderDockerList(availableHeight int) string {
 	var s strings.Builder
 
 	// Container list
+	if len(m.dockerContainers) == 0 {
+		s.WriteString("\nNo containers found.\n")
+		return s.String()
+	}
 
 	// Define consistent styles for table cells
 	idStyle := lipgloss.NewStyle().Width(12)
