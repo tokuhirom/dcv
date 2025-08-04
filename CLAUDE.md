@@ -196,6 +196,11 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - **Code Formatting**: All code must be formatted with `goimports`
   - Run `make fmt` before committing
   - CI will fail if code is not properly formatted
+- **Testing**: ALWAYS run tests before committing
+  - Run `make fmt` first to ensure proper formatting
+  - Run `make test` before every commit
+  - All tests must pass before committing code
+  - This is a mandatory step - no exceptions
 - **Linting**: Code must pass all golangci-lint checks
   - Run `make lint` to check locally
   - Configuration is in `.golangci.yml`
