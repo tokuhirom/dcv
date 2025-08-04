@@ -115,9 +115,6 @@ type Model struct {
 	networkListViewModel         NetworkListViewModel
 	statsViewModel               StatsViewModel
 
-	// Docker images state
-	dockerImages        []models.DockerImage
-	selectedDockerImage int
 
 	// Docker volumes state
 	dockerVolumes        []models.DockerVolume

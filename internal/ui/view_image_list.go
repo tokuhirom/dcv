@@ -3,15 +3,22 @@ package ui
 import (
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// ImageListViewModel manages the state and rendering of the Docker image list view
 type ImageListViewModel struct {
-	showAll bool
+	dockerImages        []models.DockerImage
+	selectedDockerImage int
+	showAll             bool
 }
 
-func (m *Model) renderImageList(availableHeight int) string {
+// render renders the image list view
+func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	// No images
@@ -25,12 +32,12 @@ func (m *Model) renderImageList(availableHeight int) string {
 	t := table.New().
 		Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE").
 		Height(availableHeight).
-		Width(m.width).
+		Width(model.width).
 		Offset(m.selectedDockerImage)
 
 	// Configure column widths based on terminal width
 	// Approximate widths: REPOSITORY(30), TAG(15), IMAGE ID(12), CREATED(15), SIZE(10)
-	availableWidth := m.width - 10 // margin
+	availableWidth := model.width - 10 // margin
 	repoWidth := 30
 	if availableWidth < 100 {
 		repoWidth = 20
@@ -94,4 +101,89 @@ func (m *Model) renderImageList(availableHeight int) string {
 	s.WriteString(t.Render() + "\n")
 
 	return s.String()
+}
+
+// Show switches to the image list view
+func (m *ImageListViewModel) Show(model *Model) tea.Cmd {
+	model.currentView = ImageListView
+	model.loading = true
+	return loadDockerImages(model.dockerClient, m.showAll)
+}
+
+// HandleSelectUp moves selection up in the image list
+func (m *ImageListViewModel) HandleSelectUp() tea.Cmd {
+	if m.selectedDockerImage > 0 {
+		m.selectedDockerImage--
+	}
+	return nil
+}
+
+// HandleSelectDown moves selection down in the image list
+func (m *ImageListViewModel) HandleSelectDown() tea.Cmd {
+	if m.selectedDockerImage < len(m.dockerImages)-1 {
+		m.selectedDockerImage++
+	}
+	return nil
+}
+
+// HandleToggleAll toggles showing all images including intermediate layers
+func (m *ImageListViewModel) HandleToggleAll(model *Model) tea.Cmd {
+	m.showAll = !m.showAll
+	model.loading = true
+	return loadDockerImages(model.dockerClient, m.showAll)
+}
+
+// HandleDelete removes the selected image
+func (m *ImageListViewModel) HandleDelete(model *Model) tea.Cmd {
+	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {
+		return nil
+	}
+	image := m.dockerImages[m.selectedDockerImage]
+	model.loading = true
+	return removeImage(model.dockerClient, image.GetRepoTag(), false)
+}
+
+// HandleForceDelete forcefully removes the selected image
+func (m *ImageListViewModel) HandleForceDelete(model *Model) tea.Cmd {
+	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {
+		return nil
+	}
+	image := m.dockerImages[m.selectedDockerImage]
+	model.loading = true
+	return removeImage(model.dockerClient, image.GetRepoTag(), true)
+}
+
+// HandleInspect shows the inspect view for the selected image
+func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
+	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {
+		return nil
+	}
+
+	image := m.dockerImages[m.selectedDockerImage]
+	model.inspectImageID = image.ID
+	model.inspectContainerID = "" // Clear container ID
+	model.inspectNetworkID = ""
+	model.inspectVolumeID = ""
+	model.loading = true
+	return loadImageInspect(model.dockerClient, image.ID)
+}
+
+// HandleBack returns to the compose process list view
+func (m *ImageListViewModel) HandleBack(model *Model) tea.Cmd {
+	model.currentView = ComposeProcessListView
+	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+}
+
+// HandleRefresh reloads the image list
+func (m *ImageListViewModel) HandleRefresh(model *Model) tea.Cmd {
+	model.loading = true
+	return loadDockerImages(model.dockerClient, m.showAll)
+}
+
+// Loaded updates the image list after loading
+func (m *ImageListViewModel) Loaded(images []models.DockerImage) {
+	m.dockerImages = images
+	if len(m.dockerImages) > 0 && m.selectedDockerImage >= len(m.dockerImages) {
+		m.selectedDockerImage = 0
+	}
 }

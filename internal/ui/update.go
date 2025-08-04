@@ -187,11 +187,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.dockerImages = msg.images
+		m.imageListViewModel.Loaded(msg.images)
 		m.err = nil
-		if len(m.dockerImages) > 0 && m.selectedDockerImage >= len(m.dockerImages) {
-			m.selectedDockerImage = 0
-		}
 		return m, nil
 
 	case dockerNetworksLoadedMsg:
