@@ -155,9 +155,9 @@ func (m *CommandExecutionViewModel) HandleBack(model *Model) tea.Cmd {
 	// Reload data for the previous view
 	switch model.previousView {
 	case ComposeProcessListView:
-		return loadProcesses(model.dockerClient, model.projectName, model.showAll)
+		return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
 	case DockerContainerListView:
-		return loadDockerContainers(model.dockerClient, model.showAll)
+		return loadDockerContainers(model.dockerClient, model.dockerContainerListViewModel.showAll)
 	default:
 		model.loading = false
 		return nil

@@ -12,16 +12,20 @@ import (
 )
 
 type ComposeProcessListViewModel struct {
+	// Process list state
+	composeContainers []models.ComposeContainer
+	selectedContainer int
+	showAll           bool // Toggle to show all composeContainers including stopped ones
 }
 
 func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeProject) tea.Cmd {
 	model.projectName = project.Name
 	model.currentView = ComposeProcessListView
 	model.loading = true
-	return loadProcesses(model.dockerClient, model.projectName, model.showAll)
+	return loadProcesses(model.dockerClient, model.projectName, m.showAll)
 }
 
-func (m *Model) renderComposeProcessList(availableHeight int) string {
+func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	slog.Info("Rendering container list",
@@ -47,7 +51,7 @@ func (m *Model) renderComposeProcessList(availableHeight int) string {
 		}).
 		Headers("SERVICE", "IMAGE", "STATUS", "PORTS").
 		Height(availableHeight).
-		Width(m.width).
+		Width(model.width).
 		Offset(m.selectedContainer)
 
 	// Add rows with width control
@@ -84,4 +88,119 @@ func (m *Model) renderComposeProcessList(availableHeight int) string {
 	s.WriteString(t.Render() + "\n\n")
 
 	return s.String()
+}
+
+func (m *ComposeProcessListViewModel) HandleUp() tea.Cmd {
+	if m.selectedContainer > 0 {
+		m.selectedContainer--
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleDown() tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers)-1 {
+		m.selectedContainer++
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleLog(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		process := m.composeContainers[m.selectedContainer]
+		return model.logViewModel.StreamLogs(model, process, false, "")
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
+	m.showAll = !m.showAll
+	model.loading = true
+	return loadProcesses(model.dockerClient, model.projectName, m.showAll)
+}
+
+func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.topViewModel.Load(model, model.projectName, container.Service)
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		if container.IsDind() {
+			return model.dindProcessListViewModel.Load(model, container)
+		}
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleKill(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, model.currentView, container.ID, "kill")
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleStop(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, model.currentView, container.ID, "stop")
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleStart(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, model.currentView, container.ID, "start")
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleRestart(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.commandExecutionViewModel.ExecuteContainerCommand(model, model.currentView, container.ID, "restart")
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleRemove(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		// Only allow removing stopped composeContainers
+		if !strings.Contains(container.GetStatus(), "Up") && !strings.Contains(container.State, "running") {
+			model.loading = true
+			return removeService(model.dockerClient, container.ID)
+		}
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.fileBrowserViewModel.Load(model, container.ID, container.Name)
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleShell(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		// Default to /bin/sh as it's most commonly available
+		return executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.inspectViewModel.InspectContainer(model, container.ID)
+	}
+	return nil
 }

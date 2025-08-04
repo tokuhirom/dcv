@@ -7,6 +7,10 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 )
 
+type ImageListViewModel struct {
+	showAll bool
+}
+
 func (m *Model) renderImageList(availableHeight int) string {
 	var s strings.Builder
 

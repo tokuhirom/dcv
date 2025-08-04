@@ -39,10 +39,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.composeContainers = msg.processes
+		m.composeProcessListViewModel.composeContainers = msg.processes
 		m.err = nil
-		if len(m.composeContainers) > 0 && m.selectedContainer >= len(m.composeContainers) {
-			m.selectedContainer = 0
+		if len(m.composeProcessListViewModel.composeContainers) > 0 && m.composeProcessListViewModel.selectedContainer >= len(m.composeProcessListViewModel.composeContainers) {
+			m.composeProcessListViewModel.selectedContainer = 0
 		}
 		return m, nil
 
@@ -129,13 +129,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Reload the appropriate view after action completes
 		switch m.currentView {
 		case ImageListView:
-			return m, loadDockerImages(m.dockerClient, m.showAll)
+			return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
 		case DockerContainerListView:
-			return m, loadDockerContainers(m.dockerClient, m.showAll)
+			return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
 		case NetworkListView:
 			return m, loadDockerNetworks(m.dockerClient)
 		default:
-			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+			return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 		}
 
 	case upActionCompleteMsg:
@@ -145,7 +145,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		// Reload process list after up/down action
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 
 	case statsLoadedMsg:
 		m.loading = false
@@ -284,8 +284,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch m.currentView {
 		case ComposeProcessListView:
-			return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
-		case DindComposeProcessListView:
+			return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+		case DindProcessListView:
 			return m, loadDindContainers(m.dockerClient, m.currentDindContainerID)
 		case LogView:
 			// Logs are continuously streamed, no need to refresh
@@ -297,9 +297,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case ComposeProjectListView:
 			return m, loadProjects(m.dockerClient)
 		case DockerContainerListView:
-			return m, loadDockerContainers(m.dockerClient, m.showAll)
+			return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
 		case ImageListView:
-			return m, loadDockerImages(m.dockerClient, m.showAll)
+			return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
 		case NetworkListView:
 			return m, loadDockerNetworks(m.dockerClient)
 		case VolumeListView:
@@ -371,7 +371,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		m.currentView = ComposeProcessListView
 		m.err = nil
-		return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 	}
 
 	// Handle ctrl+c for immediate quit
@@ -388,7 +388,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleProcessListKeys(msg)
 	case LogView:
 		return m.handleLogViewKeys(msg)
-	case DindComposeProcessListView:
+	case DindProcessListView:
 		return m.handleDindListKeys(msg)
 	case TopView:
 		return m.handleTopViewKeys(msg)
@@ -640,15 +640,15 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 		m.helpScrollY = 0
 		return m, nil
 
-	case "set":
+	case "set": // TODO: deprecate this
 		// Handle set commands (e.g., :set showAll)
 		if len(parts) > 1 {
 			switch parts[1] {
 			case "all", "showAll":
-				m.showAll = true
+				m.composeProcessListViewModel.showAll = true
 				return m, m.refreshCurrentView()
 			case "noall", "noshowAll":
-				m.showAll = false
+				m.composeProcessListViewModel.showAll = false
 				return m, m.refreshCurrentView()
 			}
 		}
@@ -663,18 +663,18 @@ func (m *Model) executeCommand() (tea.Model, tea.Cmd) {
 func (m *Model) refreshCurrentView() tea.Cmd {
 	switch m.currentView {
 	case ComposeProcessListView:
-		return loadProcesses(m.dockerClient, m.projectName, m.showAll)
+		return loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 	case DockerContainerListView:
-		return loadDockerContainers(m.dockerClient, m.showAll)
+		return loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
 	case ImageListView:
-		return loadDockerImages(m.dockerClient, m.showAll)
+		return loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
 	case NetworkListView:
 		return loadDockerNetworks(m.dockerClient)
 	case VolumeListView:
 		return loadDockerVolumes(m.dockerClient)
 	case ComposeProjectListView:
 		return loadProjects(m.dockerClient)
-	case DindComposeProcessListView:
+	case DindProcessListView:
 		if m.currentDindContainerID != "" {
 			return loadDindContainers(m.dockerClient, m.currentDindContainerID)
 		}

@@ -33,7 +33,7 @@ func (m *Model) ShowVolumeList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) BackFromVolumeList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProcessListView
 	m.err = nil
-	return m, loadProcesses(m.dockerClient, m.projectName, m.showAll)
+	return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 }
 
 // Action handlers

@@ -30,18 +30,20 @@ func TestView(t *testing.T) {
 				width:       80,
 				height:      24,
 				loading:     false,
-				composeContainers: []models.ComposeContainer{
-					{
-						Name:    "web-1",
-						Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
-						Service: "web",
-						State:   "running",
-					},
-					{
-						Name:    "dind-1",
-						Command: "dockerd",
-						Service: "dind",
-						State:   "running",
+				composeProcessListViewModel: ComposeProcessListViewModel{
+					composeContainers: []models.ComposeContainer{
+						{
+							Name:    "web-1",
+							Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
+							Service: "web",
+							State:   "running",
+						},
+						{
+							Name:    "dind-1",
+							Command: "dockerd",
+							Service: "dind",
+							State:   "running",
+						},
 					},
 				},
 			},
@@ -120,7 +122,7 @@ func TestView(t *testing.T) {
 		{
 			name: "dind process list",
 			model: Model{
-				currentView:     DindComposeProcessListView,
+				currentView:     DindProcessListView,
 				width:           80,
 				height:          24,
 				loading:         false,
@@ -166,20 +168,22 @@ func TestRenderProcessList(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		composeContainers: []models.ComposeContainer{
-			{
-				Name:    "web-1",
-				Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
-				Service: "web",
-				State:   "running",
+		composeProcessListViewModel: ComposeProcessListViewModel{
+			composeContainers: []models.ComposeContainer{
+				{
+					Name:    "web-1",
+					Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
+					Service: "web",
+					State:   "running",
+				},
 			},
+			selectedContainer: 0,
 		},
-		selectedContainer: 0,
 	}
 
 	// Calculate available height (height - title - footer)
 	availableHeight := m.height - 2
-	view := m.renderComposeProcessList(availableHeight)
+	view := m.composeProcessListViewModel.render(&m, availableHeight)
 
 	// Check that the selected row is highlighted
 	assert.Contains(t, view, "web")
@@ -221,7 +225,7 @@ func TestRenderLogView(t *testing.T) {
 
 func TestRenderDindList(t *testing.T) {
 	m := Model{
-		currentView:     DindComposeProcessListView,
+		currentView:     DindProcessListView,
 		width:           80,
 		height:          24,
 		loading:         false,
@@ -259,16 +263,18 @@ func TestRenderDindList(t *testing.T) {
 
 func TestViewWithNoContainers(t *testing.T) {
 	m := Model{
-		currentView:       ComposeProcessListView,
-		width:             80,
-		height:            24,
-		loading:           false,
-		composeContainers: []models.ComposeContainer{},
+		currentView: ComposeProcessListView,
+		width:       80,
+		height:      24,
+		loading:     false,
+		composeProcessListViewModel: ComposeProcessListViewModel{
+			composeContainers: []models.ComposeContainer{},
+		},
 	}
 
 	// Calculate available height
 	availableHeight := m.height - 2
-	view := m.renderComposeProcessList(availableHeight)
+	view := m.composeProcessListViewModel.render(&m, availableHeight)
 	assert.Contains(t, view, "No containers found")
 	assert.Contains(t, view, "Press u to start services or p to switch to project list")
 }
@@ -279,19 +285,21 @@ func TestTableRendering(t *testing.T) {
 		width:       80,
 		height:      24,
 		loading:     false,
-		composeContainers: []models.ComposeContainer{
-			{
-				Name:    "web-1",
-				Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
-				Service: "web",
-				State:   "running",
+		composeProcessListViewModel: ComposeProcessListViewModel{
+			composeContainers: []models.ComposeContainer{
+				{
+					Name:    "web-1",
+					Command: "/docker-entrypoint.sh nginx -g 'daemon off;'",
+					Service: "web",
+					State:   "running",
+				},
 			},
 		},
 	}
 
 	// Calculate available height
 	availableHeight := m.height - 2
-	view := m.renderComposeProcessList(availableHeight)
+	view := m.composeProcessListViewModel.render(&m, availableHeight)
 
 	// Check for table borders
 	lines := strings.Split(view, "\n")
@@ -357,9 +365,9 @@ func TestDockerContainerListView(t *testing.T) {
 			width:       80,
 			height:      24,
 			currentView: DockerContainerListView,
-			showAll:     true,
 			dockerContainerListViewModel: DockerContainerListViewModel{
 				dockerContainers: []models.DockerContainer{},
+				showAll:          true,
 			},
 		}
 		m.initializeKeyHandlers()

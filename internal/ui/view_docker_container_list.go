@@ -7,12 +7,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 
+	"github.com/tokuhirom/dcv/internal/docker"
+
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type DockerContainerListViewModel struct {
 	dockerContainers        []models.DockerContainer
 	selectedDockerContainer int
+	showAll                 bool
 }
 
 func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) string {
@@ -57,7 +60,8 @@ func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) str
 			}
 		}).
 		Headers("CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES").
-		Height(availableHeight)
+		Height(availableHeight - 6).
+		Offset(m.selectedDockerContainer)
 
 	for _, container := range m.dockerContainers {
 		// Truncate container ID
@@ -154,7 +158,7 @@ func (m *DockerContainerListViewModel) HandleRestart(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
+func (m *DockerContainerListViewModel) HandleRemove(model *Model) tea.Cmd {
 	// Delete the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
@@ -166,13 +170,12 @@ func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
 func (m *DockerContainerListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.fileBrowserViewModel.Load(model, container)
+		return model.fileBrowserViewModel.Load(model, container.ID, container.Names)
 	}
 	return nil
 }
 
 func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
-
 	// Execute shell in the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
@@ -186,7 +189,23 @@ func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
 	// Inspect the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.inspectViewModel.InspectContainer(model, container)
+		return model.inspectViewModel.InspectContainer(model, container.ID)
 	}
 	return nil
+}
+
+func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {
+	model.currentView = DockerContainerListView
+	model.loading = true
+	return loadDockerContainers(model.dockerClient, m.showAll)
+}
+
+func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
+	return func() tea.Msg {
+		containers, err := client.ListAllContainers(showAll)
+		return dockerContainersLoadedMsg{
+			containers: containers,
+			err:        err,
+		}
+	}
 }
