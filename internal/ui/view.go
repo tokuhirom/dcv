@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -175,9 +174,9 @@ func (m *Model) viewTitle() string {
 	case VolumeListView:
 		return "Docker Volumes"
 	case FileBrowserView:
-		return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainerName, m.currentPath)
+		return m.fileBrowserViewModel.Title()
 	case FileContentView:
-		return fmt.Sprintf("File: %s [%s]", filepath.Base(m.fileContentViewModel.contentPath), m.browsingContainerName)
+		return m.fileContentViewModel.Title()
 	case InspectView:
 		return m.inspectViewModel.Title()
 	case HelpView:
@@ -222,7 +221,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case VolumeListView:
 		return m.volumeListViewModel.render(m, availableHeight)
 	case FileBrowserView:
-		return m.renderFileBrowser(availableHeight)
+		return m.fileBrowserViewModel.render(m, availableHeight)
 	case FileContentView:
 		return m.fileContentViewModel.render(m, availableHeight)
 	case InspectView:

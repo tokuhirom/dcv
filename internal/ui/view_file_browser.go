@@ -20,8 +20,8 @@ type FileBrowserViewModel struct {
 	pathHistory           []string
 }
 
-// renderFileBrowser renders the file browser view
-func (m *FileBrowserViewModel) renderFileBrowser(model *Model, availableHeight int) string {
+// render renders the file browser view
+func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string {
 	var content strings.Builder
 
 	if len(m.containerFiles) == 0 {
@@ -163,8 +163,23 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 			return loadContainerFiles(model.dockerClient, m.browsingContainerID, newPath)
 		} else {
 			// View file content
-			return m.Load(model, m.browsingContainerID, newPath)
+			return model.fileContentViewModel.Load(model, m.browsingContainerID, newPath)
 		}
 	}
 	return nil
+}
+
+func (m *FileBrowserViewModel) SetFiles(files []models.ContainerFile) {
+	m.containerFiles = files
+	if len(m.containerFiles) > 0 && m.selectedFile >= len(m.containerFiles) {
+		m.selectedFile = 0
+	}
+}
+
+func (m *FileBrowserViewModel) HandleRefresh(model *Model) tea.Cmd {
+	return loadContainerFiles(model.dockerClient, m.browsingContainerID, m.currentPath)
+}
+
+func (m *FileBrowserViewModel) Title() string {
+	return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainerName, m.currentPath)
 }

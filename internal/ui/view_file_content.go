@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -9,9 +10,10 @@ import (
 )
 
 type FileContentViewModel struct {
-	content     string
-	contentPath string
-	scrollY     int
+	containerName string
+	content       string
+	contentPath   string
+	scrollY       int
 }
 
 // render renders the file content view
@@ -63,6 +65,7 @@ func (m *FileContentViewModel) render(model *Model, availableHeight int) string 
 }
 
 func (m *FileContentViewModel) Load(model *Model, containerID, path string) tea.Cmd {
+	// no one calls this directly, it's used by the Model
 	model.currentView = FileContentView
 	model.loading = true
 	m.scrollY = 0
@@ -105,4 +108,8 @@ func (m *FileContentViewModel) HandleBack(model *Model) tea.Cmd {
 	m.contentPath = ""
 	m.scrollY = 0
 	return nil
+}
+
+func (m *FileContentViewModel) Title() string {
+	return fmt.Sprintf("File: %s [%s]", filepath.Base(m.contentPath), m.containerName)
 }
