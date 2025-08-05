@@ -418,13 +418,15 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 func TestFileBrowserParentDirectory(t *testing.T) {
 	// Test 'u' key to go to parent directory
 	model := Model{
-		currentView:         FileBrowserView,
-		browsingContainerID: "test-container",
-		currentPath:         "/app/src",
-		pathHistory:         []string{"/", "/app", "/app/src"},
-		containerFiles: []models.ContainerFile{
-			{Name: "..", IsDir: true},
-			{Name: "file.txt", IsDir: false},
+		currentView: FileBrowserView,
+		fileBrowserViewModel: FileBrowserViewModel{
+			browsingContainerID: "test-container",
+			currentPath:         "/app/src",
+			pathHistory:         []string{"/", "/app", "/app/src"},
+			containerFiles: []models.ContainerFile{
+				{Name: "..", IsDir: true},
+				{Name: "file.txt", IsDir: false},
+			},
 		},
 	}
 	model.initializeKeyHandlers()
@@ -433,22 +435,22 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("u")})
 	m := *newModel.(*Model)
 
-	assert.Equal(t, "/app", m.currentPath)
-	assert.Equal(t, 2, len(m.pathHistory)) // Should have removed the last entry
+	assert.Equal(t, "/app", m.fileBrowserViewModel.currentPath)
+	assert.Equal(t, 2, len(m.fileBrowserViewModel.pathHistory)) // Should have removed the last entry
 	assert.True(t, m.loading)
-	assert.Equal(t, 0, m.selectedFile) // Should reset selection
-	assert.NotNil(t, cmd)              // Should trigger loading parent directory files
+	assert.Equal(t, 0, m.fileBrowserViewModel.selectedFile) // Should reset selection
+	assert.NotNil(t, cmd)                                   // Should trigger loading parent directory files
 
 	// Test at root directory - should not change
-	model.currentPath = "/"
-	model.pathHistory = []string{"/"}
+	model.fileBrowserViewModel.currentPath = "/"
+	model.fileBrowserViewModel.pathHistory = []string{"/"}
 	model.loading = false
 
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("u")})
 	m = *newModel.(*Model)
 
-	assert.Equal(t, "/", m.currentPath) // Should stay at root
-	assert.Equal(t, 1, len(m.pathHistory))
+	assert.Equal(t, "/", m.fileBrowserViewModel.currentPath) // Should stay at root
+	assert.Equal(t, 1, len(m.fileBrowserViewModel.pathHistory))
 	assert.False(t, m.loading) // Should not trigger loading
 	assert.Nil(t, cmd)         // No command when already at root
 }
