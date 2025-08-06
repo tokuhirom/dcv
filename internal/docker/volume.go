@@ -51,29 +51,6 @@ func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 		return nil, fmt.Errorf("error scanning volume output: %w", err)
 	}
 
-	// Get size information using docker system df
-	sizeInfo, err := c.getVolumeSizes()
-	if err != nil {
-		slog.Warn("Failed to get volume sizes", slog.String("error", err.Error()))
-	} else {
-		// Map sizes to volumes
-		sizeMap := make(map[string]models.DockerVolumeSize)
-		for _, size := range sizeInfo {
-			sizeMap[size.Name] = size
-		}
-
-		for i := range volumes {
-			if size, ok := sizeMap[volumes[i].Name]; ok {
-				// Parse size string (e.g., "1.051GB" -> bytes)
-				volumes[i].Size = parseVolumeSize(size.Size)
-				// Parse links (reference count)
-				if links, err := strconv.Atoi(size.Links); err == nil {
-					volumes[i].RefCount = links
-				}
-			}
-		}
-	}
-
 	return volumes, nil
 }
 

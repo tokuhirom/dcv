@@ -2,7 +2,6 @@ package models
 
 import (
 	"strings"
-	"time"
 )
 
 // DockerVolume represents a Docker volume
@@ -10,12 +9,9 @@ type DockerVolume struct {
 	Name       string            `json:"Name"`
 	Driver     string            `json:"Driver"`
 	Mountpoint string            `json:"Mountpoint"`
-	CreatedAt  time.Time         `json:"CreatedAt"`
 	Scope      string            `json:"Scope"`
 	Labels     string            `json:"Labels"` // Raw labels string from docker
 	Options    map[string]string `json:"Options"`
-	Size       int64             `json:"-"` // Size in bytes, populated separately
-	RefCount   int               `json:"-"` // Reference count, populated separately
 	labelMap   map[string]string // Parsed labels, populated on demand
 }
 

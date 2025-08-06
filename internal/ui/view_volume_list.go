@@ -33,36 +33,16 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 		{Title: "Name", Width: 40},
 		{Title: "Driver", Width: 10},
 		{Title: "Scope", Width: 10},
-		{Title: "Size", Width: 12},
-		{Title: "Created", Width: 20},
-		{Title: "Ref Count", Width: 10},
 	}
 
 	// Create table rows
 	rows := make([]table.Row, len(m.dockerVolumes))
 	for i, volume := range m.dockerVolumes {
-		size := formatBytes(volume.Size)
-		if volume.Size == 0 {
-			size = "-"
-		}
-
-		refCount := fmt.Sprintf("%d", volume.RefCount)
-		if volume.RefCount == 0 && volume.Size == 0 {
-			refCount = "-"
-		}
-
-		created := volume.CreatedAt.Format("2006-01-02 15:04:05")
-		if volume.CreatedAt.IsZero() {
-			created = "-"
-		}
 
 		rows[i] = table.Row{
 			volume.Name,
 			volume.Driver,
 			volume.Scope,
-			size,
-			created,
-			refCount,
 		}
 	}
 
@@ -104,6 +84,7 @@ func (m *VolumeListViewModel) Show(model *Model) tea.Cmd {
 	model.currentView = VolumeListView
 	model.loading = true
 	m.selectedDockerVolume = 0
+	m.dockerVolumes = []models.DockerVolume{}
 	model.err = nil
 	return loadDockerVolumes(model.dockerClient)
 }
