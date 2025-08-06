@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -88,7 +87,8 @@ func (view ViewType) String() string {
 // Model represents the application state
 type Model struct {
 	// Current view
-	currentView ViewType
+	currentView  ViewType
+	previousView ViewType
 
 	// Docker client
 	dockerClient *docker.Client
@@ -217,6 +217,11 @@ func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
+func (m *Model) SwitchView(view ViewType) {
+	m.previousView = m.currentView
+	m.currentView = view
+}
+
 // Messages
 
 type processesLoadedMsg struct {
@@ -229,6 +234,8 @@ type dindContainersLoadedMsg struct {
 	err        error
 }
 
+// logLineMsg represents a single log line message
+// TODO: we can merge logLineMsg and logLinesMsg into a single type
 type logLineMsg struct {
 	line string
 }

@@ -106,8 +106,9 @@ func (m *ComposeProcessListViewModel) HandleDown() tea.Cmd {
 
 func (m *ComposeProcessListViewModel) HandleLog(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
-		process := m.composeContainers[m.selectedContainer]
-		return model.logViewModel.StreamLogs(model, process, false, "")
+		composeContainer := m.composeContainers[m.selectedContainer]
+		model.logViewModel.SwitchToLogView(model, composeContainer.Name)
+		return model.logViewModel.StreamLogs(model, composeContainer, false, "")
 	}
 	return nil
 }

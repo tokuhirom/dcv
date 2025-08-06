@@ -20,10 +20,12 @@ type LogViewModel struct {
 	containerName string
 	isDindLog     bool
 	hostContainer string
+
+	LogReaderManager
 }
 
-func (m *LogViewModel) Clear(model *Model, containerName string) {
-	model.currentView = LogView
+func (m *LogViewModel) SwitchToLogView(model *Model, containerName string) {
+	model.SwitchView(LogView)
 
 	m.containerName = containerName
 	m.isDindLog = false
@@ -38,28 +40,21 @@ func (m *LogViewModel) StreamLogs(model *Model, composeContainer models.ComposeC
 	m.isDindLog = false
 	m.logs = []string{}
 	m.logScrollY = 0
-	return streamLogsReal(model.dockerClient, composeContainer.ID, isDind, hostService)
+	return m.streamLogsReal(model.dockerClient, composeContainer.ID, isDind, hostService)
 }
 
 func (m *LogViewModel) ShowDindLog(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
-	model.currentView = LogView
-
-	m.containerName = container.Names
+	m.SwitchToLogView(model, container.Names)
 	m.hostContainer = model.dindProcessListViewModel.currentDindHost
 	m.isDindLog = true
-	m.logs = []string{}
-	m.logScrollY = 0
-	return streamLogsReal(model.dockerClient, container.ID, true, dindHostContainerID)
+
+	return m.streamLogsReal(model.dockerClient, container.ID, true, dindHostContainerID)
 }
 
 func (m *LogViewModel) HandleBack(model *Model) tea.Cmd {
-	stopLogReader()
-	if m.isDindLog {
-		model.currentView = DindProcessListView
-		return loadDindContainers(model.dockerClient, model.dindProcessListViewModel.currentDindContainerID)
-	}
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	m.stopLogReader()
+	model.currentView = model.previousView
+	return nil
 }
 
 func (m *LogViewModel) render(model *Model, availableHeight int) string {
@@ -407,6 +402,6 @@ func (m *LogViewModel) Title() string {
 }
 
 func (m *LogViewModel) HandleCancel() tea.Cmd {
-	stopLogReader()
+	m.stopLogReader()
 	return nil
 }

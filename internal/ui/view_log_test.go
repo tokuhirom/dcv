@@ -356,7 +356,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("Clear resets log view state", func(t *testing.T) {
+	t.Run("SwitchToLogView resets log view state", func(t *testing.T) {
 		model := &Model{
 			currentView: ComposeProcessListView,
 			logViewModel: LogViewModel{
@@ -367,7 +367,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 			},
 		}
 
-		model.logViewModel.Clear(model, "new-container")
+		model.logViewModel.SwitchToLogView(model, "new-container")
 
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "new-container", model.logViewModel.containerName)
