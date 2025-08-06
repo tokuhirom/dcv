@@ -184,27 +184,8 @@ func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
 		return nil, fmt.Errorf("failed to execute docker network ls: %w\nOutput: %s", err, string(output))
 	}
 
-	// Docker network ls outputs each network as a separate JSON object on its own line
-	networks := make([]models.DockerNetwork, 0)
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-
-		var networkList models.DockerNetworkList
-		if err := json.Unmarshal(line, &networkList); err != nil {
-			// Skip invalid lines
-			continue
-		}
-
-		// Convert to DockerNetwork
-		network := networkList.ToDockerNetwork()
-		networks = append(networks, network)
-	}
-
-	if err := scanner.Err(); err != nil {
+	networks, err := ParseNetworkJSON(output)
+	if err != nil {
 		return nil, err
 	}
 
@@ -292,20 +273,7 @@ func (c *Client) InspectImage(imageID string) (string, error) {
 		return "", fmt.Errorf("failed to inspect image: %w\nOutput: %s", err, string(output))
 	}
 
-	// Pretty format the JSON output
-	var jsonData interface{}
-	if err := json.Unmarshal(output, &jsonData); err != nil {
-		// If we can't parse it, return raw output
-		return string(output), nil
-	}
-
-	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		// If we can't pretty print, return raw output
-		return string(output), nil
-	}
-
-	return string(prettyJSON), nil
+	return string(output), nil
 }
 
 func (c *Client) InspectNetwork(networkID string) (string, error) {
@@ -314,18 +282,5 @@ func (c *Client) InspectNetwork(networkID string) (string, error) {
 		return "", fmt.Errorf("failed to inspect network: %w\nOutput: %s", err, string(output))
 	}
 
-	// Pretty format the JSON output
-	var jsonData interface{}
-	if err := json.Unmarshal(output, &jsonData); err != nil {
-		// If we can't parse it, return raw output
-		return string(output), nil
-	}
-
-	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		// If we can't pretty print, return raw output
-		return string(output), nil
-	}
-
-	return string(prettyJSON), nil
+	return string(output), nil
 }

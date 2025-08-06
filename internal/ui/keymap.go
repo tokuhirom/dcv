@@ -90,7 +90,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.projectListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
-		{[]string{"enter"}, "select project", m.SelectProject},
+		{[]string{"i"}, "select project", m.SelectProject},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -135,7 +135,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.networkListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.SelectUpNetwork},
 		{[]string{"down", "j"}, "move down", m.SelectDownNetwork},
-		{[]string{"enter"}, "inspect", m.ShowNetworkInspect},
+		{[]string{"i"}, "inspect", m.ShowNetworkInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "remove", m.DeleteNetwork},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
@@ -147,7 +147,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.volumeListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.SelectUpVolume},
 		{[]string{"down", "j"}, "move down", m.SelectDownVolume},
-		{[]string{"enter"}, "inspect", m.ShowVolumeInspect},
+		{[]string{"i"}, "inspect", m.ShowVolumeInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "remove", m.DeleteVolume},
 		{[]string{"F"}, "force remove", m.ForceDeleteVolume},
