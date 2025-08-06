@@ -167,9 +167,9 @@ func (m *InspectViewModel) highlightInspectLine(originalLine, styledLine string,
 
 func loadInspect(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		content, err := client.InspectContainer(containerID)
+		content, err := client.ExecuteCaptured("inspect", containerID)
 		return inspectLoadedMsg{
-			content: content,
+			content: string(content),
 			err:     err,
 		}
 	}
@@ -336,9 +336,9 @@ func (m *InspectViewModel) InspectImage(model *Model, image models.DockerImage) 
 
 func loadImageInspect(client *docker.Client, imageID string) tea.Cmd {
 	return func() tea.Msg {
-		content, err := client.InspectImage(imageID)
+		content, err := client.ExecuteCaptured("image", "inspect", imageID)
 		return inspectLoadedMsg{
-			content: content,
+			content: string(content),
 			err:     err,
 		}
 	}
@@ -354,9 +354,9 @@ func (m *InspectViewModel) InspectNetwork(model *Model, network models.DockerNet
 
 func loadNetworkInspect(client *docker.Client, networkID string) tea.Cmd {
 	return func() tea.Msg {
-		content, err := client.InspectNetwork(networkID)
+		content, err := client.ExecuteCaptured("network", "inspect", networkID)
 		return inspectLoadedMsg{
-			content: content,
+			content: string(content),
 			err:     err,
 		}
 	}

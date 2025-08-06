@@ -69,6 +69,10 @@ func (c *Client) Execute(args ...string) *exec.Cmd {
 	return Execute(args...)
 }
 
+func (c *Client) ExecuteCaptured(args ...string) ([]byte, error) {
+	return ExecuteCaptured(args...)
+}
+
 func (c *Client) PauseContainer(containerID string) error {
 	output, err := ExecuteCaptured("pause", containerID)
 	if err != nil {
@@ -243,44 +247,4 @@ func (c *Client) ExecuteInteractive(containerID string, command []string) error 
 
 	// Run the command
 	return cmd.Run()
-}
-
-func (c *Client) InspectContainer(containerID string) (string, error) {
-	output, err := ExecuteCaptured("inspect", containerID)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect container: %w\nOutput: %s", err, string(output))
-	}
-
-	// Pretty format the JSON output
-	var jsonData interface{}
-	if err := json.Unmarshal(output, &jsonData); err != nil {
-		// If we can't parse it, return raw output
-		return string(output), nil
-	}
-
-	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		// If we can't pretty print, return raw output
-		return string(output), nil
-	}
-
-	return string(prettyJSON), nil
-}
-
-func (c *Client) InspectImage(imageID string) (string, error) {
-	output, err := ExecuteCaptured("image", "inspect", imageID)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect image: %w\nOutput: %s", err, string(output))
-	}
-
-	return string(output), nil
-}
-
-func (c *Client) InspectNetwork(networkID string) (string, error) {
-	output, err := ExecuteCaptured("network", "inspect", networkID)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect network: %w\nOutput: %s", err, string(output))
-	}
-
-	return string(output), nil
 }
