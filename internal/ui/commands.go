@@ -39,19 +39,16 @@ func newLogReader(client *docker.Client, targetContainerID string, isDind bool, 
 		lines:               make([]string, 0),
 	}
 
-	var err error
 	if isDind && dindHostContainerID != "" {
 		// For dind, targetContainerID is the container name inside dind
-		lr.cmd, err = client.GetDindContainerLogs(dindHostContainerID, targetContainerID, true)
+		lr.cmd = client.Dind(dindHostContainerID).Execute(
+			"logs", targetContainerID, "--tail", "1000", "--timestamps", "--follow")
 	} else {
 		// For regular logs, use service name
-		lr.cmd, err = client.GetContainerLogs(targetContainerID, true)
+		lr.cmd = client.Execute("logs", targetContainerID, "--tail", "1000", "--timestamps", "--follow")
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to create log command: %w", err)
-	}
-
+	var err error
 	lr.stdout, err = lr.cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)

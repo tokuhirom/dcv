@@ -191,7 +191,7 @@ func (mr *MockDockerClientMockRecorder) KillContainer(containerID any) *gomock.C
 // ListAllContainers mocks base method.
 func (m *MockDockerClient) ListAllContainers(showAll bool) ([]models.DockerContainer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAllContainers", showAll)
+	ret := m.ctrl.Call(m, "ListContainers", showAll)
 	ret0, _ := ret[0].([]models.DockerContainer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -200,7 +200,7 @@ func (m *MockDockerClient) ListAllContainers(showAll bool) ([]models.DockerConta
 // ListAllContainers indicates an expected call of ListAllContainers.
 func (mr *MockDockerClientMockRecorder) ListAllContainers(showAll any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllContainers", reflect.TypeOf((*MockDockerClient)(nil).ListAllContainers), showAll)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContainers", reflect.TypeOf((*MockDockerClient)(nil).ListAllContainers), showAll)
 }
 
 // ListComposeProjects mocks base method.

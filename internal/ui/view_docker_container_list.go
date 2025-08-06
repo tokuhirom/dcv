@@ -207,7 +207,7 @@ func (m *DockerContainerListViewModel) HandleBack(model *Model) tea.Cmd {
 
 func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
 	return func() tea.Msg {
-		containers, err := client.ListAllContainers(showAll)
+		containers, err := client.ListContainers(showAll)
 		return dockerContainersLoadedMsg{
 			containers: containers,
 			err:        err,
