@@ -352,7 +352,8 @@ func loadTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
 
 func removeService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.RemoveContainer(containerID)
+		cmd := client.Execute("rm", "-f", containerID)
+		err := cmd.Wait()
 		return serviceActionCompleteMsg{
 			service: containerID,
 			err:     err,
