@@ -261,7 +261,7 @@ func TestRenderDindList(t *testing.T) {
 
 	// Calculate available Height
 	availableHeight := m.Height - 2
-	view := m.dindProcessListViewModel.render(&m, availableHeight)
+	view := m.dindProcessListViewModel.render(availableHeight)
 
 	// The title is in viewTitle(), not renderDindList()
 	// Check that dind containers are listed correctly
@@ -410,17 +410,19 @@ func TestDockerContainerListView(t *testing.T) {
 func TestFileBrowserTableView(t *testing.T) {
 	t.Run("file_browser_with_files", func(t *testing.T) {
 		m := &Model{
-			width:                 80,
-			Height:                24,
-			currentView:           FileBrowserView,
-			browsingContainerName: "web-1",
-			currentPath:           "/app",
-			selectedFile:          1,
-			containerFiles: []models.ContainerFile{
-				{Name: "Dockerfile", Permissions: "-rw-r--r--", IsDir: false},
-				{Name: "src", Permissions: "drwxr-xr-x", IsDir: true},
-				{Name: "README.md", Permissions: "-rw-r--r--", IsDir: false},
-				{Name: "link", Permissions: "lrwxrwxrwx", IsDir: false, LinkTarget: "/etc/hosts"},
+			width:       80,
+			Height:      24,
+			currentView: FileBrowserView,
+			fileBrowserViewModel: FileBrowserViewModel{
+				browsingContainerName: "web-1",
+				currentPath:           "/app",
+				selectedFile:          1,
+				containerFiles: []models.ContainerFile{
+					{Name: "Dockerfile", Permissions: "-rw-r--r--", IsDir: false},
+					{Name: "src", Permissions: "drwxr-xr-x", IsDir: true},
+					{Name: "README.md", Permissions: "-rw-r--r--", IsDir: false},
+					{Name: "link", Permissions: "lrwxrwxrwx", IsDir: false, LinkTarget: "/etc/hosts"},
+				},
 			},
 		}
 		m.initializeKeyHandlers()
@@ -470,12 +472,14 @@ func TestFileBrowserTableView(t *testing.T) {
 
 	t.Run("file_browser_empty_directory", func(t *testing.T) {
 		m := &Model{
-			width:                 80,
-			Height:                24,
-			currentView:           FileBrowserView,
-			browsingContainerName: "web-1",
-			currentPath:           "/empty",
-			containerFiles:        []models.ContainerFile{},
+			width:       80,
+			Height:      24,
+			currentView: FileBrowserView,
+			fileBrowserViewModel: FileBrowserViewModel{
+				browsingContainerName: "web-1",
+				currentPath:           "/empty",
+				containerFiles:        []models.ContainerFile{},
+			},
 		}
 		m.initializeKeyHandlers()
 

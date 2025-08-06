@@ -2,18 +2,27 @@ package ui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type FileBrowserViewModel struct {
+	containerFiles        []models.ContainerFile
+	selectedFile          int
+	currentPath           string
+	browsingContainerID   string
+	browsingContainerName string
+	pathHistory           []string
 }
 
-// renderFileBrowser renders the file browser view
-func (m *Model) renderFileBrowser(availableHeight int) string {
+// render renders the file browser view
+func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string {
 	var content strings.Builder
 
 	if len(m.containerFiles) == 0 {
@@ -39,7 +48,7 @@ func (m *Model) renderFileBrowser(availableHeight int) string {
 		}).
 		Headers("PERMISSIONS", "NAME").
 		Height(availableHeight - 3). // Reserve 3 lines for path display
-		Width(m.width).
+		Width(model.width).
 		Offset(m.selectedFile)
 
 	// Define styles for different file types
@@ -71,10 +80,10 @@ func (m *Model) renderFileBrowser(availableHeight int) string {
 }
 
 func (m *FileBrowserViewModel) Load(model *Model, containerID, containerName string) tea.Cmd {
-	model.browsingContainerID = containerID
-	model.browsingContainerName = containerName
-	model.currentPath = "/"
-	model.pathHistory = []string{"/"}
+	m.browsingContainerID = containerID
+	m.browsingContainerName = containerName
+	m.currentPath = "/"
+	m.pathHistory = []string{"/"}
 	model.currentView = FileBrowserView
 	model.loading = true
 	return loadContainerFiles(model.dockerClient, containerID, "/")
@@ -85,7 +94,7 @@ func (m *FileBrowserViewModel) HandleBack(model *Model) tea.Cmd {
 
 	// Check where we came from based on the container name prefix
 	for _, container := range model.dockerContainerListViewModel.dockerContainers {
-		if container.ID == model.browsingContainerID {
+		if container.ID == m.browsingContainerID {
 			model.currentView = DockerContainerListView
 			return loadDockerContainers(model.dockerClient, model.dockerContainerListViewModel.showAll)
 		}
@@ -93,4 +102,85 @@ func (m *FileBrowserViewModel) HandleBack(model *Model) tea.Cmd {
 	// Default to compose process list
 	model.currentView = ComposeProcessListView
 	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+}
+
+func (m *FileBrowserViewModel) HandleUp() tea.Cmd {
+	if m.selectedFile > 0 {
+		m.selectedFile--
+	}
+	return nil
+}
+
+func (m *FileBrowserViewModel) HandleDown() tea.Cmd {
+	if m.selectedFile < len(m.containerFiles)-1 {
+		m.selectedFile++
+	}
+	return nil
+}
+
+func (m *FileBrowserViewModel) HandleGoToParentDirectory(model *Model) tea.Cmd {
+	// Go up one directory
+	if m.currentPath != "/" {
+		m.currentPath = filepath.Dir(m.currentPath)
+		if len(m.pathHistory) > 1 {
+			m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
+		}
+		model.loading = true
+		m.selectedFile = 0
+		return loadContainerFiles(model.dockerClient, m.browsingContainerID, m.currentPath)
+	}
+	return nil
+}
+
+func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
+	if m.selectedFile < len(m.containerFiles) {
+		file := m.containerFiles[m.selectedFile]
+
+		if file.Name == "." {
+			return nil
+		}
+
+		if file.Name == ".." {
+			// Go up one directory
+			if m.currentPath != "/" {
+				m.currentPath = filepath.Dir(m.currentPath)
+				if len(m.pathHistory) > 1 {
+					m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
+				}
+			}
+			model.loading = true
+			m.selectedFile = 0
+			return loadContainerFiles(model.dockerClient, m.browsingContainerID, m.currentPath)
+		}
+
+		newPath := filepath.Join(m.currentPath, file.Name)
+
+		if file.IsDir {
+			// Navigate into directory
+			m.currentPath = newPath
+			m.pathHistory = append(m.pathHistory, newPath)
+			model.loading = true
+			m.selectedFile = 0
+			return loadContainerFiles(model.dockerClient, m.browsingContainerID, newPath)
+		} else {
+			// View file content
+			return model.fileContentViewModel.Load(model, m.browsingContainerID, newPath)
+		}
+	}
+	return nil
+}
+
+func (m *FileBrowserViewModel) SetFiles(files []models.ContainerFile) {
+	m.containerFiles = files
+	if len(m.containerFiles) > 0 && m.selectedFile >= len(m.containerFiles) {
+		m.selectedFile = 0
+	}
+}
+
+func (m *FileBrowserViewModel) HandleRefresh(model *Model) tea.Cmd {
+	return loadContainerFiles(model.dockerClient, m.browsingContainerID, m.currentPath)
+}
+
+func (m *FileBrowserViewModel) Title() string {
+	return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainerName, m.currentPath)
 }

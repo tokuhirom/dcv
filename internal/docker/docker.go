@@ -126,7 +126,7 @@ func (c *Client) ListDindContainers(containerID string) ([]models.DockerContaine
 }
 
 func (c *Client) GetDindContainerLogs(hostContainerID, targetContainerID string, follow bool) (*exec.Cmd, error) {
-	args := []string{"logs", hostContainerID, "docker", "logs", targetContainerID, "--tail", "1000", "--timestamps"}
+	args := []string{"exec", hostContainerID, "docker", "logs", targetContainerID, "--tail", "1000", "--timestamps"}
 	if follow {
 		args = append(args, "-f")
 	}

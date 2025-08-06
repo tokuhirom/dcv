@@ -17,35 +17,35 @@ import (
 
 // logReader manages log streaming from a container
 type logReader struct {
-	client        *docker.Client
-	containerName string
-	isDind        bool
-	hostContainer string
-	cmd           *exec.Cmd
-	stdout        io.ReadCloser
-	stderr        io.ReadCloser
-	lines         []string
-	mu            sync.Mutex
-	done          bool
+	client              *docker.Client
+	targetContainerID   string
+	isDind              bool
+	dindHostContainerID string
+	cmd                 *exec.Cmd
+	stdout              io.ReadCloser
+	stderr              io.ReadCloser
+	lines               []string
+	mu                  sync.Mutex
+	done                bool
 }
 
 // newLogReader creates a new log reader
-func newLogReader(client *docker.Client, serviceName string, isDind bool, hostService string) (*logReader, error) {
+func newLogReader(client *docker.Client, targetContainerID string, isDind bool, dindHostContainerID string) (*logReader, error) {
 	lr := &logReader{
-		client:        client,
-		containerName: serviceName, // Keep field name for compatibility but it's actually service name
-		isDind:        isDind,
-		hostContainer: hostService, // Keep field name for compatibility but it's actually service name
-		lines:         make([]string, 0),
+		client:              client,
+		targetContainerID:   targetContainerID,
+		isDind:              isDind,
+		dindHostContainerID: dindHostContainerID,
+		lines:               make([]string, 0),
 	}
 
 	var err error
-	if isDind && hostService != "" {
-		// For dind, serviceName is the container name inside dind
-		lr.cmd, err = client.GetDindContainerLogs(hostService, serviceName, true)
+	if isDind && dindHostContainerID != "" {
+		// For dind, targetContainerID is the container name inside dind
+		lr.cmd, err = client.GetDindContainerLogs(dindHostContainerID, targetContainerID, true)
 	} else {
 		// For regular logs, use service name
-		lr.cmd, err = client.GetContainerLogs(serviceName, true)
+		lr.cmd, err = client.GetContainerLogs(targetContainerID, true)
 	}
 
 	if err != nil {
@@ -76,9 +76,9 @@ func newLogReader(client *docker.Client, serviceName string, isDind bool, hostSe
 	slog.Info("Log command started",
 		slog.String("command", strings.Join(lr.cmd.Args, " ")),
 		slog.Duration("startTime", time.Since(startTime)),
-		slog.String("containerName", lr.containerName),
+		slog.String("targetContainerID", lr.targetContainerID),
 		slog.Bool("isDind", lr.isDind),
-		slog.String("hostContainer", lr.hostContainer))
+		slog.String("dindHostContainerID", lr.dindHostContainerID))
 
 	// HandleStart reading logs in background
 	go lr.readLogs()
@@ -157,13 +157,14 @@ func (lr *logReader) getNewLines(lastIndex int) ([]string, int, bool) {
 	return newLines, len(lr.lines), lr.done
 }
 
+// TODO: don't use global variables for log reader
 // Global log reader storage
 var activeLogReader *logReader
 var logReaderMu sync.Mutex
 var lastLogIndex int
 
 // streamLogsReal creates a command that starts log streaming
-func streamLogsReal(client *docker.Client, serviceName string, isDind bool, hostService string) tea.Cmd {
+func streamLogsReal(client *docker.Client, targetContainerID string, isDind bool, dindHostContainerID string) tea.Cmd {
 	return func() tea.Msg {
 		logReaderMu.Lock()
 		defer logReaderMu.Unlock()
@@ -183,11 +184,11 @@ func streamLogsReal(client *docker.Client, serviceName string, isDind bool, host
 
 		// Create new log reader
 		slog.Debug("Creating new log reader",
-			slog.String("serviceName", serviceName))
-		lr, err := newLogReader(client, serviceName, isDind, hostService)
+			slog.String("targetContainerID", targetContainerID))
+		lr, err := newLogReader(client, targetContainerID, isDind, dindHostContainerID)
 		if err != nil {
 			slog.Info("Failed to create log reader",
-				slog.String("serviceName", serviceName),
+				slog.String("targetContainerID", targetContainerID),
 				slog.Any("error", err))
 			return errorMsg{err: err}
 		}
@@ -195,9 +196,9 @@ func streamLogsReal(client *docker.Client, serviceName string, isDind bool, host
 		activeLogReader = lr
 		lastLogIndex = 0
 		slog.Info("Log reader created",
-			slog.String("serviceName", serviceName),
+			slog.String("targetContainerID", targetContainerID),
 			slog.Bool("isDind", isDind),
-			slog.String("hostService", hostService))
+			slog.String("dindHostContainerID", dindHostContainerID))
 
 		// Send command info message
 		cmdStr := strings.Join(lr.cmd.Args, " ")

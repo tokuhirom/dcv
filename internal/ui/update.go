@@ -192,11 +192,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		m.containerFiles = msg.files
 		m.err = nil
-		if len(m.containerFiles) > 0 && m.selectedFile >= len(m.containerFiles) {
-			m.selectedFile = 0
-		}
+		m.fileBrowserViewModel.SetFiles(msg.files)
 		return m, nil
 
 	case fileContentLoadedMsg:
@@ -271,7 +268,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case VolumeListView:
 			return m, m.volumeListViewModel.HandleRefresh(m)
 		case FileBrowserView:
-			return m, loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
+			return m, m.fileBrowserViewModel.HandleRefresh(m)
 		case FileContentView:
 			// File content doesn't need refresh, it's static
 			return m, nil
@@ -461,7 +458,7 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) refreshCurrentView() tea.Cmd {
+func (m *Model) refreshCurrentView() tea.Cmd { // TODO: deprecate
 	switch m.currentView {
 	case ComposeProcessListView:
 		return loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
@@ -478,10 +475,7 @@ func (m *Model) refreshCurrentView() tea.Cmd {
 	case DindProcessListView:
 		return m.dindProcessListViewModel.HandleRefresh(m)
 	case FileBrowserView:
-		if m.browsingContainerID != "" {
-			return loadContainerFiles(m.dockerClient, m.browsingContainerID, m.currentPath)
-		}
-		return nil
+		return m.fileBrowserViewModel.HandleRefresh(m)
 	default:
 		return nil
 	}

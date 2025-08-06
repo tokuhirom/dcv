@@ -20,7 +20,7 @@ type DindProcessListViewModel struct {
 }
 
 // render renders the dind process list view
-func (m *DindProcessListViewModel) render(model *Model, availableHeight int) string {
+func (m *DindProcessListViewModel) render(availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.dindContainers) == 0 {
@@ -37,10 +37,7 @@ func (m *DindProcessListViewModel) render(model *Model, availableHeight int) str
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 {
-				return headerStyle
-			}
-			if row-1 == m.selectedDindContainer {
+			if row == m.selectedDindContainer {
 				return selectedStyle
 			}
 			return normalStyle

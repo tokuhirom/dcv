@@ -109,14 +109,6 @@ type Model struct {
 	statsViewModel               StatsViewModel
 	volumeListViewModel          VolumeListViewModel
 
-	// File browser state
-	containerFiles        []models.ContainerFile
-	selectedFile          int
-	currentPath           string
-	browsingContainerID   string
-	browsingContainerName string
-	pathHistory           []string
-
 	// Error state
 	err error
 
