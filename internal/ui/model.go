@@ -384,7 +384,7 @@ func unpauseService(client *docker.Client, containerID string) tea.Cmd {
 func loadStats(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		// TODO: support periodic update
-		output, err := client.GetStats()
+		output, err := client.ExecuteCaptured("stats", "--no-stream", "--format", "json", "--all")
 		if err != nil {
 			return statsLoadedMsg{
 				stats: nil,
@@ -394,7 +394,7 @@ func loadStats(client *docker.Client) tea.Cmd {
 
 		// Parse JSON lines format
 		var stats []ContainerStats
-		lines := strings.Split(strings.TrimSpace(output), "\n")
+		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 		for _, line := range lines {
 			if line == "" {
 				continue
@@ -479,9 +479,9 @@ func loadContainerFiles(client *docker.Client, containerID, path string) tea.Cmd
 
 func loadFileContent(client *docker.Client, containerID, path string) tea.Cmd {
 	return func() tea.Msg {
-		content, err := client.ReadContainerFile(containerID, path)
+		content, err := client.ExecuteCaptured("exec", containerID, "cat", path)
 		return fileContentLoadedMsg{
-			content: content,
+			content: string(content),
 			path:    path,
 			err:     err,
 		}

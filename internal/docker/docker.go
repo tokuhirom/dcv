@@ -99,15 +99,6 @@ func (c *Client) UnpauseContainer(containerID string) error {
 	return nil
 }
 
-func (c *Client) GetStats() (string, error) {
-	output, err := ExecuteCaptured([]string{"stats", "--no-stream", "--format", "json", "--all"}...)
-	if err != nil {
-		return "", fmt.Errorf("failed to executeCaptured: %w", err)
-	}
-
-	return string(output), nil
-}
-
 func (c *Client) ListContainers(showAll bool) ([]models.DockerContainer, error) {
 	args := []string{"ps", "--format", "json"}
 	if showAll {
@@ -218,16 +209,6 @@ func (c *Client) ListContainerFiles(containerID, path string) ([]models.Containe
 
 	files := models.ParseLsOutput(string(output))
 	return files, nil
-}
-
-func (c *Client) ReadContainerFile(containerID, path string) (string, error) {
-	// Use cat to read file contents
-	output, err := ExecuteCaptured("exec", containerID, "cat", path)
-	if err != nil {
-		return "", fmt.Errorf("failed to read file in container: %w\nOutput: %s", err, string(output))
-	}
-
-	return string(output), nil
 }
 
 func (c *Client) ExecuteInteractive(containerID string, command []string) error {

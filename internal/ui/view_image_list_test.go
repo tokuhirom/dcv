@@ -346,7 +346,7 @@ func TestImageListViewModel_KeyHandlers(t *testing.T) {
 	assert.Greater(t, len(handlers), 0, "Should have registered key handlers")
 
 	// Check specific handlers exist
-	expectedKeys := []string{"up", "down", "a", "D", "F", "I", "r", "q"}
+	expectedKeys := []string{"up", "down", "a", "D", "F", "i", "r", "q"}
 	registeredKeys := make(map[string]bool)
 
 	for _, h := range handlers {

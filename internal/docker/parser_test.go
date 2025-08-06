@@ -38,7 +38,6 @@ func TestParsePSJSON(t *testing.T) {
 		},
 	}
 
-	c := &Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ParsePSJSON(tt.input)
