@@ -121,7 +121,7 @@ func (m *DockerContainerListViewModel) HandleLog(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
 		model.logViewModel.Clear(model, container.Names)
-		return streamLogs(model.dockerClient, container.ID, false, "")
+		return streamLogsReal(model.dockerClient, container.ID, false, "")
 	}
 	return nil
 }

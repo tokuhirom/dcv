@@ -20,7 +20,7 @@ type DindProcessListViewModel struct {
 }
 
 // render renders the dind process list view
-func (m *DindProcessListViewModel) render(model *Model, availableHeight int) string {
+func (m *DindProcessListViewModel) render(availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.dindContainers) == 0 {

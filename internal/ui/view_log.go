@@ -8,7 +8,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -32,17 +31,17 @@ func (m *LogViewModel) Clear(model *Model, containerName string) {
 	m.logScrollY = 0
 }
 
-func (m *LogViewModel) StreamLogs(model *Model, process models.ComposeContainer, isDind bool, hostService string) tea.Cmd {
+func (m *LogViewModel) StreamLogs(model *Model, composeContainer models.ComposeContainer, isDind bool, hostService string) tea.Cmd {
 	model.currentView = LogView
 
-	m.containerName = process.Name
+	m.containerName = composeContainer.Name
 	m.isDindLog = false
 	m.logs = []string{}
 	m.logScrollY = 0
-	return streamLogs(model.dockerClient, process.ID, isDind, hostService)
+	return streamLogsReal(model.dockerClient, composeContainer.ID, isDind, hostService)
 }
 
-func (m *LogViewModel) ShowDindLog(model *Model, dindContainerID string, container models.DockerContainer) tea.Cmd {
+func (m *LogViewModel) ShowDindLog(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
 	model.currentView = LogView
 
 	m.containerName = container.Names
@@ -50,7 +49,7 @@ func (m *LogViewModel) ShowDindLog(model *Model, dindContainerID string, contain
 	m.isDindLog = true
 	m.logs = []string{}
 	m.logScrollY = 0
-	return streamLogs(model.dockerClient, container.Names, true, dindContainerID)
+	return streamLogsReal(model.dockerClient, container.ID, true, dindHostContainerID)
 }
 
 func (m *LogViewModel) HandleBack(model *Model) tea.Cmd {
@@ -410,8 +409,4 @@ func (m *LogViewModel) Title() string {
 func (m *LogViewModel) HandleCancel() tea.Cmd {
 	stopLogReader()
 	return nil
-}
-
-func streamLogs(client *docker.Client, serviceName string, isDind bool, hostService string) tea.Cmd {
-	return streamLogsReal(client, serviceName, isDind, hostService)
 }
