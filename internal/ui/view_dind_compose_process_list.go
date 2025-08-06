@@ -37,10 +37,7 @@ func (m *DindProcessListViewModel) render(model *Model, availableHeight int) str
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 {
-				return headerStyle
-			}
-			if row-1 == m.selectedDindContainer {
+			if row == m.selectedDindContainer {
 				return selectedStyle
 			}
 			return normalStyle
