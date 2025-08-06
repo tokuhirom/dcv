@@ -136,8 +136,8 @@ type Model struct {
 	topViewHandlers                 []KeyConfig
 	statsViewKeymap                 map[string]KeyHandler
 	statsViewHandlers               []KeyConfig
-	projectListViewKeymap           map[string]KeyHandler
-	projectListViewHandlers         []KeyConfig
+	composeProjectListViewKeymap    map[string]KeyHandler
+	composeProjectListViewHandlers  []KeyConfig
 	dockerListViewKeymap            map[string]KeyHandler
 	dockerContainerListViewHandlers []KeyConfig
 	imageListViewKeymap             map[string]KeyHandler

@@ -40,7 +40,7 @@ func (m *Model) registerCommands() {
 		{m.dindListViewHandlers, DindProcessListView},
 		{m.topViewHandlers, TopView},
 		{m.statsViewHandlers, StatsView},
-		{m.projectListViewHandlers, ComposeProjectListView},
+		{m.composeProjectListViewHandlers, ComposeProjectListView},
 		{m.dockerContainerListViewHandlers, DockerContainerListView},
 		{m.imageListViewHandlers, ImageListView},
 		{m.networkListViewHandlers, NetworkListView},

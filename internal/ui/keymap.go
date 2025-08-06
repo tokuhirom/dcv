@@ -87,14 +87,14 @@ func (m *Model) initializeKeyHandlers() {
 	m.statsViewKeymap = m.createKeymap(m.statsViewHandlers)
 
 	// Project List View
-	m.projectListViewHandlers = []KeyConfig{
+	m.composeProjectListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
-		{[]string{"i"}, "select project", m.SelectProject},
+		{[]string{"enter"}, "select project", m.SelectProject},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
-	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
+	m.composeProjectListViewKeymap = m.createKeymap(m.composeProjectListViewHandlers)
 
 	// Docker Container List View
 	m.dockerContainerListViewHandlers = []KeyConfig{

@@ -498,7 +498,7 @@ func (m *Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.projectListViewKeymap[msg.String()]
+	handler, ok := m.composeProjectListViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

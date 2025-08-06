@@ -373,7 +373,7 @@ func (m *Model) GetHelpText() string {
 	case StatsView:
 		configs = m.statsViewHandlers
 	case ComposeProjectListView:
-		configs = m.projectListViewHandlers
+		configs = m.composeProjectListViewHandlers
 	case DockerContainerListView:
 		configs = m.dockerContainerListViewHandlers
 	case ImageListView:
