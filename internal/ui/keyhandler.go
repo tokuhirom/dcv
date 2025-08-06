@@ -138,6 +138,7 @@ func (m *Model) CmdFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// TODO: merge into CmdLog
 	return m, m.dindProcessListViewModel.HandleShowLog(m)
 }
 

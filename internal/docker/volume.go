@@ -54,24 +54,6 @@ func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 	return volumes, nil
 }
 
-// getVolumeSizes gets volume size information using docker system df
-func (c *Client) getVolumeSizes() ([]models.DockerVolumeSize, error) {
-	output, err := ExecuteCaptured([]string{"system", "df", "--format", "json", "-v"}...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute docker system df: %w", err)
-	}
-
-	var systemDf struct {
-		Volumes []models.DockerVolumeSize `json:"Volumes"`
-	}
-
-	if err := json.Unmarshal(output, &systemDf); err != nil {
-		return nil, fmt.Errorf("failed to parse docker system df output: %w", err)
-	}
-
-	return systemDf.Volumes, nil
-}
-
 // RemoveVolume removes a Docker volume
 func (c *Client) RemoveVolume(volumeName string, force bool) error {
 	args := []string{"volume", "rm"}

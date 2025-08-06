@@ -150,7 +150,7 @@ func TestViewSwitching(t *testing.T) {
 	m = *newModel.(*Model)
 
 	assert.Equal(t, ComposeProcessListView, m.currentView)
-	assert.NotNil(t, cmd)
+	assert.Nil(t, cmd) // HandleBack now returns nil
 
 	// Test entering dind view
 	m.composeProcessListViewModel.selectedContainer = 1
