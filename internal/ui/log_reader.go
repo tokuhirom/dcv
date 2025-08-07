@@ -163,21 +163,10 @@ type LogReaderManager struct {
 // streamLogsReal creates a command that starts log streaming
 func (lrm *LogReaderManager) streamLogsReal(client *docker.Client, targetContainerID string, isDind bool, dindHostContainerID string) tea.Cmd {
 	return func() tea.Msg {
+		lrm.stopLogReader()
+
 		lrm.logReaderMu.Lock()
 		defer lrm.logReaderMu.Unlock()
-
-		// Stop any existing log reader
-		if lrm.activeLogReader != nil && lrm.activeLogReader.cmd != nil {
-			slog.Debug("Stopping existing log reader")
-			if lrm.activeLogReader.cmd.Process != nil {
-				if err := lrm.activeLogReader.cmd.Process.Kill(); err != nil {
-					slog.Warn("Failed to kill log reader process", slog.Any("error", err))
-				}
-				if err := lrm.activeLogReader.cmd.Wait(); err != nil {
-					slog.Debug("Log reader process wait error", slog.Any("error", err))
-				}
-			}
-		}
 
 		// Create new log reader
 		slog.Debug("Creating new log reader",

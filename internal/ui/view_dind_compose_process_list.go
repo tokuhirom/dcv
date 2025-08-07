@@ -106,7 +106,7 @@ func (m *DindProcessListViewModel) HandleShowLog(model *Model) tea.Cmd {
 	}
 
 	container := m.dindContainers[m.selectedDindContainer]
-	return model.logViewModel.ShowDindLog(model, m.currentDindContainerID, container)
+	return model.logViewModel.StreamLogsDind(model, m.currentDindContainerID, container)
 }
 
 // HandleBack returns to the compose process list view

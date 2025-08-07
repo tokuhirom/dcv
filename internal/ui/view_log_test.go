@@ -317,7 +317,7 @@ func TestLogView_AutoScroll(t *testing.T) {
 }
 
 func TestLogViewModel_ShowMethods(t *testing.T) {
-	t.Run("StreamLogs sets up log view", func(t *testing.T) {
+	t.Run("StreamComposeLogs sets up log view", func(t *testing.T) {
 		model := &Model{
 			currentView: ComposeProcessListView,
 		}
@@ -326,7 +326,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 			Name: "test-container",
 		}
 
-		cmd := model.logViewModel.StreamLogs(model, process, false, "")
+		cmd := model.logViewModel.StreamComposeLogs(model, process)
 
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "test-container", model.logViewModel.containerName)
@@ -336,7 +336,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("ShowDindLog sets up dind log view", func(t *testing.T) {
+	t.Run("StreamLogsDind sets up dind log view", func(t *testing.T) {
 		model := &Model{
 			currentView: DindProcessListView,
 			dindProcessListViewModel: DindProcessListViewModel{
@@ -348,7 +348,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 			Names: "/docker-test",
 		}
 
-		cmd := model.logViewModel.ShowDindLog(model, "dind-container-id", container)
+		cmd := model.logViewModel.StreamLogsDind(model, "dind-container-id", container)
 
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "/docker-test", model.logViewModel.containerName)
@@ -627,7 +627,7 @@ func TestLogView_Integration(t *testing.T) {
 			ID:   "test-container",
 			Name: "my-app",
 		}
-		cmd := model.logViewModel.StreamLogs(model, process, false, "")
+		cmd := model.logViewModel.StreamComposeLogs(model, process)
 		assert.NotNil(t, cmd)
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "my-app", model.logViewModel.containerName)

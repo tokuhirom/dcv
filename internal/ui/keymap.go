@@ -53,7 +53,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"n"}, "next match", m.CmdNextSearchResult},
 		{[]string{"N"}, "prev match", m.CmdPrevSearchResult},
 		{[]string{"f"}, "filter", m.CmdFilter},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 		{[]string{"ctrl+c"}, "cancel", m.CmdCancel},
 	}

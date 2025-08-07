@@ -219,6 +219,12 @@ func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) SwitchView(view ViewType) {
+	if view == m.currentView {
+		slog.Info("SwitchView called with the same view, ignoring",
+			slog.String("view", view.String()))
+		return
+	}
+
 	m.previousView = m.currentView
 	m.currentView = view
 }

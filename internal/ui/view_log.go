@@ -33,17 +33,17 @@ func (m *LogViewModel) SwitchToLogView(model *Model, containerName string) {
 	m.logScrollY = 0
 }
 
-func (m *LogViewModel) StreamLogs(model *Model, composeContainer models.ComposeContainer, isDind bool, hostService string) tea.Cmd {
-	model.currentView = LogView
-
-	m.containerName = composeContainer.Name
-	m.isDindLog = false
-	m.logs = []string{}
-	m.logScrollY = 0
-	return m.streamLogsReal(model.dockerClient, composeContainer.ID, isDind, hostService)
+func (m *LogViewModel) StreamContainerLogs(model *Model, container models.DockerContainer) tea.Cmd {
+	m.SwitchToLogView(model, container.Names)
+	return m.streamLogsReal(model.dockerClient, container.ID, false, "")
 }
 
-func (m *LogViewModel) ShowDindLog(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
+func (m *LogViewModel) StreamComposeLogs(model *Model, composeContainer models.ComposeContainer) tea.Cmd {
+	m.SwitchToLogView(model, composeContainer.Name)
+	return m.streamLogsReal(model.dockerClient, composeContainer.ID, false, "")
+}
+
+func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
 	m.SwitchToLogView(model, container.Names)
 	m.hostContainer = model.dindProcessListViewModel.currentDindHost
 	m.isDindLog = true
