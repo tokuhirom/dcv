@@ -48,6 +48,8 @@ func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case VolumeListView:
+		return m, m.volumeListViewModel.HandleUp()
 	case ImageListView:
 		return m, m.imageListViewModel.HandleUp()
 	case FileContentView:
@@ -79,6 +81,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case VolumeListView:
+		return m, m.volumeListViewModel.HandleDown()
 	case ImageListView:
 		return m, m.imageListViewModel.HandleDown()
 	case FileContentView:
@@ -627,4 +631,20 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
+}
+
+func (m *Model) CmdVolumeLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	return m, m.volumeListViewModel.Show(m)
+}
+
+func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// TODO: Handle delete confirmation
+	switch m.currentView {
+	case VolumeListView:
+		return m, m.volumeListViewModel.HandleDelete(m, false)
+	default:
+		slog.Info("Unhandled :delete command in current view",
+			slog.String("view", m.currentView.String()))
+		return m, nil
+	}
 }

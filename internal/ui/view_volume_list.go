@@ -88,16 +88,16 @@ func (m *VolumeListViewModel) Show(model *Model) tea.Cmd {
 	return loadDockerVolumes(model.dockerClient)
 }
 
-// HandleSelectUp moves selection up in the volume list
-func (m *VolumeListViewModel) HandleSelectUp() tea.Cmd {
+// HandleUp moves selection up in the volume list
+func (m *VolumeListViewModel) HandleUp() tea.Cmd {
 	if m.selectedDockerVolume > 0 {
 		m.selectedDockerVolume--
 	}
 	return nil
 }
 
-// HandleSelectDown moves selection down in the volume list
-func (m *VolumeListViewModel) HandleSelectDown() tea.Cmd {
+// HandleDown moves selection down in the volume list
+func (m *VolumeListViewModel) HandleDown() tea.Cmd {
 	if m.selectedDockerVolume < len(m.dockerVolumes)-1 {
 		m.selectedDockerVolume++
 	}
@@ -117,7 +117,7 @@ func (m *VolumeListViewModel) HandleInspect(model *Model) tea.Cmd {
 }
 
 // HandleDelete removes the selected volume
-func (m *VolumeListViewModel) HandleDelete(model *Model) tea.Cmd {
+func (m *VolumeListViewModel) HandleDelete(model *Model, force bool) tea.Cmd {
 	if len(m.dockerVolumes) == 0 || m.selectedDockerVolume >= len(m.dockerVolumes) {
 		return nil
 	}
@@ -126,20 +126,7 @@ func (m *VolumeListViewModel) HandleDelete(model *Model) tea.Cmd {
 	model.loading = true
 	model.err = nil
 
-	return removeVolume(model.dockerClient, volume.Name, false)
-}
-
-// HandleForceDelete forcefully removes the selected volume
-func (m *VolumeListViewModel) HandleForceDelete(model *Model) tea.Cmd {
-	if len(m.dockerVolumes) == 0 || m.selectedDockerVolume >= len(m.dockerVolumes) {
-		return nil
-	}
-
-	volume := m.dockerVolumes[m.selectedDockerVolume]
-	model.loading = true
-	model.err = nil
-
-	return removeVolume(model.dockerClient, volume.Name, true)
+	return removeVolume(model.dockerClient, volume.Name, force)
 }
 
 // HandleBack returns to the compose process list view

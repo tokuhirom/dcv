@@ -145,12 +145,11 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Volume List View
 	m.volumeListViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "move up", m.SelectUpVolume},
-		{[]string{"down", "j"}, "move down", m.SelectDownVolume},
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
-		{[]string{"D"}, "remove", m.DeleteVolume},
-		{[]string{"F"}, "force remove", m.ForceDeleteVolume},
+		{[]string{"d"}, "delete", m.CmdDelete},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
