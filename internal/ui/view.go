@@ -165,10 +165,7 @@ func (m *Model) viewTitle() string {
 		}
 		return "Docker Containers"
 	case ImageListView:
-		if m.imageListViewModel.showAll {
-			return "Docker Images (all)"
-		}
-		return "Docker Images"
+		return m.imageListViewModel.Title()
 	case NetworkListView:
 		return "Docker Networks"
 	case VolumeListView:

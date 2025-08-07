@@ -17,6 +17,13 @@ type ImageListViewModel struct {
 	showAll             bool
 }
 
+func (m *ImageListViewModel) Title() string {
+	if m.showAll {
+		return "Docker Images (all)"
+	}
+	return "Docker Images"
+}
+
 // render renders the image list view
 func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
