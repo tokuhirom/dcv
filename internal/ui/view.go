@@ -81,49 +81,7 @@ func (m *Model) View() string {
 	}
 
 	// Build footer content (command line or quit confirmation or help hint)
-	var footer string
-
-	if m.quitConfirmation {
-		// Show quit confirmation dialog
-		footer = errorStyle.Render("Really quit? (y/n)")
-	} else if m.currentView == LogView && m.logViewModel.filterMode {
-		footer = m.logViewModel.RenderCmdLine()
-	} else if (m.currentView == LogView && m.logViewModel.searchMode) || (m.currentView == InspectView && m.inspectViewModel.searchMode) {
-		// Show search prompt
-		var searchText string
-		var searchCursorPos int
-
-		if m.currentView == LogView {
-			searchText = m.logViewModel.searchText
-			searchCursorPos = m.logViewModel.searchCursorPos
-		} else {
-			searchText = m.inspectViewModel.searchText
-			searchCursorPos = m.inspectViewModel.searchCursorPos
-		}
-
-		cursor := " "
-		if searchCursorPos < len(searchText) {
-			cursor = string(searchText[searchCursorPos])
-		}
-
-		// Build search line with cursor
-		before := searchText[:searchCursorPos]
-		after := ""
-		if searchCursorPos < len(searchText) {
-			after = searchText[searchCursorPos+1:]
-		}
-
-		cursorStyle := lipgloss.NewStyle().
-			Background(lipgloss.Color("226")).
-			Foreground(lipgloss.Color("235"))
-
-		footer = "/" + before + cursorStyle.Render(cursor) + after
-	} else if m.commandViewModel.commandMode {
-		footer = m.commandViewModel.RenderCmdLine()
-	} else {
-		// Show help hint
-		footer = helpStyle.Render("Press ? for help")
-	}
+	footer := m.viewFooter()
 
 	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for spacing
 
@@ -229,5 +187,28 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.commandExecutionViewModel.render(m)
 	default:
 		return "Unknown view"
+	}
+}
+
+func (m *Model) viewFooter() string {
+	if m.quitConfirmation {
+		// Show quit confirmation dialog
+		return errorStyle.Render("Really quit? (y/n)")
+	}
+
+	if m.currentView == LogView {
+		if m.logViewModel.filterMode {
+			return m.logViewModel.RenderFilterCmdLine()
+		} else if m.logViewModel.searchMode {
+			return m.logViewModel.RenderSearchCmdLine()
+		}
+	}
+
+	if m.currentView == InspectView && m.inspectViewModel.searchMode {
+		return m.inspectViewModel.RenderSearchCmdLine()
+	} else if m.commandViewModel.commandMode {
+		return m.commandViewModel.RenderCmdLine()
+	} else {
+		return helpStyle.Render("Press ? for help")
 	}
 }

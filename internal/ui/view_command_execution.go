@@ -75,9 +75,9 @@ func (m *CommandExecutionViewModel) render(model *Model) string {
 	// Footer
 	var footerText string
 	if m.done {
-		footerText = "Press ESC or q to go back"
+		footerText = "Press ESC to go back"
 	} else {
-		footerText = "Press Ctrl+C to cancel, ESC or q to go back"
+		footerText = "Press Ctrl+C to cancel, ESC to go back"
 	}
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("7")).
