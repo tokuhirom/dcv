@@ -39,6 +39,8 @@ func (m *Model) CmdRefresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case HelpView:
+		return m, m.helpViewModel.HandleUp()
 	case DindProcessListView:
 		return m, m.dindProcessListViewModel.HandleUp()
 	case VolumeListView:
@@ -74,6 +76,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case HelpView:
+		return m, m.helpViewModel.HandleDown()
 	case DindProcessListView:
 		return m, m.dindProcessListViewModel.HandleDown()
 	case VolumeListView:
@@ -551,14 +555,6 @@ func (m *Model) CmdPrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdHelp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.helpViewModel.Show(m, m.currentView)
-}
-
-func (m *Model) ScrollHelpUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.helpViewModel.HandleScrollUp()
-}
-
-func (m *Model) ScrollHelpDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.helpViewModel.HandleScrollDown()
 }
 
 func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

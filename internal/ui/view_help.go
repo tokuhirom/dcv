@@ -208,14 +208,14 @@ func (m *HelpViewModel) Show(model *Model, parentView ViewType) tea.Cmd {
 	return nil
 }
 
-func (m *HelpViewModel) HandleScrollUp() tea.Cmd {
+func (m *HelpViewModel) HandleUp() tea.Cmd {
 	if m.scrollY > 0 {
 		m.scrollY--
 	}
 	return nil
 }
 
-func (m *HelpViewModel) HandleScrollDown() tea.Cmd {
+func (m *HelpViewModel) HandleDown() tea.Cmd {
 	m.scrollY++
 	return nil
 }

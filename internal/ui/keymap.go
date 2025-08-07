@@ -22,13 +22,13 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
-		{[]string{"d"}, "dind composeContainers", m.ShowDindProcessList},
+		{[]string{"d"}, "dind composeContainers", m.ShowDindProcessList}, // TODO: rename
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
-		{[]string{"s"}, "stats", m.ShowStatsView},
+		{[]string{"s"}, "stats", m.ShowStatsView}, // TODO: rename
 		{[]string{"t"}, "top", m.CmdTop},
 		{[]string{"K"}, "kill", m.CmdKill},
 		{[]string{"S"}, "stop", m.CmdStop},
@@ -90,7 +90,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.composeProjectListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
-		{[]string{"enter"}, "select project", m.SelectProject},
+		{[]string{"enter"}, "select project", m.SelectProject}, // TODO: rename
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -132,8 +132,8 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Network List View
 	m.networkListViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "move up", m.SelectUpNetwork},
-		{[]string{"down", "j"}, "move down", m.SelectDownNetwork},
+		{[]string{"up", "k"}, "move up", m.SelectUpNetwork},       // TODO: rename
+		{[]string{"down", "j"}, "move down", m.SelectDownNetwork}, // TODO: rename
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "delete", m.CmdDelete},
@@ -158,8 +158,8 @@ func (m *Model) initializeKeyHandlers() {
 	m.fileBrowserHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
-		{[]string{"enter"}, "open", m.OpenFileOrDirectory},
-		{[]string{"u"}, "parent directory", m.GoToParentDirectory},
+		{[]string{"enter"}, "open", m.OpenFileOrDirectory},         // TODO: rename
+		{[]string{"u"}, "parent directory", m.GoToParentDirectory}, // TODO : rename
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
@@ -193,8 +193,8 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Help View
 	m.helpViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "scroll up", m.ScrollHelpUp},
-		{[]string{"down", "j"}, "scroll down", m.ScrollHelpDown},
+		{[]string{"up", "k"}, "scroll up", m.CmdUp},
+		{[]string{"down", "j"}, "scroll down", m.CmdDown},
 		{[]string{"esc"}, "back", m.CmdBack},
 	}
 	m.helpViewKeymap = m.createKeymap(m.helpViewHandlers)
