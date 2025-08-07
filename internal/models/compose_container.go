@@ -24,6 +24,14 @@ type ComposeContainer struct {
 	} `json:"Publishers"`
 }
 
+func (c ComposeContainer) GetID() string {
+	return c.ID
+}
+
+func (c ComposeContainer) GetName() string {
+	return c.Name
+}
+
 func (c ComposeContainer) IsDind() bool {
 	// Since compose containers don't have an Image field in JSON output,
 	// we check the container name for dind patterns

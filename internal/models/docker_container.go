@@ -20,6 +20,14 @@ type DockerContainer struct {
 	Status       string `json:"Status"`
 }
 
+func (c DockerContainer) GetID() string {
+	return c.ID
+}
+
+func (c DockerContainer) GetName() string {
+	return c.Names
+}
+
 func (c DockerContainer) IsDind() bool {
 	// Since compose containers don't have an Image field in JSON output,
 	// we check the container name for dind patterns

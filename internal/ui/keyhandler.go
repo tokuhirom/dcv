@@ -158,6 +158,8 @@ func (m *Model) CmdFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdDind(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleDindProcessList(m)
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleDindProcessList(m)
 	default:

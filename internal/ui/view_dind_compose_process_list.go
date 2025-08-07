@@ -75,12 +75,12 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 }
 
 // Load switches to the dind process list view and loads containers
-func (m *DindProcessListViewModel) Load(model *Model, container models.ComposeContainer) tea.Cmd {
-	m.currentDindHost = container.Name
-	m.currentDindContainerID = container.ID
+func (m *DindProcessListViewModel) Load(model *Model, container models.GenericContainer) tea.Cmd {
+	m.currentDindHost = container.GetName()
+	m.currentDindContainerID = container.GetID()
 	model.currentView = DindProcessListView
 	model.loading = true
-	return loadDindContainers(model.dockerClient, container.ID)
+	return loadDindContainers(model.dockerClient, container.GetID())
 }
 
 // HandleUp moves selection up in the dind container list

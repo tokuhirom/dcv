@@ -218,6 +218,16 @@ func (m *DockerContainerListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	return loadDockerContainers(model.dockerClient, m.showAll)
 }
 
+func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		if container.IsDind() {
+			return model.dindProcessListViewModel.Load(model, container)
+		}
+	}
+	return nil
+}
+
 func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
 	return func() tea.Msg {
 		containers, err := client.ListContainers(showAll)
