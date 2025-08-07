@@ -127,8 +127,8 @@ type Model struct {
 	globalHandlers []KeyConfig
 
 	// Key handler maps and configurations for all views
-	processListViewKeymap           map[string]KeyHandler
-	processListViewHandlers         []KeyConfig
+	composeProcessListViewKeymap    map[string]KeyHandler
+	composeProcessListViewHandlers  []KeyConfig
 	logViewKeymap                   map[string]KeyHandler
 	logViewHandlers                 []KeyConfig
 	dindListViewKeymap              map[string]KeyHandler

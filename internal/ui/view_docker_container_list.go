@@ -18,7 +18,7 @@ type DockerContainerListViewModel struct {
 	showAll                 bool
 }
 
-func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) string {
+func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	// Container list
@@ -35,7 +35,7 @@ func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) str
 	nameStyle := lipgloss.NewStyle().Width(20)
 
 	t := table.New().
-		Border(lipgloss.NormalBorder()).
+		Border(lipgloss.HiddenBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			baseStyle := normalStyle
@@ -60,7 +60,10 @@ func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) str
 			}
 		}).
 		Headers("CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES").
-		Height(availableHeight - 6).
+		Height(availableHeight - 8).
+		BorderBottom(false).
+		BorderTop(false).
+		Width(model.width).
 		Offset(m.selectedDockerContainer)
 
 	for _, container := range m.dockerContainers {

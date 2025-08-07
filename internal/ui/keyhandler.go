@@ -156,7 +156,7 @@ func (m *Model) CmdFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdDind(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleDindProcessList(m)
@@ -365,7 +365,7 @@ func (m *Model) GetHelpText() string {
 
 	switch m.currentView {
 	case ComposeProcessListView:
-		configs = m.processListViewHandlers
+		configs = m.composeProcessListViewHandlers
 	case LogView:
 		configs = m.logViewHandlers
 	case DindProcessListView:

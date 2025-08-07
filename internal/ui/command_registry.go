@@ -35,7 +35,7 @@ func (m *Model) registerCommands() {
 		handlers []KeyConfig
 		viewMask ViewType
 	}{
-		{m.processListViewHandlers, ComposeProcessListView},
+		{m.composeProcessListViewHandlers, ComposeProcessListView},
 		{m.logViewHandlers, LogView},
 		{m.dindListViewHandlers, DindProcessListView},
 		{m.topViewHandlers, TopView},

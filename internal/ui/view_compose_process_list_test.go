@@ -215,15 +215,15 @@ func TestComposeProcessListView_KeyHandlers(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Check that compose process view handlers are registered
-		assert.NotEmpty(t, m.processListViewHandlers)
-		assert.NotEmpty(t, m.processListViewKeymap)
+		assert.NotEmpty(t, m.composeProcessListViewHandlers)
+		assert.NotEmpty(t, m.composeProcessListViewKeymap)
 
 		// Check specific handlers exist
 		hasKillHandler := false
 		hasToggleHandler := false
 		hasUpHandler := false
 		hasDownHandler := false
-		for _, config := range m.processListViewHandlers {
+		for _, config := range m.composeProcessListViewHandlers {
 			if config.Description == "kill" {
 				hasKillHandler = true
 			}
@@ -264,7 +264,7 @@ func TestComposeProcessListView_KeyHandlers(t *testing.T) {
 		}
 		// Check dind handler in view-specific handlers
 		hasDindSwitch := false
-		for _, config := range m.processListViewHandlers {
+		for _, config := range m.composeProcessListViewHandlers {
 			if strings.Contains(config.Description, "dind") {
 				hasDindSwitch = true
 			}

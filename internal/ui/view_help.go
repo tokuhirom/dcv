@@ -23,7 +23,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 
 	switch m.parentView {
 	case ComposeProcessListView:
-		viewConfigs = model.processListViewHandlers
+		viewConfigs = model.composeProcessListViewHandlers
 		viewName = "Compose Process List"
 	case LogView:
 		viewConfigs = model.logViewHandlers

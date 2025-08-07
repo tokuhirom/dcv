@@ -318,7 +318,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle view-specific keys
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m.handleProcessListKeys(msg)
+		return m.handleComposeProcessListKeys(msg)
 	case LogView:
 		return m.handleLogViewKeys(msg)
 	case DindProcessListView:
@@ -353,11 +353,11 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.processListViewKeymap[msg.String()]
+func (m *Model) handleComposeProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.composeProcessListViewKeymap[msg.String()]
 	slog.Info(fmt.Sprintf("Key: %s", msg.String()),
 		slog.Bool("ok", ok),
-		slog.Any("handler", m.processListViewKeymap))
+		slog.Any("handler", m.composeProcessListViewKeymap))
 	if ok {
 		return handler(msg)
 	}
