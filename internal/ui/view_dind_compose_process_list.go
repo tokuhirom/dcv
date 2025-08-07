@@ -78,7 +78,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 func (m *DindProcessListViewModel) Load(model *Model, container models.GenericContainer) tea.Cmd {
 	m.currentDindHost = container.GetName()
 	m.currentDindContainerID = container.GetID()
-	model.currentView = DindProcessListView
+	model.SwitchView(DindProcessListView)
 	model.loading = true
 	return loadDindContainers(model.dockerClient, container.GetID())
 }
