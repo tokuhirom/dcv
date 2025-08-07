@@ -35,7 +35,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"U"}, "start", m.CmdStart},
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
-		{[]string{"D"}, "remove", m.CmdRemove},
+		{[]string{"D"}, "delete", m.CmdDelete},
 		{[]string{"u"}, "up -d", m.DeployProject},
 		{[]string{"x"}, "down", m.DownProject},
 		{[]string{"?"}, "help", m.CmdHelp},
@@ -61,9 +61,9 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Dind Process List View
 	m.dindListViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "move up", m.SelectUpDindContainer},
-		{[]string{"down", "j"}, "move down", m.SelectDownDindContainer},
-		{[]string{"enter"}, "view logs", m.ShowDindLog},
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
+		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
@@ -111,7 +111,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"U"}, "start", m.CmdStart},
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
-		{[]string{"D"}, "remove", m.CmdRemove},
+		{[]string{"D"}, "delete", m.CmdDelete},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -124,8 +124,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
-		{[]string{"D"}, "remove", m.DeleteImage},
-		{[]string{"F"}, "force remove", m.ForceDeleteImage},
+		{[]string{"D"}, "delete", m.CmdDelete},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -137,7 +136,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.SelectDownNetwork},
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
-		{[]string{"D"}, "remove", m.DeleteNetwork},
+		{[]string{"D"}, "delete", m.CmdDelete},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -149,7 +148,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
-		{[]string{"d"}, "delete", m.CmdDelete},
+		{[]string{"D"}, "delete", m.CmdDelete},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}

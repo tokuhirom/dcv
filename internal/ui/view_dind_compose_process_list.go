@@ -83,24 +83,24 @@ func (m *DindProcessListViewModel) Load(model *Model, container models.ComposeCo
 	return loadDindContainers(model.dockerClient, container.ID)
 }
 
-// HandleSelectUp moves selection up in the dind container list
-func (m *DindProcessListViewModel) HandleSelectUp() tea.Cmd {
+// HandleUp moves selection up in the dind container list
+func (m *DindProcessListViewModel) HandleUp() tea.Cmd {
 	if m.selectedDindContainer > 0 {
 		m.selectedDindContainer--
 	}
 	return nil
 }
 
-// HandleSelectDown moves selection down in the dind container list
-func (m *DindProcessListViewModel) HandleSelectDown() tea.Cmd {
+// HandleDown moves selection down in the dind container list
+func (m *DindProcessListViewModel) HandleDown() tea.Cmd {
 	if m.selectedDindContainer < len(m.dindContainers)-1 {
 		m.selectedDindContainer++
 	}
 	return nil
 }
 
-// HandleShowLog shows logs for the selected dind container
-func (m *DindProcessListViewModel) HandleShowLog(model *Model) tea.Cmd {
+// HandleLog shows logs for the selected dind container
+func (m *DindProcessListViewModel) HandleLog(model *Model) tea.Cmd {
 	if len(m.dindContainers) == 0 || m.selectedDindContainer >= len(m.dindContainers) {
 		return nil
 	}

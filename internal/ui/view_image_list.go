@@ -150,16 +150,6 @@ func (m *ImageListViewModel) HandleDelete(model *Model) tea.Cmd {
 	return removeImage(model.dockerClient, image.GetRepoTag(), false)
 }
 
-// HandleForceDelete forcefully removes the selected image
-func (m *ImageListViewModel) HandleForceDelete(model *Model) tea.Cmd {
-	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {
-		return nil
-	}
-	image := m.dockerImages[m.selectedDockerImage]
-	model.loading = true
-	return removeImage(model.dockerClient, image.GetRepoTag(), true)
-}
-
 // HandleInspect shows the inspect view for the selected image
 func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {

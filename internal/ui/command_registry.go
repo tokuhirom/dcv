@@ -156,7 +156,7 @@ func getShortCommandName(methodName string) string {
 		"CmdStop":                   "stop",
 		"CmdStart":                  "start",
 		"CmdRestart":                "restart",
-		"CmdRemove":                 "remove",
+		"CmdDelete":                 "remove",
 		"CmdPause":                  "pause",
 		"CmdShell":                  "shell",
 		"CmdInspect":                "inspect",

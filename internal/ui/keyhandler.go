@@ -37,17 +37,10 @@ func (m *Model) CmdRefresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-// Common selection handlers for different views
-func (m *Model) SelectUpDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.dindProcessListViewModel.HandleSelectUp()
-}
-
-func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.dindProcessListViewModel.HandleSelectDown()
-}
-
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleUp()
 	case VolumeListView:
 		return m, m.volumeListViewModel.HandleUp()
 	case ImageListView:
@@ -81,6 +74,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleDown()
 	case VolumeListView:
 		return m, m.volumeListViewModel.HandleDown()
 	case ImageListView:
@@ -151,11 +146,6 @@ func (m *Model) CmdFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			slog.String("view", m.currentView.String()))
 		return m, nil
 	}
-}
-
-func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// TODO: merge into CmdLog
-	return m, m.dindProcessListViewModel.HandleShowLog(m)
 }
 
 func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -235,6 +225,8 @@ func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 // Docker container handlers
 func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleLog(m)
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleLog(m)
 	case ComposeProcessListView:
@@ -293,19 +285,6 @@ func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProcessListViewModel.HandleRestart(m)
 	default:
 		slog.Info("Unhandled :restart command in current view",
-			slog.String("view", m.currentView.String()))
-	}
-	return m, nil
-}
-
-func (m *Model) CmdRemove(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleRemove(m)
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleRemove(m)
-	default:
-		slog.Info("Unhandled :delete command in current view",
 			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
@@ -427,14 +406,6 @@ func (m *Model) CmdImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.imageListViewModel.Show(m)
 }
 
-func (m *Model) DeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.imageListViewModel.HandleDelete(m)
-}
-
-func (m *Model) ForceDeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.imageListViewModel.HandleForceDelete(m)
-}
-
 // Network list handlers
 func (m *Model) SelectUpNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.networkListViewModel.HandleSelectUp()
@@ -446,10 +417,6 @@ func (m *Model) SelectDownNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdNetworkLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.networkListViewModel.Show(m)
-}
-
-func (m *Model) DeleteNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.networkListViewModel.HandleDelete(m)
 }
 
 func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -640,6 +607,14 @@ func (m *Model) CmdVolumeLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// TODO: Handle delete confirmation
 	switch m.currentView {
+	case NetworkListView:
+		return m, m.networkListViewModel.HandleDelete(m)
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleRemove(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleRemove(m)
+	case ImageListView:
+		return m, m.imageListViewModel.HandleDelete(m)
 	case VolumeListView:
 		return m, m.volumeListViewModel.HandleDelete(m, false)
 	default:
