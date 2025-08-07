@@ -53,7 +53,7 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case LogView:
 		return m, m.logViewModel.HandleUp()
 	case InspectView:
-		return m, m.inspectViewModel.HandleUp(m)
+		return m, m.inspectViewModel.HandleUp()
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleUp(m)
 	case ComposeProjectListView:

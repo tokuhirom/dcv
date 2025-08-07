@@ -187,41 +187,16 @@ func (m *InspectViewModel) HandleBack(model *Model) tea.Cmd {
 	m.searchText = ""
 	m.searchResults = nil
 	m.currentSearchIdx = 0
+	m.inspectImageID = ""
+	m.inspectNetworkID = ""
+	m.inspectVolumeID = ""
 
-	// Check if we were inspecting an image
-	if m.inspectImageID != "" {
-		model.currentView = ImageListView
-		m.inspectImageID = ""
-		return nil
-	}
+	model.SwitchToPreviousView()
 
-	// Check if we were inspecting a network
-	if m.inspectNetworkID != "" {
-		model.currentView = NetworkListView
-		m.inspectNetworkID = ""
-		return nil
-	}
-
-	// Check if we were inspecting a volume
-	if m.inspectVolumeID != "" {
-		model.currentView = VolumeListView
-		m.inspectVolumeID = ""
-		return nil
-	}
-
-	// Check where we came from based on the container ID
-	for _, container := range model.dockerContainerListViewModel.dockerContainers {
-		if container.ID == m.inspectContainerID {
-			model.currentView = DockerContainerListView
-			return nil
-		}
-	}
-	// Default to compose process list
-	model.currentView = ComposeProcessListView
 	return nil
 }
 
-func (m *InspectViewModel) HandleUp(model *Model) tea.Cmd {
+func (m *InspectViewModel) HandleUp() tea.Cmd {
 	if m.inspectScrollY > 0 {
 		m.inspectScrollY--
 	}
@@ -367,7 +342,7 @@ func (m *InspectViewModel) InspectVolume(model *Model, volume models.DockerVolum
 	m.inspectImageID = ""
 	m.inspectContainerID = ""
 	m.inspectNetworkID = ""
-	model.currentView = InspectView
+	model.SwitchView(InspectView)
 	return inspectVolume(model.dockerClient, volume.Name)
 }
 

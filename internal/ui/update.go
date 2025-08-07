@@ -32,7 +32,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Check if error is due to missing compose file
 			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
 				// Switch to project list view
-				m.currentView = ComposeProjectListView
+				m.SwitchView(ComposeProjectListView)
 				m.loading = true
 				return m, loadProjects(m.dockerClient)
 			}
@@ -227,7 +227,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = nil
 
 		m.inspectViewModel.Set(msg.content)
-		m.currentView = InspectView
+		m.SwitchView(InspectView)
 		return m, nil
 
 	case commandExecStartedMsg:

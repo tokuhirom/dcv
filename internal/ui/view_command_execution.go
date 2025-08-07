@@ -239,7 +239,7 @@ func executeContainerCommand(client *docker.Client, containerID string, operatio
 
 func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previousView ViewType, containerID string, operation string) tea.Cmd {
 	m.previousView = previousView
-	model.currentView = CommandExecutionView
+	model.SwitchView(CommandExecutionView)
 	m.output = []string{}
 	m.scrollY = 0
 	m.done = false
