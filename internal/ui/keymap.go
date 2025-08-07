@@ -9,11 +9,11 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"q"}, "quit", m.CmdQuit},
 		{[]string{":"}, "command mode", m.CmdCommandMode},
 
-		{[]string{"1"}, "docker ps", m.ShowDockerContainerList},
-		{[]string{"2"}, "project list", m.ShowProjectList},
-		{[]string{"3"}, "docker images", m.ShowImageList},
-		{[]string{"4"}, "docker networks", m.ShowNetworkList},
-		{[]string{"5"}, "docker volumes", m.ShowVolumeList},
+		{[]string{"1"}, "docker ps", m.CmdPS},
+		{[]string{"2"}, "project list", m.CmdComposeLS},
+		{[]string{"3"}, "docker images", m.CmdImages},
+		{[]string{"4"}, "docker networks", m.CmdNetworkLs},
+		{[]string{"5"}, "docker volumes", m.CmdVolumeLs},
 	}
 	m.globalKeymap = m.createKeymap(m.globalHandlers)
 

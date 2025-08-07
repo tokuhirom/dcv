@@ -165,7 +165,7 @@ func (m *Model) ShowDindProcessList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) ShowDockerContainerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdPS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.dockerContainerListViewModel.Show(m)
 }
 
@@ -211,7 +211,7 @@ func (m *Model) DownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.commandExecutionViewModel.ExecuteComposeCommand(m, "down")
 }
 
-func (m *Model) ShowProjectList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeLS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.currentView = ComposeProjectListView
 	m.loading = true
 	return m, loadProjects(m.dockerClient)
@@ -419,7 +419,7 @@ func (m *Model) GetStyledHelpText() string {
 	return style.Render(helpText)
 }
 
-func (m *Model) ShowImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.imageListViewModel.Show(m)
 }
 
@@ -440,7 +440,7 @@ func (m *Model) SelectDownNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.networkListViewModel.HandleSelectDown()
 }
 
-func (m *Model) ShowNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdNetworkLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.networkListViewModel.Show(m)
 }
 

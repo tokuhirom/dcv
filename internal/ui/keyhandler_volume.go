@@ -14,7 +14,7 @@ func (m *Model) SelectDownVolume(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // View change handlers
-func (m *Model) ShowVolumeList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdVolumeLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.volumeListViewModel.Show(m)
 }
 
