@@ -37,22 +37,17 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 
 	// Create table
 	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE").
-		Height(availableHeight - 6).
-		Width(model.width).
-		Offset(m.selectedDockerImage)
+		Height(availableHeight).
+		Width(model.width)
 
-	// Configure column widths based on terminal width
-	// Approximate widths: REPOSITORY(30), TAG(15), IMAGE ID(12), CREATED(15), SIZE(10)
 	availableWidth := model.width - 10 // margin
 	repoWidth := 30
 	if availableWidth < 100 {
 		repoWidth = 20
 	}
-	t.Width(availableWidth).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			return lipgloss.NewStyle()
-		})
 
 	// Styles
 	selectedStyle := lipgloss.NewStyle().Background(lipgloss.Color("238"))
@@ -105,6 +100,7 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 		t.Row(repo, tag, id, created, size)
 	}
 
+	t.Offset(m.selectedDockerImage)
 	s.WriteString(t.Render() + "\n")
 
 	return s.String()

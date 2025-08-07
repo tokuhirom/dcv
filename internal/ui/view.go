@@ -68,7 +68,7 @@ func (m *Model) View() string {
 	body := m.viewBody(availableBodyHeight)
 	bodyHeight := lipgloss.Height(body)
 
-	totalContentHeight := titleHeight + bodyHeight + footerHeight
+	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for the bottom padding
 
 	// Add padding if needed to push footer to the bottom
 	if totalContentHeight < m.Height {
