@@ -165,8 +165,8 @@ func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 
 // HandleBack returns to the compose process list view
 func (m *ImageListViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 // HandleRefresh reloads the image list

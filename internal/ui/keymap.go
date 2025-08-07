@@ -172,8 +172,8 @@ func (m *Model) initializeKeyHandlers() {
 	m.fileContentHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "scroll up", m.CmdUp},
 		{[]string{"down", "j"}, "scroll down", m.CmdDown},
-		{[]string{"G"}, "go to end", m.GoToFileEnd},
-		{[]string{"g"}, "go to start", m.GoToFileStart},
+		{[]string{"G"}, "go to end", m.CmdGoToEnd},
+		{[]string{"g"}, "go to start", m.CmdGoToStart},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}

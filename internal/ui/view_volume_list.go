@@ -144,9 +144,8 @@ func (m *VolumeListViewModel) HandleForceDelete(model *Model) tea.Cmd {
 
 // HandleBack returns to the compose process list view
 func (m *VolumeListViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	model.err = nil
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 // HandleRefresh reloads the volume list

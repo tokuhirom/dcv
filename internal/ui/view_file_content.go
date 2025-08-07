@@ -103,7 +103,7 @@ func (m *FileContentViewModel) HandleGoToEnd(height int) tea.Cmd {
 }
 
 func (m *FileContentViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = FileBrowserView
+	model.SwitchToPreviousView()
 	m.content = ""
 	m.contentPath = ""
 	m.scrollY = 0

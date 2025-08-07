@@ -200,8 +200,8 @@ func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {

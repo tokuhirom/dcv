@@ -102,6 +102,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case FileContentView:
+		return m, m.fileContentViewModel.HandleGoToEnd(m.Height)
 	case LogView:
 		return m, m.logViewModel.HandleGoToEnd(m)
 	case InspectView:
@@ -117,6 +119,8 @@ func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdGoToStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case FileContentView:
+		return m, m.fileContentViewModel.HandleGoToStart()
 	case LogView:
 		return m, m.logViewModel.HandleGoToStart()
 	case CommandExecutionView:
@@ -507,8 +511,7 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleBack(m)
 	case ComposeProcessListView:
-		m.currentView = ComposeProjectListView
-		return m, nil
+		return m, m.composeProcessListViewModel.HandleBack(m)
 	case DindProcessListView:
 		return m, m.dindProcessListViewModel.HandleBack(m)
 	case TopView:
@@ -520,14 +523,6 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
-}
-
-func (m *Model) GoToFileEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.fileContentViewModel.HandleGoToEnd(m.Height)
-}
-
-func (m *Model) GoToFileStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.fileContentViewModel.HandleGoToStart()
 }
 
 func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

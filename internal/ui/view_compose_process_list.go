@@ -205,3 +205,8 @@ func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 	}
 	return nil
 }
+
+func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {
+	model.SwitchToPreviousView()
+	return nil
+}

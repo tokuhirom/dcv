@@ -111,8 +111,8 @@ func (m *DindProcessListViewModel) HandleShowLog(model *Model) tea.Cmd {
 
 // HandleBack returns to the compose process list view
 func (m *DindProcessListViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 // HandleRefresh reloads the dind container list

@@ -230,6 +230,8 @@ func (m *Model) SwitchView(view ViewType) {
 }
 
 func (m *Model) SwitchToPreviousView() {
+	m.err = nil
+
 	for len(m.viewHistory) > 0 && m.viewHistory[len(m.viewHistory)-1] == m.currentView {
 		// Remove consecutive duplicates from the history
 		m.viewHistory = m.viewHistory[:len(m.viewHistory)-1]

@@ -79,8 +79,8 @@ func (m *StatsViewModel) HandleRefresh(model *Model) tea.Cmd {
 
 // HandleBack returns to the compose process list view
 func (m *StatsViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 // Loaded updates the stats list after loading

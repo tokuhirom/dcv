@@ -10,8 +10,8 @@ import (
 )
 
 type HelpViewModel struct {
-	scrollY      int
-	previousView ViewType
+	scrollY    int
+	parentView ViewType
 }
 
 func (m *HelpViewModel) render(model *Model, availableHeight int) string {
@@ -21,7 +21,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	var viewConfigs []KeyConfig
 	viewName := ""
 
-	switch m.previousView {
+	switch m.parentView {
 	case ComposeProcessListView:
 		viewConfigs = model.processListViewHandlers
 		viewName = "Compose Process List"
@@ -201,9 +201,9 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	return s.String()
 }
 
-func (m *HelpViewModel) Show(model *Model, previousView ViewType) tea.Cmd {
-	m.previousView = previousView
-	model.currentView = HelpView
+func (m *HelpViewModel) Show(model *Model, parentView ViewType) tea.Cmd {
+	m.parentView = parentView
+	model.SwitchView(HelpView)
 	m.scrollY = 0
 	return nil
 }
@@ -221,7 +221,7 @@ func (m *HelpViewModel) HandleScrollDown() tea.Cmd {
 }
 
 func (m *HelpViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = m.previousView
+	model.SwitchToPreviousView()
 	m.scrollY = 0
 	return nil
 }
