@@ -38,8 +38,7 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 		}).
 		Headers("NAME", "STATUS", "CONFIG FILES").
 		Height(availableHeight).
-		Width(model.width).
-		Offset(m.selectedProject)
+		Width(model.width)
 
 	for _, project := range m.projects {
 		// Status with color
@@ -59,6 +58,7 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 		t.Row(project.Name, status, configFiles)
 	}
 
+	t.Offset(m.selectedProject)
 	s.WriteString(t.Render() + "\n")
 
 	return s.String()
