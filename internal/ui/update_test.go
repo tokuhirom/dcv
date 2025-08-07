@@ -17,7 +17,7 @@ func TestHandleKeyPress(t *testing.T) {
 		key         tea.KeyMsg
 		wantView    ViewType
 		wantLoading bool
-		checkFunc   func(t *testing.T, m Model)
+		checkFunc   func(t *testing.T, m *Model)
 	}{
 		{
 			name: "navigate down in process list",
@@ -33,7 +33,7 @@ func TestHandleKeyPress(t *testing.T) {
 			},
 			key:      tea.KeyMsg{Type: tea.KeyDown},
 			wantView: ComposeProcessListView,
-			checkFunc: func(t *testing.T, m Model) {
+			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
 			},
 		},
@@ -51,7 +51,7 @@ func TestHandleKeyPress(t *testing.T) {
 			},
 			key:      tea.KeyMsg{Type: tea.KeyUp},
 			wantView: ComposeProcessListView,
-			checkFunc: func(t *testing.T, m Model) {
+			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
 			},
 		},
@@ -68,7 +68,7 @@ func TestHandleKeyPress(t *testing.T) {
 			},
 			key:      tea.KeyMsg{Type: tea.KeyEnter},
 			wantView: LogView,
-			checkFunc: func(t *testing.T, m Model) {
+			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, "web-1", m.logViewModel.containerName)
 				assert.False(t, m.logViewModel.isDindLog)
 			},
@@ -90,7 +90,7 @@ func TestHandleKeyPress(t *testing.T) {
 			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")},
 			wantView:    DindProcessListView,
 			wantLoading: true,
-			checkFunc: func(t *testing.T, m Model) {
+			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, "dind-1", m.dindProcessListViewModel.currentDindHost)
 			},
 		},
@@ -125,7 +125,7 @@ func TestHandleKeyPress(t *testing.T) {
 			},
 			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")},
 			wantView: LogView,
-			checkFunc: func(t *testing.T, m Model) {
+			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, 1, m.logViewModel.logScrollY)
 			},
 		},
@@ -141,7 +141,7 @@ func TestHandleKeyPress(t *testing.T) {
 			},
 			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")},
 			wantView: LogView,
-			checkFunc: func(t *testing.T, m Model) {
+			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, 9, m.logViewModel.logScrollY) // 10 logs - (5 Height - 4 ui elements) = 9
 			},
 		},
@@ -152,7 +152,7 @@ func TestHandleKeyPress(t *testing.T) {
 			},
 			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")},
 			wantView: LogView,
-			checkFunc: func(t *testing.T, m Model) {
+			checkFunc: func(t *testing.T, m *Model) {
 				assert.True(t, m.logViewModel.searchMode)
 				assert.Equal(t, "", m.logViewModel.searchText)
 			},
@@ -168,13 +168,14 @@ func TestHandleKeyPress(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for i := range tests {
+		tt := &tests[i]
 		t.Run(tt.name, func(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
 
 			newModel, _ := tt.model.handleKeyPress(tt.key)
-			m := *newModel.(*Model)
+			m := newModel.(*Model)
 
 			assert.Equal(t, tt.wantView, m.currentView)
 			if tt.checkFunc != nil {
@@ -256,13 +257,14 @@ func TestHandleSearchMode(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for i := range tests {
+		tt := &tests[i]
 		t.Run(tt.name, func(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
 
 			newModel, _ := tt.model.handleSearchMode(tt.key, &tt.model.logViewModel.SearchViewModel)
-			m := *newModel.(*Model)
+			m := newModel.(*Model)
 
 			assert.Equal(t, tt.wantSearchMode, m.logViewModel.searchMode)
 			assert.Equal(t, tt.wantSearchText, m.logViewModel.searchText)
@@ -287,12 +289,12 @@ func TestHandleDindListKeys(t *testing.T) {
 
 	// Test navigation
 	newModel, _ := model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyDown})
-	m := *newModel.(*Model)
+	m := newModel.(*Model)
 	assert.Equal(t, 1, m.dindProcessListViewModel.selectedDindContainer)
 
 	// Test entering log view
 	newModel, cmd := m.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEnter})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView)
 	assert.Equal(t, "test-2", m.logViewModel.containerName)
 	assert.Equal(t, "dind-1", m.logViewModel.hostContainer)
@@ -302,7 +304,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	// Test escape
 	model.currentView = DindProcessListView
 	newModel, _ = model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEsc})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView)
 }
 
@@ -311,7 +313,7 @@ func TestUpdateMessages(t *testing.T) {
 
 	// Test window size message
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-	m := *newModel.(*Model)
+	m := newModel.(*Model)
 	assert.Equal(t, 100, m.width)
 	assert.Equal(t, 30, m.Height)
 
@@ -320,14 +322,14 @@ func TestUpdateMessages(t *testing.T) {
 		{Name: "test-1"},
 	}
 	newModel, _ = m.Update(processesLoadedMsg{processes: processes})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, processes, m.composeProcessListViewModel.composeContainers)
 	assert.False(t, m.loading)
 
 	// Test error message
 	testErr := errors.New("test error")
 	newModel, _ = m.Update(errorMsg{err: testErr})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, testErr, m.err)
 	assert.False(t, m.loading)
 
@@ -335,14 +337,14 @@ func TestUpdateMessages(t *testing.T) {
 	m.currentView = LogView
 	m.Height = 10
 	newModel, cmd := m.Update(logLineMsg{line: "[Log reader stopped]"})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Contains(t, m.logViewModel.logs, "[Log reader stopped]")
 	assert.Nil(t, cmd) // Status messages don't trigger continued polling
 
 	// Test log lines message (for actual log streaming)
 	m.logViewModel.logs = []string{} // Reset logs
 	newModel, cmd = m.Update(logLinesMsg{lines: []string{"log line 1", "log line 2"}})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Contains(t, m.logViewModel.logs, "log line 1")
 	assert.Contains(t, m.logViewModel.logs, "log line 2")
 	assert.NotNil(t, cmd) // Should continue streaming
@@ -352,7 +354,7 @@ func TestUpdateMessages(t *testing.T) {
 		{ID: "abc123", Names: "test-container"},
 	}
 	newModel, _ = m.Update(dindContainersLoadedMsg{containers: containers})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, containers, m.dindProcessListViewModel.dindContainers)
 	assert.False(t, m.loading)
 }
@@ -372,18 +374,18 @@ func TestBoundaryConditions(t *testing.T) {
 
 	// Try to go up at the top
 	newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyUp})
-	m := *newModel.(*Model)
+	m := newModel.(*Model)
 	assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer) // Should stay at 0
 
 	// Try to go down at the bottom
 	newModel, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer) // Should stay at 0 (only one item)
 
 	// Test with empty list
 	model.composeProcessListViewModel.composeContainers = []models.ComposeContainer{}
 	newModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView) // Should stay in process list
 }
 
@@ -392,7 +394,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	model := Model{currentView: ComposeProcessListView}
 	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	m := *newModel.(*Model)
+	m := newModel.(*Model)
 	assert.True(t, m.quitConfirmation)
 	assert.Nil(t, cmd) // No command yet, just showing confirmation
 
@@ -400,7 +402,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	model = Model{currentView: LogView}
 	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView) // View should not change
 	assert.True(t, m.quitConfirmation)
 	assert.Nil(t, cmd)
@@ -409,7 +411,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	model = Model{currentView: DindProcessListView}
 	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 	assert.Equal(t, DindProcessListView, m.currentView) // View should not change
 	assert.True(t, m.quitConfirmation)
 	assert.Nil(t, cmd)
@@ -433,7 +435,7 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 
 	// Press 'u' to go to parent directory
 	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("u")})
-	m := *newModel.(*Model)
+	m := newModel.(*Model)
 
 	assert.Equal(t, "/app", m.fileBrowserViewModel.currentPath)
 	assert.Equal(t, 2, len(m.fileBrowserViewModel.pathHistory)) // Should have removed the last entry
@@ -447,7 +449,7 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 	model.loading = false
 
 	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("u")})
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.Equal(t, "/", m.fileBrowserViewModel.currentPath) // Should stay at root
 	assert.Equal(t, 1, len(m.fileBrowserViewModel.pathHistory))
