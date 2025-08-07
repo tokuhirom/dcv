@@ -336,7 +336,7 @@ func TestUpdateMessages(t *testing.T) {
 	// Test log line message (for status messages like "[Log reader stopped]")
 	m.currentView = LogView
 	m.Height = 10
-	newModel, cmd := m.Update(logLineMsg{line: "[Log reader stopped]"})
+	newModel, cmd := m.Update(logLinesMsg{lines: []string{"[Log reader stopped]"}})
 	m = newModel.(*Model)
 	assert.Contains(t, m.logViewModel.logs, "[Log reader stopped]")
 	assert.Nil(t, cmd) // Status messages don't trigger continued polling

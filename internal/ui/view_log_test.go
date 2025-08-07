@@ -196,7 +196,7 @@ func TestLogView_Navigation(t *testing.T) {
 	t.Run("HandleBack returns to process list", func(t *testing.T) {
 		model := &Model{
 			currentView: LogView,
-			viewHistory: ComposeProcessListView,
+			viewHistory: []ViewType{ComposeProcessListView},
 			logViewModel: LogViewModel{
 				isDindLog: false,
 			},
@@ -210,7 +210,7 @@ func TestLogView_Navigation(t *testing.T) {
 	t.Run("HandleBack returns to dind list for dind logs", func(t *testing.T) {
 		model := &Model{
 			currentView: LogView,
-			viewHistory: DindProcessListView,
+			viewHistory: []ViewType{DindProcessListView},
 			logViewModel: LogViewModel{
 				isDindLog: true,
 			},
@@ -418,8 +418,8 @@ func TestLogView_Update(t *testing.T) {
 			},
 		}
 
-		msg := logLineMsg{
-			line: "Line 3",
+		msg := logLinesMsg{
+			lines: []string{"Line 3"},
 		}
 
 		newModel, cmd := model.Update(msg)
@@ -529,8 +529,8 @@ func TestLogView_ScrollIndicator(t *testing.T) {
 
 		result := model.logViewModel.render(model, 6)
 
-		// Should show scroll indicator: [6-11/20]
-		assert.Contains(t, result, "[6-11/20]")
+		// Should show scroll indicator: [6-9/20]
+		assert.Contains(t, result, "[6-9/20]")
 	})
 
 	t.Run("shows filtered count in scroll indicator", func(t *testing.T) {
