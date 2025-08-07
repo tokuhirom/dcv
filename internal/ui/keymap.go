@@ -39,7 +39,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"u"}, "up -d", m.DeployProject},
 		{[]string{"x"}, "down", m.DownProject},
 		{[]string{"?"}, "help", m.CmdHelp},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 	}
 	m.processListViewKeymap = m.createKeymap(m.processListViewHandlers)
 
@@ -73,7 +73,7 @@ func (m *Model) initializeKeyHandlers() {
 	// Top View
 	m.topViewHandlers = []KeyConfig{
 		{[]string{"r"}, "refresh", m.CmdRefresh},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.topViewKeymap = m.createKeymap(m.topViewHandlers)
@@ -81,7 +81,7 @@ func (m *Model) initializeKeyHandlers() {
 	// Stats View
 	m.statsViewHandlers = []KeyConfig{
 		{[]string{"r"}, "refresh", m.CmdRefresh},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.statsViewKeymap = m.createKeymap(m.statsViewHandlers)
@@ -112,7 +112,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
 		{[]string{"D"}, "remove", m.CmdRemove},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
@@ -126,7 +126,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"a"}, "toggle all", m.ToggleAllImages},
 		{[]string{"D"}, "remove", m.DeleteImage},
 		{[]string{"F"}, "force remove", m.ForceDeleteImage},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.imageListViewKeymap = m.createKeymap(m.imageListViewHandlers)
@@ -138,7 +138,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"i"}, "inspect", m.ShowNetworkInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "remove", m.DeleteNetwork},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.networkListViewKeymap = m.createKeymap(m.networkListViewHandlers)
@@ -151,7 +151,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "remove", m.DeleteVolume},
 		{[]string{"F"}, "force remove", m.ForceDeleteVolume},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.volumeListViewKeymap = m.createKeymap(m.volumeListViewHandlers)
@@ -163,7 +163,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "open", m.OpenFileOrDirectory},
 		{[]string{"u"}, "parent directory", m.GoToParentDirectory},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.fileBrowserKeymap = m.createKeymap(m.fileBrowserHandlers)
@@ -174,7 +174,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "scroll down", m.ScrollFileDown},
 		{[]string{"G"}, "go to end", m.GoToFileEnd},
 		{[]string{"g"}, "go to start", m.GoToFileStart},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.fileContentKeymap = m.createKeymap(m.fileContentHandlers)
@@ -188,7 +188,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"/"}, "search", m.CmdSearch},
 		{[]string{"n"}, "next match", m.CmdNextSearchResult},
 		{[]string{"N"}, "prev match", m.CmdPrevSearchResult},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.inspectViewKeymap = m.createKeymap(m.inspectViewHandlers)
@@ -197,7 +197,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.helpViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "scroll up", m.ScrollHelpUp},
 		{[]string{"down", "j"}, "scroll down", m.ScrollHelpDown},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 	}
 	m.helpViewKeymap = m.createKeymap(m.helpViewHandlers)
 
@@ -208,7 +208,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"G"}, "go to end", m.CmdGoToEnd},
 		{[]string{"g"}, "go to start", m.CmdGoToStart},
 		{[]string{"ctrl+c"}, "cancel", m.CmdCancel},
-		{[]string{"esc", "q"}, "back", m.CmdBack},
+		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.commandExecKeymap = m.createKeymap(m.commandExecHandlers)
