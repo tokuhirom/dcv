@@ -101,7 +101,7 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	t.Offset(m.selectedDockerImage)
-	s.WriteString(t.Render() + "\n")
+	s.WriteString(t.Render())
 
 	return s.String()
 }
