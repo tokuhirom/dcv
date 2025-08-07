@@ -119,8 +119,8 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Image List View
 	m.imageListViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "move up", m.SelectUpImage},
-		{[]string{"down", "j"}, "move down", m.SelectDownImage},
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.ToggleAllImages},

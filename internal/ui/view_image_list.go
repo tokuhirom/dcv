@@ -110,16 +110,16 @@ func (m *ImageListViewModel) Show(model *Model) tea.Cmd {
 	return loadDockerImages(model.dockerClient, m.showAll)
 }
 
-// HandleSelectUp moves selection up in the image list
-func (m *ImageListViewModel) HandleSelectUp() tea.Cmd {
+// HandleUp moves selection up in the image list
+func (m *ImageListViewModel) HandleUp() tea.Cmd {
 	if m.selectedDockerImage > 0 {
 		m.selectedDockerImage--
 	}
 	return nil
 }
 
-// HandleSelectDown moves selection down in the image list
-func (m *ImageListViewModel) HandleSelectDown() tea.Cmd {
+// HandleDown moves selection down in the image list
+func (m *ImageListViewModel) HandleDown() tea.Cmd {
 	if m.selectedDockerImage < len(m.dockerImages)-1 {
 		m.selectedDockerImage++
 	}

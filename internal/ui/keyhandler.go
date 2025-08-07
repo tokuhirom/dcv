@@ -48,6 +48,8 @@ func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case ImageListView:
+		return m, m.imageListViewModel.HandleUp()
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleUp()
 	case FileBrowserView:
@@ -77,6 +79,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case ImageListView:
+		return m, m.imageListViewModel.HandleDown()
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleDown(m.Height)
 	case FileBrowserView:
@@ -415,15 +419,6 @@ func (m *Model) GetStyledHelpText() string {
 		Padding(0, 1)
 
 	return style.Render(helpText)
-}
-
-// Image list handlers
-func (m *Model) SelectUpImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.imageListViewModel.HandleSelectUp()
-}
-
-func (m *Model) SelectDownImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.imageListViewModel.HandleSelectDown()
 }
 
 func (m *Model) ShowImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

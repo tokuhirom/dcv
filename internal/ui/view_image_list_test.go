@@ -112,7 +112,7 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 }
 
 func TestImageListViewModel_Navigation(t *testing.T) {
-	t.Run("HandleSelectDown moves selection down", func(t *testing.T) {
+	t.Run("HandleDown moves selection down", func(t *testing.T) {
 		vm := &ImageListViewModel{
 			dockerImages: []models.DockerImage{
 				{Repository: "image1", Tag: "latest"},
@@ -122,18 +122,18 @@ func TestImageListViewModel_Navigation(t *testing.T) {
 			selectedDockerImage: 0,
 		}
 
-		cmd := vm.HandleSelectDown()
+		cmd := vm.HandleDown()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, vm.selectedDockerImage)
 
 		// Test boundary
 		vm.selectedDockerImage = 2
-		cmd = vm.HandleSelectDown()
+		cmd = vm.HandleDown()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 2, vm.selectedDockerImage, "Should not go beyond last image")
 	})
 
-	t.Run("HandleSelectUp moves selection up", func(t *testing.T) {
+	t.Run("HandleUp moves selection up", func(t *testing.T) {
 		vm := &ImageListViewModel{
 			dockerImages: []models.DockerImage{
 				{Repository: "image1", Tag: "latest"},
@@ -143,13 +143,13 @@ func TestImageListViewModel_Navigation(t *testing.T) {
 			selectedDockerImage: 2,
 		}
 
-		cmd := vm.HandleSelectUp()
+		cmd := vm.HandleUp()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, vm.selectedDockerImage)
 
 		// Test boundary
 		vm.selectedDockerImage = 0
-		cmd = vm.HandleSelectUp()
+		cmd = vm.HandleUp()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 0, vm.selectedDockerImage, "Should not go below 0")
 	})
@@ -332,8 +332,8 @@ func TestImageListViewModel_EmptySelection(t *testing.T) {
 		assert.Nil(t, vm.HandleInspect(model))
 
 		// Navigation should not crash
-		assert.Nil(t, vm.HandleSelectUp())
-		assert.Nil(t, vm.HandleSelectDown())
+		assert.Nil(t, vm.HandleUp())
+		assert.Nil(t, vm.HandleDown())
 	})
 }
 
