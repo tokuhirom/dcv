@@ -10,7 +10,8 @@ import (
 )
 
 func TestNewModel(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
+	m := &model
 
 	assert.Equal(t, ComposeProcessListView, m.currentView)
 	assert.NotNil(t, m.dockerClient)
@@ -20,7 +21,8 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestModelInit(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
+	m := &model
 	cmd := m.Init()
 
 	// Init should return a batch command
@@ -28,7 +30,8 @@ func TestModelInit(t *testing.T) {
 }
 
 func TestProcessesLoadedMsg(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
+	m := &model
 
 	// Test successful load
 	containers := []models.ComposeContainer{
@@ -52,7 +55,7 @@ func TestProcessesLoadedMsg(t *testing.T) {
 	}
 
 	newModel, cmd := m.Update(msg)
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.False(t, m.loading)
 	assert.Nil(t, m.err)
@@ -64,7 +67,8 @@ func TestProcessesLoadedMsg(t *testing.T) {
 }
 
 func TestWindowSizeMsg(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
+	m := &model
 
 	msg := tea.WindowSizeMsg{
 		Width:  80,
@@ -72,7 +76,7 @@ func TestWindowSizeMsg(t *testing.T) {
 	}
 
 	newModel, cmd := m.Update(msg)
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.Equal(t, 80, m.width)
 	assert.Equal(t, 24, m.Height)
@@ -80,7 +84,8 @@ func TestWindowSizeMsg(t *testing.T) {
 }
 
 func TestKeyNavigation(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
+	m := &model
 	m.Init() // Initialize key handlers
 	m.loading = false
 	m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
@@ -111,7 +116,7 @@ func TestKeyNavigation(t *testing.T) {
 					msg = tea.KeyMsg{Type: tea.KeyDown}
 				}
 				newModel, _ := m.Update(msg)
-				m = *newModel.(*Model)
+				m = newModel.(*Model)
 			}
 
 			assert.Equal(t, tt.expected, m.composeProcessListViewModel.selectedContainer)
@@ -120,7 +125,8 @@ func TestKeyNavigation(t *testing.T) {
 }
 
 func TestViewSwitching(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
+	m := &model
 	m.Init() // Initialize key handlers
 	m.loading = false
 	m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
@@ -137,7 +143,7 @@ func TestViewSwitching(t *testing.T) {
 	m.composeProcessListViewModel.selectedContainer = 0
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
 	newModel, cmd := m.Update(msg)
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.Equal(t, LogView, m.currentView)
 	assert.Equal(t, "web-1", m.logViewModel.containerName)
@@ -147,16 +153,16 @@ func TestViewSwitching(t *testing.T) {
 	// Test going back with ESC
 	msg = tea.KeyMsg{Type: tea.KeyEsc}
 	newModel, cmd = m.Update(msg)
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.Equal(t, ComposeProcessListView, m.currentView)
-	assert.NotNil(t, cmd)
+	assert.Nil(t, cmd) // HandleBack now returns nil
 
 	// Test entering dind view
 	m.composeProcessListViewModel.selectedContainer = 1
 	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")}
 	newModel, cmd = m.Update(msg)
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.Equal(t, DindProcessListView, m.currentView)
 	assert.Equal(t, "dind-1", m.dindProcessListViewModel.currentDindHost)
@@ -165,7 +171,8 @@ func TestViewSwitching(t *testing.T) {
 }
 
 func TestSearchMode(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
+	m := &model
 	m.Init() // Initialize key handlers
 	m.currentView = LogView
 	m.logViewModel.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
@@ -173,7 +180,7 @@ func TestSearchMode(t *testing.T) {
 	// Enter search mode
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")}
 	newModel, _ := m.Update(msg)
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.True(t, m.logViewModel.searchMode)
 	assert.Equal(t, "", m.logViewModel.searchText)
@@ -182,7 +189,7 @@ func TestSearchMode(t *testing.T) {
 	for _, r := range "error" {
 		msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
 		newModel, _ = m.Update(msg)
-		m = *newModel.(*Model)
+		m = newModel.(*Model)
 	}
 
 	assert.Equal(t, "error", m.logViewModel.searchText)
@@ -190,18 +197,19 @@ func TestSearchMode(t *testing.T) {
 	// Exit search mode with ESC
 	msg = tea.KeyMsg{Type: tea.KeyEsc}
 	newModel, _ = m.Update(msg)
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.False(t, m.logViewModel.searchMode)
 }
 
 func TestErrorHandling(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView, "")
+	m := &model
 
 	// Test error message
 	msg := errorMsg{err: assert.AnError}
 	newModel, _ := m.Update(msg)
-	m = *newModel.(*Model)
+	m = newModel.(*Model)
 
 	assert.NotNil(t, m.err)
 	assert.False(t, m.loading)
@@ -236,14 +244,15 @@ func TestQuitBehavior(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewModel(ComposeProcessListView, "")
+			model := NewModel(ComposeProcessListView, "")
+			m := &model
 			m.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 			m.currentView = tt.currentView
 			m.loading = false
 
 			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
 			newModel, cmd := m.Update(msg)
-			m = *newModel.(*Model)
+			m = newModel.(*Model)
 
 			assert.Equal(t, tt.expectView, m.currentView)
 

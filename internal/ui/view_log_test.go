@@ -195,20 +195,22 @@ func TestLogView_Navigation(t *testing.T) {
 
 	t.Run("HandleBack returns to process list", func(t *testing.T) {
 		model := &Model{
-			currentView: LogView,
+			currentView:  LogView,
+			previousView: ComposeProcessListView,
 			logViewModel: LogViewModel{
 				isDindLog: false,
 			},
 		}
 
 		cmd := model.logViewModel.HandleBack(model)
-		assert.NotNil(t, cmd) // Returns loadProcesses command
+		assert.Nil(t, cmd) // Now returns nil as it just switches view
 		assert.Equal(t, ComposeProcessListView, model.currentView)
 	})
 
 	t.Run("HandleBack returns to dind list for dind logs", func(t *testing.T) {
 		model := &Model{
-			currentView: LogView,
+			currentView:  LogView,
+			previousView: DindProcessListView,
 			logViewModel: LogViewModel{
 				isDindLog: true,
 			},
@@ -218,7 +220,7 @@ func TestLogView_Navigation(t *testing.T) {
 		}
 
 		cmd := model.logViewModel.HandleBack(model)
-		assert.NotNil(t, cmd) // Returns loadDindContainers command
+		assert.Nil(t, cmd) // Now returns nil as it just switches view
 		assert.Equal(t, DindProcessListView, model.currentView)
 	})
 }
@@ -356,7 +358,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("Clear resets log view state", func(t *testing.T) {
+	t.Run("SwitchToLogView resets log view state", func(t *testing.T) {
 		model := &Model{
 			currentView: ComposeProcessListView,
 			logViewModel: LogViewModel{
@@ -367,7 +369,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 			},
 		}
 
-		model.logViewModel.Clear(model, "new-container")
+		model.logViewModel.SwitchToLogView(model, "new-container")
 
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "new-container", model.logViewModel.containerName)

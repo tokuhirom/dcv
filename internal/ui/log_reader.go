@@ -39,19 +39,16 @@ func newLogReader(client *docker.Client, targetContainerID string, isDind bool, 
 		lines:               make([]string, 0),
 	}
 
-	var err error
 	if isDind && dindHostContainerID != "" {
 		// For dind, targetContainerID is the container name inside dind
-		lr.cmd, err = client.GetDindContainerLogs(dindHostContainerID, targetContainerID, true)
+		lr.cmd = client.Dind(dindHostContainerID).Execute(
+			"logs", targetContainerID, "--tail", "1000", "--timestamps", "--follow")
 	} else {
 		// For regular logs, use service name
-		lr.cmd, err = client.GetContainerLogs(targetContainerID, true)
+		lr.cmd = client.Execute("logs", targetContainerID, "--tail", "1000", "--timestamps", "--follow")
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to create log command: %w", err)
-	}
-
+	var err error
 	lr.stdout, err = lr.cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
@@ -157,26 +154,26 @@ func (lr *logReader) getNewLines(lastIndex int) ([]string, int, bool) {
 	return newLines, len(lr.lines), lr.done
 }
 
-// TODO: don't use global variables for log reader
-// Global log reader storage
-var activeLogReader *logReader
-var logReaderMu sync.Mutex
-var lastLogIndex int
+type LogReaderManager struct {
+	logReaderMu     sync.Mutex
+	lastLogIndex    int
+	activeLogReader *logReader
+}
 
 // streamLogsReal creates a command that starts log streaming
-func streamLogsReal(client *docker.Client, targetContainerID string, isDind bool, dindHostContainerID string) tea.Cmd {
+func (lrm *LogReaderManager) streamLogsReal(client *docker.Client, targetContainerID string, isDind bool, dindHostContainerID string) tea.Cmd {
 	return func() tea.Msg {
-		logReaderMu.Lock()
-		defer logReaderMu.Unlock()
+		lrm.logReaderMu.Lock()
+		defer lrm.logReaderMu.Unlock()
 
 		// Stop any existing log reader
-		if activeLogReader != nil && activeLogReader.cmd != nil {
+		if lrm.activeLogReader != nil && lrm.activeLogReader.cmd != nil {
 			slog.Debug("Stopping existing log reader")
-			if activeLogReader.cmd.Process != nil {
-				if err := activeLogReader.cmd.Process.Kill(); err != nil {
+			if lrm.activeLogReader.cmd.Process != nil {
+				if err := lrm.activeLogReader.cmd.Process.Kill(); err != nil {
 					slog.Warn("Failed to kill log reader process", slog.Any("error", err))
 				}
-				if err := activeLogReader.cmd.Wait(); err != nil {
+				if err := lrm.activeLogReader.cmd.Wait(); err != nil {
 					slog.Debug("Log reader process wait error", slog.Any("error", err))
 				}
 			}
@@ -193,8 +190,8 @@ func streamLogsReal(client *docker.Client, targetContainerID string, isDind bool
 			return errorMsg{err: err}
 		}
 
-		activeLogReader = lr
-		lastLogIndex = 0
+		lrm.activeLogReader = lr
+		lrm.lastLogIndex = 0
 		slog.Info("Log reader created",
 			slog.String("targetContainerID", targetContainerID),
 			slog.Bool("isDind", isDind),
@@ -207,35 +204,35 @@ func streamLogsReal(client *docker.Client, targetContainerID string, isDind bool
 }
 
 // stopLogReader stops the active log reader
-func stopLogReader() {
-	logReaderMu.Lock()
-	defer logReaderMu.Unlock()
+func (lrm *LogReaderManager) stopLogReader() {
+	lrm.logReaderMu.Lock()
+	defer lrm.logReaderMu.Unlock()
 
-	if activeLogReader != nil {
-		if activeLogReader.cmd != nil && activeLogReader.cmd.Process != nil {
-			if err := activeLogReader.cmd.Process.Kill(); err != nil {
+	if lrm.activeLogReader != nil {
+		if lrm.activeLogReader.cmd != nil && lrm.activeLogReader.cmd.Process != nil {
+			if err := lrm.activeLogReader.cmd.Process.Kill(); err != nil {
 				slog.Warn("Failed to kill log reader process in stopLogReader", slog.Any("error", err))
 			}
 			// Don't wait here as it might block
 		}
-		activeLogReader = nil
-		lastLogIndex = 0 // Reset the index too
+		lrm.activeLogReader = nil
+		lrm.lastLogIndex = 0 // Reset the index too
 	}
 }
 
 // pollForLogs polls for new log lines
-func pollForLogs() tea.Cmd {
+func (lrm *LogReaderManager) pollForLogs() tea.Cmd {
 	return func() tea.Msg {
-		logReaderMu.Lock()
-		defer logReaderMu.Unlock()
+		lrm.logReaderMu.Lock()
+		defer lrm.logReaderMu.Unlock()
 
-		if activeLogReader == nil {
+		if lrm.activeLogReader == nil {
 			// Don't log here as we don't have access to client
 			return logLineMsg{line: "[Log reader stopped]"}
 		}
 
-		newLines, newIndex, done := activeLogReader.getNewLines(lastLogIndex)
-		lastLogIndex = newIndex
+		newLines, newIndex, done := lrm.activeLogReader.getNewLines(lrm.lastLogIndex)
+		lrm.lastLogIndex = newIndex
 		slog.Debug("Got new log lines",
 			slog.Int("newLinesCount", len(newLines)))
 
@@ -246,11 +243,11 @@ func pollForLogs() tea.Cmd {
 
 		if done {
 			// Log streaming finished
-			if lastLogIndex == 0 {
-				activeLogReader = nil
+			if lrm.lastLogIndex == 0 {
+				lrm.activeLogReader = nil
 				return logLineMsg{line: "[No logs available for this container]"}
 			}
-			activeLogReader = nil
+			lrm.activeLogReader = nil
 			return nil
 		}
 

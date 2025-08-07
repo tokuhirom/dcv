@@ -38,7 +38,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		viewConfigs = model.statsViewHandlers
 		viewName = "Container Stats"
 	case ComposeProjectListView:
-		viewConfigs = model.projectListViewHandlers
+		viewConfigs = model.composeProjectListViewHandlers
 		viewName = "Project List"
 	case DockerContainerListView:
 		viewConfigs = model.dockerContainerListViewHandlers

@@ -131,7 +131,7 @@ func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 
 func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		containers, err := client.ListDindContainers(containerID)
+		containers, err := client.Dind(containerID).ListContainers()
 		return dindContainersLoadedMsg{
 			containers: containers,
 			err:        err,

@@ -25,7 +25,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"d"}, "dind composeContainers", m.ShowDindProcessList},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
-		{[]string{"I"}, "inspect", m.CmdInspect},
+		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
 		{[]string{"s"}, "stats", m.ShowStatsView},
@@ -87,14 +87,14 @@ func (m *Model) initializeKeyHandlers() {
 	m.statsViewKeymap = m.createKeymap(m.statsViewHandlers)
 
 	// Project List View
-	m.projectListViewHandlers = []KeyConfig{
+	m.composeProjectListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "select project", m.SelectProject},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
-	m.projectListViewKeymap = m.createKeymap(m.projectListViewHandlers)
+	m.composeProjectListViewKeymap = m.createKeymap(m.composeProjectListViewHandlers)
 
 	// Docker Container List View
 	m.dockerContainerListViewHandlers = []KeyConfig{
@@ -103,7 +103,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
-		{[]string{"I"}, "inspect", m.ShowDockerInspect},
+		{[]string{"i"}, "inspect", m.ShowDockerInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.ToggleAllDockerContainers},
 		{[]string{"K"}, "kill", m.CmdKill},
@@ -121,7 +121,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.imageListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.SelectUpImage},
 		{[]string{"down", "j"}, "move down", m.SelectDownImage},
-		{[]string{"I"}, "inspect", m.ShowImageInspect},
+		{[]string{"i"}, "inspect", m.ShowImageInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.ToggleAllImages},
 		{[]string{"D"}, "remove", m.DeleteImage},
@@ -135,7 +135,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.networkListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.SelectUpNetwork},
 		{[]string{"down", "j"}, "move down", m.SelectDownNetwork},
-		{[]string{"enter"}, "inspect", m.ShowNetworkInspect},
+		{[]string{"i"}, "inspect", m.ShowNetworkInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "remove", m.DeleteNetwork},
 		{[]string{"esc", "q"}, "back", m.CmdBack},
@@ -147,7 +147,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.volumeListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.SelectUpVolume},
 		{[]string{"down", "j"}, "move down", m.SelectDownVolume},
-		{[]string{"enter"}, "inspect", m.ShowVolumeInspect},
+		{[]string{"i"}, "inspect", m.ShowVolumeInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "remove", m.DeleteVolume},
 		{[]string{"F"}, "force remove", m.ForceDeleteVolume},

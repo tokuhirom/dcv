@@ -61,27 +61,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Don't continue polling for single lines (e.g., "[Log reader stopped]")
 		return m, nil
 
+	// Following 3 cases seems very similar, so we can combine them?
 	case logLinesMsg:
 		m.logViewModel.LogLines(m, msg.lines)
 		// Continue polling for more logs with a small delay
 		return m, tea.Tick(time.Millisecond*50, func(time.Time) tea.Msg {
-			return pollForLogs()()
+			return m.logViewModel.pollForLogs()()
 		})
 
 	case pollLogsContinueMsg:
 		// Continue polling with a delay
 		return m, tea.Tick(time.Millisecond*50, func(time.Time) tea.Msg {
-			return pollForLogs()()
+			return m.logViewModel.pollForLogs()()
 		})
+
+	case commandExecutedMsg:
+		// HandleStart polling for logs after command is set
+		return m, m.logViewModel.pollForLogs()
 
 	case errorMsg:
 		m.err = msg.err
 		m.loading = false
 		return m, nil
-
-	case commandExecutedMsg:
-		// HandleStart polling for logs after command is set
-		return m, pollForLogs()
 
 	case topLoadedMsg:
 		m.loading = false
@@ -446,9 +447,6 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "y", "Y":
 		// Confirm quit
 		m.quitConfirmation = false
-		if m.currentView == LogView {
-			stopLogReader()
-		}
 		return m, tea.Quit
 	case "n", "N", "esc":
 		// Cancel quit
@@ -498,7 +496,7 @@ func (m *Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.projectListViewKeymap[msg.String()]
+	handler, ok := m.composeProjectListViewKeymap[msg.String()]
 	if ok {
 		return handler(msg)
 	}

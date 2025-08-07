@@ -258,7 +258,7 @@ func TestComposeProjectListViewModel_KeyHandlers(t *testing.T) {
 	model.initializeKeyHandlers()
 
 	// Verify key handlers are registered
-	handlers := model.projectListViewHandlers
+	handlers := model.composeProjectListViewHandlers
 	assert.Greater(t, len(handlers), 0, "Should have registered key handlers")
 
 	// Check view-specific handlers

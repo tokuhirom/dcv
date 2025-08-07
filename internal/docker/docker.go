@@ -4,13 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -28,47 +26,15 @@ func (c *Client) Compose(projectName string) *ComposeClient {
 	}
 }
 
-// executeCaptured executes a command and logs the result
-func (c *Client) executeCaptured(args ...string) ([]byte, error) {
-	cmd := c.execute(args...)
-
-	startTime := time.Now()
-	cmdStr := strings.Join(cmd.Args, " ")
-
-	output, err := cmd.CombinedOutput()
-	duration := time.Since(startTime)
-
-	exitCode := 0
-	errorStr := ""
-
-	if err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitCode()
-		}
-		errorStr = err.Error()
+func (c *Client) Dind(dindHostContainerID string) *DindClient {
+	return &DindClient{
+		hostContainerID: dindHostContainerID,
 	}
-
-	slog.Info("Executed command",
-		slog.String("command", cmdStr),
-		slog.Int("exitCode", exitCode),
-		slog.String("error", errorStr),
-		slog.Duration("duration", duration),
-		slog.String("output", string(output)))
-
-	return output, err
-}
-
-func (c *Client) execute(args ...string) *exec.Cmd {
-	slog.Info("Executing docker command",
-		slog.String("args", strings.Join(args, " ")))
-
-	return exec.Command("docker", args...)
 }
 
 // ListComposeProjects lists all Docker Compose projects
 func (c *Client) ListComposeProjects() ([]models.ComposeProject, error) {
-	output, err := c.executeCaptured("compose", "ls", "--format", "json")
+	output, err := ExecuteCaptured("compose", "ls", "--format", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to executeCaptured docker compose ls: %w\nOutput: %s", err, string(output))
 	}
@@ -99,125 +65,16 @@ func (c *Client) ListComposeProjects() ([]models.ComposeProject, error) {
 	return projects, nil
 }
 
-func (c *Client) GetContainerLogs(containerID string, follow bool) (*exec.Cmd, error) {
-	args := []string{"logs", containerID, "--tail", "1000", "--timestamps"}
-	if follow {
-		args = append(args, "-f")
-	}
-
-	cmd := exec.Command("docker", args...)
-
-	return cmd, nil
+func (c *Client) Execute(args ...string) *exec.Cmd {
+	return Execute(args...)
 }
 
-func (c *Client) ListDindContainers(containerID string) ([]models.DockerContainer, error) {
-	output, err := c.executeCaptured("exec", containerID, "docker", "ps", "--format", "json")
-	if err != nil {
-		return nil, fmt.Errorf("failed to executeCaptured docker ps: %w\nOutput: %s", err, string(output))
-	}
-
-	// Try to parse as JSON first
-	containers, err := c.parseDindPSJSON(output)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse docker ps JSON output: %w\nOutput: %s", err, string(output))
-	}
-
-	return containers, nil
-}
-
-func (c *Client) GetDindContainerLogs(hostContainerID, targetContainerID string, follow bool) (*exec.Cmd, error) {
-	args := []string{"exec", hostContainerID, "docker", "logs", targetContainerID, "--tail", "1000", "--timestamps"}
-	if follow {
-		args = append(args, "-f")
-	}
-	cmd := c.execute(args...)
-
-	return cmd, nil
-}
-
-func (c *Client) parseDindPSJSON(output []byte) ([]models.DockerContainer, error) {
-	containers := make([]models.DockerContainer, 0)
-
-	// Docker ps outputs each container as a separate JSON object on its own line
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-
-		var container models.DockerContainer
-
-		if err := json.Unmarshal(line, &container); err != nil {
-			// Skip invalid lines
-			continue
-		}
-
-		containers = append(containers, container)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return containers, nil
-}
-
-func (c *Client) KillContainer(containerID string) error {
-	output, err := c.executeCaptured("kill", containerID)
-	if err != nil {
-		return fmt.Errorf("failed to executeCaptured docker compose kill: %w\nOutput: %s", err, string(output))
-	}
-
-	return nil
-}
-
-func (c *Client) StopContainer(containerID string) error {
-	output, err := c.executeCaptured("stop", containerID)
-	if err != nil {
-		return fmt.Errorf("failed to executeCaptured docker compose stop: %w\nOutput: %s", err, string(output))
-	}
-
-	return nil
-}
-
-func (c *Client) StartContainer(containerID string) error {
-	output, err := c.executeCaptured("start", containerID)
-	if err != nil {
-		return fmt.Errorf("failed to executeCaptured docker compose start: %w\nOutput: %s", err, string(output))
-	}
-
-	slog.Info("Started container",
-		slog.String("containerID", containerID),
-		slog.String("output", string(output)))
-
-	return nil
-}
-
-func (c *Client) RestartContainer(containerID string) error {
-	output, err := c.executeCaptured("restart", containerID)
-	if err != nil {
-		return fmt.Errorf("failed to executeCaptured docker compose restart: %w\nOutput: %s", err, string(output))
-	}
-
-	return nil
-}
-
-func (c *Client) RemoveContainer(containerID string) error {
-	output, err := c.executeCaptured("rm", "-f", containerID)
-	if err != nil {
-		return fmt.Errorf("failed to executeCaptured docker compose rm: %w\nOutput: %s", err, string(output))
-	}
-
-	slog.Info("Removed container",
-		slog.String("containerID", containerID),
-		slog.String("output", string(output)))
-
-	return nil
+func (c *Client) ExecuteCaptured(args ...string) ([]byte, error) {
+	return ExecuteCaptured(args...)
 }
 
 func (c *Client) PauseContainer(containerID string) error {
-	output, err := c.executeCaptured("pause", containerID)
+	output, err := ExecuteCaptured("pause", containerID)
 	if err != nil {
 		return fmt.Errorf("failed to pause container: %w\nOutput: %s", err, string(output))
 	}
@@ -230,7 +87,7 @@ func (c *Client) PauseContainer(containerID string) error {
 }
 
 func (c *Client) UnpauseContainer(containerID string) error {
-	output, err := c.executeCaptured("unpause", containerID)
+	output, err := ExecuteCaptured([]string{"unpause", containerID}...)
 	if err != nil {
 		return fmt.Errorf("failed to unpause container: %w\nOutput: %s", err, string(output))
 	}
@@ -242,46 +99,20 @@ func (c *Client) UnpauseContainer(containerID string) error {
 	return nil
 }
 
-func (c *Client) GetStats() (string, error) {
-	output, err := c.executeCaptured("stats", "--no-stream", "--format", "json", "--all")
-	if err != nil {
-		return "", fmt.Errorf("failed to executeCaptured: %w", err)
-	}
-
-	return string(output), nil
-}
-
-func (c *Client) ListAllContainers(showAll bool) ([]models.DockerContainer, error) {
+func (c *Client) ListContainers(showAll bool) ([]models.DockerContainer, error) {
 	args := []string{"ps", "--format", "json"}
 	if showAll {
 		args = append(args, "--all")
 	}
 
-	output, err := c.executeCaptured(args...)
+	output, err := ExecuteCaptured(args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute docker ps: %w\nOutput: %s", err, string(output))
 	}
 
-	// Docker ps outputs each container as a separate JSON object on its own line
-	containers := make([]models.DockerContainer, 0)
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-
-		var container models.DockerContainer
-		if err := json.Unmarshal(line, &container); err != nil {
-			// Skip invalid lines
-			continue
-		}
-
-		containers = append(containers, container)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	containers, err := ParsePSJSON(output)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse docker ps JSON output: %w\nOutput: %s", err, string(output))
 	}
 
 	return containers, nil
@@ -293,7 +124,7 @@ func (c *Client) ListImages(showAll bool) ([]models.DockerImage, error) {
 		args = append(args, "--all")
 	}
 
-	output, err := c.executeCaptured(args...)
+	output, err := ExecuteCaptured(args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute docker images: %w\nOutput: %s", err, string(output))
 	}
@@ -330,7 +161,7 @@ func (c *Client) RemoveImage(imageID string, force bool) error {
 	}
 	args = append(args, imageID)
 
-	output, err := c.executeCaptured(args...)
+	output, err := ExecuteCaptured(args...)
 	if err != nil {
 		return fmt.Errorf("failed to remove image: %w\nOutput: %s", err, string(output))
 	}
@@ -343,32 +174,13 @@ func (c *Client) RemoveImage(imageID string, force bool) error {
 }
 
 func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
-	output, err := c.executeCaptured("network", "ls", "--format", "json")
+	output, err := ExecuteCaptured("network", "ls", "--format", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute docker network ls: %w\nOutput: %s", err, string(output))
 	}
 
-	// Docker network ls outputs each network as a separate JSON object on its own line
-	networks := make([]models.DockerNetwork, 0)
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-
-		var networkList models.DockerNetworkList
-		if err := json.Unmarshal(line, &networkList); err != nil {
-			// Skip invalid lines
-			continue
-		}
-
-		// Convert to DockerNetwork
-		network := networkList.ToDockerNetwork()
-		networks = append(networks, network)
-	}
-
-	if err := scanner.Err(); err != nil {
+	networks, err := ParseNetworkJSON(output)
+	if err != nil {
 		return nil, err
 	}
 
@@ -376,7 +188,7 @@ func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
 }
 
 func (c *Client) RemoveNetwork(networkID string) error {
-	output, err := c.executeCaptured("network", "rm", networkID)
+	output, err := ExecuteCaptured([]string{"network", "rm", networkID}...)
 	if err != nil {
 		return fmt.Errorf("failed to remove network: %w\nOutput: %s", err, string(output))
 	}
@@ -390,23 +202,13 @@ func (c *Client) RemoveNetwork(networkID string) error {
 
 func (c *Client) ListContainerFiles(containerID, path string) ([]models.ContainerFile, error) {
 	// Use ls -la to get detailed file information
-	output, err := c.executeCaptured("exec", containerID, "ls", "-la", path)
+	output, err := ExecuteCaptured("exec", containerID, "ls", "-la", path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in container: %w\nOutput: %s", err, string(output))
 	}
 
 	files := models.ParseLsOutput(string(output))
 	return files, nil
-}
-
-func (c *Client) ReadContainerFile(containerID, path string) (string, error) {
-	// Use cat to read file contents
-	output, err := c.executeCaptured("exec", containerID, "cat", path)
-	if err != nil {
-		return "", fmt.Errorf("failed to read file in container: %w\nOutput: %s", err, string(output))
-	}
-
-	return string(output), nil
 }
 
 func (c *Client) ExecuteInteractive(containerID string, command []string) error {
@@ -426,70 +228,4 @@ func (c *Client) ExecuteInteractive(containerID string, command []string) error 
 
 	// Run the command
 	return cmd.Run()
-}
-
-func (c *Client) InspectContainer(containerID string) (string, error) {
-	output, err := c.executeCaptured("inspect", containerID)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect container: %w\nOutput: %s", err, string(output))
-	}
-
-	// Pretty format the JSON output
-	var jsonData interface{}
-	if err := json.Unmarshal(output, &jsonData); err != nil {
-		// If we can't parse it, return raw output
-		return string(output), nil
-	}
-
-	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		// If we can't pretty print, return raw output
-		return string(output), nil
-	}
-
-	return string(prettyJSON), nil
-}
-
-func (c *Client) InspectImage(imageID string) (string, error) {
-	output, err := c.executeCaptured("image", "inspect", imageID)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect image: %w\nOutput: %s", err, string(output))
-	}
-
-	// Pretty format the JSON output
-	var jsonData interface{}
-	if err := json.Unmarshal(output, &jsonData); err != nil {
-		// If we can't parse it, return raw output
-		return string(output), nil
-	}
-
-	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		// If we can't pretty print, return raw output
-		return string(output), nil
-	}
-
-	return string(prettyJSON), nil
-}
-
-func (c *Client) InspectNetwork(networkID string) (string, error) {
-	output, err := c.executeCaptured("network", "inspect", networkID)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect network: %w\nOutput: %s", err, string(output))
-	}
-
-	// Pretty format the JSON output
-	var jsonData interface{}
-	if err := json.Unmarshal(output, &jsonData); err != nil {
-		// If we can't parse it, return raw output
-		return string(output), nil
-	}
-
-	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		// If we can't pretty print, return raw output
-		return string(output), nil
-	}
-
-	return string(prettyJSON), nil
 }

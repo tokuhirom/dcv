@@ -15,7 +15,7 @@ import (
 // ListVolumes lists all Docker volumes
 func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 	// Use docker volume ls with JSON format
-	output, err := c.executeCaptured("volume", "ls", "--format", "json")
+	output, err := ExecuteCaptured([]string{"volume", "ls", "--format", "json"}...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute docker volume ls: %w\nOutput: %s", err, string(output))
 	}
@@ -51,48 +51,7 @@ func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 		return nil, fmt.Errorf("error scanning volume output: %w", err)
 	}
 
-	// Get size information using docker system df
-	sizeInfo, err := c.getVolumeSizes()
-	if err != nil {
-		slog.Warn("Failed to get volume sizes", slog.String("error", err.Error()))
-	} else {
-		// Map sizes to volumes
-		sizeMap := make(map[string]models.DockerVolumeSize)
-		for _, size := range sizeInfo {
-			sizeMap[size.Name] = size
-		}
-
-		for i := range volumes {
-			if size, ok := sizeMap[volumes[i].Name]; ok {
-				// Parse size string (e.g., "1.051GB" -> bytes)
-				volumes[i].Size = parseVolumeSize(size.Size)
-				// Parse links (reference count)
-				if links, err := strconv.Atoi(size.Links); err == nil {
-					volumes[i].RefCount = links
-				}
-			}
-		}
-	}
-
 	return volumes, nil
-}
-
-// getVolumeSizes gets volume size information using docker system df
-func (c *Client) getVolumeSizes() ([]models.DockerVolumeSize, error) {
-	output, err := c.executeCaptured("system", "df", "--format", "json", "-v")
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute docker system df: %w", err)
-	}
-
-	var systemDf struct {
-		Volumes []models.DockerVolumeSize `json:"Volumes"`
-	}
-
-	if err := json.Unmarshal(output, &systemDf); err != nil {
-		return nil, fmt.Errorf("failed to parse docker system df output: %w", err)
-	}
-
-	return systemDf.Volumes, nil
 }
 
 // RemoveVolume removes a Docker volume
@@ -103,7 +62,7 @@ func (c *Client) RemoveVolume(volumeName string, force bool) error {
 	}
 	args = append(args, volumeName)
 
-	output, err := c.executeCaptured(args...)
+	output, err := ExecuteCaptured(args...)
 	if err != nil {
 		return fmt.Errorf("failed to remove volume %s: %w\nOutput: %s", volumeName, err, string(output))
 	}
@@ -117,7 +76,7 @@ func (c *Client) RemoveVolume(volumeName string, force bool) error {
 
 // InspectVolume inspects a Docker volume and returns the formatted JSON
 func (c *Client) InspectVolume(volumeName string) (string, error) {
-	output, err := c.executeCaptured("volume", "inspect", volumeName)
+	output, err := ExecuteCaptured([]string{"volume", "inspect", volumeName}...)
 	if err != nil {
 		return "", fmt.Errorf("failed to inspect volume %s: %w\nOutput: %s", volumeName, err, string(output))
 	}

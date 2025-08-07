@@ -120,8 +120,8 @@ func (m *DockerContainerListViewModel) HandleDown(*Model) tea.Cmd {
 func (m *DockerContainerListViewModel) HandleLog(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		model.logViewModel.Clear(model, container.Names)
-		return streamLogsReal(model.dockerClient, container.ID, false, "")
+		model.logViewModel.SwitchToLogView(model, container.Names)
+		return model.logViewModel.streamLogsReal(model.dockerClient, container.ID, false, "")
 	}
 	return nil
 }
@@ -207,7 +207,7 @@ func (m *DockerContainerListViewModel) HandleBack(model *Model) tea.Cmd {
 
 func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
 	return func() tea.Msg {
-		containers, err := client.ListAllContainers(showAll)
+		containers, err := client.ListContainers(showAll)
 		return dockerContainersLoadedMsg{
 			containers: containers,
 			err:        err,

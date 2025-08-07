@@ -88,7 +88,8 @@ func (view ViewType) String() string {
 // Model represents the application state
 type Model struct {
 	// Current view
-	currentView ViewType
+	currentView  ViewType
+	previousView ViewType
 
 	// Docker client
 	dockerClient *docker.Client
@@ -136,8 +137,8 @@ type Model struct {
 	topViewHandlers                 []KeyConfig
 	statsViewKeymap                 map[string]KeyHandler
 	statsViewHandlers               []KeyConfig
-	projectListViewKeymap           map[string]KeyHandler
-	projectListViewHandlers         []KeyConfig
+	composeProjectListViewKeymap    map[string]KeyHandler
+	composeProjectListViewHandlers  []KeyConfig
 	dockerListViewKeymap            map[string]KeyHandler
 	dockerContainerListViewHandlers []KeyConfig
 	imageListViewKeymap             map[string]KeyHandler
@@ -217,6 +218,11 @@ func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
+func (m *Model) SwitchView(view ViewType) {
+	m.previousView = m.currentView
+	m.currentView = view
+}
+
 // Messages
 
 type processesLoadedMsg struct {
@@ -229,6 +235,8 @@ type dindContainersLoadedMsg struct {
 	err        error
 }
 
+// logLineMsg represents a single log line message
+// TODO: we can merge logLineMsg and logLinesMsg into a single type
 type logLineMsg struct {
 	line string
 }
@@ -352,7 +360,8 @@ func loadTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
 
 func removeService(client *docker.Client, containerID string) tea.Cmd {
 	return func() tea.Msg {
-		err := client.RemoveContainer(containerID)
+		cmd := client.Execute("rm", "-f", containerID)
+		err := cmd.Wait()
 		return serviceActionCompleteMsg{
 			service: containerID,
 			err:     err,
@@ -383,7 +392,7 @@ func unpauseService(client *docker.Client, containerID string) tea.Cmd {
 func loadStats(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		// TODO: support periodic update
-		output, err := client.GetStats()
+		output, err := client.ExecuteCaptured("stats", "--no-stream", "--format", "json", "--all")
 		if err != nil {
 			return statsLoadedMsg{
 				stats: nil,
@@ -393,7 +402,7 @@ func loadStats(client *docker.Client) tea.Cmd {
 
 		// Parse JSON lines format
 		var stats []ContainerStats
-		lines := strings.Split(strings.TrimSpace(output), "\n")
+		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 		for _, line := range lines {
 			if line == "" {
 				continue
@@ -478,9 +487,9 @@ func loadContainerFiles(client *docker.Client, containerID, path string) tea.Cmd
 
 func loadFileContent(client *docker.Client, containerID, path string) tea.Cmd {
 	return func() tea.Msg {
-		content, err := client.ReadContainerFile(containerID, path)
+		content, err := client.ExecuteCaptured("exec", containerID, "cat", path)
 		return fileContentLoadedMsg{
-			content: content,
+			content: string(content),
 			path:    path,
 			err:     err,
 		}

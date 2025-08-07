@@ -138,6 +138,7 @@ func (m *Model) CmdFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) ShowDindLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// TODO: merge into CmdLog
 	return m, m.dindProcessListViewModel.HandleShowLog(m)
 }
 
@@ -373,7 +374,7 @@ func (m *Model) GetHelpText() string {
 	case StatsView:
 		configs = m.statsViewHandlers
 	case ComposeProjectListView:
-		configs = m.projectListViewHandlers
+		configs = m.composeProjectListViewHandlers
 	case DockerContainerListView:
 		configs = m.dockerContainerListViewHandlers
 	case ImageListView:
