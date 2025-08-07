@@ -27,44 +27,19 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		return s.String()
 	}
 
-	// Define consistent styles for table cells
-	idStyle := lipgloss.NewStyle().Width(12)
-	imageStyle := lipgloss.NewStyle().Width(30)
-	statusStyle := lipgloss.NewStyle().Width(20)
-	portsStyle := lipgloss.NewStyle().Width(30)
-	nameStyle := lipgloss.NewStyle().Width(20)
-
 	t := table.New().
-		Border(lipgloss.HiddenBorder()).
+		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			baseStyle := normalStyle
 			if row == m.selectedDockerContainer {
 				baseStyle = selectedStyle
 			}
-
-			// Apply column-specific styling
-			switch col {
-			case 0:
-				return baseStyle.Inherit(idStyle)
-			case 1:
-				return baseStyle.Inherit(imageStyle)
-			case 2:
-				return baseStyle.Inherit(statusStyle)
-			case 3:
-				return baseStyle.Inherit(portsStyle)
-			case 4:
-				return baseStyle.Inherit(nameStyle)
-			default:
-				return baseStyle
-			}
+			return baseStyle
 		}).
 		Headers("CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES").
-		Height(availableHeight - 8).
-		BorderBottom(false).
-		BorderTop(false).
-		Width(model.width).
-		Offset(m.selectedDockerContainer)
+		Height(availableHeight).
+		Width(model.width)
 
 	for _, container := range m.dockerContainers {
 		// Truncate container ID
@@ -72,14 +47,12 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		if len(id) > 12 {
 			id = id[:12]
 		}
-		id = idStyle.Render(id)
 
 		// Truncate image name
 		image := container.Image
 		if len(image) > 30 {
 			image = image[:27] + "..."
 		}
-		image = imageStyle.Render(image)
 
 		// Status with color
 		status := container.Status
@@ -94,17 +67,16 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		if len(ports) > 30 {
 			ports = ports[:27] + "..."
 		}
-		ports = portsStyle.Render(ports)
 
 		name := container.Names
 		if container.IsDind() {
-			name = dindStyle.Render("⬢ ") + nameStyle.Render(name)
-		} else {
-			name = nameStyle.Render(name)
+			name = dindStyle.Render("⬢ ") + name
 		}
 
 		t.Row(id, image, status, ports, name)
 	}
+
+	t.Offset(m.selectedDockerContainer)
 
 	s.WriteString(t.Render() + "\n")
 

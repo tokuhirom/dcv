@@ -55,16 +55,11 @@ func (m *Model) View() string {
 	title := m.viewTitle()
 	titleHeight := lipgloss.Height(titleStyle.Render(title))
 
-	// Calculate available Height for body content
-	// Layout: title (with margin) + body + footer
-	titleRendered := titleStyle.Render(title)
-	actualTitleHeight := lipgloss.Height(titleRendered)
-
 	footer := m.viewFooter()
 	footerHeight := lipgloss.Height(footer)
 
 	// Available Height = total Height - title Height - footer Height
-	availableBodyHeight := m.Height - actualTitleHeight - footerHeight
+	availableBodyHeight := m.Height - titleHeight - footerHeight
 	if availableBodyHeight < 1 {
 		availableBodyHeight = 1
 	}
