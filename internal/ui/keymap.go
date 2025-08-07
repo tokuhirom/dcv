@@ -132,8 +132,8 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Network List View
 	m.networkListViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "move up", m.SelectUpNetwork},       // TODO: rename
-		{[]string{"down", "j"}, "move down", m.SelectDownNetwork}, // TODO: rename
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"D"}, "delete", m.CmdDelete},

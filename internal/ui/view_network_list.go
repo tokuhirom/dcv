@@ -85,16 +85,16 @@ func (m *NetworkListViewModel) Show(model *Model) tea.Cmd {
 	return loadDockerNetworks(model.dockerClient)
 }
 
-// HandleSelectUp moves the selection up
-func (m *NetworkListViewModel) HandleSelectUp() tea.Cmd {
+// HandleUp moves the selection up
+func (m *NetworkListViewModel) HandleUp() tea.Cmd {
 	if m.selectedDockerNetwork > 0 {
 		m.selectedDockerNetwork--
 	}
 	return nil
 }
 
-// HandleSelectDown moves the selection down
-func (m *NetworkListViewModel) HandleSelectDown() tea.Cmd {
+// HandleDown moves the selection down
+func (m *NetworkListViewModel) HandleDown() tea.Cmd {
 	if m.selectedDockerNetwork < len(m.dockerNetworks)-1 {
 		m.selectedDockerNetwork++
 	}

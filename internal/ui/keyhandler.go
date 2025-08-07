@@ -39,6 +39,8 @@ func (m *Model) CmdRefresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case NetworkListView:
+		return m, m.networkListViewModel.HandleUp()
 	case HelpView:
 		return m, m.helpViewModel.HandleUp()
 	case DindProcessListView:
@@ -76,6 +78,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case NetworkListView:
+		return m, m.networkListViewModel.HandleDown()
 	case HelpView:
 		return m, m.helpViewModel.HandleDown()
 	case DindProcessListView:
@@ -408,15 +412,6 @@ func (m *Model) GetStyledHelpText() string {
 
 func (m *Model) CmdImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.imageListViewModel.Show(m)
-}
-
-// Network list handlers
-func (m *Model) SelectUpNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.networkListViewModel.HandleSelectUp()
-}
-
-func (m *Model) SelectDownNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.networkListViewModel.HandleSelectDown()
 }
 
 func (m *Model) CmdNetworkLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
