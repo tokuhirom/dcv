@@ -50,7 +50,7 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 			return normalStyle
 		}).
 		Headers("SERVICE", "IMAGE", "STATUS", "PORTS").
-		Height(availableHeight).
+		Height(availableHeight - 2).
 		Width(model.width).
 		Offset(m.selectedContainer)
 

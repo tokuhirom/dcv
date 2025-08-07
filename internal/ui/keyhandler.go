@@ -171,6 +171,10 @@ func (m *Model) ShowDockerContainerList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleToggleAll(m)
+	case ImageListView:
+		return m, m.imageListViewModel.HandleToggleAll(m)
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleToggleAll(m)
 	default:
@@ -236,12 +240,6 @@ func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
-}
-
-func (m *Model) ToggleAllDockerContainers(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.dockerContainerListViewModel.showAll = !m.dockerContainerListViewModel.showAll
-	m.loading = true
-	return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
 }
 
 func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -423,10 +421,6 @@ func (m *Model) GetStyledHelpText() string {
 
 func (m *Model) ShowImageList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.imageListViewModel.Show(m)
-}
-
-func (m *Model) ToggleAllImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.imageListViewModel.HandleToggleAll(m)
 }
 
 func (m *Model) DeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

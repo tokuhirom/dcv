@@ -38,7 +38,7 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 	// Create table
 	t := table.New().
 		Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE").
-		Height(availableHeight - 2).
+		Height(availableHeight - 6).
 		Width(model.width).
 		Offset(m.selectedDockerImage)
 
