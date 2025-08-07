@@ -59,7 +59,9 @@ func (m *Model) View() string {
 	// Layout: title (with margin) + body + footer
 	titleRendered := titleStyle.Render(title)
 	actualTitleHeight := lipgloss.Height(titleRendered)
-	footerHeight := 1
+
+	footer := m.viewFooter()
+	footerHeight := lipgloss.Height(footer)
 
 	// Available Height = total Height - title Height - footer Height
 	availableBodyHeight := m.Height - actualTitleHeight - footerHeight
@@ -69,23 +71,11 @@ func (m *Model) View() string {
 
 	// Get body content with available Height
 	body := m.viewBody(availableBodyHeight)
-	bodyHeight := strings.Count(body, "\n") + 1
+	bodyHeight := lipgloss.Height(body)
 
-	// Special handling for HelpView (it has its own footer)
-	if m.currentView == HelpView {
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			titleStyle.Render(title),
-			body,
-		)
-	}
+	totalContentHeight := titleHeight + bodyHeight + footerHeight
 
-	// Build footer content (command line or quit confirmation or help hint)
-	footer := m.viewFooter()
-
-	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for spacing
-
-	// Add padding if needed to push footer to bottom
+	// Add padding if needed to push footer to the bottom
 	if totalContentHeight < m.Height {
 		padding := m.Height - totalContentHeight
 		body = body + strings.Repeat("\n", padding)
@@ -208,6 +198,8 @@ func (m *Model) viewFooter() string {
 		return m.inspectViewModel.RenderSearchCmdLine()
 	} else if m.commandViewModel.commandMode {
 		return m.commandViewModel.RenderCmdLine()
+	} else if m.currentView == HelpView {
+		return helpStyle.Render("Press ESC or q to go back")
 	} else {
 		return helpStyle.Render("Press ? for help")
 	}

@@ -194,10 +194,6 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		s.WriteString("\n" + helpStyle.Render(scrollInfo))
 	}
 
-	// Footer
-	footer := "\n" + helpStyle.Render("Press ESC or q to go back")
-	s.WriteString(footer)
-
 	return s.String()
 }
 
