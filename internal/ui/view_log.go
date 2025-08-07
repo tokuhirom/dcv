@@ -35,12 +35,15 @@ func (m *LogViewModel) SwitchToLogView(model *Model, containerName string) {
 
 func (m *LogViewModel) StreamContainerLogs(model *Model, container models.DockerContainer) tea.Cmd {
 	m.SwitchToLogView(model, container.Names)
-	return m.streamLogsReal(model.dockerClient, container.ID, false, "")
+	cmd := model.dockerClient.Execute("logs", container.ID, "--tail", "1000", "--timestamps", "--follow")
+	return m.streamLogsReal(cmd)
 }
 
 func (m *LogViewModel) StreamComposeLogs(model *Model, composeContainer models.ComposeContainer) tea.Cmd {
 	m.SwitchToLogView(model, composeContainer.Name)
-	return m.streamLogsReal(model.dockerClient, composeContainer.ID, false, "")
+
+	cmd := model.dockerClient.Execute("logs", composeContainer.ID, "--tail", "1000", "--timestamps", "--follow")
+	return m.streamLogsReal(cmd)
 }
 
 func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
@@ -48,7 +51,9 @@ func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, 
 	m.hostContainer = model.dindProcessListViewModel.currentDindHost
 	m.isDindLog = true
 
-	return m.streamLogsReal(model.dockerClient, container.ID, true, dindHostContainerID)
+	cmd := model.dockerClient.Dind(dindHostContainerID).Execute(
+		"logs", container.ID, "--tail", "1000", "--timestamps", "--follow")
+	return m.streamLogsReal(cmd)
 }
 
 func (m *LogViewModel) HandleBack(model *Model) tea.Cmd {
