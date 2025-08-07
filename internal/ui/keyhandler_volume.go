@@ -18,11 +18,6 @@ func (m *Model) ShowVolumeList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.volumeListViewModel.Show(m)
 }
 
-// Action handlers
-func (m *Model) ShowVolumeInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.volumeListViewModel.HandleInspect(m)
-}
-
 func (m *Model) DeleteVolume(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.volumeListViewModel.HandleDelete(m)
 }

@@ -442,10 +442,6 @@ func (m *Model) ForceDeleteImage(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.imageListViewModel.HandleForceDelete(m)
 }
 
-func (m *Model) ShowImageInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.imageListViewModel.HandleInspect(m)
-}
-
 // Network list handlers
 func (m *Model) SelectUpNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.networkListViewModel.HandleSelectUp()
@@ -461,10 +457,6 @@ func (m *Model) ShowNetworkList(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) DeleteNetwork(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.networkListViewModel.HandleDelete(m)
-}
-
-func (m *Model) ShowNetworkInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.networkListViewModel.HandleInspect(m)
 }
 
 func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -541,6 +533,14 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 // Inspect handlers
 func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case VolumeListView:
+		return m, m.volumeListViewModel.HandleInspect(m)
+	case NetworkListView:
+		return m, m.networkListViewModel.HandleInspect(m)
+	case ImageListView:
+		return m, m.imageListViewModel.HandleInspect(m)
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleInspect(m)
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleInspect(m)
 	default:
@@ -548,17 +548,6 @@ func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			slog.String("view", m.currentView.String()))
 		return m, nil
 	}
-}
-
-func (m *Model) ShowDockerInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleInspect(m)
-	default:
-		slog.Info("Unhandled :inspect command in current view",
-			slog.String("view", m.currentView.String()))
-	}
-	return m, nil
 }
 
 func (m *Model) CmdSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
