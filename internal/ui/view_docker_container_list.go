@@ -96,7 +96,12 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		}
 		ports = portsStyle.Render(ports)
 
-		name := nameStyle.Render(container.Names)
+		name := container.Names
+		if container.IsDind() {
+			name = dindStyle.Render("⬢ ") + nameStyle.Render(name)
+		} else {
+			name = nameStyle.Render(name)
+		}
 
 		t.Row(id, image, status, ports, name)
 	}
