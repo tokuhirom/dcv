@@ -160,9 +160,9 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
-			// Header row
-			if row == 0 {
-				return headerStyle
+			baseStyle := normalStyle
+			if row == m.scrollY {
+				baseStyle = selectedStyle
 			}
 
 			// Regular rows
@@ -177,22 +177,17 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 					Foreground(lipgloss.Color("214")).
 					Width(30)
 			case 2: // Description column
-				newStyle := normalStyle
+				newStyle := baseStyle
 				return newStyle.Width(40)
 			default:
-				return normalStyle
+				return baseStyle
 			}
 		}).
 		Headers("Key", "Command", "Description").
-		Rows(visibleTableRows...)
+		Rows(visibleTableRows...).
+		Height(availableHeight - 2)
 
 	s.WriteString(t.String())
-
-	// Scroll indicator
-	if len(allRows) > visibleRows {
-		scrollInfo := fmt.Sprintf(" [Showing %d-%d of %d] ", startIdx+1, endIdx, len(allRows))
-		s.WriteString("\n" + helpStyle.Render(scrollInfo))
-	}
 
 	return s.String()
 }

@@ -265,7 +265,7 @@ func TestComposeProcessListView_KeyHandlers(t *testing.T) {
 		// Check dind handler in view-specific handlers
 		hasDindSwitch := false
 		for _, config := range m.composeProcessListViewHandlers {
-			if strings.Contains(config.Description, "dind") {
+			if strings.Contains(strings.ToLower(config.Description), "dind") {
 				hasDindSwitch = true
 			}
 		}

@@ -68,12 +68,9 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 	t.Focus()
 
 	// Move to selected row
-	for i := 0; i < m.selectedDockerVolume; i++ {
-		t.MoveDown(1)
-	}
+	t.MoveDown(m.selectedDockerVolume)
 
 	s.WriteString(t.View())
-	s.WriteString("\n")
 
 	return s.String()
 }

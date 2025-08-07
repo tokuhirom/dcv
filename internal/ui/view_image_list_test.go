@@ -216,21 +216,6 @@ func TestImageListViewModel_Operations(t *testing.T) {
 		assert.Nil(t, cmd)
 	})
 
-	t.Run("HandleForceDelete force removes selected image", func(t *testing.T) {
-		model := &Model{loading: false}
-		vm := &ImageListViewModel{
-			dockerImages: []models.DockerImage{
-				{ID: "image1"},
-			},
-			selectedDockerImage: 0,
-		}
-
-		cmd := vm.HandleForceDelete(model)
-
-		assert.True(t, model.loading)
-		assert.NotNil(t, cmd)
-	})
-
 	t.Run("HandleInspect shows image inspection", func(t *testing.T) {
 		model := &Model{
 			currentView: ImageListView,
@@ -329,7 +314,6 @@ func TestImageListViewModel_EmptySelection(t *testing.T) {
 
 		// Test all operations that depend on selection
 		assert.Nil(t, vm.HandleDelete(model))
-		assert.Nil(t, vm.HandleForceDelete(model))
 		assert.Nil(t, vm.HandleInspect(model))
 
 		// Navigation should not crash
@@ -347,7 +331,7 @@ func TestImageListViewModel_KeyHandlers(t *testing.T) {
 	assert.Greater(t, len(handlers), 0, "Should have registered key handlers")
 
 	// Check specific handlers exist
-	expectedKeys := []string{"up", "down", "a", "D", "F", "i", "r"} // 'q' is now a global handler
+	expectedKeys := []string{"up", "down", "a", "D", "i", "r"} // 'q' is now a global handler
 	registeredKeys := make(map[string]bool)
 
 	for _, h := range handlers {
