@@ -48,6 +48,8 @@ func (m *Model) SelectDownDindContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case FileContentView:
+		return m, m.fileContentViewModel.HandleUp()
 	case FileBrowserView:
 		return m, m.fileBrowserViewModel.HandleUp()
 	case LogView:
@@ -75,6 +77,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
 
 	switch m.currentView {
+	case FileContentView:
+		return m, m.fileContentViewModel.HandleDown(m.Height)
 	case FileBrowserView:
 		return m, m.fileBrowserViewModel.HandleDown()
 	case LogView:
@@ -516,15 +520,6 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
-}
-
-// File content handlers
-func (m *Model) ScrollFileUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.fileContentViewModel.HandleScrollUp()
-}
-
-func (m *Model) ScrollFileDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.fileContentViewModel.HandleScrollDown(m.Height)
 }
 
 func (m *Model) GoToFileEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

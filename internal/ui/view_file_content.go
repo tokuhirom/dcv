@@ -72,14 +72,14 @@ func (m *FileContentViewModel) Load(model *Model, containerID, path string) tea.
 	return loadFileContent(model.dockerClient, containerID, path)
 }
 
-func (m *FileContentViewModel) HandleScrollUp() tea.Cmd {
+func (m *FileContentViewModel) HandleUp() tea.Cmd {
 	if m.scrollY > 0 {
 		m.scrollY--
 	}
 	return nil
 }
 
-func (m *FileContentViewModel) HandleScrollDown(height int) tea.Cmd {
+func (m *FileContentViewModel) HandleDown(height int) tea.Cmd {
 	lines := strings.Split(m.content, "\n")
 	maxScroll := len(lines) - (height - 5)
 	if m.scrollY < maxScroll && maxScroll > 0 {
