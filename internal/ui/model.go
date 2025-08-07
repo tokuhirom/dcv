@@ -88,8 +88,8 @@ func (view ViewType) String() string {
 // Model represents the application state
 type Model struct {
 	// Current view
-	currentView  ViewType
-	previousView ViewType
+	currentView ViewType
+	viewHistory []ViewType
 
 	// Docker client
 	dockerClient *docker.Client
@@ -225,8 +225,27 @@ func (m *Model) SwitchView(view ViewType) {
 		return
 	}
 
-	m.previousView = m.currentView
+	m.viewHistory = append(m.viewHistory, m.currentView)
 	m.currentView = view
+}
+
+func (m *Model) SwitchToPreviousView() {
+	for len(m.viewHistory) > 0 && m.viewHistory[len(m.viewHistory)-1] == m.currentView {
+		// Remove consecutive duplicates from the history
+		m.viewHistory = m.viewHistory[:len(m.viewHistory)-1]
+	}
+
+	if len(m.viewHistory) == 0 {
+		slog.Info("No previous view to switch to, staying in current view",
+			slog.String("current_view", m.currentView.String()))
+		return
+	}
+
+	previousView := m.viewHistory[len(m.viewHistory)-1]
+	slog.Info("Switching to previous view",
+		slog.String("previous_view", previousView.String()))
+	m.viewHistory = m.viewHistory[:len(m.viewHistory)-1] // Remove the last
+	m.currentView = previousView
 }
 
 // Messages

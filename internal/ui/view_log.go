@@ -53,7 +53,7 @@ func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, 
 
 func (m *LogViewModel) HandleBack(model *Model) tea.Cmd {
 	m.stopLogReader()
-	model.currentView = model.previousView
+	model.SwitchToPreviousView()
 	return nil
 }
 

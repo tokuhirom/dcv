@@ -195,8 +195,8 @@ func TestLogView_Navigation(t *testing.T) {
 
 	t.Run("HandleBack returns to process list", func(t *testing.T) {
 		model := &Model{
-			currentView:  LogView,
-			previousView: ComposeProcessListView,
+			currentView: LogView,
+			viewHistory: ComposeProcessListView,
 			logViewModel: LogViewModel{
 				isDindLog: false,
 			},
@@ -209,8 +209,8 @@ func TestLogView_Navigation(t *testing.T) {
 
 	t.Run("HandleBack returns to dind list for dind logs", func(t *testing.T) {
 		model := &Model{
-			currentView:  LogView,
-			previousView: DindProcessListView,
+			currentView: LogView,
+			viewHistory: DindProcessListView,
 			logViewModel: LogViewModel{
 				isDindLog: true,
 			},
