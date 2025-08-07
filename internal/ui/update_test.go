@@ -106,6 +106,7 @@ func TestHandleKeyPress(t *testing.T) {
 			name: "escape from log view",
 			model: Model{
 				currentView: LogView,
+				viewHistory: []ViewType{ComposeProcessListView},
 				logViewModel: LogViewModel{
 					containerName: "web-1",
 				},
@@ -301,8 +302,9 @@ func TestHandleDindListKeys(t *testing.T) {
 	assert.True(t, m.logViewModel.isDindLog)
 	assert.NotNil(t, cmd)
 
-	// Test escape
+	// Test escape - add viewHistory for proper navigation
 	model.currentView = DindProcessListView
+	model.viewHistory = []ViewType{ComposeProcessListView}
 	newModel, _ = model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEsc})
 	m = newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView)
@@ -333,13 +335,13 @@ func TestUpdateMessages(t *testing.T) {
 	assert.Equal(t, testErr, m.err)
 	assert.False(t, m.loading)
 
-	// Test log line message (for status messages like "[Log reader stopped]")
+	// Test log lines message (status messages are now handled same as regular logs)
 	m.currentView = LogView
 	m.Height = 10
 	newModel, cmd := m.Update(logLinesMsg{lines: []string{"[Log reader stopped]"}})
 	m = newModel.(*Model)
 	assert.Contains(t, m.logViewModel.logs, "[Log reader stopped]")
-	assert.Nil(t, cmd) // Status messages don't trigger continued polling
+	assert.NotNil(t, cmd) // logLinesMsg always returns a command to continue polling
 
 	// Test log lines message (for actual log streaming)
 	m.logViewModel.logs = []string{} // Reset logs

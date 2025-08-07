@@ -53,8 +53,8 @@ func TestLogView_Rendering(t *testing.T) {
 				width:  100,
 				Height: 5,
 			},
-			height:   3,
-			expected: []string{"Line 2", "Line 3", "Line 4"},
+			height:   5,                                      // Changed from 3 to 5 to allow more lines to be visible
+			expected: []string{"Line 2", "Line 3", "Line 4"}, // visibleHeight = 5 - 2 = 3 lines
 		},
 		{
 			name: "shows loading message",
@@ -427,7 +427,7 @@ func TestLogView_Update(t *testing.T) {
 
 		assert.Equal(t, 3, len(m.logViewModel.logs))
 		assert.Equal(t, "Line 3", m.logViewModel.logs[2])
-		assert.Nil(t, cmd) // logLineMsg doesn't continue polling
+		assert.NotNil(t, cmd) // logLinesMsg now always returns a command to continue polling
 	})
 }
 

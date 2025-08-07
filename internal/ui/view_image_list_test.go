@@ -252,16 +252,17 @@ func TestImageListViewModel_Operations(t *testing.T) {
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("HandleBack returns to compose process list", func(t *testing.T) {
+	t.Run("HandleBack returns to previous view", func(t *testing.T) {
 		model := &Model{
 			currentView: ImageListView,
+			viewHistory: []ViewType{ComposeProcessListView},
 		}
 		vm := &ImageListViewModel{}
 
 		cmd := vm.HandleBack(model)
 
 		assert.Equal(t, ComposeProcessListView, model.currentView)
-		assert.NotNil(t, cmd)
+		assert.Nil(t, cmd) // HandleBack now returns nil
 	})
 }
 
@@ -346,7 +347,7 @@ func TestImageListViewModel_KeyHandlers(t *testing.T) {
 	assert.Greater(t, len(handlers), 0, "Should have registered key handlers")
 
 	// Check specific handlers exist
-	expectedKeys := []string{"up", "down", "a", "D", "F", "i", "r", "q"}
+	expectedKeys := []string{"up", "down", "a", "D", "F", "i", "r"} // 'q' is now a global handler
 	registeredKeys := make(map[string]bool)
 
 	for _, h := range handlers {
