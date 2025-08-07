@@ -56,12 +56,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = nil
 		return m, nil
 
-	case logLineMsg:
-		m.logViewModel.LogLine(m, msg.line)
-		// Don't continue polling for single lines (e.g., "[Log reader stopped]")
-		return m, nil
-
-	// Following 3 cases seems very similar, so we can combine them?
+	// Following 2 cases seems very similar, so we can combine them?
 	case logLinesMsg:
 		m.logViewModel.LogLines(m, msg.lines)
 		// Continue polling for more logs with a small delay

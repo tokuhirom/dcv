@@ -193,7 +193,7 @@ func (lrm *LogReaderManager) pollForLogs() tea.Cmd {
 
 		if lrm.activeLogReader == nil {
 			// Don't log here as we don't have access to client
-			return logLineMsg{line: "[Log reader stopped]"}
+			return logLinesMsg{lines: []string{"[Log reader stopped]"}}
 		}
 
 		newLines, newIndex, done := lrm.activeLogReader.getNewLines(lrm.lastLogIndex)
@@ -210,7 +210,7 @@ func (lrm *LogReaderManager) pollForLogs() tea.Cmd {
 			// Log streaming finished
 			if lrm.lastLogIndex == 0 {
 				lrm.activeLogReader = nil
-				return logLineMsg{line: "[No logs available for this container]"}
+				return logLinesMsg{lines: []string{"[No logs available for this container]"}}
 			}
 			lrm.activeLogReader = nil
 			return nil

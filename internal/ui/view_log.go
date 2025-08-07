@@ -333,19 +333,6 @@ func (m *LogViewModel) performFilter() {
 	m.logScrollY = 0
 }
 
-func (m *LogViewModel) LogLine(model *Model, line string) {
-	m.logs = append(m.logs, line)
-	// Keep only last 10000 lines to prevent unbounded memory growth
-	if len(m.logs) > 10000 {
-		m.logs = m.logs[len(m.logs)-10000:]
-	}
-	// Auto-scroll to bottom
-	maxScroll := len(m.logs) - (model.Height - 4)
-	if maxScroll > 0 {
-		m.logScrollY = maxScroll
-	}
-}
-
 func (m *LogViewModel) LogLines(model *Model, lines []string) {
 	m.logs = append(m.logs, lines...)
 	// Keep only last 10000 lines to prevent unbounded memory growth

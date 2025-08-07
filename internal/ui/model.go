@@ -262,12 +262,6 @@ type dindContainersLoadedMsg struct {
 	err        error
 }
 
-// logLineMsg represents a single log line message
-// TODO: we can merge logLineMsg and logLinesMsg into a single type
-type logLineMsg struct {
-	line string
-}
-
 type logLinesMsg struct {
 	lines []string
 }
