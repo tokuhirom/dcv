@@ -197,7 +197,7 @@ func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {
-	model.currentView = DockerContainerListView
+	model.SwitchView(DockerContainerListView)
 	model.loading = true
 	return loadDockerContainers(model.dockerClient, m.showAll)
 }

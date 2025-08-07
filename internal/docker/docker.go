@@ -100,7 +100,7 @@ func (c *Client) UnpauseContainer(containerID string) error {
 }
 
 func (c *Client) ListContainers(showAll bool) ([]models.DockerContainer, error) {
-	args := []string{"ps", "--format", "json"}
+	args := []string{"ps", "--format", "json", "--no-trunc"}
 	if showAll {
 		args = append(args, "--all")
 	}
