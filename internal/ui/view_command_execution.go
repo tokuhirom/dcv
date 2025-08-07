@@ -250,7 +250,7 @@ func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previo
 
 func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, operation string) tea.Cmd {
 	m.previousView = model.currentView
-	model.currentView = CommandExecutionView
+	model.SwitchView(CommandExecutionView)
 	m.output = []string{}
 	m.scrollY = 0
 	m.done = false
