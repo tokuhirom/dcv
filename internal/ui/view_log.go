@@ -72,7 +72,7 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	// Calculate visible logs based on scroll position
-	visibleHeight := availableHeight
+	visibleHeight := availableHeight - 2
 
 	startIdx := m.logScrollY
 	endIdx := startIdx + visibleHeight
