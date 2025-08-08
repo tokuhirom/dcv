@@ -26,10 +26,9 @@ func (m *ImageListViewModel) Title() string {
 
 // render renders the image list view
 func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
-	var s strings.Builder
-
 	// No images
 	if len(m.dockerImages) == 0 {
+		var s strings.Builder
 		s.WriteString("No images found.\n")
 		s.WriteString("Press 'r' to refresh.\n")
 		return s.String()
@@ -74,17 +73,11 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 		}
 	}
 
-	// Create table
-	tableHeight := availableHeight
-	if tableHeight <= 0 {
-		tableHeight = 10
-	}
-
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(tableHeight),
+		table.WithHeight(availableHeight-4),
 	)
 
 	// Set styles
@@ -103,13 +96,9 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 	t.Focus()
 
 	// Move to selected row
-	for i := 0; i < m.selectedDockerImage; i++ {
-		t.MoveDown(1)
-	}
+	t.MoveDown(m.selectedDockerImage)
 
-	s.WriteString(t.View())
-
-	return s.String()
+	return t.View()
 }
 
 // Show switches to the image list view

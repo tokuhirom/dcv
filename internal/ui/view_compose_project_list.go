@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -36,7 +37,10 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 	for _, project := range m.projects {
 		// Status with color
 		status := project.Status
-		if status == "running" {
+		slog.Info("Project status",
+			slog.String("project", project.Name),
+			slog.String("status", status))
+		if strings.Contains(status, "running") {
 			status = statusUpStyle.Render(status)
 		} else {
 			status = statusDownStyle.Render(status)
@@ -47,6 +51,10 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 		if len(configFiles) > 50 {
 			configFiles = configFiles[:47] + "..."
 		}
+		configFiles = lipgloss.NewStyle().
+			Background(lipgloss.Color("0")).
+			Foreground(lipgloss.Color("4")).
+			Render(configFiles)
 
 		rows = append(rows, table.Row{project.Name, status, configFiles})
 	}
