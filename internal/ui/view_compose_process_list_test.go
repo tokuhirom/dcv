@@ -3,10 +3,8 @@ package ui
 import (
 	"strings"
 	"testing"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/models"
@@ -324,29 +322,19 @@ func TestComposeProcessListView_FullOutput(t *testing.T) {
 		m.width = 120
 		m.Height = 30
 		m.projectName = "test-project"
+		m.loading = false
 		m.initializeKeyHandlers()
 
-		tm := teatest.NewTestModel(
-			t, m,
-			teatest.WithInitialTermSize(120, 30),
-		)
+		// Test the View() method directly instead of using teatest
+		output := m.View()
 
-		// Wait for render
-		teatest.WaitFor(
-			t, tm.Output(),
-			func(bts []byte) bool {
-				output := string(bts)
-				// The view should show the project name and the container
-				return strings.Contains(output, "test-project") &&
-					strings.Contains(output, "nginx:latest")
-			},
-			teatest.WithCheckInterval(time.Millisecond*50),
-			teatest.WithDuration(time.Second),
-		)
-
-		// Send quit
-		tm.Send(tea.QuitMsg{})
-		tm.WaitFinished(t, teatest.WithFinalTimeout(time.Second))
+		// Check that the output contains expected content
+		assert.Contains(t, output, "test-project")
+		assert.Contains(t, output, "SERVICE")
+		assert.Contains(t, output, "IMAGE")
+		assert.Contains(t, output, "nginx:latest")
+		assert.Contains(t, output, "web")
+		assert.Contains(t, output, "Up") // Status shows as "Up" not "running"
 	})
 }
 
