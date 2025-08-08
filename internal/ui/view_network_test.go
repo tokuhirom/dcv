@@ -106,8 +106,6 @@ func TestRenderNetworkList(t *testing.T) {
 		selectedDockerNetwork: 0,
 	}
 
-	m := &Model{}
-
 	// Test rendering with sufficient Height
 	output := vm.render(10)
 
