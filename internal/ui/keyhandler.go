@@ -247,7 +247,7 @@ func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleKill(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleKill(m)
+		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "kill")
 	default:
 		slog.Info("Unhandled :kill command in current view",
 			slog.String("view", m.currentView.String()))
@@ -260,7 +260,7 @@ func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleStop(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleStop(m)
+		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "stop")
 	default:
 		slog.Info("Unhandled :stop command in current view",
 			slog.String("view", m.currentView.String()))
@@ -273,7 +273,7 @@ func (m *Model) CmdStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleStart(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleStart(m)
+		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "start")
 	default:
 		slog.Info("Unhandled :start command in current view",
 			slog.String("view", m.currentView.String()))
@@ -286,7 +286,7 @@ func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleRestart(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleRestart(m)
+		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "restart")
 	default:
 		slog.Info("Unhandled :restart command in current view",
 			slog.String("view", m.currentView.String()))
@@ -365,7 +365,7 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleShell(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleShell(m)
+		return m, m.composeProcessListViewModel.HandleShell()
 	default:
 		slog.Info("Unhandled :shell command in current view",
 			slog.String("view", m.currentView.String()))
