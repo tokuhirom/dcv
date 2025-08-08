@@ -79,7 +79,7 @@ func (m *Model) registerCommands() {
 
 				// Get shorter, more intuitive command name if available
 				shortName := getShortCommandName(methodName)
-				
+
 				if shortName != "" {
 					// If we have a short name, use it as the primary command
 					commandRegistry[shortName] = CommandHandler{
