@@ -451,29 +451,6 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) refreshCurrentView() tea.Cmd { // TODO: deprecate
-	switch m.currentView {
-	case ComposeProcessListView:
-		return loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
-	case DockerContainerListView:
-		return loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
-	case ImageListView:
-		return loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
-	case NetworkListView:
-		return loadDockerNetworks(m.dockerClient)
-	case VolumeListView:
-		return m.volumeListViewModel.HandleRefresh(m)
-	case ComposeProjectListView:
-		return loadProjects(m.dockerClient)
-	case DindProcessListView:
-		return m.dindProcessListViewModel.HandleRefresh(m)
-	case FileBrowserView:
-		return m.fileBrowserViewModel.HandleRefresh(m)
-	default:
-		return nil
-	}
-}
-
 func (m *Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	handler, ok := m.topViewKeymap[msg.String()]
 	if ok {
