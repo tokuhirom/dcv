@@ -18,8 +18,6 @@ type DockerClient interface {
 	StartContainer(containerID string) error
 	RestartContainer(containerID string) error
 	RemoveContainer(containerID string) error
-	PauseContainer(containerID string) error
-	UnpauseContainer(containerID string) error
 	GetStats() (string, error)
 	ListAllContainers(showAll bool) ([]models.DockerContainer, error)
 	ListImages(showAll bool) ([]models.DockerImage, error)
@@ -48,6 +46,4 @@ type ComposeClientInterface interface {
 	Top() (string, error)
 	Up(detach bool) error
 	Down() error
-	PauseService(serviceName string) error
-	UnpauseService(serviceName string) error
 }

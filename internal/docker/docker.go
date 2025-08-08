@@ -73,32 +73,6 @@ func (c *Client) ExecuteCaptured(args ...string) ([]byte, error) {
 	return ExecuteCaptured(args...)
 }
 
-func (c *Client) PauseContainer(containerID string) error {
-	output, err := ExecuteCaptured("pause", containerID)
-	if err != nil {
-		return fmt.Errorf("failed to pause container: %w\nOutput: %s", err, string(output))
-	}
-
-	slog.Info("Paused container",
-		slog.String("containerID", containerID),
-		slog.String("output", string(output)))
-
-	return nil
-}
-
-func (c *Client) UnpauseContainer(containerID string) error {
-	output, err := ExecuteCaptured([]string{"unpause", containerID}...)
-	if err != nil {
-		return fmt.Errorf("failed to unpause container: %w\nOutput: %s", err, string(output))
-	}
-
-	slog.Info("Unpaused container",
-		slog.String("containerID", containerID),
-		slog.String("output", string(output)))
-
-	return nil
-}
-
 func (c *Client) ListContainers(showAll bool) ([]models.DockerContainer, error) {
 	args := []string{"ps", "--format", "json", "--no-trunc"}
 	if showAll {

@@ -58,20 +58,26 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Check if selected container is paused
 		if m.composeProcessListViewModel.selectedContainer < len(m.composeProcessListViewModel.composeContainers) {
 			selected := m.composeProcessListViewModel.composeContainers[m.composeProcessListViewModel.selectedContainer]
+			var args []string
 			if selected.State == "paused" {
-				return m, unpauseService(m.dockerClient, selected.ID)
+				args = []string{"unpause", selected.ID}
+			} else {
+				args = []string{"pause", selected.ID}
 			}
-			return m, pauseService(m.dockerClient, selected.ID)
+			return m, m.commandExecutionViewModel.ExecuteCommand(m, args...)
 		}
 		return m, nil
 	case DockerContainerListView:
-		// Docker container list doesn't have pause/unpause yet, could be added
+		// Docker container list pause/unpause support
 		if m.dockerContainerListViewModel.selectedDockerContainer < len(m.dockerContainerListViewModel.dockerContainers) {
 			selected := m.dockerContainerListViewModel.dockerContainers[m.dockerContainerListViewModel.selectedDockerContainer]
+			var args []string
 			if strings.Contains(selected.Status, "Paused") {
-				return m, unpauseService(m.dockerClient, selected.ID)
+				args = []string{"unpause", selected.ID}
+			} else {
+				args = []string{"pause", selected.ID}
 			}
-			return m, pauseService(m.dockerClient, selected.ID)
+			return m, m.commandExecutionViewModel.ExecuteCommand(m, args...)
 		}
 		return m, nil
 	default:
