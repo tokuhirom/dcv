@@ -1,12 +1,10 @@
 package ui
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 // KeyHandler represents a function that handles a key press
@@ -294,118 +292,6 @@ func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			slog.String("view", m.currentView.String()))
 	}
 	return m, nil
-}
-
-// renderHelpText generates help text based on key configurations and screen width
-func renderHelpText(configs []KeyConfig, width int) string {
-	if len(configs) == 0 {
-		return ""
-	}
-
-	var helpItems []string
-	for _, config := range configs {
-		// Use the first key as the display key
-		if len(config.Keys) > 0 {
-			key := config.Keys[0]
-			helpItems = append(helpItems, fmt.Sprintf("%s:%s", key, config.Description))
-		}
-	}
-
-	// Calculate available width (leaving some margin)
-	availableWidth := width - 4
-	if availableWidth < 20 {
-		// If screen is too narrow, show minimal help
-		return "Press q to quit"
-	}
-
-	// Join items and wrap if necessary
-	helpText := strings.Join(helpItems, " | ")
-
-	if len(helpText) <= availableWidth {
-		// All items fit on one line
-		return helpText
-	}
-
-	// Need to wrap or truncate
-	var lines []string
-	var currentLine string
-
-	for i, item := range helpItems {
-		if i == 0 {
-			currentLine = item
-		} else {
-			testLine := currentLine + " | " + item
-			if len(testLine) <= availableWidth {
-				currentLine = testLine
-			} else {
-				// HandleStart new line
-				lines = append(lines, currentLine)
-				currentLine = item
-			}
-		}
-	}
-
-	if currentLine != "" {
-		lines = append(lines, currentLine)
-	}
-
-	// Return first line (can be extended to show multiple lines)
-	if len(lines) > 0 {
-		return lines[0]
-	}
-
-	return helpText[:availableWidth-3] + "..."
-}
-
-// GetHelpText returns the help text for the current view
-func (m *Model) GetHelpText() string {
-	var configs []KeyConfig
-
-	switch m.currentView {
-	case ComposeProcessListView:
-		configs = m.composeProcessListViewHandlers
-	case LogView:
-		configs = m.logViewHandlers
-	case DindProcessListView:
-		configs = m.dindListViewHandlers
-	case TopView:
-		configs = m.topViewHandlers
-	case StatsView:
-		configs = m.statsViewHandlers
-	case ComposeProjectListView:
-		configs = m.composeProjectListViewHandlers
-	case DockerContainerListView:
-		configs = m.dockerContainerListViewHandlers
-	case ImageListView:
-		configs = m.imageListViewHandlers
-	case NetworkListView:
-		configs = m.networkListViewHandlers
-	case FileBrowserView:
-		configs = m.fileBrowserHandlers
-	case FileContentView:
-		configs = m.fileContentHandlers
-	case InspectView:
-		configs = m.inspectViewHandlers
-	default:
-		return ""
-	}
-
-	return renderHelpText(configs, m.width)
-}
-
-// GetStyledHelpText returns the help text with styling
-func (m *Model) GetStyledHelpText() string {
-	helpText := m.GetHelpText()
-	if helpText == "" {
-		return ""
-	}
-
-	style := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240")).
-		Italic(true).
-		Padding(0, 1)
-
-	return style.Render(helpText)
 }
 
 func (m *Model) CmdImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
