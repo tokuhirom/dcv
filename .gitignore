@@ -36,3 +36,6 @@ dist/
 
 dcv_test
 
+
+# Lefthook
+.lefthook-local/

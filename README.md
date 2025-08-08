@@ -399,6 +399,31 @@ Shows real-time output when executing Docker commands (start, stop, restart, kil
 
 ## Development
 
+### Setting up development environment
+
+```bash
+# Install all development dependencies including lefthook
+make dev-deps
+```
+
+This will install:
+- golangci-lint for linting
+- goimports for code formatting
+- lefthook for git hooks
+
+### Git Hooks (Lefthook)
+
+This project uses [lefthook](https://github.com/evilmartians/lefthook) to ensure code quality:
+
+- **Pre-commit**: Automatically formats Go code and runs quick tests
+- **Pre-push**: Runs full linting and test suite
+
+To manually run hooks:
+```bash
+lefthook run pre-commit
+lefthook run pre-push
+```
+
 ### Running tests
 
 ```bash
@@ -409,12 +434,6 @@ make test
 
 ```bash
 make all
-```
-
-### Installing development dependencies
-
-```bash
-make dev-deps
 ```
 
 ### Formatting code
