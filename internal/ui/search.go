@@ -3,6 +3,8 @@ package ui
 import (
 	"regexp"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 type SearchViewModel struct {
@@ -13,6 +15,30 @@ type SearchViewModel struct {
 	searchResults    []int // Line indices of search results
 	currentSearchIdx int   // Current position in searchResults
 	searchCursorPos  int   // Cursor position in search text
+}
+
+func (m *SearchViewModel) RenderSearchCmdLine() string {
+	// Show search prompt
+	searchText := m.searchText
+	searchCursorPos := m.searchCursorPos
+
+	cursor := " "
+	if searchCursorPos < len(searchText) {
+		cursor = string(searchText[searchCursorPos])
+	}
+
+	// Build search line with cursor
+	before := searchText[:searchCursorPos]
+	after := ""
+	if searchCursorPos < len(searchText) {
+		after = searchText[searchCursorPos+1:]
+	}
+
+	cursorStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("226")).
+		Foreground(lipgloss.Color("235"))
+
+	return "/" + before + cursorStyle.Render(cursor) + after
 }
 
 func (m *SearchViewModel) ClearSearch() {

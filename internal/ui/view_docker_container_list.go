@@ -3,9 +3,9 @@ package ui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 
@@ -18,7 +18,7 @@ type DockerContainerListViewModel struct {
 	showAll                 bool
 }
 
-func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) string {
+func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	// Container list
@@ -27,56 +27,28 @@ func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) str
 		return s.String()
 	}
 
-	// Define consistent styles for table cells
-	idStyle := lipgloss.NewStyle().Width(12)
-	imageStyle := lipgloss.NewStyle().Width(30)
-	statusStyle := lipgloss.NewStyle().Width(20)
-	portsStyle := lipgloss.NewStyle().Width(30)
-	nameStyle := lipgloss.NewStyle().Width(20)
+	widthPerColumn := model.width / 5
+	columns := []table.Column{
+		{Title: "CONTAINER ID", Width: widthPerColumn},
+		{Title: "IMAGE", Width: widthPerColumn},
+		{Title: "STATUS", Width: widthPerColumn},
+		{Title: "PORTS", Width: widthPerColumn},
+		{Title: "NAMES", Width: widthPerColumn},
+	}
 
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			baseStyle := normalStyle
-			if row == m.selectedDockerContainer {
-				baseStyle = selectedStyle
-			}
-
-			// Apply column-specific styling
-			switch col {
-			case 0:
-				return baseStyle.Inherit(idStyle)
-			case 1:
-				return baseStyle.Inherit(imageStyle)
-			case 2:
-				return baseStyle.Inherit(statusStyle)
-			case 3:
-				return baseStyle.Inherit(portsStyle)
-			case 4:
-				return baseStyle.Inherit(nameStyle)
-			default:
-				return baseStyle
-			}
-		}).
-		Headers("CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES").
-		Height(availableHeight - 6).
-		Offset(m.selectedDockerContainer)
-
+	rows := make([]table.Row, 0, len(m.dockerContainers))
 	for _, container := range m.dockerContainers {
 		// Truncate container ID
 		id := container.ID
 		if len(id) > 12 {
 			id = id[:12]
 		}
-		id = idStyle.Render(id)
 
 		// Truncate image name
 		image := container.Image
 		if len(image) > 30 {
 			image = image[:27] + "..."
 		}
-		image = imageStyle.Render(image)
 
 		// Status with color
 		status := container.Status
@@ -91,14 +63,40 @@ func (m *DockerContainerListViewModel) renderDockerList(availableHeight int) str
 		if len(ports) > 30 {
 			ports = ports[:27] + "..."
 		}
-		ports = portsStyle.Render(ports)
 
-		name := nameStyle.Render(container.Names)
+		name := container.Names
+		if container.IsDind() {
+			name = dindStyle.Render("⬢ ") + name
+		}
 
-		t.Row(id, image, status, ports, name)
+		rows = append(rows, table.Row{id, image, status, ports, name})
 	}
 
-	s.WriteString(t.Render() + "\n")
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithHeight(availableHeight-1),
+		table.WithFocused(true),
+	)
+
+	// Apply styles
+	styles := table.DefaultStyles()
+	styles.Header = styles.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	styles.Selected = selectedStyle
+	styles.Cell = styles.Cell.
+		BorderForeground(lipgloss.Color("240"))
+	t.SetStyles(styles)
+
+	// Set cursor position
+	if m.selectedDockerContainer < len(rows) {
+		t.MoveDown(m.selectedDockerContainer)
+	}
+
+	s.WriteString(t.View())
 
 	return s.String()
 }
@@ -120,8 +118,7 @@ func (m *DockerContainerListViewModel) HandleDown(*Model) tea.Cmd {
 func (m *DockerContainerListViewModel) HandleLog(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		model.logViewModel.SwitchToLogView(model, container.Names)
-		return model.logViewModel.streamLogsReal(model.dockerClient, container.ID, false, "")
+		return model.logViewModel.StreamContainerLogs(model, container)
 	}
 	return nil
 }
@@ -195,14 +192,30 @@ func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {
-	model.currentView = DockerContainerListView
+	model.SwitchView(DockerContainerListView)
 	model.loading = true
 	return loadDockerContainers(model.dockerClient, m.showAll)
 }
 
 func (m *DockerContainerListViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleToggleAll(model *Model) tea.Cmd {
+	m.showAll = !m.showAll
+	model.loading = true
+	return loadDockerContainers(model.dockerClient, m.showAll)
+}
+
+func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		if container.IsDind() {
+			return model.dindProcessListViewModel.Load(model, container)
+		}
+	}
+	return nil
 }
 
 func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {

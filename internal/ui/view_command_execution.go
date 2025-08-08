@@ -16,14 +16,13 @@ import (
 )
 
 type CommandExecutionViewModel struct {
-	cmd          *exec.Cmd
-	output       []string
-	scrollY      int
-	done         bool
-	exitCode     int
-	cmdString    string
-	reader       *bufio.Reader
-	previousView ViewType
+	cmd       *exec.Cmd
+	output    []string
+	scrollY   int
+	done      bool
+	exitCode  int
+	cmdString string
+	reader    *bufio.Reader
 }
 
 func (m *CommandExecutionViewModel) render(model *Model) string {
@@ -76,9 +75,9 @@ func (m *CommandExecutionViewModel) render(model *Model) string {
 	// Footer
 	var footerText string
 	if m.done {
-		footerText = "Press ESC or q to go back"
+		footerText = "Press ESC to go back"
 	} else {
-		footerText = "Press Ctrl+C to cancel, ESC or q to go back"
+		footerText = "Press Ctrl+C to cancel, ESC to go back"
 	}
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("7")).
@@ -148,21 +147,8 @@ func (m *CommandExecutionViewModel) HandleBack(model *Model) tea.Cmd {
 	}
 
 	// Go back to previous view
-	model.currentView = m.previousView
-	model.loading = true
-
-	// TODO: CommandExecutionModelView でここを管理するのは微妙｡refresh してもらう旨だけ､メッセージ送ればよろしいかもしれず｡
-
-	// Reload data for the previous view
-	switch m.previousView {
-	case ComposeProcessListView:
-		return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
-	case DockerContainerListView:
-		return loadDockerContainers(model.dockerClient, model.dockerContainerListViewModel.showAll)
-	default:
-		model.loading = false
-		return nil
-	}
+	model.SwitchToPreviousView()
+	return nil
 }
 
 func executeComposeCommandWithStreaming(client *docker.Client, projectName string, operation string) tea.Cmd {
@@ -238,8 +224,7 @@ func executeContainerCommand(client *docker.Client, containerID string, operatio
 }
 
 func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previousView ViewType, containerID string, operation string) tea.Cmd {
-	m.previousView = previousView
-	model.currentView = CommandExecutionView
+	model.SwitchView(CommandExecutionView)
 	m.output = []string{}
 	m.scrollY = 0
 	m.done = false
@@ -249,8 +234,7 @@ func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previo
 }
 
 func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, operation string) tea.Cmd {
-	m.previousView = model.currentView
-	model.currentView = CommandExecutionView
+	model.SwitchView(CommandExecutionView)
 	m.output = []string{}
 	m.scrollY = 0
 	m.done = false

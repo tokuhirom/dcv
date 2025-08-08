@@ -3,9 +3,9 @@ package ui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -17,9 +17,8 @@ type ComposeProjectListViewModel struct {
 }
 
 func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) string {
-	var s strings.Builder
-
 	if len(m.projects) == 0 {
+		var s strings.Builder
 		s.WriteString("\nNo Docker Compose projects found.\n")
 		s.WriteString("\nPress q to quit\n")
 		return s.String()
@@ -27,20 +26,13 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 
 	// Project list
 
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == m.selectedProject {
-				return selectedStyle
-			}
-			return normalStyle
-		}).
-		Headers("NAME", "STATUS", "CONFIG FILES").
-		Height(availableHeight).
-		Width(model.width).
-		Offset(m.selectedProject)
+	columns := []table.Column{
+		{Title: "NAME", Width: 20},
+		{Title: "STATUS", Width: 15},
+		{Title: "CONFIG FILES", Width: model.width - 40},
+	}
 
+	rows := make([]table.Row, 0, len(m.projects))
 	for _, project := range m.projects {
 		// Status with color
 		status := project.Status
@@ -56,12 +48,34 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 			configFiles = configFiles[:47] + "..."
 		}
 
-		t.Row(project.Name, status, configFiles)
+		rows = append(rows, table.Row{project.Name, status, configFiles})
 	}
 
-	s.WriteString(t.Render() + "\n")
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithHeight(availableHeight-2),
+		table.WithFocused(true),
+	)
 
-	return s.String()
+	// Apply styles
+	styles := table.DefaultStyles()
+	styles.Header = styles.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	styles.Selected = selectedStyle
+	styles.Cell = styles.Cell.
+		BorderForeground(lipgloss.Color("240"))
+	t.SetStyles(styles)
+
+	// Set cursor position
+	if m.selectedProject < len(rows) {
+		t.MoveDown(m.selectedProject)
+	}
+
+	return t.View()
 }
 
 func (m *ComposeProjectListViewModel) HandleUp(_ *Model) tea.Cmd {

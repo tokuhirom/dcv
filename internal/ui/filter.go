@@ -39,7 +39,7 @@ func (m *FilterViewModel) AppendString(str string) {
 	m.filterCursorPos += len(str)
 }
 
-func (m *FilterViewModel) RenderCmdLine() string {
+func (m *FilterViewModel) RenderFilterCmdLine() string {
 	// Show filter prompt
 	cursor := " "
 	if m.filterCursorPos < len(m.filterText) {

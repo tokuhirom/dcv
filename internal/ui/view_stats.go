@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 )
 
 // StatsViewModel manages the state and rendering of the stats view
@@ -24,18 +24,16 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	// Stats table
+	columns := []table.Column{
+		{Title: "NAME", Width: 20},
+		{Title: "CPU %", Width: 10},
+		{Title: "MEM USAGE", Width: 15},
+		{Title: "MEM %", Width: 10},
+		{Title: "NET I/O", Width: 15},
+		{Title: "BLOCK I/O", Width: 15},
+	}
 
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 {
-				return headerStyle
-			}
-			return normalStyle
-		}).
-		Headers("NAME", "CPU %", "MEM USAGE", "MEM %", "NET I/O", "BLOCK I/O")
-
+	rows := []table.Row{}
 	for _, stat := range m.stats {
 		// Truncate name if too long
 		name := stat.Name
@@ -56,10 +54,28 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 			}
 		}
 
-		t.Row(name, cpu, stat.MemUsage, stat.MemPerc, stat.NetIO, stat.BlockIO)
+		rows = append(rows, table.Row{name, cpu, stat.MemUsage, stat.MemPerc, stat.NetIO, stat.BlockIO})
 	}
 
-	s.WriteString(t.Render() + "\n")
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(false),
+	)
+
+	// Apply styles
+	styles := table.DefaultStyles()
+	styles.Header = styles.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	styles.Cell = styles.Cell.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240"))
+	t.SetStyles(styles)
+
+	s.WriteString(t.View() + "\n")
 
 	return s.String()
 }
@@ -79,8 +95,8 @@ func (m *StatsViewModel) HandleRefresh(model *Model) tea.Cmd {
 
 // HandleBack returns to the compose process list view
 func (m *StatsViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 // Loaded updates the stats list after loading

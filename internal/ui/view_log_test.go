@@ -53,8 +53,8 @@ func TestLogView_Rendering(t *testing.T) {
 				width:  100,
 				Height: 5,
 			},
-			height:   3,
-			expected: []string{"Line 2", "Line 3", "Line 4"},
+			height:   5,                                      // Changed from 3 to 5 to allow more lines to be visible
+			expected: []string{"Line 2", "Line 3", "Line 4"}, // visibleHeight = 5 - 2 = 3 lines
 		},
 		{
 			name: "shows loading message",
@@ -195,8 +195,8 @@ func TestLogView_Navigation(t *testing.T) {
 
 	t.Run("HandleBack returns to process list", func(t *testing.T) {
 		model := &Model{
-			currentView:  LogView,
-			previousView: ComposeProcessListView,
+			currentView: LogView,
+			viewHistory: []ViewType{ComposeProcessListView},
 			logViewModel: LogViewModel{
 				isDindLog: false,
 			},
@@ -209,8 +209,8 @@ func TestLogView_Navigation(t *testing.T) {
 
 	t.Run("HandleBack returns to dind list for dind logs", func(t *testing.T) {
 		model := &Model{
-			currentView:  LogView,
-			previousView: DindProcessListView,
+			currentView: LogView,
+			viewHistory: []ViewType{DindProcessListView},
 			logViewModel: LogViewModel{
 				isDindLog: true,
 			},
@@ -317,7 +317,7 @@ func TestLogView_AutoScroll(t *testing.T) {
 }
 
 func TestLogViewModel_ShowMethods(t *testing.T) {
-	t.Run("StreamLogs sets up log view", func(t *testing.T) {
+	t.Run("StreamComposeLogs sets up log view", func(t *testing.T) {
 		model := &Model{
 			currentView: ComposeProcessListView,
 		}
@@ -326,7 +326,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 			Name: "test-container",
 		}
 
-		cmd := model.logViewModel.StreamLogs(model, process, false, "")
+		cmd := model.logViewModel.StreamComposeLogs(model, process)
 
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "test-container", model.logViewModel.containerName)
@@ -336,7 +336,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("ShowDindLog sets up dind log view", func(t *testing.T) {
+	t.Run("StreamLogsDind sets up dind log view", func(t *testing.T) {
 		model := &Model{
 			currentView: DindProcessListView,
 			dindProcessListViewModel: DindProcessListViewModel{
@@ -348,7 +348,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 			Names: "/docker-test",
 		}
 
-		cmd := model.logViewModel.ShowDindLog(model, "dind-container-id", container)
+		cmd := model.logViewModel.StreamLogsDind(model, "dind-container-id", container)
 
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "/docker-test", model.logViewModel.containerName)
@@ -418,8 +418,8 @@ func TestLogView_Update(t *testing.T) {
 			},
 		}
 
-		msg := logLineMsg{
-			line: "Line 3",
+		msg := logLinesMsg{
+			lines: []string{"Line 3"},
 		}
 
 		newModel, cmd := model.Update(msg)
@@ -427,7 +427,7 @@ func TestLogView_Update(t *testing.T) {
 
 		assert.Equal(t, 3, len(m.logViewModel.logs))
 		assert.Equal(t, "Line 3", m.logViewModel.logs[2])
-		assert.Nil(t, cmd) // logLineMsg doesn't continue polling
+		assert.NotNil(t, cmd) // logLinesMsg now always returns a command to continue polling
 	})
 }
 
@@ -529,8 +529,8 @@ func TestLogView_ScrollIndicator(t *testing.T) {
 
 		result := model.logViewModel.render(model, 6)
 
-		// Should show scroll indicator: [6-11/20]
-		assert.Contains(t, result, "[6-11/20]")
+		// Should show scroll indicator: [6-9/20]
+		assert.Contains(t, result, "[6-9/20]")
 	})
 
 	t.Run("shows filtered count in scroll indicator", func(t *testing.T) {
@@ -627,7 +627,7 @@ func TestLogView_Integration(t *testing.T) {
 			ID:   "test-container",
 			Name: "my-app",
 		}
-		cmd := model.logViewModel.StreamLogs(model, process, false, "")
+		cmd := model.logViewModel.StreamComposeLogs(model, process)
 		assert.NotNil(t, cmd)
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "my-app", model.logViewModel.containerName)

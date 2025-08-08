@@ -33,27 +33,32 @@ func (m *LogViewModel) SwitchToLogView(model *Model, containerName string) {
 	m.logScrollY = 0
 }
 
-func (m *LogViewModel) StreamLogs(model *Model, composeContainer models.ComposeContainer, isDind bool, hostService string) tea.Cmd {
-	model.currentView = LogView
-
-	m.containerName = composeContainer.Name
-	m.isDindLog = false
-	m.logs = []string{}
-	m.logScrollY = 0
-	return m.streamLogsReal(model.dockerClient, composeContainer.ID, isDind, hostService)
+func (m *LogViewModel) StreamContainerLogs(model *Model, container models.DockerContainer) tea.Cmd {
+	m.SwitchToLogView(model, container.Names)
+	cmd := model.dockerClient.Execute("logs", container.ID, "--tail", "1000", "--timestamps", "--follow")
+	return m.streamLogsReal(cmd)
 }
 
-func (m *LogViewModel) ShowDindLog(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
+func (m *LogViewModel) StreamComposeLogs(model *Model, composeContainer models.ComposeContainer) tea.Cmd {
+	m.SwitchToLogView(model, composeContainer.Name)
+
+	cmd := model.dockerClient.Execute("logs", composeContainer.ID, "--tail", "1000", "--timestamps", "--follow")
+	return m.streamLogsReal(cmd)
+}
+
+func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
 	m.SwitchToLogView(model, container.Names)
 	m.hostContainer = model.dindProcessListViewModel.currentDindHost
 	m.isDindLog = true
 
-	return m.streamLogsReal(model.dockerClient, container.ID, true, dindHostContainerID)
+	cmd := model.dockerClient.Dind(dindHostContainerID).Execute(
+		"logs", container.ID, "--tail", "1000", "--timestamps", "--follow")
+	return m.streamLogsReal(cmd)
 }
 
 func (m *LogViewModel) HandleBack(model *Model) tea.Cmd {
 	m.stopLogReader()
-	model.currentView = model.previousView
+	model.SwitchToPreviousView()
 	return nil
 }
 
@@ -72,7 +77,7 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	// Calculate visible logs based on scroll position
-	visibleHeight := availableHeight
+	visibleHeight := availableHeight - 2
 
 	startIdx := m.logScrollY
 	endIdx := startIdx + visibleHeight
@@ -326,19 +331,6 @@ func (m *LogViewModel) performFilter() {
 
 	// Reset scroll position when filter changes
 	m.logScrollY = 0
-}
-
-func (m *LogViewModel) LogLine(model *Model, line string) {
-	m.logs = append(m.logs, line)
-	// Keep only last 10000 lines to prevent unbounded memory growth
-	if len(m.logs) > 10000 {
-		m.logs = m.logs[len(m.logs)-10000:]
-	}
-	// Auto-scroll to bottom
-	maxScroll := len(m.logs) - (model.Height - 4)
-	if maxScroll > 0 {
-		m.logScrollY = maxScroll
-	}
 }
 
 func (m *LogViewModel) LogLines(model *Model, lines []string) {

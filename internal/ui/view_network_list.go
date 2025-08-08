@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -18,64 +19,67 @@ type NetworkListViewModel struct {
 
 // render renders the network list view
 func (m *NetworkListViewModel) render(model *Model, availableHeight int) string {
-	var content strings.Builder
-
 	if len(m.dockerNetworks) == 0 {
-		dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-		content.WriteString(dimStyle.Render("No networks found"))
-		return content.String()
+		s := strings.Builder{}
+		s.WriteString("No networks found.\n")
+		s.WriteString(helpStyle.Render("\nPress 'q' to go back"))
+		return s.String()
 	}
 
-	// Table headers
-	headerStyle := lipgloss.NewStyle().Bold(true).Underline(true).Foreground(lipgloss.Color("86"))
-	headers := []string{"NETWORK ID", "NAME", "DRIVER", "SCOPE", "CONTAINERS"}
-	colWidths := []int{12, 30, 15, 10, 10}
-
-	// Render headers
-	for i, header := range headers {
-		content.WriteString(headerStyle.Render(padRight(header, colWidths[i])))
-		if i < len(headers)-1 {
-			content.WriteString(" ")
-		}
+	// Create table columns
+	columns := []table.Column{
+		{Title: "NETWORK ID", Width: 12},
+		{Title: "NAME", Width: 30},
+		{Title: "DRIVER", Width: 15},
+		{Title: "SCOPE", Width: 10},
+		{Title: "CONTAINERS", Width: 10},
 	}
-	content.WriteString("\n")
 
-	// Render networks
-	normalStyle := lipgloss.NewStyle()
-	selectedStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("220")).Background(lipgloss.Color("235"))
-	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-
+	// Create table rows
+	rows := make([]table.Row, len(m.dockerNetworks))
 	for i, network := range m.dockerNetworks {
-		style := normalStyle
-		if i == m.selectedDockerNetwork {
-			style = selectedStyle
-		}
-
-		// Format row data
-		row := []string{
+		rows[i] = table.Row{
 			truncate(network.ID, 12),
 			truncate(network.Name, 30),
 			truncate(network.Driver, 15),
 			truncate(network.Scope, 10),
 			fmt.Sprintf("%d", network.GetContainerCount()),
 		}
-
-		// Render row
-		for j, col := range row {
-			if j == 0 && i != m.selectedDockerNetwork {
-				// Dim the ID for non-selected rows
-				content.WriteString(dimStyle.Render(padRight(col, colWidths[j])))
-			} else {
-				content.WriteString(style.Render(padRight(col, colWidths[j])))
-			}
-			if j < len(row)-1 {
-				content.WriteString(" ")
-			}
-		}
-		content.WriteString("\n")
 	}
 
-	return content.String()
+	// Create table
+	// Calculate height - ensure we show all rows within available space
+	// The height should be the viewport height, not the number of rows
+	tableHeight := availableHeight
+	if tableHeight <= 0 {
+		tableHeight = 10 // Default height if not specified
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(tableHeight-2),
+	)
+
+	// Set styles
+	tableStyle := table.DefaultStyles()
+	tableStyle.Header = tableStyle.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	tableStyle.Selected = tableStyle.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+
+	t.SetStyles(tableStyle)
+	t.Focus()
+
+	t.MoveDown(m.selectedDockerNetwork)
+
+	return t.View()
 }
 
 // Show switches to the network list view
@@ -85,16 +89,16 @@ func (m *NetworkListViewModel) Show(model *Model) tea.Cmd {
 	return loadDockerNetworks(model.dockerClient)
 }
 
-// HandleSelectUp moves the selection up
-func (m *NetworkListViewModel) HandleSelectUp() tea.Cmd {
+// HandleUp moves the selection up
+func (m *NetworkListViewModel) HandleUp() tea.Cmd {
 	if m.selectedDockerNetwork > 0 {
 		m.selectedDockerNetwork--
 	}
 	return nil
 }
 
-// HandleSelectDown moves the selection down
-func (m *NetworkListViewModel) HandleSelectDown() tea.Cmd {
+// HandleDown moves the selection down
+func (m *NetworkListViewModel) HandleDown() tea.Cmd {
 	if m.selectedDockerNetwork < len(m.dockerNetworks)-1 {
 		m.selectedDockerNetwork++
 	}
@@ -127,8 +131,8 @@ func (m *NetworkListViewModel) HandleInspect(model *Model) tea.Cmd {
 
 // HandleBack returns to the compose process list view
 func (m *NetworkListViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 // HandleRefresh reloads the network list
@@ -154,11 +158,4 @@ func truncate(s string, maxLen int) string {
 		return s[:maxLen]
 	}
 	return s[:maxLen-3] + "..."
-}
-
-func padRight(s string, length int) string {
-	if len(s) >= length {
-		return s[:length]
-	}
-	return s + strings.Repeat(" ", length-len(s))
 }

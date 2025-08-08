@@ -3,9 +3,9 @@ package ui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
@@ -21,30 +21,22 @@ type DindProcessListViewModel struct {
 
 // render renders the dind process list view
 func (m *DindProcessListViewModel) render(availableHeight int) string {
-	var s strings.Builder
-
 	if len(m.dindContainers) == 0 {
+		var s strings.Builder
 		s.WriteString("\nNo containers running inside this dind container.\n")
 		s.WriteString("\nPress ESC to go back\n")
 		return s.String()
 	}
 
-	// Container list
-	s.WriteString("\n")
-
 	// Create table
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == m.selectedDindContainer {
-				return selectedStyle
-			}
-			return normalStyle
-		}).
-		Headers("CONTAINER ID", "IMAGE", "STATUS", "NAMES").
-		Height(availableHeight)
+	columns := []table.Column{
+		{Title: "CONTAINER ID", Width: 15},
+		{Title: "IMAGE", Width: 30},
+		{Title: "STATUS", Width: 20},
+		{Title: "NAMES", Width: 30},
+	}
 
+	rows := make([]table.Row, 0, len(m.dindContainers))
 	for _, container := range m.dindContainers {
 		// Truncate container ID
 		id := container.ID
@@ -66,53 +58,75 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			status = statusDownStyle.Render(status)
 		}
 
-		t.Row(id, image, status, container.Names)
+		rows = append(rows, table.Row{id, image, status, container.Names})
 	}
 
-	s.WriteString(t.Render() + "\n\n")
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithHeight(availableHeight-2),
+		table.WithFocused(true),
+	)
 
-	return s.String()
+	// Apply styles
+	styles := table.DefaultStyles()
+	styles.Header = styles.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	styles.Selected = selectedStyle
+	styles.Cell = styles.Cell.
+		BorderForeground(lipgloss.Color("240"))
+	t.SetStyles(styles)
+
+	// Set cursor position
+	if m.selectedDindContainer < len(rows) {
+		t.MoveDown(m.selectedDindContainer)
+	}
+
+	return t.View()
 }
 
 // Load switches to the dind process list view and loads containers
-func (m *DindProcessListViewModel) Load(model *Model, container models.ComposeContainer) tea.Cmd {
-	m.currentDindHost = container.Name
-	m.currentDindContainerID = container.ID
-	model.currentView = DindProcessListView
+func (m *DindProcessListViewModel) Load(model *Model, container models.GenericContainer) tea.Cmd {
+	m.currentDindHost = container.GetName()
+	m.currentDindContainerID = container.GetID()
+	model.SwitchView(DindProcessListView)
 	model.loading = true
-	return loadDindContainers(model.dockerClient, container.ID)
+	return loadDindContainers(model.dockerClient, container.GetID())
 }
 
-// HandleSelectUp moves selection up in the dind container list
-func (m *DindProcessListViewModel) HandleSelectUp() tea.Cmd {
+// HandleUp moves selection up in the dind container list
+func (m *DindProcessListViewModel) HandleUp() tea.Cmd {
 	if m.selectedDindContainer > 0 {
 		m.selectedDindContainer--
 	}
 	return nil
 }
 
-// HandleSelectDown moves selection down in the dind container list
-func (m *DindProcessListViewModel) HandleSelectDown() tea.Cmd {
+// HandleDown moves selection down in the dind container list
+func (m *DindProcessListViewModel) HandleDown() tea.Cmd {
 	if m.selectedDindContainer < len(m.dindContainers)-1 {
 		m.selectedDindContainer++
 	}
 	return nil
 }
 
-// HandleShowLog shows logs for the selected dind container
-func (m *DindProcessListViewModel) HandleShowLog(model *Model) tea.Cmd {
+// HandleLog shows logs for the selected dind container
+func (m *DindProcessListViewModel) HandleLog(model *Model) tea.Cmd {
 	if len(m.dindContainers) == 0 || m.selectedDindContainer >= len(m.dindContainers) {
 		return nil
 	}
 
 	container := m.dindContainers[m.selectedDindContainer]
-	return model.logViewModel.ShowDindLog(model, m.currentDindContainerID, container)
+	return model.logViewModel.StreamLogsDind(model, m.currentDindContainerID, container)
 }
 
 // HandleBack returns to the compose process list view
 func (m *DindProcessListViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 // HandleRefresh reloads the dind container list

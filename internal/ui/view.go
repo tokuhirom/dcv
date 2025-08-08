@@ -18,8 +18,6 @@ var (
 			Foreground(lipgloss.Color("86")).
 			Background(lipgloss.Color("235"))
 
-	normalStyle = lipgloss.NewStyle()
-
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
 			Bold(true)
@@ -55,79 +53,22 @@ func (m *Model) View() string {
 	title := m.viewTitle()
 	titleHeight := lipgloss.Height(titleStyle.Render(title))
 
-	// Calculate available Height for body content
-	// Layout: title (with margin) + body + footer
-	titleRendered := titleStyle.Render(title)
-	actualTitleHeight := lipgloss.Height(titleRendered)
-	footerHeight := 1
+	footer := m.viewFooter()
+	footerHeight := lipgloss.Height(footer)
 
 	// Available Height = total Height - title Height - footer Height
-	availableBodyHeight := m.Height - actualTitleHeight - footerHeight
+	availableBodyHeight := m.Height - titleHeight - footerHeight
 	if availableBodyHeight < 1 {
 		availableBodyHeight = 1
 	}
 
 	// Get body content with available Height
 	body := m.viewBody(availableBodyHeight)
-	bodyHeight := strings.Count(body, "\n") + 1
+	bodyHeight := lipgloss.Height(body)
 
-	// Special handling for HelpView (it has its own footer)
-	if m.currentView == HelpView {
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			titleStyle.Render(title),
-			body,
-		)
-	}
+	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for the bottom padding
 
-	// Build footer content (command line or quit confirmation or help hint)
-	var footer string
-
-	if m.quitConfirmation {
-		// Show quit confirmation dialog
-		footer = errorStyle.Render("Really quit? (y/n)")
-	} else if m.currentView == LogView && m.logViewModel.filterMode {
-		footer = m.logViewModel.RenderCmdLine()
-	} else if (m.currentView == LogView && m.logViewModel.searchMode) || (m.currentView == InspectView && m.inspectViewModel.searchMode) {
-		// Show search prompt
-		var searchText string
-		var searchCursorPos int
-
-		if m.currentView == LogView {
-			searchText = m.logViewModel.searchText
-			searchCursorPos = m.logViewModel.searchCursorPos
-		} else {
-			searchText = m.inspectViewModel.searchText
-			searchCursorPos = m.inspectViewModel.searchCursorPos
-		}
-
-		cursor := " "
-		if searchCursorPos < len(searchText) {
-			cursor = string(searchText[searchCursorPos])
-		}
-
-		// Build search line with cursor
-		before := searchText[:searchCursorPos]
-		after := ""
-		if searchCursorPos < len(searchText) {
-			after = searchText[searchCursorPos+1:]
-		}
-
-		cursorStyle := lipgloss.NewStyle().
-			Background(lipgloss.Color("226")).
-			Foreground(lipgloss.Color("235"))
-
-		footer = "/" + before + cursorStyle.Render(cursor) + after
-	} else if m.commandViewModel.commandMode {
-		footer = m.commandViewModel.RenderCmdLine()
-	} else {
-		// Show help hint
-		footer = helpStyle.Render("Press ? for help")
-	}
-
-	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for spacing
-
-	// Add padding if needed to push footer to bottom
+	// Add padding if needed to push footer to the bottom
 	if totalContentHeight < m.Height {
 		padding := m.Height - totalContentHeight
 		body = body + strings.Repeat("\n", padding)
@@ -165,10 +106,7 @@ func (m *Model) viewTitle() string {
 		}
 		return "Docker Containers"
 	case ImageListView:
-		if m.imageListViewModel.showAll {
-			return "Docker Images (all)"
-		}
-		return "Docker Images"
+		return m.imageListViewModel.Title()
 	case NetworkListView:
 		return "Docker Networks"
 	case VolumeListView:
@@ -213,7 +151,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case ComposeProjectListView:
 		return m.composeProjectListViewModel.render(m, availableHeight)
 	case DockerContainerListView:
-		return m.dockerContainerListViewModel.renderDockerList(availableHeight)
+		return m.dockerContainerListViewModel.renderDockerList(m, availableHeight)
 	case ImageListView:
 		return m.imageListViewModel.render(m, availableHeight)
 	case NetworkListView:
@@ -232,5 +170,30 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.commandExecutionViewModel.render(m)
 	default:
 		return "Unknown view"
+	}
+}
+
+func (m *Model) viewFooter() string {
+	if m.quitConfirmation {
+		// Show quit confirmation dialog
+		return errorStyle.Render("Really quit? (y/n)")
+	}
+
+	if m.currentView == LogView {
+		if m.logViewModel.filterMode {
+			return m.logViewModel.RenderFilterCmdLine()
+		} else if m.logViewModel.searchMode {
+			return m.logViewModel.RenderSearchCmdLine()
+		}
+	}
+
+	if m.currentView == InspectView && m.inspectViewModel.searchMode {
+		return m.inspectViewModel.RenderSearchCmdLine()
+	} else if m.commandViewModel.commandMode {
+		return m.commandViewModel.RenderCmdLine()
+	} else if m.currentView == HelpView {
+		return helpStyle.Render("Press ESC or q to go back")
+	} else {
+		return helpStyle.Render("Press ? for help")
 	}
 }

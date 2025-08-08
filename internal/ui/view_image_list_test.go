@@ -112,7 +112,7 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 }
 
 func TestImageListViewModel_Navigation(t *testing.T) {
-	t.Run("HandleSelectDown moves selection down", func(t *testing.T) {
+	t.Run("HandleDown moves selection down", func(t *testing.T) {
 		vm := &ImageListViewModel{
 			dockerImages: []models.DockerImage{
 				{Repository: "image1", Tag: "latest"},
@@ -122,18 +122,18 @@ func TestImageListViewModel_Navigation(t *testing.T) {
 			selectedDockerImage: 0,
 		}
 
-		cmd := vm.HandleSelectDown()
+		cmd := vm.HandleDown()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, vm.selectedDockerImage)
 
 		// Test boundary
 		vm.selectedDockerImage = 2
-		cmd = vm.HandleSelectDown()
+		cmd = vm.HandleDown()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 2, vm.selectedDockerImage, "Should not go beyond last image")
 	})
 
-	t.Run("HandleSelectUp moves selection up", func(t *testing.T) {
+	t.Run("HandleUp moves selection up", func(t *testing.T) {
 		vm := &ImageListViewModel{
 			dockerImages: []models.DockerImage{
 				{Repository: "image1", Tag: "latest"},
@@ -143,13 +143,13 @@ func TestImageListViewModel_Navigation(t *testing.T) {
 			selectedDockerImage: 2,
 		}
 
-		cmd := vm.HandleSelectUp()
+		cmd := vm.HandleUp()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, vm.selectedDockerImage)
 
 		// Test boundary
 		vm.selectedDockerImage = 0
-		cmd = vm.HandleSelectUp()
+		cmd = vm.HandleUp()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 0, vm.selectedDockerImage, "Should not go below 0")
 	})
@@ -216,21 +216,6 @@ func TestImageListViewModel_Operations(t *testing.T) {
 		assert.Nil(t, cmd)
 	})
 
-	t.Run("HandleForceDelete force removes selected image", func(t *testing.T) {
-		model := &Model{loading: false}
-		vm := &ImageListViewModel{
-			dockerImages: []models.DockerImage{
-				{ID: "image1"},
-			},
-			selectedDockerImage: 0,
-		}
-
-		cmd := vm.HandleForceDelete(model)
-
-		assert.True(t, model.loading)
-		assert.NotNil(t, cmd)
-	})
-
 	t.Run("HandleInspect shows image inspection", func(t *testing.T) {
 		model := &Model{
 			currentView: ImageListView,
@@ -252,16 +237,17 @@ func TestImageListViewModel_Operations(t *testing.T) {
 		assert.NotNil(t, cmd)
 	})
 
-	t.Run("HandleBack returns to compose process list", func(t *testing.T) {
+	t.Run("HandleBack returns to previous view", func(t *testing.T) {
 		model := &Model{
 			currentView: ImageListView,
+			viewHistory: []ViewType{ComposeProcessListView},
 		}
 		vm := &ImageListViewModel{}
 
 		cmd := vm.HandleBack(model)
 
 		assert.Equal(t, ComposeProcessListView, model.currentView)
-		assert.NotNil(t, cmd)
+		assert.Nil(t, cmd) // HandleBack now returns nil
 	})
 }
 
@@ -328,12 +314,11 @@ func TestImageListViewModel_EmptySelection(t *testing.T) {
 
 		// Test all operations that depend on selection
 		assert.Nil(t, vm.HandleDelete(model))
-		assert.Nil(t, vm.HandleForceDelete(model))
 		assert.Nil(t, vm.HandleInspect(model))
 
 		// Navigation should not crash
-		assert.Nil(t, vm.HandleSelectUp())
-		assert.Nil(t, vm.HandleSelectDown())
+		assert.Nil(t, vm.HandleUp())
+		assert.Nil(t, vm.HandleDown())
 	})
 }
 
@@ -346,7 +331,7 @@ func TestImageListViewModel_KeyHandlers(t *testing.T) {
 	assert.Greater(t, len(handlers), 0, "Should have registered key handlers")
 
 	// Check specific handlers exist
-	expectedKeys := []string{"up", "down", "a", "D", "F", "i", "r", "q"}
+	expectedKeys := []string{"up", "down", "a", "D", "i", "r"} // 'q' is now a global handler
 	registeredKeys := make(map[string]bool)
 
 	for _, h := range handlers {

@@ -32,7 +32,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Check if error is due to missing compose file
 			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
 				// Switch to project list view
-				m.currentView = ComposeProjectListView
+				m.SwitchView(ComposeProjectListView)
 				m.loading = true
 				return m, loadProjects(m.dockerClient)
 			}
@@ -56,12 +56,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = nil
 		return m, nil
 
-	case logLineMsg:
-		m.logViewModel.LogLine(m, msg.line)
-		// Don't continue polling for single lines (e.g., "[Log reader stopped]")
-		return m, nil
-
-	// Following 3 cases seems very similar, so we can combine them?
+	// Following 2 cases seems very similar, so we can combine them?
 	case logLinesMsg:
 		m.logViewModel.LogLines(m, msg.lines)
 		// Continue polling for more logs with a small delay
@@ -227,7 +222,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = nil
 
 		m.inspectViewModel.Set(msg.content)
-		m.currentView = InspectView
+		m.SwitchView(InspectView)
 		return m, nil
 
 	case commandExecStartedMsg:
@@ -323,7 +318,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle view-specific keys
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m.handleProcessListKeys(msg)
+		return m.handleComposeProcessListKeys(msg)
 	case LogView:
 		return m.handleLogViewKeys(msg)
 	case DindProcessListView:
@@ -358,11 +353,11 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) handleProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.processListViewKeymap[msg.String()]
+func (m *Model) handleComposeProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	handler, ok := m.composeProcessListViewKeymap[msg.String()]
 	slog.Info(fmt.Sprintf("Key: %s", msg.String()),
 		slog.Bool("ok", ok),
-		slog.Any("handler", m.processListViewKeymap))
+		slog.Any("handler", m.composeProcessListViewKeymap))
 	if ok {
 		return handler(msg)
 	}

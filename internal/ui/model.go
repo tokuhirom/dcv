@@ -88,8 +88,8 @@ func (view ViewType) String() string {
 // Model represents the application state
 type Model struct {
 	// Current view
-	currentView  ViewType
-	previousView ViewType
+	currentView ViewType
+	viewHistory []ViewType
 
 	// Docker client
 	dockerClient *docker.Client
@@ -127,8 +127,8 @@ type Model struct {
 	globalHandlers []KeyConfig
 
 	// Key handler maps and configurations for all views
-	processListViewKeymap           map[string]KeyHandler
-	processListViewHandlers         []KeyConfig
+	composeProcessListViewKeymap    map[string]KeyHandler
+	composeProcessListViewHandlers  []KeyConfig
 	logViewKeymap                   map[string]KeyHandler
 	logViewHandlers                 []KeyConfig
 	dindListViewKeymap              map[string]KeyHandler
@@ -219,8 +219,35 @@ func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) SwitchView(view ViewType) {
-	m.previousView = m.currentView
+	if view == m.currentView {
+		slog.Info("SwitchView called with the same view, ignoring",
+			slog.String("view", view.String()))
+		return
+	}
+
+	m.viewHistory = append(m.viewHistory, m.currentView)
 	m.currentView = view
+}
+
+func (m *Model) SwitchToPreviousView() {
+	m.err = nil
+
+	for len(m.viewHistory) > 0 && m.viewHistory[len(m.viewHistory)-1] == m.currentView {
+		// Remove consecutive duplicates from the history
+		m.viewHistory = m.viewHistory[:len(m.viewHistory)-1]
+	}
+
+	if len(m.viewHistory) == 0 {
+		slog.Info("No previous view to switch to, staying in current view",
+			slog.String("current_view", m.currentView.String()))
+		return
+	}
+
+	previousView := m.viewHistory[len(m.viewHistory)-1]
+	slog.Info("Switching to previous view",
+		slog.String("previous_view", previousView.String()))
+	m.viewHistory = m.viewHistory[:len(m.viewHistory)-1] // Remove the last
+	m.currentView = previousView
 }
 
 // Messages
@@ -233,12 +260,6 @@ type processesLoadedMsg struct {
 type dindContainersLoadedMsg struct {
 	containers []models.DockerContainer
 	err        error
-}
-
-// logLineMsg represents a single log line message
-// TODO: we can merge logLineMsg and logLinesMsg into a single type
-type logLineMsg struct {
-	line string
 }
 
 type logLinesMsg struct {

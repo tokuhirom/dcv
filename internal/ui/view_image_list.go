@@ -3,9 +3,9 @@ package ui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -15,6 +15,13 @@ type ImageListViewModel struct {
 	dockerImages        []models.DockerImage
 	selectedDockerImage int
 	showAll             bool
+}
+
+func (m *ImageListViewModel) Title() string {
+	if m.showAll {
+		return "Docker Images (all)"
+	}
+	return "Docker Images"
 }
 
 // render renders the image list view
@@ -28,77 +35,79 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 		return s.String()
 	}
 
-	// Create table
-	t := table.New().
-		Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE").
-		Height(availableHeight - 2).
-		Width(model.width).
-		Offset(m.selectedDockerImage)
-
-	// Configure column widths based on terminal width
-	// Approximate widths: REPOSITORY(30), TAG(15), IMAGE ID(12), CREATED(15), SIZE(10)
 	availableWidth := model.width - 10 // margin
 	repoWidth := 30
 	if availableWidth < 100 {
 		repoWidth = 20
 	}
-	t.Width(availableWidth).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			return lipgloss.NewStyle()
-		})
 
-	// Styles
-	selectedStyle := lipgloss.NewStyle().Background(lipgloss.Color("238"))
-	repoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
-	tagStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("229"))
-	idStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
-	createdStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("243"))
-	sizeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("213"))
+	// Create columns
+	columns := []table.Column{
+		{Title: "REPOSITORY", Width: repoWidth},
+		{Title: "TAG", Width: 15},
+		{Title: "IMAGE ID", Width: 12},
+		{Title: "CREATED", Width: 20},
+		{Title: "SIZE", Width: 10},
+	}
 
-	// Add rows
+	// Create rows
+	rows := make([]table.Row, len(m.dockerImages))
 	for i, image := range m.dockerImages {
-		var rowRepoStyle, rowTagStyle, rowIdStyle, rowCreatedStyle, rowSizeStyle lipgloss.Style
-
-		if i == m.selectedDockerImage {
-			rowRepoStyle = selectedStyle.Inherit(repoStyle)
-			rowTagStyle = selectedStyle.Inherit(tagStyle)
-			rowIdStyle = selectedStyle.Inherit(idStyle)
-			rowCreatedStyle = selectedStyle.Inherit(createdStyle)
-			rowSizeStyle = selectedStyle.Inherit(sizeStyle)
-		} else {
-			rowRepoStyle = repoStyle
-			rowTagStyle = tagStyle
-			rowIdStyle = idStyle
-			rowCreatedStyle = createdStyle
-			rowSizeStyle = sizeStyle
-		}
-
 		// Handle <none> repository
 		repo := image.Repository
-		if repo == "<none>" {
-			repo = "<none>"
-		}
 		if len(repo) > repoWidth {
 			repo = repo[:repoWidth-3] + "..."
 		}
-		repo = rowRepoStyle.Render(repo)
-
-		tag := rowTagStyle.Render(image.Tag)
 
 		// Show first 12 chars of ID
 		id := image.ID
 		if len(id) > 12 {
 			id = id[:12]
 		}
-		id = rowIdStyle.Render(id)
 
-		created := rowCreatedStyle.Render(image.CreatedSince)
-		size := rowSizeStyle.Render(image.Size)
-
-		t.Row(repo, tag, id, created, size)
+		rows[i] = table.Row{
+			repo,
+			image.Tag,
+			id,
+			image.CreatedSince,
+			image.Size,
+		}
 	}
 
-	s.WriteString(t.Render() + "\n")
+	// Create table
+	tableHeight := availableHeight
+	if tableHeight <= 0 {
+		tableHeight = 10
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(tableHeight),
+	)
+
+	// Set styles
+	tableStyle := table.DefaultStyles()
+	tableStyle.Header = tableStyle.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	tableStyle.Selected = tableStyle.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+
+	t.SetStyles(tableStyle)
+	t.Focus()
+
+	// Move to selected row
+	for i := 0; i < m.selectedDockerImage; i++ {
+		t.MoveDown(1)
+	}
+
+	s.WriteString(t.View())
 
 	return s.String()
 }
@@ -110,16 +119,16 @@ func (m *ImageListViewModel) Show(model *Model) tea.Cmd {
 	return loadDockerImages(model.dockerClient, m.showAll)
 }
 
-// HandleSelectUp moves selection up in the image list
-func (m *ImageListViewModel) HandleSelectUp() tea.Cmd {
+// HandleUp moves selection up in the image list
+func (m *ImageListViewModel) HandleUp() tea.Cmd {
 	if m.selectedDockerImage > 0 {
 		m.selectedDockerImage--
 	}
 	return nil
 }
 
-// HandleSelectDown moves selection down in the image list
-func (m *ImageListViewModel) HandleSelectDown() tea.Cmd {
+// HandleDown moves selection down in the image list
+func (m *ImageListViewModel) HandleDown() tea.Cmd {
 	if m.selectedDockerImage < len(m.dockerImages)-1 {
 		m.selectedDockerImage++
 	}
@@ -143,16 +152,6 @@ func (m *ImageListViewModel) HandleDelete(model *Model) tea.Cmd {
 	return removeImage(model.dockerClient, image.GetRepoTag(), false)
 }
 
-// HandleForceDelete forcefully removes the selected image
-func (m *ImageListViewModel) HandleForceDelete(model *Model) tea.Cmd {
-	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {
-		return nil
-	}
-	image := m.dockerImages[m.selectedDockerImage]
-	model.loading = true
-	return removeImage(model.dockerClient, image.GetRepoTag(), true)
-}
-
 // HandleInspect shows the inspect view for the selected image
 func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {
@@ -165,8 +164,8 @@ func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 
 // HandleBack returns to the compose process list view
 func (m *ImageListViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = ComposeProcessListView
-	return loadProcesses(model.dockerClient, model.projectName, model.composeProcessListViewModel.showAll)
+	model.SwitchToPreviousView()
+	return nil
 }
 
 // HandleRefresh reloads the image list

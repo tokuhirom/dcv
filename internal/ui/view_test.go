@@ -197,9 +197,11 @@ func TestRenderProcessList(t *testing.T) {
 	// Check that the selected row is highlighted
 	assert.Contains(t, view, "web")
 
-	// Check table structure
-	assert.Contains(t, view, "│")
-	assert.Contains(t, view, "─")
+	// Check table structure - bubbles/table uses simpler format
+	assert.Contains(t, view, "SERVICE")
+	assert.Contains(t, view, "IMAGE")
+	assert.Contains(t, view, "STATUS")
+	assert.Contains(t, view, "PORTS")
 }
 
 func TestRenderLogView(t *testing.T) {
@@ -316,25 +318,22 @@ func TestTableRendering(t *testing.T) {
 
 	// Check for table borders
 	lines := strings.Split(view, "\n")
-	hasTopBorder := false
-	hasBottomBorder := false
-	hasVerticalBorder := false
+	hasHeaderSeparator := false
 
+	// bubbles/table uses a simpler format with header underline
 	for _, line := range lines {
-		if strings.Contains(line, "┌") || strings.Contains(line, "┐") {
-			hasTopBorder = true
-		}
-		if strings.Contains(line, "└") || strings.Contains(line, "┘") {
-			hasBottomBorder = true
-		}
-		if strings.Contains(line, "│") {
-			hasVerticalBorder = true
+		if strings.Contains(line, "─") {
+			hasHeaderSeparator = true // Header underline acts as separator
+			break
 		}
 	}
 
-	assert.True(t, hasTopBorder, "Table should have top border")
-	assert.True(t, hasBottomBorder, "Table should have bottom border")
-	assert.True(t, hasVerticalBorder, "Table should have vertical borders")
+	// Check for table headers instead of specific border characters
+	assert.Contains(t, view, "SERVICE")
+	assert.Contains(t, view, "IMAGE")
+	assert.Contains(t, view, "STATUS")
+	assert.Contains(t, view, "PORTS")
+	assert.True(t, hasHeaderSeparator, "Table should have header separator")
 }
 
 func TestDockerContainerListView(t *testing.T) {

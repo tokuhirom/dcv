@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 )
 
 type HelpViewModel struct {
-	scrollY      int
-	previousView ViewType
+	scrollY    int
+	parentView ViewType
 }
 
 func (m *HelpViewModel) render(model *Model, availableHeight int) string {
@@ -21,9 +21,9 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	var viewConfigs []KeyConfig
 	viewName := ""
 
-	switch m.previousView {
+	switch m.parentView {
 	case ComposeProcessListView:
-		viewConfigs = model.processListViewHandlers
+		viewConfigs = model.composeProcessListViewHandlers
 		viewName = "Compose Process List"
 	case LogView:
 		viewConfigs = model.logViewHandlers
@@ -131,13 +131,6 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	// Adjust scroll position
-	maxScroll := len(allRows) - visibleRows
-	if maxScroll < 0 {
-		maxScroll = 0
-	}
-	if m.scrollY > maxScroll {
-		m.scrollY = maxScroll
-	}
 	if m.scrollY < 0 {
 		m.scrollY = 0
 	}
@@ -155,73 +148,81 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		visibleTableRows = allRows[startIdx:endIdx]
 	}
 
-	// Create the table
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			// Header row
-			if row == 0 {
-				return headerStyle
-			}
-
-			// Regular rows
-			switch col {
-			case 0: // Key column
-				return lipgloss.NewStyle().
-					Foreground(lipgloss.Color("86")).
-					Bold(true).
-					Width(15)
-			case 1: // Command column
-				return lipgloss.NewStyle().
-					Foreground(lipgloss.Color("214")).
-					Width(30)
-			case 2: // Description column
-				newStyle := normalStyle
-				return newStyle.Width(40)
-			default:
-				return normalStyle
-			}
-		}).
-		Headers("Key", "Command", "Description").
-		Rows(visibleTableRows...)
-
-	s.WriteString(t.String())
-
-	// Scroll indicator
-	if len(allRows) > visibleRows {
-		scrollInfo := fmt.Sprintf(" [Showing %d-%d of %d] ", startIdx+1, endIdx, len(allRows))
-		s.WriteString("\n" + helpStyle.Render(scrollInfo))
+	// Create columns
+	columns := []table.Column{
+		{Title: "Key", Width: 15},
+		{Title: "Command", Width: 30},
+		{Title: "Description", Width: 40},
 	}
 
-	// Footer
-	footer := "\n" + helpStyle.Render("Press ESC or q to go back")
-	s.WriteString(footer)
+	// Convert visible table rows to table.Row format
+	rows := make([]table.Row, len(visibleTableRows))
+	for i, row := range visibleTableRows {
+		if len(row) >= 3 {
+			rows[i] = table.Row{row[0], row[1], row[2]}
+		} else {
+			// Handle empty separator rows
+			rows[i] = table.Row{"", "", ""}
+		}
+	}
+
+	// Create the table
+	tableHeight := availableHeight - 2
+	if tableHeight <= 0 {
+		tableHeight = 10
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(tableHeight),
+	)
+
+	// Set styles
+	tableStyle := table.DefaultStyles()
+	tableStyle.Header = tableStyle.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	tableStyle.Selected = tableStyle.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+
+	t.SetStyles(tableStyle)
+	t.Focus()
+
+	// Move to scroll position
+	t.MoveDown(m.scrollY)
+
+	s.WriteString(t.View())
 
 	return s.String()
 }
 
-func (m *HelpViewModel) Show(model *Model, previousView ViewType) tea.Cmd {
-	m.previousView = previousView
-	model.currentView = HelpView
+func (m *HelpViewModel) Show(model *Model, parentView ViewType) tea.Cmd {
+	m.parentView = parentView
+	model.SwitchView(HelpView)
 	m.scrollY = 0
 	return nil
 }
 
-func (m *HelpViewModel) HandleScrollUp() tea.Cmd {
+func (m *HelpViewModel) HandleUp() tea.Cmd {
 	if m.scrollY > 0 {
 		m.scrollY--
 	}
 	return nil
 }
 
-func (m *HelpViewModel) HandleScrollDown() tea.Cmd {
+func (m *HelpViewModel) HandleDown() tea.Cmd {
 	m.scrollY++
 	return nil
 }
 
 func (m *HelpViewModel) HandleBack(model *Model) tea.Cmd {
-	model.currentView = m.previousView
+	model.SwitchToPreviousView()
 	m.scrollY = 0
 	return nil
 }

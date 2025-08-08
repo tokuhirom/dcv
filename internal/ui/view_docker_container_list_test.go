@@ -31,7 +31,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 		m.dockerContainerListViewModel.dockerContainers = []models.DockerContainer{}
 
 		// Test the render function directly
-		output := m.dockerContainerListViewModel.renderDockerList(20)
+		output := m.dockerContainerListViewModel.renderDockerList(m, 20)
 		assert.Contains(t, output, "No containers found")
 	})
 
@@ -57,7 +57,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 		m.dockerContainerListViewModel.selectedDockerContainer = 0
 
 		// Test the render function
-		output := m.dockerContainerListViewModel.renderDockerList(20)
+		output := m.dockerContainerListViewModel.renderDockerList(m, 20)
 
 		// Check for table headers
 		assert.Contains(t, output, "CONTAINER ID")
@@ -86,14 +86,14 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 			},
 		}
 
-		output := m.dockerContainerListViewModel.renderDockerList(20)
+		output := m.dockerContainerListViewModel.renderDockerList(m, 20)
 
 		// Check that ID is truncated to 12 chars
 		assert.Contains(t, output, "verylongcont")
 		assert.NotContains(t, output, "verylongcontaineridthatneedstruncation")
 
-		// Check that image is truncated with ellipsis
-		assert.Contains(t, output, "...")
+		// Check that image is truncated with ellipsis (Unicode character)
+		assert.Contains(t, output, "…")
 	})
 
 	t.Run("highlights running containers", func(t *testing.T) {
@@ -114,7 +114,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 		}
 
 		// The render function applies different styles to Up vs Exited containers
-		output := m.dockerContainerListViewModel.renderDockerList(20)
+		output := m.dockerContainerListViewModel.renderDockerList(m, 20)
 		assert.Contains(t, output, "Up 2 hours")
 		assert.Contains(t, output, "Exited")
 	})
