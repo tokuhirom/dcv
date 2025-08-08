@@ -376,26 +376,6 @@ func removeService(client *docker.Client, containerID string) tea.Cmd {
 	}
 }
 
-func pauseService(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.PauseContainer(containerID)
-		return serviceActionCompleteMsg{
-			service: containerID,
-			err:     err,
-		}
-	}
-}
-
-func unpauseService(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.UnpauseContainer(containerID)
-		return serviceActionCompleteMsg{
-			service: containerID,
-			err:     err,
-		}
-	}
-}
-
 func loadStats(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		// TODO: support periodic update
