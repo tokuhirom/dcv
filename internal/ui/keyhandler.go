@@ -203,11 +203,11 @@ func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) DeployProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.commandExecutionViewModel.ExecuteComposeCommand(m, "up")
 }
 
-func (m *Model) DownProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.commandExecutionViewModel.ExecuteComposeCommand(m, "down")
 }
 
