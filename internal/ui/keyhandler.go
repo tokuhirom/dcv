@@ -203,10 +203,6 @@ func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) DeleteContainer(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, nil
-}
-
 func (m *Model) DeployProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.commandExecutionViewModel.ExecuteComposeCommand(m, "up")
 }
