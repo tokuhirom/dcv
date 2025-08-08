@@ -21,16 +21,12 @@ type DindProcessListViewModel struct {
 
 // render renders the dind process list view
 func (m *DindProcessListViewModel) render(availableHeight int) string {
-	var s strings.Builder
-
 	if len(m.dindContainers) == 0 {
+		var s strings.Builder
 		s.WriteString("\nNo containers running inside this dind container.\n")
 		s.WriteString("\nPress ESC to go back\n")
 		return s.String()
 	}
-
-	// Container list
-	s.WriteString("\n")
 
 	// Create table
 	columns := []table.Column{
@@ -40,7 +36,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 		{Title: "NAMES", Width: 30},
 	}
 
-	rows := []table.Row{}
+	rows := make([]table.Row, 0, len(m.dindContainers))
 	for _, container := range m.dindContainers {
 		// Truncate container ID
 		id := container.ID
@@ -68,7 +64,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
-		table.WithHeight(availableHeight),
+		table.WithHeight(availableHeight-2),
 		table.WithFocused(true),
 	)
 
@@ -81,20 +77,15 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 		Bold(false)
 	styles.Selected = selectedStyle
 	styles.Cell = styles.Cell.
-		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("240"))
 	t.SetStyles(styles)
 
 	// Set cursor position
 	if m.selectedDindContainer < len(rows) {
-		for i := 0; i < m.selectedDindContainer; i++ {
-			t.MoveDown(1)
-		}
+		t.MoveDown(m.selectedDindContainer)
 	}
 
-	s.WriteString(t.View() + "\n\n")
-
-	return s.String()
+	return t.View()
 }
 
 // Load switches to the dind process list view and loads containers

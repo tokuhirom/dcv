@@ -19,9 +19,8 @@ type NetworkListViewModel struct {
 
 // render renders the network list view
 func (m *NetworkListViewModel) render(model *Model, availableHeight int) string {
-	s := strings.Builder{}
-
 	if len(m.dockerNetworks) == 0 {
+		s := strings.Builder{}
 		s.WriteString("No networks found.\n")
 		s.WriteString(helpStyle.Render("\nPress 'q' to go back"))
 		return s.String()
@@ -60,7 +59,7 @@ func (m *NetworkListViewModel) render(model *Model, availableHeight int) string 
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(tableHeight),
+		table.WithHeight(tableHeight-2),
 	)
 
 	// Set styles
@@ -78,14 +77,9 @@ func (m *NetworkListViewModel) render(model *Model, availableHeight int) string 
 	t.SetStyles(tableStyle)
 	t.Focus()
 
-	// Move to selected row
-	for i := 0; i < m.selectedDockerNetwork; i++ {
-		t.MoveDown(1)
-	}
+	t.MoveDown(m.selectedDockerNetwork)
 
-	s.WriteString(t.View())
-
-	return s.String()
+	return t.View()
 }
 
 // Show switches to the network list view

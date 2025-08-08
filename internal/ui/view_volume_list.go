@@ -19,9 +19,8 @@ type VolumeListViewModel struct {
 
 // render renders the volume list view
 func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
-	s := strings.Builder{}
-
 	if len(m.dockerVolumes) == 0 {
+		s := strings.Builder{}
 		s.WriteString("No volumes found.\n")
 		s.WriteString(helpStyle.Render("\nPress 'q' to go back"))
 		return s.String()
@@ -49,7 +48,7 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(min(len(rows), model.Height-8)),
+		table.WithHeight(availableHeight-2),
 	)
 
 	tableStyle := table.DefaultStyles()
@@ -69,9 +68,7 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 	// Move to selected row
 	t.MoveDown(m.selectedDockerVolume)
 
-	s.WriteString(t.View())
-
-	return s.String()
+	return t.View()
 }
 
 // Show switches to the volume list view
