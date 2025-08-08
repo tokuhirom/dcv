@@ -191,7 +191,7 @@ func (mr *MockDockerClientMockRecorder) KillContainer(containerID any) *gomock.C
 // ListAllContainers mocks base method.
 func (m *MockDockerClient) ListAllContainers(showAll bool) ([]models.DockerContainer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListContainers", showAll)
+	ret := m.ctrl.Call(m, "ListAllContainers", showAll)
 	ret0, _ := ret[0].([]models.DockerContainer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -200,7 +200,7 @@ func (m *MockDockerClient) ListAllContainers(showAll bool) ([]models.DockerConta
 // ListAllContainers indicates an expected call of ListAllContainers.
 func (mr *MockDockerClientMockRecorder) ListAllContainers(showAll any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContainers", reflect.TypeOf((*MockDockerClient)(nil).ListAllContainers), showAll)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllContainers", reflect.TypeOf((*MockDockerClient)(nil).ListAllContainers), showAll)
 }
 
 // ListComposeProjects mocks base method.
@@ -291,20 +291,6 @@ func (m *MockDockerClient) ListVolumes() ([]models.DockerVolume, error) {
 func (mr *MockDockerClientMockRecorder) ListVolumes() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVolumes", reflect.TypeOf((*MockDockerClient)(nil).ListVolumes))
-}
-
-// PauseContainer mocks base method.
-func (m *MockDockerClient) PauseContainer(containerID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PauseContainer", containerID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PauseContainer indicates an expected call of PauseContainer.
-func (mr *MockDockerClientMockRecorder) PauseContainer(containerID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseContainer", reflect.TypeOf((*MockDockerClient)(nil).PauseContainer), containerID)
 }
 
 // ReadContainerFile mocks base method.
@@ -420,20 +406,6 @@ func (mr *MockDockerClientMockRecorder) StopContainer(containerID any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopContainer", reflect.TypeOf((*MockDockerClient)(nil).StopContainer), containerID)
 }
 
-// UnpauseContainer mocks base method.
-func (m *MockDockerClient) UnpauseContainer(containerID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UnpauseContainer", containerID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UnpauseContainer indicates an expected call of UnpauseContainer.
-func (mr *MockDockerClientMockRecorder) UnpauseContainer(containerID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnpauseContainer", reflect.TypeOf((*MockDockerClient)(nil).UnpauseContainer), containerID)
-}
-
 // MockComposeClientInterface is a mock of ComposeClientInterface interface.
 type MockComposeClientInterface struct {
 	ctrl     *gomock.Controller
@@ -499,20 +471,6 @@ func (m *MockComposeClientInterface) ListContainers(showAll bool) ([]models.Comp
 func (mr *MockComposeClientInterfaceMockRecorder) ListContainers(showAll any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContainers", reflect.TypeOf((*MockComposeClientInterface)(nil).ListContainers), showAll)
-}
-
-// PauseService mocks base method.
-func (m *MockComposeClientInterface) PauseService(serviceName string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PauseService", serviceName)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PauseService indicates an expected call of PauseService.
-func (mr *MockComposeClientInterfaceMockRecorder) PauseService(serviceName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseService", reflect.TypeOf((*MockComposeClientInterface)(nil).PauseService), serviceName)
 }
 
 // RemoveService mocks base method.
@@ -584,20 +542,6 @@ func (m *MockComposeClientInterface) Top() (string, error) {
 func (mr *MockComposeClientInterfaceMockRecorder) Top() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Top", reflect.TypeOf((*MockComposeClientInterface)(nil).Top))
-}
-
-// UnpauseService mocks base method.
-func (m *MockComposeClientInterface) UnpauseService(serviceName string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UnpauseService", serviceName)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UnpauseService indicates an expected call of UnpauseService.
-func (mr *MockComposeClientInterfaceMockRecorder) UnpauseService(serviceName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnpauseService", reflect.TypeOf((*MockComposeClientInterface)(nil).UnpauseService), serviceName)
 }
 
 // Up mocks base method.
