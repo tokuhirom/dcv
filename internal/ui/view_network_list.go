@@ -6,8 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -18,7 +16,7 @@ type NetworkListViewModel struct {
 }
 
 // render renders the network list view
-func (m *NetworkListViewModel) render(model *Model, availableHeight int) string {
+func (m *NetworkListViewModel) render(availableHeight int) string {
 	if len(m.dockerNetworks) == 0 {
 		s := strings.Builder{}
 		s.WriteString("No networks found.\n")
@@ -47,39 +45,7 @@ func (m *NetworkListViewModel) render(model *Model, availableHeight int) string 
 		}
 	}
 
-	// Create table
-	// Calculate height - ensure we show all rows within available space
-	// The height should be the viewport height, not the number of rows
-	tableHeight := availableHeight
-	if tableHeight <= 0 {
-		tableHeight = 10 // Default height if not specified
-	}
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithHeight(tableHeight-2),
-	)
-
-	// Set styles
-	tableStyle := table.DefaultStyles()
-	tableStyle.Header = tableStyle.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	tableStyle.Selected = tableStyle.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-
-	t.SetStyles(tableStyle)
-	t.Focus()
-
-	t.MoveDown(m.selectedDockerNetwork)
-
-	return t.View()
+	return RenderTable(columns, rows, availableHeight, m.selectedDockerNetwork)
 }
 
 // Show switches to the network list view

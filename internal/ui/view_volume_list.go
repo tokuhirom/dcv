@@ -5,8 +5,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -22,7 +20,7 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 	if len(m.dockerVolumes) == 0 {
 		s := strings.Builder{}
 		s.WriteString("No volumes found.\n")
-		s.WriteString(helpStyle.Render("\nPress 'q' to go back"))
+		s.WriteString(helpStyle.Render("\nPress 'Esc' to go back"))
 		return s.String()
 	}
 
@@ -43,32 +41,7 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 		}
 	}
 
-	// Create table
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithHeight(availableHeight-2),
-	)
-
-	tableStyle := table.DefaultStyles()
-	tableStyle.Header = tableStyle.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	tableStyle.Selected = tableStyle.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-
-	t.SetStyles(tableStyle)
-	t.Focus()
-
-	// Move to selected row
-	t.MoveDown(m.selectedDockerVolume)
-
-	return t.View()
+	return RenderTable(columns, rows, availableHeight, m.selectedDockerVolume)
 }
 
 // Show switches to the volume list view

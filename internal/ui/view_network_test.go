@@ -109,7 +109,7 @@ func TestRenderNetworkList(t *testing.T) {
 	m := &Model{}
 
 	// Test rendering with sufficient Height
-	output := vm.render(m, 10)
+	output := vm.render(10)
 
 	assert.Contains(t, output, "NETWORK ID")
 	assert.Contains(t, output, "NAME")
