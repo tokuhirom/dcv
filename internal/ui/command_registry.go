@@ -77,32 +77,25 @@ func (m *Model) registerCommands() {
 				methodName = strings.TrimPrefix(methodName, "(*Model)")
 				methodName = strings.TrimPrefix(methodName, ")")
 
-				// Convert to kebab-case command name (e.g., "SelectUpContainer" -> "select-up-container")
-				cmdName := toKebabCase(methodName)
-
-				// Create shorter aliases for common commands
+				// Get shorter, more intuitive command name if available
 				shortName := getShortCommandName(methodName)
-
-				// Register with the full kebab-case name
-				commandRegistry[cmdName] = CommandHandler{
-					Handler:     handler.KeyHandler,
-					Description: handler.Description,
-					ViewMask:    viewHandlers.viewMask,
-				}
-
-				// Also register with short name if available
-				if shortName != "" && shortName != cmdName {
+				
+				if shortName != "" {
+					// If we have a short name, use it as the primary command
 					commandRegistry[shortName] = CommandHandler{
 						Handler:     handler.KeyHandler,
 						Description: handler.Description,
 						ViewMask:    viewHandlers.viewMask,
 					}
-				}
-
-				// Map the handler to command name for help display (use short name if available)
-				if shortName != "" {
 					handlerToCommand[funcPtr] = shortName
 				} else {
+					// Otherwise, use kebab-case version
+					cmdName := toKebabCase(methodName)
+					commandRegistry[cmdName] = CommandHandler{
+						Handler:     handler.KeyHandler,
+						Description: handler.Description,
+						ViewMask:    viewHandlers.viewMask,
+					}
 					handlerToCommand[funcPtr] = cmdName
 				}
 			}

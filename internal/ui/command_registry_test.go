@@ -41,12 +41,12 @@ func TestCommandRegistry(t *testing.T) {
 
 	// Test that some common commands exist
 	commonCommands := []string{
-		"cmd-up",
-		"cmd-down",
-		"cmd-log",
+		"up",
+		"down",
+		"log",
 		"refresh",
-		"cmd-kill",
-		"cmd-stop",
+		"kill",
+		"stop",
 	}
 
 	for _, cmd := range commonCommands {
@@ -58,9 +58,9 @@ func TestCommandRegistry(t *testing.T) {
 
 	// Test aliases
 	aliases := map[string]string{
-		"up":   "cmd-up",
-		"down": "cmd-down",
-		"logs": "cmd-log",
+		"logs": "log",
+		"exec": "shell",
+		"rm":   "remove",
 	}
 
 	for alias, target := range aliases {
@@ -91,8 +91,8 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 	model.composeProcessListViewModel.selectedContainer = 1
 
 	// Test executing a navigation command
-	t.Run("cmd-down", func(t *testing.T) {
-		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(&model, "cmd-down")
+	t.Run("down", func(t *testing.T) {
+		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(&model, "down")
 		m := newModel.(*Model)
 		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
 	})
@@ -151,18 +151,18 @@ func TestGetAvailableCommands(t *testing.T) {
 	assert.Greater(t, len(commands), 0)
 
 	// Check that we have some expected commands
-	hasSelectUp := false
-	hasShowLog := false
+	hasUp := false
+	hasLog := false
 	for _, cmd := range commands {
-		if cmd == "cmd-up" {
-			hasSelectUp = true
+		if cmd == "up" {
+			hasUp = true
 		}
-		if cmd == "cmd-log" {
-			hasShowLog = true
+		if cmd == "log" {
+			hasLog = true
 		}
 	}
-	assert.True(t, hasSelectUp, "Should have cmd-up command")
-	assert.True(t, hasShowLog, "Should have cmd-log command")
+	assert.True(t, hasUp, "Should have up command")
+	assert.True(t, hasLog, "Should have log command")
 }
 
 func TestGetCommandSuggestions(t *testing.T) {
@@ -172,10 +172,10 @@ func TestGetCommandSuggestions(t *testing.T) {
 
 	// Test prefix matching
 	t.Run("prefix-match", func(t *testing.T) {
-		suggestions := model.getCommandSuggestions("cmd-")
+		suggestions := model.getCommandSuggestions("lo")
 		assert.Greater(t, len(suggestions), 0)
 		for _, s := range suggestions {
-			assert.Contains(t, s, "cmd-")
+			assert.True(t, strings.HasPrefix(s, "lo") || strings.Contains(s, "lo"))
 		}
 	})
 
