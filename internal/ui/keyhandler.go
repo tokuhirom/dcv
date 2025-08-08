@@ -35,6 +35,20 @@ func (m *Model) CmdRefresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
+// CmdCancel handles cancel/escape key for views that support it
+func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case CommandExecutionView:
+		return m, m.commandExecutionViewModel.HandleCancel()
+	case LogView:
+		return m, m.logViewModel.HandleCancel()
+	default:
+		slog.Info("Cancel command not implemented for current view",
+			slog.String("current_view", m.currentView.String()))
+		return m, nil
+	}
+}
+
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case NetworkListView:
