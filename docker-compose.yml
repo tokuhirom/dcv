@@ -1,27 +1,4 @@
 services:
-  # Web application
-  web:
-    image: nginx:alpine
-    ports:
-      - "8090:80"
-    volumes:
-      - ./html:/usr/share/nginx/html:ro
-    networks:
-      - frontend
-      - backend  # Needs to connect to backend services
-
-  # Database
-  db:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: dcvuser
-      POSTGRES_PASSWORD: dcvpass
-      POSTGRES_DB: dcvdb
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - backend  # Only on backend network
-
   # Redis cache
   redis:
     image: redis:8-alpine
@@ -64,18 +41,6 @@ services:
       "
     networks:
       - monitoring  # On monitoring network
-
-  # API Gateway service
-  api-gateway:
-    image: nginx:alpine
-    ports:
-      - "8091:80"
-    networks:
-      - frontend
-      - backend
-      - monitoring
-    volumes:
-      - ./nginx-api.conf:/etc/nginx/nginx.conf:ro
 
   # Cache warmer service
   cache-warmer:
