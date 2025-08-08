@@ -182,10 +182,6 @@ func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, args ...string)
 	}
 }
 
-func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, containerID string, operation string) tea.Cmd {
-	return m.ExecuteCommand(model, operation, containerID)
-}
-
 func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, operation string) tea.Cmd {
 	switch operation {
 	case "up":

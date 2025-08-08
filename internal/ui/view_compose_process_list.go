@@ -155,7 +155,7 @@ func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cm
 func (m *ComposeProcessListViewModel) HandleKill(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteContainerCommand(model, container.ID, "kill")
+		return model.commandExecutionViewModel.ExecuteCommand(model, "kill", container.ID)
 	}
 	return nil
 }
@@ -163,7 +163,7 @@ func (m *ComposeProcessListViewModel) HandleKill(model *Model) tea.Cmd {
 func (m *ComposeProcessListViewModel) HandleStop(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteContainerCommand(model, container.ID, "stop")
+		return model.commandExecutionViewModel.ExecuteCommand(model, "stop", container.ID)
 	}
 	return nil
 }
@@ -171,7 +171,7 @@ func (m *ComposeProcessListViewModel) HandleStop(model *Model) tea.Cmd {
 func (m *ComposeProcessListViewModel) HandleStart(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteContainerCommand(model, container.ID, "start")
+		return model.commandExecutionViewModel.ExecuteCommand(model, "start", container.ID)
 	}
 	return nil
 }
@@ -179,7 +179,7 @@ func (m *ComposeProcessListViewModel) HandleStart(model *Model) tea.Cmd {
 func (m *ComposeProcessListViewModel) HandleRestart(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteContainerCommand(model, container.ID, "restart")
+		return model.commandExecutionViewModel.ExecuteCommand(model, "restart", container.ID)
 	}
 	return nil
 }
