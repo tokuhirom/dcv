@@ -152,34 +152,10 @@ func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cm
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) HandleKill(model *Model) tea.Cmd {
+func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, operation string) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteContainerCommand(model, model.currentView, container.ID, "kill")
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleStop(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteContainerCommand(model, model.currentView, container.ID, "stop")
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleStart(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteContainerCommand(model, model.currentView, container.ID, "start")
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleRestart(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteContainerCommand(model, model.currentView, container.ID, "restart")
+		return model.commandExecutionViewModel.ExecuteCommand(model, operation, container.ID)
 	}
 	return nil
 }
@@ -204,7 +180,7 @@ func (m *ComposeProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) HandleShell(model *Model) tea.Cmd {
+func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
 		// Default to /bin/sh as it's most commonly available
