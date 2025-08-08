@@ -131,13 +131,6 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	// Adjust scroll position
-	maxScroll := len(allRows) - visibleRows
-	if maxScroll < 0 {
-		maxScroll = 0
-	}
-	if m.scrollY > maxScroll {
-		m.scrollY = maxScroll
-	}
 	if m.scrollY < 0 {
 		m.scrollY = 0
 	}
@@ -202,9 +195,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	t.Focus()
 
 	// Move to scroll position
-	for i := 0; i < m.scrollY; i++ {
-		t.MoveDown(1)
-	}
+	t.MoveDown(m.scrollY)
 
 	s.WriteString(t.View())
 

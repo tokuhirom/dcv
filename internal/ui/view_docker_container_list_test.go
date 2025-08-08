@@ -92,8 +92,8 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 		assert.Contains(t, output, "verylongcont")
 		assert.NotContains(t, output, "verylongcontaineridthatneedstruncation")
 
-		// Check that image is truncated with ellipsis
-		assert.Contains(t, output, "...")
+		// Check that image is truncated with ellipsis (Unicode character)
+		assert.Contains(t, output, "…")
 	})
 
 	t.Run("highlights running containers", func(t *testing.T) {
