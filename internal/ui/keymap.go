@@ -59,8 +59,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
 		{[]string{"D"}, "delete", m.CmdDelete},
-		{[]string{"u"}, "up -d", m.DeployProject},
-		{[]string{"x"}, "down", m.DownProject},
+		{[]string{"u"}, "up -d", m.CmdComposeUp},
+		{[]string{"x"}, "down", m.CmdComposeDown},
 		{[]string{"?"}, "help", m.CmdHelp},
 		{[]string{"esc"}, "back", m.CmdBack},
 	}
