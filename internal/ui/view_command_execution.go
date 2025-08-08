@@ -11,8 +11,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 type CommandExecutionViewModel struct {
@@ -151,95 +149,55 @@ func (m *CommandExecutionViewModel) HandleBack(model *Model) tea.Cmd {
 	return nil
 }
 
-func executeComposeCommandWithStreaming(client *docker.Client, projectName string, operation string) tea.Cmd {
-	return func() tea.Msg {
-		// Create the command based on operation
-		var cmd *exec.Cmd
-		switch operation {
-		case "up":
-			cmd = exec.Command("docker", "compose", "-p", projectName, "up", "-d")
-		case "down":
-			cmd = exec.Command("docker", "compose", "-p", projectName, "down")
-		default:
-			return errorMsg{err: fmt.Errorf("unknown operation: %s", operation)}
-		}
-
-		// Create pipes for stdout and stderr
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			return errorMsg{err: fmt.Errorf("failed to create stdout pipe: %w", err)}
-		}
-		stderr, err := cmd.StderrPipe()
-		if err != nil {
-			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
-		}
-
-		// HandleStart the command
-		if err := cmd.Start(); err != nil {
-			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
-		}
-
-		// Store the command reference and output channel
-		return commandExecStartedMsg{cmd: cmd, stdout: stdout, stderr: stderr}
-	}
-}
-
-func executeContainerCommand(client *docker.Client, containerID string, operation string) tea.Cmd {
-	return func() tea.Msg {
-		// Create the command based on operation
-		var cmd *exec.Cmd
-		switch operation {
-		case "start":
-			cmd = exec.Command("docker", "start", containerID)
-		case "stop":
-			cmd = exec.Command("docker", "stop", containerID)
-		case "restart":
-			cmd = exec.Command("docker", "restart", containerID)
-		case "kill":
-			cmd = exec.Command("docker", "kill", containerID)
-		case "rm":
-			cmd = exec.Command("docker", "rm", containerID)
-		default:
-			return errorMsg{err: fmt.Errorf("unknown operation: %s", operation)}
-		}
-
-		// Create pipes for stdout and stderr
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			return errorMsg{err: fmt.Errorf("failed to create stdout pipe: %w", err)}
-		}
-		stderr, err := cmd.StderrPipe()
-		if err != nil {
-			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
-		}
-
-		// HandleStart the command
-		if err := cmd.Start(); err != nil {
-			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
-		}
-
-		// Store the command reference and output channel
-		return commandExecStartedMsg{cmd: cmd, stdout: stdout, stderr: stderr}
-	}
-}
-
-func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, previousView ViewType, containerID string, operation string) tea.Cmd {
+func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, args ...string) tea.Cmd {
 	model.SwitchView(CommandExecutionView)
+
 	m.output = []string{}
 	m.scrollY = 0
 	m.done = false
-	m.cmdString = fmt.Sprintf("docker %s %s", operation, containerID)
 
-	return executeContainerCommand(model.dockerClient, containerID, operation)
+	return func() tea.Msg {
+		m.cmdString = fmt.Sprintf("docker %s", strings.Join(args, " "))
+
+		// Create the command based on operation
+		cmd := exec.Command("docker", args...)
+
+		// Create pipes for stdout and stderr
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stdout pipe: %w", err)}
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return errorMsg{err: fmt.Errorf("failed to create stderr pipe: %w", err)}
+		}
+
+		// Start the command
+		if err := cmd.Start(); err != nil {
+			return errorMsg{err: fmt.Errorf("failed to start command: %w", err)}
+		}
+
+		// Store the command reference and output channel
+		return commandExecStartedMsg{cmd: cmd, stdout: stdout, stderr: stderr}
+	}
+}
+
+func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, containerID string, operation string) tea.Cmd {
+	model.SwitchView(CommandExecutionView)
+	return m.ExecuteCommand(model, operation, containerID)
 }
 
 func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, operation string) tea.Cmd {
-	model.SwitchView(CommandExecutionView)
-	m.output = []string{}
-	m.scrollY = 0
-	m.done = false
-	m.cmdString = fmt.Sprintf("docker compose -p %s up -d", model.projectName)
-	return executeComposeCommandWithStreaming(model.dockerClient, model.projectName, operation)
+	switch operation {
+	case "up":
+		args := []string{"compose", "-p", model.projectName, "up", "-d"}
+		return m.ExecuteCommand(model, args...)
+	case "down":
+		args := []string{"compose", "-p", model.projectName, "down"}
+		return m.ExecuteCommand(model, args...)
+	default:
+		return nil
+	}
 }
 
 func (m *CommandExecutionViewModel) ExecStarted(cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) tea.Cmd {
