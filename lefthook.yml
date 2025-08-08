@@ -1,0 +1,27 @@
+# Lefthook configuration for automatic code formatting
+# https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    go-fmt:
+      glob: "*.go"
+      run: make fmt && git add {staged_files}
+      
+    go-test:
+      glob: "*.go"
+      run: go test -short ./...
+
+pre-push:
+  parallel: true
+  commands:
+    go-lint:
+      run: make lint
+      
+    go-test-full:
+      run: make test
+
+# Skip lefthook execution in CI/CD environments
+skip_output:
+  - meta
+  - summary

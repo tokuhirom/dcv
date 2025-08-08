@@ -55,4 +55,6 @@ dev-deps:
 	@echo "Installing development dependencies..."
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@which golangci-lint > /dev/null || $(MAKE) install-golangci-lint
+	@which lefthook > /dev/null || go install github.com/evilmartians/lefthook@latest
+	@lefthook install
 	@echo "Development dependencies installed successfully"
