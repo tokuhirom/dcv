@@ -447,18 +447,18 @@ func TestFileBrowserTableView(t *testing.T) {
 		// Check for table headers
 		assert.Contains(t, view, "PERMISSIONS")
 		assert.Contains(t, view, "NAME")
-		
+
 		// Check for header separator (bubbles/table uses simpler format)
 		lines := strings.Split(view, "\n")
 		hasHeaderSeparator := false
-		
+
 		for _, line := range lines {
 			if strings.Contains(line, "─") {
 				hasHeaderSeparator = true
 				break
 			}
 		}
-		
+
 		assert.True(t, hasHeaderSeparator, "Table should have header separator")
 	})
 
