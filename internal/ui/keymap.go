@@ -51,7 +51,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
-		{[]string{"s"}, "stats", m.ShowStatsView}, // TODO: rename
+		{[]string{"s"}, "stats", m.CmdStats},
 		{[]string{"t"}, "top", m.CmdTop},
 		{[]string{"K"}, "kill", m.CmdKill},
 		{[]string{"S"}, "stop", m.CmdStop},
@@ -113,7 +113,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.composeProjectListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
-		{[]string{"enter"}, "select project", m.SelectProject}, // TODO: rename
+		{[]string{"enter"}, "select project", m.CmdSelectProject},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -160,8 +160,8 @@ func (m *Model) initializeKeyHandlers() {
 	m.fileBrowserHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
-		{[]string{"enter"}, "open", m.OpenFileOrDirectory},         // TODO: rename
-		{[]string{"u"}, "parent directory", m.GoToParentDirectory}, // TODO : rename
+		{[]string{"enter"}, "open", m.CmdOpenFileOrDirectory},
+		{[]string{"u"}, "parent directory", m.CmdGoToParentDirectory},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},

@@ -188,7 +188,7 @@ func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) ShowStatsView(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdStats(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.statsViewModel.Show(m)
 }
 
@@ -217,7 +217,7 @@ func (m *Model) CmdComposeLS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, loadProjects(m.dockerClient)
 }
 
-func (m *Model) SelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProjectListView:
 		return m, m.composeProjectListViewModel.HandleSelectProject(m)
@@ -429,11 +429,11 @@ func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) OpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdOpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.fileBrowserViewModel.HandleOpenFileOrDirectory(m)
 }
 
-func (m *Model) GoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdGoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.fileBrowserViewModel.HandleGoToParentDirectory(m)
 }
 
