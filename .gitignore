@@ -33,3 +33,6 @@ Thumbs.db
 
 # GoReleaser
 dist/
+
+dcv_test
+
