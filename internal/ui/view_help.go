@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type HelpViewModel struct {
@@ -75,6 +74,28 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	// Build table rows
 	var allRows [][]string
 
+	// Add view-specific configs
+	if len(viewConfigs) > 0 {
+		for _, config := range viewConfigs {
+			if len(config.Keys) > 0 {
+				key := config.Keys[0]
+				if len(config.Keys) > 1 {
+					key = strings.Join(config.Keys, "/")
+				}
+
+				// Get command name for this handler
+				cmdName := getCommandForHandler(config.KeyHandler)
+				if cmdName != "" {
+					cmdName = ":" + cmdName
+				}
+
+				allRows = append(allRows, []string{key, cmdName, config.Description})
+			}
+		}
+	}
+
+	allRows = append(allRows, []string{"", "", ""})
+
 	// Add global configs
 	if len(model.globalHandlers) > 0 {
 		// Add section header as a special row
@@ -96,58 +117,6 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		}
 	}
 
-	// Add view-specific configs
-	if len(viewConfigs) > 0 {
-		// Add separator row if we have both
-		if len(model.globalHandlers) > 0 {
-			allRows = append(allRows, []string{"", "", ""})
-		}
-
-		// Add section header
-		allRows = append(allRows, []string{"", "", ""})
-
-		for _, config := range viewConfigs {
-			if len(config.Keys) > 0 {
-				key := config.Keys[0]
-				if len(config.Keys) > 1 {
-					key = strings.Join(config.Keys, "/")
-				}
-
-				// Get command name for this handler
-				cmdName := getCommandForHandler(config.KeyHandler)
-				if cmdName != "" {
-					cmdName = ":" + cmdName
-				}
-
-				allRows = append(allRows, []string{key, cmdName, config.Description})
-			}
-		}
-	}
-
-	// Calculate scrolling
-	visibleRows := availableHeight - 8 // Account for title, headers, footer
-	if visibleRows < 5 {
-		visibleRows = 5
-	}
-
-	// Adjust scroll position
-	if m.scrollY < 0 {
-		m.scrollY = 0
-	}
-
-	// Apply scrolling to rows
-	startIdx := m.scrollY
-	endIdx := startIdx + visibleRows
-	if endIdx > len(allRows) {
-		endIdx = len(allRows)
-	}
-
-	// Get visible rows
-	var visibleTableRows [][]string
-	if len(allRows) > 0 && startIdx < len(allRows) {
-		visibleTableRows = allRows[startIdx:endIdx]
-	}
-
 	// Create columns
 	columns := []table.Column{
 		{Title: "Key", Width: 15},
@@ -156,8 +125,8 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	// Convert visible table rows to table.Row format
-	rows := make([]table.Row, len(visibleTableRows))
-	for i, row := range visibleTableRows {
+	rows := make([]table.Row, len(allRows))
+	for i, row := range allRows {
 		if len(row) >= 3 {
 			rows[i] = table.Row{row[0], row[1], row[2]}
 		} else {
@@ -172,32 +141,8 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		tableHeight = 10
 	}
 
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithHeight(tableHeight),
-	)
-
-	// Set styles
-	tableStyle := table.DefaultStyles()
-	tableStyle.Header = tableStyle.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	tableStyle.Selected = tableStyle.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-
-	t.SetStyles(tableStyle)
-	t.Focus()
-
-	// Move to scroll position
-	t.MoveDown(m.scrollY)
-
-	s.WriteString(t.View())
+	tableString := RenderTable(columns, rows, tableHeight, m.scrollY)
+	s.WriteString(tableString)
 
 	return s.String()
 }
