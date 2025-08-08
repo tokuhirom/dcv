@@ -18,51 +18,70 @@ type DockerContainerListViewModel struct {
 	showAll                 bool
 }
 
-func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
-	var s strings.Builder
+type ColumnMap struct {
+	containerID table.Column
+	image       table.Column
+	status      table.Column
+	ports       table.Column
+	names       table.Column
+}
 
+func NewColumnMap(model *Model) ColumnMap {
+	sideMargin := 2 * 2    // 2 for left and right padding
+	cellMargin := 2        // 2 for cell margin
+	containerIDWidth := 12 // Fixed width for container ID
+	widthPerColumn := (model.width - containerIDWidth - cellMargin*4 - sideMargin) / 4
+
+	return ColumnMap{
+		containerID: table.Column{Title: "CONTAINER ID", Width: containerIDWidth},
+		image:       table.Column{Title: "IMAGE", Width: widthPerColumn},
+		status:      table.Column{Title: "STATUS", Width: widthPerColumn},
+		ports:       table.Column{Title: "PORTS", Width: widthPerColumn},
+		names:       table.Column{Title: "NAMES", Width: widthPerColumn},
+	}
+}
+
+func (c *ColumnMap) ToArray() []table.Column {
+	return []table.Column{
+		c.containerID,
+		c.image,
+		c.status,
+		c.ports,
+		c.names,
+	}
+}
+
+func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
 	// Container list
 	if len(m.dockerContainers) == 0 {
+		var s strings.Builder
 		s.WriteString("\nNo containers found.\n")
 		return s.String()
 	}
 
-	widthPerColumn := model.width / 5
-	columns := []table.Column{
-		{Title: "CONTAINER ID", Width: widthPerColumn},
-		{Title: "IMAGE", Width: widthPerColumn},
-		{Title: "STATUS", Width: widthPerColumn},
-		{Title: "PORTS", Width: widthPerColumn},
-		{Title: "NAMES", Width: widthPerColumn},
-	}
+	columns := NewColumnMap(model)
 
 	rows := make([]table.Row, 0, len(m.dockerContainers))
 	for _, container := range m.dockerContainers {
 		// Truncate container ID
 		id := container.ID
-		if len(id) > 12 {
+		if len(id) > 12 { // shorten ID to 12 characters
 			id = id[:12]
 		}
 
 		// Truncate image name
 		image := container.Image
-		if len(image) > 30 {
-			image = image[:27] + "..."
-		}
 
 		// Status with color
 		status := container.Status
 		if strings.Contains(status, "Up") || strings.Contains(status, "running") {
-			status = statusUpStyle.Render(status)
+			status = statusUpStyle.MaxWidth(columns.status.Width).Inline(true).Render(status)
 		} else {
-			status = statusDownStyle.Render(status)
+			status = statusDownStyle.MaxWidth(columns.status.Width).Inline(true).Render(status)
 		}
 
 		// Truncate ports
-		ports := container.Ports
-		if len(ports) > 30 {
-			ports = ports[:27] + "..."
-		}
+		ports := lipgloss.NewStyle().MaxWidth(columns.ports.Width).Render(container.Ports)
 
 		name := container.Names
 		if container.IsDind() {
@@ -73,7 +92,7 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 	}
 
 	t := table.New(
-		table.WithColumns(columns),
+		table.WithColumns(columns.ToArray()),
 		table.WithRows(rows),
 		table.WithHeight(availableHeight-1),
 		table.WithFocused(true),
@@ -96,9 +115,7 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		t.MoveDown(m.selectedDockerContainer)
 	}
 
-	s.WriteString(t.View())
-
-	return s.String()
+	return t.View()
 }
 
 func (m *DockerContainerListViewModel) HandleUp(_ *Model) tea.Cmd {
