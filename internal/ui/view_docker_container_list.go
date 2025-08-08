@@ -74,11 +74,6 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 
 		// Status with color
 		status := container.Status
-		if strings.Contains(status, "Up") || strings.Contains(status, "running") {
-			status = statusUpStyle.MaxWidth(columns.status.Width).Inline(true).Render(status)
-		} else {
-			status = statusDownStyle.MaxWidth(columns.status.Width).Inline(true).Render(status)
-		}
 
 		// Truncate ports
 		ports := lipgloss.NewStyle().MaxWidth(columns.ports.Width).Render(container.Ports)
@@ -91,31 +86,7 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		rows = append(rows, table.Row{id, image, status, ports, name})
 	}
 
-	t := table.New(
-		table.WithColumns(columns.ToArray()),
-		table.WithRows(rows),
-		table.WithHeight(availableHeight-1),
-		table.WithFocused(true),
-	)
-
-	// Apply styles
-	styles := table.DefaultStyles()
-	styles.Header = styles.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	styles.Selected = selectedStyle
-	styles.Cell = styles.Cell.
-		BorderForeground(lipgloss.Color("240"))
-	t.SetStyles(styles)
-
-	// Set cursor position
-	if m.selectedDockerContainer < len(rows) {
-		t.MoveDown(m.selectedDockerContainer)
-	}
-
-	return t.View()
+	return RenderTable(columns.ToArray(), rows, availableHeight, m.selectedDockerContainer)
 }
 
 func (m *DockerContainerListViewModel) HandleUp(_ *Model) tea.Cmd {
