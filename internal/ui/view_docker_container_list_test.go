@@ -3,10 +3,8 @@ package ui
 import (
 	"strings"
 	"testing"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -245,7 +243,7 @@ func TestDockerContainerListView_Update(t *testing.T) {
 	})
 }
 
-// Test the view content with teatest
+// Test the view content directly without teatest to avoid Docker daemon calls
 func TestDockerContainerListView_FullOutput(t *testing.T) {
 	t.Run("renders complete view", func(t *testing.T) {
 		m := createTestModel(DockerContainerListView)
@@ -260,27 +258,19 @@ func TestDockerContainerListView_FullOutput(t *testing.T) {
 		}
 		m.width = 120
 		m.Height = 30
+		m.loading = false
 		m.initializeKeyHandlers()
 
-		tm := teatest.NewTestModel(
-			t, m,
-			teatest.WithInitialTermSize(120, 30),
-		)
+		// Test the View() method directly instead of using teatest
+		output := m.View()
 
-		// Wait for render
-		teatest.WaitFor(
-			t, tm.Output(),
-			func(bts []byte) bool {
-				output := string(bts)
-				return strings.Contains(output, "Docker Containers") &&
-					strings.Contains(output, "nginx:latest")
-			},
-			teatest.WithCheckInterval(time.Millisecond*50),
-			teatest.WithDuration(time.Second),
-		)
-
-		// Send quit
-		tm.Send(tea.QuitMsg{})
-		tm.WaitFinished(t, teatest.WithFinalTimeout(time.Second))
+		// Check that the output contains expected content
+		assert.Contains(t, output, "Docker Containers")
+		assert.Contains(t, output, "CONTAINER ID")
+		assert.Contains(t, output, "IMAGE")
+		assert.Contains(t, output, "nginx:latest")
+		assert.Contains(t, output, "abc123def456")
+		assert.Contains(t, output, "web")
+		assert.Contains(t, output, "Up 2 hours")
 	})
 }
