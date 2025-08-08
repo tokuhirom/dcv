@@ -188,7 +188,10 @@ func TestImageListViewModel_Operations(t *testing.T) {
 	})
 
 	t.Run("HandleDelete removes selected image", func(t *testing.T) {
-		model := &Model{loading: false}
+		model := &Model{
+			loading:                  false,
+			commandExecutionViewModel: CommandExecutionViewModel{},
+		}
 		vm := &ImageListViewModel{
 			dockerImages: []models.DockerImage{
 				{ID: "image1"},
@@ -199,7 +202,7 @@ func TestImageListViewModel_Operations(t *testing.T) {
 
 		cmd := vm.HandleDelete(model)
 
-		assert.True(t, model.loading)
+		// Command execution doesn't set loading anymore, it switches view
 		assert.NotNil(t, cmd)
 	})
 

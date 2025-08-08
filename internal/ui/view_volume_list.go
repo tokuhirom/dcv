@@ -90,10 +90,13 @@ func (m *VolumeListViewModel) HandleDelete(model *Model, force bool) tea.Cmd {
 	}
 
 	volume := m.dockerVolumes[m.selectedDockerVolume]
-	model.loading = true
-	model.err = nil
-
-	return removeVolume(model.dockerClient, volume.Name, force)
+	// Use CommandExecutionView to show real-time output
+	args := []string{"volume", "rm"}
+	if force {
+		args = append(args, "-f")
+	}
+	args = append(args, volume.Name)
+	return model.commandExecutionViewModel.ExecuteCommand(model, args...)
 }
 
 // HandleBack returns to the compose process list view
@@ -120,12 +123,5 @@ func loadDockerVolumes(dockerClient *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		volumes, err := dockerClient.ListVolumes()
 		return dockerVolumesLoadedMsg{volumes: volumes, err: err}
-	}
-}
-
-func removeVolume(dockerClient *docker.Client, volumeName string, force bool) tea.Cmd {
-	return func() tea.Msg {
-		err := dockerClient.RemoveVolume(volumeName, force)
-		return serviceActionCompleteMsg{err: err}
 	}
 }
