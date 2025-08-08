@@ -183,7 +183,6 @@ func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, args ...string)
 }
 
 func (m *CommandExecutionViewModel) ExecuteContainerCommand(model *Model, containerID string, operation string) tea.Cmd {
-	model.SwitchView(CommandExecutionView)
 	return m.ExecuteCommand(model, operation, containerID)
 }
 
