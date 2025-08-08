@@ -466,32 +466,12 @@ func loadDockerImages(client *docker.Client, showAll bool) tea.Cmd {
 	}
 }
 
-func removeImage(client *docker.Client, imageID string, force bool) tea.Cmd {
-	return func() tea.Msg {
-		err := client.RemoveImage(imageID, force)
-		return serviceActionCompleteMsg{
-			service: imageID,
-			err:     err,
-		}
-	}
-}
-
 func loadDockerNetworks(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		networks, err := client.ListNetworks()
 		return dockerNetworksLoadedMsg{
 			networks: networks,
 			err:      err,
-		}
-	}
-}
-
-func removeNetwork(client *docker.Client, networkID string) tea.Cmd {
-	return func() tea.Msg {
-		err := client.RemoveNetwork(networkID)
-		return serviceActionCompleteMsg{
-			service: networkID,
-			err:     err,
 		}
 	}
 }

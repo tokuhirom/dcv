@@ -81,8 +81,9 @@ func (m *NetworkListViewModel) HandleDelete(model *Model) tea.Cmd {
 			model.err = fmt.Errorf("cannot remove default network: %s", network.Name)
 			return nil
 		}
-		model.loading = true
-		return removeNetwork(model.dockerClient, network.ID)
+		// Use CommandExecutionView to show real-time output
+		args := []string{"network", "rm", network.ID}
+		return model.commandExecutionViewModel.ExecuteCommand(model, args...)
 	}
 	return nil
 }
