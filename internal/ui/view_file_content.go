@@ -2,9 +2,9 @@ package ui
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -17,58 +17,23 @@ type FileContentViewModel struct {
 }
 
 // render renders the file content view
-func (m *FileContentViewModel) render(model *Model, availableHeight int) string {
-	var content strings.Builder
-
+func (m *FileContentViewModel) render(model *Model) string {
 	if model.err != nil {
 		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
-		return content.String() + errorStyle.Render(fmt.Sprintf("Error: %v", model.err))
+		return errorStyle.Render(fmt.Sprintf("Error: %v", model.err))
 	}
 
-	// File content with line numbers
-	lines := strings.Split(m.content, "\n")
-	viewHeight := availableHeight
-	startIdx := m.scrollY
-	endIdx := startIdx + viewHeight
-
-	if endIdx > len(lines) {
-		endIdx = len(lines)
-	}
-
-	lineNumStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-	contentStyle := lipgloss.NewStyle()
-
-	if len(lines) == 0 {
-		content.WriteString("(empty file)\n")
-	} else if startIdx < len(lines) {
-		for i := startIdx; i < endIdx; i++ {
-			lineNum := lineNumStyle.Render(fmt.Sprintf("%4d ", i+1))
-			lineContent := contentStyle.Render(lines[i])
-			content.WriteString(lineNum + lineContent + "\n")
-		}
-	}
-
-	// Fill remaining space
-	linesShown := endIdx - startIdx
-	for i := linesShown; i < viewHeight; i++ {
-		content.WriteString("\n")
-	}
-
-	// Show position indicator
-	if len(lines) > viewHeight {
-		posStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-		position := fmt.Sprintf("Lines %d-%d of %d", startIdx+1, endIdx, len(lines))
-		content.WriteString(posStyle.Render(position))
-	}
-
-	return content.String()
+	v := viewport.New(model.width, model.Height-4)
+	v.SetContent(m.content)
+	v.ScrollDown(m.scrollY)
+	return v.View()
 }
 
-func (m *FileContentViewModel) Load(model *Model, containerID, path string) tea.Cmd {
-	// no one calls this directly, it's used by the Model
-	model.currentView = FileContentView
+func (m *FileContentViewModel) Load(model *Model, containerID, containerName, path string) tea.Cmd {
+	model.SwitchView(FileContentView)
 	model.loading = true
 	m.scrollY = 0
+	m.containerName = containerName
 	return loadFileContent(model.dockerClient, containerID, path)
 }
 
@@ -106,10 +71,15 @@ func (m *FileContentViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	m.content = ""
 	m.contentPath = ""
+	m.contentPath = ""
 	m.scrollY = 0
 	return nil
 }
 
 func (m *FileContentViewModel) Title() string {
-	return fmt.Sprintf("File: %s [%s]", filepath.Base(m.contentPath), m.containerName)
+	return fmt.Sprintf("File: [%d/%d] %s [%s] ",
+		m.scrollY, len(strings.Split(m.content, "\n")),
+		m.contentPath,
+		m.containerName,
+	)
 }

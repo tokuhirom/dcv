@@ -165,7 +165,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case FileBrowserView:
 		return m.fileBrowserViewModel.render(m, availableHeight)
 	case FileContentView:
-		return m.fileContentViewModel.render(m, availableHeight)
+		return m.fileContentViewModel.render(m)
 	case InspectView:
 		return m.inspectViewModel.render(availableHeight)
 	case HelpView:
