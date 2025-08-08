@@ -3,9 +3,9 @@ package ui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -35,73 +35,79 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 		return s.String()
 	}
 
-	// Create table
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		Headers("REPOSITORY", "TAG", "IMAGE ID", "CREATED", "SIZE").
-		Height(availableHeight).
-		Width(model.width)
-
 	availableWidth := model.width - 10 // margin
 	repoWidth := 30
 	if availableWidth < 100 {
 		repoWidth = 20
 	}
 
-	// Styles
-	selectedStyle := lipgloss.NewStyle().Background(lipgloss.Color("238"))
-	repoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
-	tagStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("229"))
-	idStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
-	createdStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("243"))
-	sizeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("213"))
+	// Create columns
+	columns := []table.Column{
+		{Title: "REPOSITORY", Width: repoWidth},
+		{Title: "TAG", Width: 15},
+		{Title: "IMAGE ID", Width: 12},
+		{Title: "CREATED", Width: 20},
+		{Title: "SIZE", Width: 10},
+	}
 
-	// Add rows
+	// Create rows
+	rows := make([]table.Row, len(m.dockerImages))
 	for i, image := range m.dockerImages {
-		var rowRepoStyle, rowTagStyle, rowIdStyle, rowCreatedStyle, rowSizeStyle lipgloss.Style
-
-		if i == m.selectedDockerImage {
-			rowRepoStyle = selectedStyle.Inherit(repoStyle)
-			rowTagStyle = selectedStyle.Inherit(tagStyle)
-			rowIdStyle = selectedStyle.Inherit(idStyle)
-			rowCreatedStyle = selectedStyle.Inherit(createdStyle)
-			rowSizeStyle = selectedStyle.Inherit(sizeStyle)
-		} else {
-			rowRepoStyle = repoStyle
-			rowTagStyle = tagStyle
-			rowIdStyle = idStyle
-			rowCreatedStyle = createdStyle
-			rowSizeStyle = sizeStyle
-		}
-
 		// Handle <none> repository
 		repo := image.Repository
-		if repo == "<none>" {
-			repo = "<none>"
-		}
 		if len(repo) > repoWidth {
 			repo = repo[:repoWidth-3] + "..."
 		}
-		repo = rowRepoStyle.Render(repo)
-
-		tag := rowTagStyle.Render(image.Tag)
 
 		// Show first 12 chars of ID
 		id := image.ID
 		if len(id) > 12 {
 			id = id[:12]
 		}
-		id = rowIdStyle.Render(id)
 
-		created := rowCreatedStyle.Render(image.CreatedSince)
-		size := rowSizeStyle.Render(image.Size)
-
-		t.Row(repo, tag, id, created, size)
+		rows[i] = table.Row{
+			repo,
+			image.Tag,
+			id,
+			image.CreatedSince,
+			image.Size,
+		}
 	}
 
-	t.Offset(m.selectedDockerImage)
-	s.WriteString(t.Render())
+	// Create table
+	tableHeight := availableHeight
+	if tableHeight <= 0 {
+		tableHeight = 10
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(tableHeight),
+	)
+
+	// Set styles
+	tableStyle := table.DefaultStyles()
+	tableStyle.Header = tableStyle.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	tableStyle.Selected = tableStyle.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+
+	t.SetStyles(tableStyle)
+	t.Focus()
+
+	// Move to selected row
+	for i := 0; i < m.selectedDockerImage; i++ {
+		t.MoveDown(1)
+	}
+
+	s.WriteString(t.View())
 
 	return s.String()
 }

@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -26,34 +26,27 @@ func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeP
 }
 
 func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
-	var s strings.Builder
-
 	slog.Info("Rendering container list",
 		slog.Int("selectedContainer", m.selectedContainer),
 		slog.Int("numContainers", len(m.composeContainers)))
 
 	// Empty state
 	if len(m.composeContainers) == 0 {
+		var s strings.Builder
 		s.WriteString("\nNo containers found.\n")
 		s.WriteString("\nPress u to start services or p to switch to project list\n")
 		return s.String()
 	}
 
 	// Create table with fixed widths
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == m.selectedContainer {
-				return selectedStyle
-			}
-			return normalStyle
-		}).
-		Headers("SERVICE", "IMAGE", "STATUS", "PORTS").
-		Height(availableHeight - 2).
-		Width(model.width).
-		Offset(m.selectedContainer)
+	columns := []table.Column{
+		{Title: "SERVICE", Width: 20},
+		{Title: "IMAGE", Width: 30},
+		{Title: "STATUS", Width: 20},
+		{Title: "PORTS", Width: model.width - 75},
+	}
 
+	rows := make([]table.Row, 0, len(m.composeContainers))
 	// Add rows with width control
 	for _, container := range m.composeContainers {
 		// Service name with dind indicator
@@ -82,12 +75,34 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 			ports = ports[:37] + "..."
 		}
 
-		t.Row(service, image, status, ports)
+		rows = append(rows, table.Row{service, image, status, ports})
 	}
 
-	s.WriteString(t.Render() + "\n\n")
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithHeight(availableHeight-2),
+		table.WithFocused(true),
+	)
 
-	return s.String()
+	// Apply styles
+	styles := table.DefaultStyles()
+	styles.Header = styles.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	styles.Selected = selectedStyle
+	styles.Cell = styles.Cell.
+		BorderForeground(lipgloss.Color("240"))
+	t.SetStyles(styles)
+
+	// Set cursor position
+	if m.selectedContainer < len(rows) {
+		t.MoveDown(m.selectedContainer)
+	}
+
+	return t.View()
 }
 
 func (m *ComposeProcessListViewModel) HandleUp() tea.Cmd {

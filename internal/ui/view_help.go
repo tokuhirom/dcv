@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 )
 
 type HelpViewModel struct {
@@ -155,39 +155,58 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		visibleTableRows = allRows[startIdx:endIdx]
 	}
 
+	// Create columns
+	columns := []table.Column{
+		{Title: "Key", Width: 15},
+		{Title: "Command", Width: 30},
+		{Title: "Description", Width: 40},
+	}
+
+	// Convert visible table rows to table.Row format
+	rows := make([]table.Row, len(visibleTableRows))
+	for i, row := range visibleTableRows {
+		if len(row) >= 3 {
+			rows[i] = table.Row{row[0], row[1], row[2]}
+		} else {
+			// Handle empty separator rows
+			rows[i] = table.Row{"", "", ""}
+		}
+	}
+
 	// Create the table
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			baseStyle := normalStyle
-			if row == m.scrollY {
-				baseStyle = selectedStyle
-			}
+	tableHeight := availableHeight - 2
+	if tableHeight <= 0 {
+		tableHeight = 10
+	}
 
-			// Regular rows
-			switch col {
-			case 0: // Key column
-				return lipgloss.NewStyle().
-					Foreground(lipgloss.Color("86")).
-					Bold(true).
-					Width(15)
-			case 1: // Command column
-				return lipgloss.NewStyle().
-					Foreground(lipgloss.Color("214")).
-					Width(30)
-			case 2: // Description column
-				newStyle := baseStyle
-				return newStyle.Width(40)
-			default:
-				return baseStyle
-			}
-		}).
-		Headers("Key", "Command", "Description").
-		Rows(visibleTableRows...).
-		Height(availableHeight - 2)
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(tableHeight),
+	)
 
-	s.WriteString(t.String())
+	// Set styles
+	tableStyle := table.DefaultStyles()
+	tableStyle.Header = tableStyle.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	tableStyle.Selected = tableStyle.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+
+	t.SetStyles(tableStyle)
+	t.Focus()
+
+	// Move to scroll position
+	for i := 0; i < m.scrollY; i++ {
+		t.MoveDown(1)
+	}
+
+	s.WriteString(t.View())
 
 	return s.String()
 }

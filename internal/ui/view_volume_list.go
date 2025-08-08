@@ -37,7 +37,6 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 	// Create table rows
 	rows := make([]table.Row, len(m.dockerVolumes))
 	for i, volume := range m.dockerVolumes {
-
 		rows[i] = table.Row{
 			volume.Name,
 			volume.Driver,

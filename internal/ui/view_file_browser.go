@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -37,24 +37,16 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 	content.WriteString("\n")
 
 	// Create table
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == m.selectedFile {
-				return selectedStyle
-			}
-			return normalStyle
-		}).
-		Headers("PERMISSIONS", "NAME").
-		Height(availableHeight - 3). // Reserve 3 lines for path display
-		Width(model.width).
-		Offset(m.selectedFile)
+	columns := []table.Column{
+		{Title: "PERMISSIONS", Width: 15},
+		{Title: "NAME", Width: model.width - 20},
+	}
 
 	// Define styles for different file types
 	dirStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
 	linkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
 
+	rows := []table.Row{}
 	// Add rows
 	for _, file := range m.containerFiles {
 		// Style the name based on file type
@@ -65,10 +57,37 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 			name = linkStyle.Render(name)
 		}
 
-		t.Row(file.Permissions, name)
+		rows = append(rows, table.Row{file.Permissions, name})
 	}
 
-	content.WriteString(t.Render())
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithHeight(availableHeight-3), // Reserve 3 lines for path display
+		table.WithFocused(true),
+	)
+
+	// Apply styles
+	styles := table.DefaultStyles()
+	styles.Header = styles.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	styles.Selected = selectedStyle
+	styles.Cell = styles.Cell.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240"))
+	t.SetStyles(styles)
+
+	// Set cursor position
+	if m.selectedFile < len(rows) {
+		for i := 0; i < m.selectedFile; i++ {
+			t.MoveDown(1)
+		}
+	}
+
+	content.WriteString(t.View())
 	content.WriteString("\n\n")
 
 	// Show current path at bottom

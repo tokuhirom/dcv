@@ -3,9 +3,9 @@ package ui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 
@@ -27,20 +27,16 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		return s.String()
 	}
 
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			baseStyle := normalStyle
-			if row == m.selectedDockerContainer {
-				baseStyle = selectedStyle
-			}
-			return baseStyle
-		}).
-		Headers("CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES").
-		Height(availableHeight).
-		Width(model.width)
+	widthPerColumn := model.width / 5
+	columns := []table.Column{
+		{Title: "CONTAINER ID", Width: widthPerColumn},
+		{Title: "IMAGE", Width: widthPerColumn},
+		{Title: "STATUS", Width: widthPerColumn},
+		{Title: "PORTS", Width: widthPerColumn},
+		{Title: "NAMES", Width: widthPerColumn},
+	}
 
+	rows := make([]table.Row, 0, len(m.dockerContainers))
 	for _, container := range m.dockerContainers {
 		// Truncate container ID
 		id := container.ID
@@ -73,12 +69,34 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 			name = dindStyle.Render("⬢ ") + name
 		}
 
-		t.Row(id, image, status, ports, name)
+		rows = append(rows, table.Row{id, image, status, ports, name})
 	}
 
-	t.Offset(m.selectedDockerContainer)
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithHeight(availableHeight-1),
+		table.WithFocused(true),
+	)
 
-	s.WriteString(t.Render() + "\n")
+	// Apply styles
+	styles := table.DefaultStyles()
+	styles.Header = styles.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	styles.Selected = selectedStyle
+	styles.Cell = styles.Cell.
+		BorderForeground(lipgloss.Color("240"))
+	t.SetStyles(styles)
+
+	// Set cursor position
+	if m.selectedDockerContainer < len(rows) {
+		t.MoveDown(m.selectedDockerContainer)
+	}
+
+	s.WriteString(t.View())
 
 	return s.String()
 }

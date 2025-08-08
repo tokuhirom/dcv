@@ -18,8 +18,6 @@ var (
 			Foreground(lipgloss.Color("86")).
 			Background(lipgloss.Color("235"))
 
-	normalStyle = lipgloss.NewStyle()
-
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
 			Bold(true)

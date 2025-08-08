@@ -3,9 +3,9 @@ package ui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
@@ -33,18 +33,14 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 	s.WriteString("\n")
 
 	// Create table
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == m.selectedDindContainer {
-				return selectedStyle
-			}
-			return normalStyle
-		}).
-		Headers("CONTAINER ID", "IMAGE", "STATUS", "NAMES").
-		Height(availableHeight)
+	columns := []table.Column{
+		{Title: "CONTAINER ID", Width: 15},
+		{Title: "IMAGE", Width: 30},
+		{Title: "STATUS", Width: 20},
+		{Title: "NAMES", Width: 30},
+	}
 
+	rows := []table.Row{}
 	for _, container := range m.dindContainers {
 		// Truncate container ID
 		id := container.ID
@@ -66,10 +62,37 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			status = statusDownStyle.Render(status)
 		}
 
-		t.Row(id, image, status, container.Names)
+		rows = append(rows, table.Row{id, image, status, container.Names})
 	}
 
-	s.WriteString(t.Render() + "\n\n")
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithHeight(availableHeight),
+		table.WithFocused(true),
+	)
+
+	// Apply styles
+	styles := table.DefaultStyles()
+	styles.Header = styles.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	styles.Selected = selectedStyle
+	styles.Cell = styles.Cell.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240"))
+	t.SetStyles(styles)
+
+	// Set cursor position
+	if m.selectedDindContainer < len(rows) {
+		for i := 0; i < m.selectedDindContainer; i++ {
+			t.MoveDown(1)
+		}
+	}
+
+	s.WriteString(t.View() + "\n\n")
 
 	return s.String()
 }

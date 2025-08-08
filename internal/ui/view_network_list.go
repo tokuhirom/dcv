@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -19,52 +19,73 @@ type NetworkListViewModel struct {
 
 // render renders the network list view
 func (m *NetworkListViewModel) render(model *Model, availableHeight int) string {
-	var content strings.Builder
+	s := strings.Builder{}
 
 	if len(m.dockerNetworks) == 0 {
-		dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-		content.WriteString(dimStyle.Render("No networks found"))
-		return content.String()
+		s.WriteString("No networks found.\n")
+		s.WriteString(helpStyle.Render("\nPress 'q' to go back"))
+		return s.String()
 	}
 
-	// Define dimStyle for ID column
-	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-
-	// Create table with lipgloss
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("240"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			baseStyle := normalStyle
-			if row == m.selectedDockerNetwork {
-				baseStyle = selectedStyle
-			}
-			// Dim the ID column for non-selected rows
-			if col == 0 && row != m.selectedDockerNetwork {
-				return dimStyle
-			}
-			return baseStyle
-		}).
-		Headers("NETWORK ID", "NAME", "DRIVER", "SCOPE", "CONTAINERS").
-		Height(availableHeight).
-		Width(model.width)
-
-	// Add rows
-	for _, network := range m.dockerNetworks {
-		// Format row data
-		id := truncate(network.ID, 12)
-		name := truncate(network.Name, 30)
-		driver := truncate(network.Driver, 15)
-		scope := truncate(network.Scope, 10)
-		containers := fmt.Sprintf("%d", network.GetContainerCount())
-
-		t.Row(id, name, driver, scope, containers)
+	// Create table columns
+	columns := []table.Column{
+		{Title: "NETWORK ID", Width: 12},
+		{Title: "NAME", Width: 30},
+		{Title: "DRIVER", Width: 15},
+		{Title: "SCOPE", Width: 10},
+		{Title: "CONTAINERS", Width: 10},
 	}
 
-	// Set the scroll offset based on selection
-	t.Offset(m.selectedDockerNetwork)
+	// Create table rows
+	rows := make([]table.Row, len(m.dockerNetworks))
+	for i, network := range m.dockerNetworks {
+		rows[i] = table.Row{
+			truncate(network.ID, 12),
+			truncate(network.Name, 30),
+			truncate(network.Driver, 15),
+			truncate(network.Scope, 10),
+			fmt.Sprintf("%d", network.GetContainerCount()),
+		}
+	}
 
-	return t.String()
+	// Create table
+	// Calculate height - ensure we show all rows within available space
+	// The height should be the viewport height, not the number of rows
+	tableHeight := availableHeight
+	if tableHeight <= 0 {
+		tableHeight = 10 // Default height if not specified
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(tableHeight),
+	)
+
+	// Set styles
+	tableStyle := table.DefaultStyles()
+	tableStyle.Header = tableStyle.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	tableStyle.Selected = tableStyle.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+
+	t.SetStyles(tableStyle)
+	t.Focus()
+
+	// Move to selected row
+	for i := 0; i < m.selectedDockerNetwork; i++ {
+		t.MoveDown(1)
+	}
+
+	s.WriteString(t.View())
+
+	return s.String()
 }
 
 // Show switches to the network list view
