@@ -23,18 +23,14 @@ type FileBrowserViewModel struct {
 
 // render renders the file browser view
 func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string {
-	var content strings.Builder
-
 	if len(m.containerFiles) == 0 {
+		var content strings.Builder
 		dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 		content.WriteString("\n")
 		content.WriteString(dimStyle.Render("No files found or directory is empty"))
 		content.WriteString("\n")
 		return content.String()
 	}
-
-	// Add spacing
-	content.WriteString("\n")
 
 	// Create table
 	columns := []table.Column{
@@ -46,7 +42,7 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 	dirStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
 	linkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
 
-	rows := []table.Row{}
+	rows := make([]table.Row, 0, len(m.containerFiles))
 	// Add rows
 	for _, file := range m.containerFiles {
 		// Style the name based on file type
@@ -60,42 +56,7 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 		rows = append(rows, table.Row{file.Permissions, name})
 	}
 
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithHeight(availableHeight-3), // Reserve 3 lines for path display
-		table.WithFocused(true),
-	)
-
-	// Apply styles
-	styles := table.DefaultStyles()
-	styles.Header = styles.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	styles.Selected = selectedStyle
-	styles.Cell = styles.Cell.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240"))
-	t.SetStyles(styles)
-
-	// Set cursor position
-	if m.selectedFile < len(rows) {
-		for i := 0; i < m.selectedFile; i++ {
-			t.MoveDown(1)
-		}
-	}
-
-	content.WriteString(t.View())
-	content.WriteString("\n\n")
-
-	// Show current path at bottom
-	pathStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true)
-	content.WriteString(pathStyle.Render(fmt.Sprintf("Path: %s", m.currentPath)))
-	content.WriteString("\n")
-
-	return content.String()
+	return RenderTable(columns, rows, availableHeight-3, m.selectedFile)
 }
 
 func (m *FileBrowserViewModel) Load(model *Model, containerID, containerName string) tea.Cmd {

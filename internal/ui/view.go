@@ -43,6 +43,10 @@ var (
 			Bold(true)
 )
 
+const ResetForeground = "\x1b[39m"
+
+const ResetAll = "\x1b[0m"
+
 // View returns the view for the current model
 func (m *Model) View() string {
 	if m.width == 0 || m.Height == 0 {
@@ -155,7 +159,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case ImageListView:
 		return m.imageListViewModel.render(m, availableHeight)
 	case NetworkListView:
-		return m.networkListViewModel.render(m, availableHeight)
+		return m.networkListViewModel.render(availableHeight)
 	case VolumeListView:
 		return m.volumeListViewModel.render(m, availableHeight)
 	case FileBrowserView:

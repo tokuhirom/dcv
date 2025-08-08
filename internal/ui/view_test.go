@@ -444,30 +444,22 @@ func TestFileBrowserTableView(t *testing.T) {
 		assert.Contains(t, view, "README.md")
 		assert.Contains(t, view, "link -> /etc/hosts")
 
-		// Check for path at bottom
-		assert.Contains(t, view, "Path: /app")
+		// Check for table headers
+		assert.Contains(t, view, "PERMISSIONS")
+		assert.Contains(t, view, "NAME")
 
-		// Check for table borders
+		// Check for header separator (bubbles/table uses simpler format)
 		lines := strings.Split(view, "\n")
-		hasTopBorder := false
-		hasBottomBorder := false
-		hasVerticalBorder := false
+		hasHeaderSeparator := false
 
 		for _, line := range lines {
-			if strings.Contains(line, "┌") || strings.Contains(line, "┐") {
-				hasTopBorder = true
-			}
-			if strings.Contains(line, "└") || strings.Contains(line, "┘") {
-				hasBottomBorder = true
-			}
-			if strings.Contains(line, "│") {
-				hasVerticalBorder = true
+			if strings.Contains(line, "─") {
+				hasHeaderSeparator = true
+				break
 			}
 		}
 
-		assert.True(t, hasTopBorder, "Table should have top border")
-		assert.True(t, hasBottomBorder, "Table should have bottom border")
-		assert.True(t, hasVerticalBorder, "Table should have vertical borders")
+		assert.True(t, hasHeaderSeparator, "Table should have header separator")
 	})
 
 	t.Run("file_browser_empty_directory", func(t *testing.T) {

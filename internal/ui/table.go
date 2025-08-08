@@ -5,7 +5,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, currentRow int) string {
+func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, selectedRow int) string {
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
@@ -29,7 +29,7 @@ func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, 
 	t.Focus()
 
 	// Move to the selected row
-	t.MoveDown(currentRow)
+	t.MoveDown(selectedRow)
 
 	return t.View()
 }
