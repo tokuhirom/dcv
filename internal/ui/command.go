@@ -135,20 +135,6 @@ func (m *CommandViewModel) executeCommand(model *Model) (tea.Model, tea.Cmd) {
 		}
 		return model, model.helpViewModel.Show(model, model.currentView)
 
-	case "set": // TODO: deprecate this
-		// Handle set commands (e.g., :set showAll)
-		if len(parts) > 1 {
-			switch parts[1] {
-			case "all", "showAll":
-				model.composeProcessListViewModel.showAll = true
-				return model, model.refreshCurrentView()
-			case "noall", "noshowAll":
-				model.composeProcessListViewModel.showAll = false
-				return model, model.refreshCurrentView()
-			}
-		}
-		return model, nil
-
 	default:
 		// Try to execute as a key handler command
 		return m.executeKeyHandlerCommand(model, parts[0])
