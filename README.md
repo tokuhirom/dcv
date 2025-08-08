@@ -61,6 +61,7 @@ Displays `docker compose ps` results in a table format.
 - `i`: Switch to Docker image list view
 - `n`: Switch to Docker network list view
 - `P`: Switch to project list view
+- `V`: Switch to volume list view
 - `1`: Quick switch to Docker container list view
 - `2`: Quick switch to project list view
 - `3`: Quick switch to Docker image list view
@@ -91,7 +92,8 @@ Displays container logs. Initially shows the last 1000 lines, then streams new l
 - `↓`/`j`: Scroll down
 - `G`: Jump to end
 - `g`: Jump to start
-- `/`: Search logs
+- `/`: Search logs (supports regex with Ctrl+R, case insensitive with Ctrl+I)
+- `f`: Filter logs (shows only lines matching the filter)
 - `n`: Next search result
 - `N`: Previous search result
 - `?`: Show help view
@@ -191,13 +193,43 @@ Displays the full Docker inspect output for containers, images, or networks in J
 - `?`: Show help view
 - `Esc`/`q`: Back to previous view
 
+### Top View
+
+Shows process information (docker compose top) for the selected container.
+
+**Key bindings:**
+- `r`: Refresh
+- `?`: Show help view
+- `Esc`/`q`: Back to process list
+
+### Stats View
+
+Shows container resource usage statistics including CPU, memory, network I/O, and block I/O.
+
+**Key bindings:**
+- `r`: Refresh
+- `?`: Show help view
+- `Esc`/`q`: Back to process list
+
+### Compose Project List View
+
+Shows all Docker Compose projects on the system.
+
+**Key bindings:**
+- `↑`/`k`: Move up
+- `↓`/`j`: Move down
+- `Enter`: Select project and view its containers
+- `r`: Refresh list
+- `?`: Show help view
+- `q`: Quit
+
 ### Help View
 
 Shows all available keyboard shortcuts and their corresponding commands for the current view.
 
 The help view displays three columns:
 - **Key**: The keyboard shortcut (e.g., 'j' or 'down')
-- **Command**: The vim-style command that can be used in command mode (e.g., ':select-down-container')
+- **Command**: The vim-style command that can be used in command mode (e.g., ':cmd-down')
 - **Description**: What the action does
 
 **Key bindings:**
@@ -214,31 +246,38 @@ Vim-style command line interface for executing commands.
 - `:q!` or `:quit!`: Force quit without confirmation
 - `:h` or `:help`: Show help view
 - `:help commands`: List all available commands in current view
-- `:set all` or `:set showAll`: Show all containers (including stopped)
-- `:set noall` or `:set noshowAll`: Hide stopped containers
 
 **Key handler commands:**
-All key handler functions can be called as commands using kebab-case naming:
-- `:select-up-container`: Move selection up
-- `:select-down-container`: Move selection down
-- `:show-compose-log`: View container logs
-- `:kill-container`: Kill selected container
-- `:stop-container`: Stop selected container
-- `:restart-container`: Restart selected container
-- `:show-file-browser`: Browse container files
-- `:execute-shell`: Execute /bin/sh in container
+All key handler functions can be called as commands. Commands are automatically derived from the handler method names and use either short forms or kebab-case naming:
+- `:up` or `:cmd-up`: Move selection up
+- `:down` or `:cmd-down`: Move selection down
+- `:log` or `:cmd-log`: View container logs
+- `:kill` or `:cmd-kill`: Kill selected container
+- `:stop` or `:cmd-stop`: Stop selected container
+- `:start` or `:cmd-start`: Start selected container
+- `:restart` or `:cmd-restart`: Restart selected container
+- `:filebrowse` or `:cmd-file-browse`: Browse container files
+- `:shell` or `:cmd-shell`: Execute /bin/sh in container
+- `:inspect` or `:cmd-inspect`: Show inspect view
+- `:stats` or `:cmd-stats`: Show container stats
+- `:top` or `:cmd-top`: Show process info
 - And many more...
 
 **Command aliases:**
-- `:up` → `:select-up-container`
-- `:down` → `:select-down-container`
-- `:logs` → `:show-compose-log`
-- `:inspect` → `:show-inspect`
-- `:exec` → `:execute-shell`
-- `:ps` → `:show-docker-container-list`
-- `:images` → `:show-image-list`
-- `:networks` → `:show-network-list`
-- `:volumes` → `:show-volume-list`
+- `:up` → Move selection up
+- `:down` → Move selection down
+- `:log` or `:logs` → View container logs
+- `:inspect` → Show inspect view
+- `:shell` or `:exec` → Execute shell in container
+- `:ps` → Show Docker container list
+- `:images` → Show image list
+- `:networks` → Show network list
+- `:volumes` → Show volume list
+- `:remove` or `:rm` → Remove/delete container
+- `:all` or `:a` → Toggle show all containers
+- `:refresh` or `:r` → Refresh current view
+- `:quit` or `:q` → Quit application
+- `:help` or `:h` → Show help
 
 **Key bindings:**
 - `:`: Enter command mode from any view
@@ -274,6 +313,34 @@ dcv --projects
 # To view all Docker containers, press 'p' after starting
 ```
 
+## Configuration
+
+DCV supports configuration through a TOML file located at:
+- `~/.config/dcv/config.toml` - User config directory
+
+### Configuration Options
+
+```toml
+[general]
+# Initial view to show on startup
+# Valid values: "docker", "compose", "projects"
+# Default: "docker"
+initial_view = "docker"
+```
+
+### Example Configuration
+
+```bash
+# Create config directory
+mkdir -p ~/.config/dcv
+
+# Create config file
+cat > ~/.config/dcv/config.toml << EOF
+[general]
+initial_view = "compose"
+EOF
+```
+
 ## Installation
 
 ### Using go install
@@ -293,7 +360,7 @@ go build -o dcv
 
 ## Requirements
 
-- Go 1.24.3 or later
+- Go 1.23 or later (for building from source)
 - Docker and Docker Compose installed
 - Terminal with TUI support
 
@@ -311,11 +378,24 @@ go build -o dcv
 - Shows executed commands on error for easier debugging
 - Comprehensive unit tests
 
+## Command Execution View
+
+Shows real-time output when executing Docker commands (start, stop, restart, kill, rm, docker compose up/down).
+
+**Key bindings:**
+- `↑`/`k`: Scroll up
+- `↓`/`j`: Scroll down
+- `G`: Jump to end
+- `g`: Jump to start
+- `Ctrl+C`: Cancel running command
+- `Esc`: Back to previous view
+
 ## Debugging Features
 
-- Executed commands are always displayed in the footer
-- Detailed error messages and commands shown on error
-- stderr output is prefixed with `[STDERR]`
+- Commands are displayed when executing operations
+- Real-time streaming output for all Docker operations
+- Error messages with exit codes
+- Color-coded status indicators (success/failure)
 
 ## Development
 
