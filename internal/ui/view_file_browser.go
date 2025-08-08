@@ -134,7 +134,7 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 			return loadContainerFiles(model.dockerClient, m.browsingContainerID, newPath)
 		} else {
 			// View file content
-			return model.fileContentViewModel.Load(model, m.browsingContainerID, newPath)
+			return model.fileContentViewModel.Load(model, m.browsingContainerID, m.browsingContainerName, newPath)
 		}
 	}
 	return nil
