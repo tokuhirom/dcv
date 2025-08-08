@@ -5,7 +5,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -73,32 +72,7 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 		}
 	}
 
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithHeight(availableHeight-4),
-	)
-
-	// Set styles
-	tableStyle := table.DefaultStyles()
-	tableStyle.Header = tableStyle.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	tableStyle.Selected = tableStyle.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-
-	t.SetStyles(tableStyle)
-	t.Focus()
-
-	// Move to selected row
-	t.MoveDown(m.selectedDockerImage)
-
-	return t.View()
+	return RenderTable(columns, rows, availableHeight, m.selectedDockerImage)
 }
 
 // Show switches to the image list view
