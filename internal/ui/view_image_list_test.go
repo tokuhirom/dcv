@@ -189,7 +189,7 @@ func TestImageListViewModel_Operations(t *testing.T) {
 
 	t.Run("HandleDelete removes selected image", func(t *testing.T) {
 		model := &Model{
-			loading:                  false,
+			loading:                   false,
 			commandExecutionViewModel: CommandExecutionViewModel{},
 		}
 		vm := &ImageListViewModel{
