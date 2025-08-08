@@ -164,7 +164,7 @@ func getShortCommandName(methodName string) string {
 		"CmdToggleAll":              "all",
 		"CmdTop":                    "top",
 		"CmdCancel":                 "cancel",
-		"ShowStatsView":             "stats",
+		"CmdStats":                  "stats",
 		"CmdImages":                 "images",
 		"CmdNetworkLs":              "networks",
 		"CmdVolumeLs":               "volumes",
