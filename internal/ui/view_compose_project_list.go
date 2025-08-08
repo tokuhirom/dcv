@@ -6,8 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -45,45 +43,18 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 		} else {
 			status = statusDownStyle.Render(status)
 		}
+		status += ResetAll
 
 		// Truncate config files if too long
 		configFiles := project.ConfigFiles
 		if len(configFiles) > 50 {
 			configFiles = configFiles[:47] + "..."
 		}
-		configFiles = lipgloss.NewStyle().
-			Background(lipgloss.Color("0")).
-			Foreground(lipgloss.Color("4")).
-			Render(configFiles)
 
 		rows = append(rows, table.Row{project.Name, status, configFiles})
 	}
 
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithHeight(availableHeight-2),
-		table.WithFocused(true),
-	)
-
-	// Apply styles
-	styles := table.DefaultStyles()
-	styles.Header = styles.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	styles.Selected = selectedStyle
-	styles.Cell = styles.Cell.
-		BorderForeground(lipgloss.Color("240"))
-	t.SetStyles(styles)
-
-	// Set cursor position
-	if m.selectedProject < len(rows) {
-		t.MoveDown(m.selectedProject)
-	}
-
-	return t.View()
+	return RenderTable(columns, rows, availableHeight, m.selectedProject)
 }
 
 func (m *ComposeProjectListViewModel) HandleUp(_ *Model) tea.Cmd {
