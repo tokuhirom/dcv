@@ -24,6 +24,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
+		{[]string{"s"}, "stats", m.CmdStats},
+		{[]string{"t"}, "top", m.CmdTop},
 		{[]string{"K"}, "kill", m.CmdKill},
 		{[]string{"S"}, "stop", m.CmdStop},
 		{[]string{"U"}, "start", m.CmdStart},
@@ -40,8 +42,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
-		{[]string{"s"}, "stats", m.CmdStats},
-		{[]string{"t"}, "top", m.CmdTop},
 	}, containerOperations...)
 	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
 
@@ -52,10 +52,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
-
-		// TODO: move to containerOperations
-		{[]string{"s"}, "stats", m.CmdStats},
-		{[]string{"t"}, "top", m.CmdTop},
 	}, containerOperations...)
 	m.composeProcessListViewKeymap = m.createKeymap(m.composeProcessListViewHandlers)
 
@@ -80,11 +76,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
-		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
-		{[]string{"s"}, "stats", m.CmdStats},
-		{[]string{"t"}, "top", m.CmdTop},
 	}, containerOperations...)
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 
