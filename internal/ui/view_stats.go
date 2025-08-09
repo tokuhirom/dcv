@@ -9,6 +9,8 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// TODO: support compose-stats
+
 // StatsViewModel manages the state and rendering of the stats view
 type StatsViewModel struct {
 	stats []models.ContainerStats
@@ -17,9 +19,7 @@ type StatsViewModel struct {
 // render renders the stats view
 func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 	if len(m.stats) == 0 {
-		var s strings.Builder
-		s.WriteString("\nNo stats available.\n")
-		return s.String()
+		return "\nNo stats available.\n"
 	}
 
 	// Stats table
@@ -32,7 +32,7 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 		{Title: "BLOCK I/O", Width: 15},
 	}
 
-	rows := []table.Row{}
+	rows := make([]table.Row, 0, len(m.stats))
 	for _, stat := range m.stats {
 		// Truncate name if too long
 		name := stat.Name
@@ -69,7 +69,8 @@ func (m *StatsViewModel) Show(model *Model) tea.Cmd {
 func (m *StatsViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		stats, err := model.dockerClient.GetStats()
+		// TODO: suppport toggle-all stats
+		stats, err := model.dockerClient.GetStats(false)
 		return statsLoadedMsg{
 			stats: stats,
 			err:   err,
