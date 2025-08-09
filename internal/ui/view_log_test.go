@@ -217,7 +217,7 @@ func TestLogView_Navigation(t *testing.T) {
 				isDindLog: true,
 			},
 			dindProcessListViewModel: DindProcessListViewModel{
-				hostContainer: docker.NewDindContainer(docker.NewClient(), "host-container-id", "host-container-name", "dind-container-id", "dind-container-name"),
+				hostContainer: docker.NewDindContainer(docker.NewClient(), "host-container-id", "host-container-name", "dind-container-id", "dind-container-name", "running"),
 			},
 		}
 
@@ -342,7 +342,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		model := &Model{
 			currentView: DindProcessListView,
 			dindProcessListViewModel: DindProcessListViewModel{
-				hostContainer: docker.NewDindContainer(docker.NewClient(), "host-container-id", "host-container-name", "dind-container-id", "dind-container-name"),
+				hostContainer: docker.NewDindContainer(docker.NewClient(), "host-container-id", "host-container-name", "dind-container-id", "dind-container-name", "running"),
 			},
 		}
 		container := models.DockerContainer{
