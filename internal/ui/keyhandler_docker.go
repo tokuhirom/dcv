@@ -22,14 +22,10 @@ func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "stop", true) // stop is aggressive
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleStop(m)
-	default:
-		return m, nil
-	}
+	return m, m.useContainerAware(func(container docker.Container) tea.Cmd {
+		args := container.OperationArgs("stop")
+		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // stop is aggressive
+	})
 }
 
 func (m *Model) CmdStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -56,7 +52,14 @@ func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container docker.Container) tea.Cmd {
-		args := container.PauseArgs()
+		cmd := func() string {
+			if container.GetState() == "paused" {
+				return "unpause"
+			} else {
+				return "pause"
+			}
+		}()
+		args := container.OperationArgs(cmd)
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
 	})
 }

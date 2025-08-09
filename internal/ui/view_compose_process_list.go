@@ -161,6 +161,7 @@ func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cm
 }
 
 func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, operation string, aggressive bool) tea.Cmd {
+	// TODO: deprecate this
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
 		return model.commandExecutionViewModel.ExecuteCommand(model, aggressive, operation, container.ID)

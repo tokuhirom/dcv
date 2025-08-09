@@ -6,12 +6,13 @@ type Container interface {
 	Inspect() ([]byte, error)
 	GetName() string
 	GetContainerID() string
+	GetState() string
 
 	// Title returns a title for the container, used in UI
 	Title() string
 
 	Top() ([]byte, error)
-	PauseArgs() []string
+	OperationArgs(cmd string) []string
 }
 
 type ContainerImpl struct {
@@ -51,6 +52,10 @@ func (c ContainerImpl) GetContainerID() string {
 	return c.containerID
 }
 
+func (c ContainerImpl) GetState() string {
+	return c.state
+}
+
 func (c ContainerImpl) Title() string {
 	return c.title
 }
@@ -59,14 +64,7 @@ func (c ContainerImpl) Top() ([]byte, error) {
 	return c.client.ExecuteCaptured("top", c.containerID)
 }
 
-func (c ContainerImpl) PauseArgs() []string {
-	cmd := func() string {
-		if c.state == "paused" {
-			return "unpause"
-		} else {
-			return "pause"
-		}
-	}()
+func (c ContainerImpl) OperationArgs(cmd string) []string {
 	return []string{cmd, c.containerID}
 }
 
@@ -94,6 +92,10 @@ func (c DindContainerImpl) GetContainerID() string {
 	return c.containerID
 }
 
+func (c DindContainerImpl) GetState() string {
+	return c.state
+}
+
 func (c DindContainerImpl) Inspect() ([]byte, error) {
 	captured, err := c.client.ExecuteCaptured("exec", c.hostContainerID, "docker", "inspect", c.containerID)
 	if err != nil {
@@ -114,13 +116,6 @@ func (c DindContainerImpl) Top() ([]byte, error) {
 	return c.client.ExecuteCaptured("exec", c.hostContainerID, "docker", "top", c.containerID)
 }
 
-func (c DindContainerImpl) PauseArgs() []string {
-	cmd := func() string {
-		if c.state == "paused" {
-			return "unpause"
-		} else {
-			return "pause"
-		}
-	}()
-	return []string{"exec", c.hostContainerID, "docker", cmd, c.containerID}
+func (c DindContainerImpl) OperationArgs(op string) []string {
+	return []string{"exec", c.hostContainerID, "docker", op, c.containerID}
 }

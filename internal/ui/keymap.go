@@ -94,7 +94,7 @@ func (m *Model) initializeKeyHandlers() {
 		// TODO: {[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		// TODO: {[]string{"a"}, "toggle all", m.CmdToggleAll},
 		// TODO: {[]string{"K"}, "kill", m.CmdKill},
-		// TODO: {[]string{"S"}, "stop", m.CmdStop},
+		{[]string{"S"}, "stop", m.CmdStop},
 		// TODO: {[]string{"U"}, "start", m.CmdStart},
 		// TODO: {[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
