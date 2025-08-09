@@ -189,7 +189,11 @@ func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
 		return nil
 	}
 
-	return model.inspectViewModel.InspectContainer(model, container, "container "+container.GetName())
+	return model.inspectViewModel.Inspect(model,
+		"container "+container.GetName(),
+		func() ([]byte, error) {
+			return container.Inspect()
+		})
 }
 
 func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {

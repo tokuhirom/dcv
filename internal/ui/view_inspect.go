@@ -9,8 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/models"
-
-	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 type InspectViewModel struct {
@@ -161,18 +159,6 @@ func (m *InspectViewModel) highlightInspectLine(originalLine, styledLine string,
 	}
 
 	return styledLine
-}
-
-func (m *InspectViewModel) InspectContainer(model *Model, container docker.Container, containerName string) tea.Cmd {
-	model.loading = true
-	return func() tea.Msg {
-		content, err := container.Inspect()
-		return inspectLoadedMsg{
-			content:    string(content),
-			targetName: containerName,
-			err:        err,
-		}
-	}
 }
 
 func (m *InspectViewModel) HandleBack(model *Model) tea.Cmd {
