@@ -13,7 +13,7 @@ func (m *Model) CmdImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdNetworkLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.networkListViewModel.Show(m)
+	return m, m.networkListViewModel.Show(m, false)
 }
 
 func (m *Model) CmdVolumeLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

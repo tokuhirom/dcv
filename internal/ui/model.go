@@ -454,16 +454,6 @@ func loadDockerImages(client *docker.Client, showAll bool) tea.Cmd {
 	}
 }
 
-func loadDockerNetworks(client *docker.Client) tea.Cmd {
-	return func() tea.Msg {
-		networks, err := client.ListNetworks()
-		return dockerNetworksLoadedMsg{
-			networks: networks,
-			err:      err,
-		}
-	}
-}
-
 func loadContainerFiles(client *docker.Client, containerID, path string) tea.Cmd {
 	return func() tea.Msg {
 		files, err := client.ListContainerFiles(containerID, path)

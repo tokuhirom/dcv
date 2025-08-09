@@ -96,7 +96,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case DockerContainerListView:
 			return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
 		case NetworkListView:
-			return m, m.networkListViewModel.HandleRefresh(m)
+			return m, m.networkListViewModel.Show(m, false)
 		case VolumeListView:
 			return m, m.volumeListViewModel.HandleRefresh(m)
 		default:
@@ -257,7 +257,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case ImageListView:
 			return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
 		case NetworkListView:
-			return m, m.networkListViewModel.HandleRefresh(m)
+			return m, m.networkListViewModel.Show(m, true)
 		case VolumeListView:
 			return m, m.volumeListViewModel.HandleRefresh(m)
 		case FileBrowserView:
