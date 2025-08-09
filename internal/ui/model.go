@@ -410,9 +410,10 @@ func loadComposeProcesses(client *docker.Client, projectName string, showAll boo
 	}
 }
 
-func loadTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
+func loadComposeTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
+	// TODO: support normal containers
 	return func() tea.Msg {
-		output, err := client.Compose(projectName).GetContainerTop(serviceName)
+		output, err := client.Compose(projectName).Top(serviceName)
 		return topLoadedMsg{
 			output: output,
 			err:    err,

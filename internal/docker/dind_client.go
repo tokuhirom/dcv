@@ -14,7 +14,7 @@ type DindClient struct {
 func (d *DindClient) ListContainers() ([]models.DockerContainer, error) {
 	output, err := ExecuteCaptured("exec", d.hostContainerID, "docker", "ps", "--format", "json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to executeCaptured docker ps: %w\nOutput: %s", err, string(output))
+		return nil, fmt.Errorf("failed to ExecuteCaptured docker ps: %w\nOutput: %s", err, string(output))
 	}
 
 	// Try to parse as JSON first

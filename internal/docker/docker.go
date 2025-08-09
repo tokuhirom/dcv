@@ -33,7 +33,7 @@ func (c *Client) Dind(dindHostContainerID string) *DindClient {
 func (c *Client) ListComposeProjects() ([]models.ComposeProject, error) {
 	output, err := ExecuteCaptured("compose", "ls", "--format", "json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to executeCaptured docker compose ls: %w\nOutput: %s", err, string(output))
+		return nil, fmt.Errorf("failed to ExecuteCaptured docker compose ls: %w\nOutput: %s", err, string(output))
 	}
 
 	return ParseComposeProjectsJSON(output)

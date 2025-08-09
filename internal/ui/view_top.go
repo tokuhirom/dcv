@@ -39,13 +39,13 @@ func (m *TopViewModel) Load(model *Model, projectName string, service string) te
 	m.topService = service
 	model.SwitchView(TopView)
 	model.loading = true
-	return loadTop(model.dockerClient, projectName, service)
+	return loadComposeTop(model.dockerClient, projectName, service)
 }
 
 // HandleRefresh reloads the process info
 func (m *TopViewModel) HandleRefresh(model *Model) tea.Cmd {
 	model.loading = true
-	return loadTop(model.dockerClient, model.projectName, m.topService)
+	return loadComposeTop(model.dockerClient, model.projectName, m.topService)
 }
 
 // HandleBack returns to the compose process list view
