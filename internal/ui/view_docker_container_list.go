@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -170,13 +171,27 @@ func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
-	// Inspect the selected Docker container
+func (m *DockerContainerListViewModel) GetContainer(model *Model) docker.Container {
+	// Get the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.inspectViewModel.InspectContainer(model, container.ID)
+		return docker.NewContainer(model.dockerClient, container.ID, container.Names)
 	}
 	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for inspection")
+		return nil
+	}
+
+	return model.inspectViewModel.Inspect(model,
+		"container "+container.GetName(),
+		func() ([]byte, error) {
+			return container.Inspect()
+		})
 }
 
 func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {
@@ -197,13 +212,13 @@ func (m *DockerContainerListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		if container.IsDind() {
-			return model.dindProcessListViewModel.Load(model, container)
-		}
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for DinD process list")
+		return nil
 	}
-	return nil
+
+	return model.dindProcessListViewModel.Load(model, container)
 }
 
 func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {

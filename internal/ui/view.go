@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // Styles
@@ -43,7 +45,9 @@ var (
 			Bold(true)
 )
 
-const ResetForeground = "\x1b[39m"
+type ContainerAware interface {
+	GetContainer(model *Model) (docker.Container, error)
+}
 
 const ResetAll = "\x1b[0m"
 
@@ -97,7 +101,7 @@ func (m *Model) viewTitle() string {
 	case LogView:
 		return m.logViewModel.Title()
 	case DindProcessListView:
-		return fmt.Sprintf("Docker in Docker: %s", m.dindProcessListViewModel.currentDindHost)
+		return fmt.Sprintf("Docker in Docker: %s", m.dindProcessListViewModel.currentDindHostName)
 	case TopView:
 		return fmt.Sprintf("Process Info: %s", m.topViewModel.topService)
 	case StatsView:

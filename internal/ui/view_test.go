@@ -133,7 +133,7 @@ func TestView(t *testing.T) {
 				Height:      24,
 				loading:     false,
 				dindProcessListViewModel: DindProcessListViewModel{
-					currentDindHost: "dind-1",
+					currentDindHostName: "dind-1",
 					dindContainers: []models.DockerContainer{
 						{
 							ID:     "abc123def456",
@@ -243,7 +243,7 @@ func TestRenderDindList(t *testing.T) {
 		Height:      24,
 		loading:     false,
 		dindProcessListViewModel: DindProcessListViewModel{
-			currentDindHost: "dind-1",
+			currentDindHostName: "dind-1",
 			dindContainers: []models.DockerContainer{
 				{
 					ID:     "abc123def456789",

@@ -376,8 +376,9 @@ type executeCommandMsg struct {
 }
 
 type inspectLoadedMsg struct {
-	content string
-	err     error
+	content    string
+	err        error
+	targetName string
 }
 
 type commandExecOutputMsg struct {

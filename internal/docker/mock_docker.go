@@ -147,7 +147,7 @@ func (mr *MockDockerClientMockRecorder) InspectImage(imageID any) *gomock.Call {
 // InspectNetwork mocks base method.
 func (m *MockDockerClient) InspectNetwork(networkID string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InspectNetwork", networkID)
+	ret := m.ctrl.Call(m, "Inspect", networkID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -156,7 +156,7 @@ func (m *MockDockerClient) InspectNetwork(networkID string) (string, error) {
 // InspectNetwork indicates an expected call of InspectNetwork.
 func (mr *MockDockerClientMockRecorder) InspectNetwork(networkID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InspectNetwork", reflect.TypeOf((*MockDockerClient)(nil).InspectNetwork), networkID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Inspect", reflect.TypeOf((*MockDockerClient)(nil).InspectNetwork), networkID)
 }
 
 // InspectVolume mocks base method.

@@ -198,7 +198,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = nil
 		}
 
-		m.inspectViewModel.Set(msg.content)
+		m.inspectViewModel.Set(msg.content, msg.targetName)
 		m.SwitchView(InspectView)
 		return m, nil
 
@@ -222,7 +222,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case ComposeProcessListView:
 			return m, loadComposeProcesses(m.dockerClient, m.composeProcessListViewModel.projectName, m.composeProcessListViewModel.showAll)
 		case DindProcessListView:
-			return m, loadDindContainers(m.dockerClient, m.dindProcessListViewModel.currentDindContainerID)
+			return m, m.dindProcessListViewModel.DoLoad(m)
 		case LogView:
 			// Logs are continuously streamed, no need to refresh
 			return m, nil

@@ -340,7 +340,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		model := &Model{
 			currentView: DindProcessListView,
 			dindProcessListViewModel: DindProcessListViewModel{
-				currentDindHost: "host-container",
+				currentDindHostName: "host-container",
 			},
 		}
 		container := models.DockerContainer{

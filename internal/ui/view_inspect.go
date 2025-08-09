@@ -7,22 +7,16 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"github.com/tokuhirom/dcv/internal/models"
-
-	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 type InspectViewModel struct {
 	SearchViewModel
 
 	// Inspect view state
-	inspectContent     string
-	inspectScrollY     int
-	inspectContainerID string
-	inspectImageID     string
-	inspectNetworkID   string
-	inspectVolumeID    string
+	inspectContent string
+	inspectScrollY int
+
+	inspectTargetName string
 }
 
 // render renders the container inspect view
@@ -31,7 +25,7 @@ func (m *InspectViewModel) render(availableHeight int) string {
 
 	// Split content into lines for scrolling
 	lines := strings.Split(m.inspectContent, "\n")
-	viewHeight := availableHeight
+	viewHeight := availableHeight - 1
 	startIdx := m.inspectScrollY
 	endIdx := startIdx + viewHeight
 
@@ -165,31 +159,12 @@ func (m *InspectViewModel) highlightInspectLine(originalLine, styledLine string,
 	return styledLine
 }
 
-func loadInspect(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		content, err := client.ExecuteCaptured("inspect", containerID)
-		return inspectLoadedMsg{
-			content: string(content),
-			err:     err,
-		}
-	}
-}
-
-func (m *InspectViewModel) InspectContainer(model *Model, containerID string) tea.Cmd {
-	m.inspectContainerID = containerID
-	model.loading = true
-	return loadInspect(model.dockerClient, containerID)
-}
-
 func (m *InspectViewModel) HandleBack(model *Model) tea.Cmd {
 	// ClearSearch search state when leaving inspect view
 	m.searchMode = false
 	m.searchText = ""
 	m.searchResults = nil
 	m.currentSearchIdx = 0
-	m.inspectImageID = ""
-	m.inspectNetworkID = ""
-	m.inspectVolumeID = ""
 
 	model.SwitchToPreviousView()
 
@@ -264,22 +239,14 @@ func (m *InspectViewModel) HandlePrevSearchResult(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *InspectViewModel) Set(content string) {
+func (m *InspectViewModel) Set(content string, targetName string) {
 	m.inspectContent = content
+	m.inspectTargetName = targetName
 	m.inspectScrollY = 0
 }
 
 func (m *InspectViewModel) Title() string {
-	base := ""
-	if m.inspectImageID != "" {
-		base = fmt.Sprintf("Image Inspect: %s", m.inspectImageID)
-	} else if m.inspectNetworkID != "" {
-		base = fmt.Sprintf("Network Inspect: %s", m.inspectNetworkID)
-	} else if m.inspectVolumeID != "" {
-		base = fmt.Sprintf("Volume Inspect: %s", m.inspectVolumeID)
-	} else {
-		base = fmt.Sprintf("Container Inspect: %s", m.inspectContainerID)
-	}
+	base := "Inspect " + m.inspectTargetName + " "
 
 	// Add search status if applicable
 	if m.searchText != "" && !m.searchMode {
@@ -300,58 +267,16 @@ func (m *InspectViewModel) Title() string {
 	return base
 }
 
-func (m *InspectViewModel) InspectImage(model *Model, image models.DockerImage) tea.Cmd {
-	m.inspectImageID = image.ID
-	m.inspectContainerID = "" // ClearSearch container ID
-	m.inspectNetworkID = ""
-	m.inspectVolumeID = ""
+type InspectProvider func() ([]byte, error)
+
+func (m *InspectViewModel) Inspect(model *Model, targetName string, inspectProvider InspectProvider) tea.Cmd {
 	model.loading = true
-	return loadImageInspect(model.dockerClient, image.ID)
-}
-
-func loadImageInspect(client *docker.Client, imageID string) tea.Cmd {
 	return func() tea.Msg {
-		content, err := client.ExecuteCaptured("image", "inspect", imageID)
+		content, err := inspectProvider()
 		return inspectLoadedMsg{
-			content: string(content),
-			err:     err,
-		}
-	}
-}
-
-func (m *InspectViewModel) InspectNetwork(model *Model, network models.DockerNetwork) tea.Cmd {
-	m.inspectNetworkID = network.ID
-	m.inspectContainerID = "" // ClearSearch container ID
-	m.inspectImageID = ""     // ClearSearch image ID
-	model.loading = true
-	return loadNetworkInspect(model.dockerClient, network.ID)
-}
-
-func loadNetworkInspect(client *docker.Client, networkID string) tea.Cmd {
-	return func() tea.Msg {
-		content, err := client.ExecuteCaptured("network", "inspect", networkID)
-		return inspectLoadedMsg{
-			content: string(content),
-			err:     err,
-		}
-	}
-}
-
-func (m *InspectViewModel) InspectVolume(model *Model, volume models.DockerVolume) tea.Cmd {
-	m.inspectVolumeID = volume.Name
-	m.inspectImageID = ""
-	m.inspectContainerID = ""
-	m.inspectNetworkID = ""
-	model.SwitchView(InspectView)
-	return inspectVolume(model.dockerClient, volume.Name)
-}
-
-func inspectVolume(dockerClient *docker.Client, volumeID string) tea.Cmd {
-	return func() tea.Msg {
-		content, err := dockerClient.ExecuteCaptured("volume", "inspect", volumeID)
-		return inspectLoadedMsg{
-			content: string(content),
-			err:     err,
+			content:    string(content),
+			err:        err,
+			targetName: targetName,
 		}
 	}
 }

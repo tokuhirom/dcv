@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -15,7 +17,7 @@ import (
 type DindProcessListViewModel struct {
 	dindContainers         []models.DockerContainer
 	selectedDindContainer  int
-	currentDindHost        string // Container name (for display)
+	currentDindHostName    string // Container name (for display)
 	currentDindContainerID string // Service name (for docker compose exec)
 }
 
@@ -89,12 +91,23 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 }
 
 // Load switches to the dind process list view and loads containers
-func (m *DindProcessListViewModel) Load(model *Model, container models.GenericContainer) tea.Cmd {
-	m.currentDindHost = container.GetName()
-	m.currentDindContainerID = container.GetID()
+func (m *DindProcessListViewModel) Load(model *Model, hostContainer docker.Container) tea.Cmd {
+	m.currentDindHostName = hostContainer.GetName()
+	m.currentDindContainerID = hostContainer.GetContainerID()
 	model.SwitchView(DindProcessListView)
+	return m.DoLoad(model)
+}
+
+// DoLoad reloads the dind container list
+func (m *DindProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadDindContainers(model.dockerClient, container.GetID())
+	return func() tea.Msg {
+		containers, err := model.dockerClient.Dind(m.currentDindContainerID).ListContainers()
+		return dindContainersLoadedMsg{
+			containers: containers,
+			err:        err,
+		}
+	}
 }
 
 // HandleUp moves selection up in the dind container list
@@ -129,12 +142,6 @@ func (m *DindProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	return nil
 }
 
-// HandleRefresh reloads the dind container list
-func (m *DindProcessListViewModel) HandleRefresh(model *Model) tea.Cmd {
-	model.loading = true
-	return loadDindContainers(model.dockerClient, m.currentDindContainerID)
-}
-
 // Loaded updates the dind container list after loading
 func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 	m.dindContainers = containers
@@ -143,12 +150,26 @@ func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 	}
 }
 
-func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		containers, err := client.Dind(containerID).ListContainers()
-		return dindContainersLoadedMsg{
-			containers: containers,
-			err:        err,
-		}
+func (m *DindProcessListViewModel) GetContainer(model *Model) docker.Container {
+	if m.selectedDindContainer < len(m.dindContainers) {
+		container := m.dindContainers[m.selectedDindContainer]
+		return docker.NewDindContainer(model.dockerClient, m.currentDindHostName, container.ID, container.Names)
 	}
+	return nil
+}
+
+func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for inspection",
+			slog.Any("error", fmt.Errorf("no container selected")))
+		return nil
+	}
+
+	return model.inspectViewModel.Inspect(model,
+		fmt.Sprintf("DinD: %s (%s)", m.currentDindHostName, container.GetName()),
+		func() ([]byte, error) {
+			return container.Inspect()
+		},
+	)
 }

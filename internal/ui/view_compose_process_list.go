@@ -1,12 +1,15 @@
 package ui
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/tokuhirom/dcv/internal/docker"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -144,13 +147,14 @@ func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
 }
 
 func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		if container.IsDind() {
-			return model.dindProcessListViewModel.Load(model, container)
-		}
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for DIND process list",
+			slog.Any("error", fmt.Errorf("no container selected")))
+		return nil
 	}
-	return nil
+
+	return model.dindProcessListViewModel.Load(model, container)
 }
 
 func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, operation string, aggressive bool) tea.Cmd {
@@ -190,12 +194,26 @@ func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
+func (m *ComposeProcessListViewModel) GetContainer(model *Model) docker.Container {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return model.inspectViewModel.InspectContainer(model, container.ID)
+		return docker.NewContainer(model.dockerClient, container.ID, container.Name)
 	}
 	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for inspection")
+		return nil
+	}
+
+	return model.inspectViewModel.Inspect(model,
+		fmt.Sprintf("compose process: %s(%s)", container.GetName(), m.projectName),
+		func() ([]byte, error) {
+			return container.Inspect()
+		})
 }
 
 func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {
