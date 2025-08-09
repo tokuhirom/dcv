@@ -186,7 +186,9 @@ func (m *Model) Init() tea.Cmd {
 		// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
 		// we'll switch to the project list view in the update
 		return tea.Batch(
-			loadComposeProcesses(m.dockerClient, m.composeProcessListViewModel.projectName, m.dockerContainerListViewModel.showAll),
+			func() tea.Msg {
+				return RefreshMsg{}
+			},
 			tea.WindowSize(),
 		)
 	}

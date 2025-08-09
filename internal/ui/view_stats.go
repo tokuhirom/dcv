@@ -11,6 +11,7 @@ import (
 
 // TODO: support compose-stats
 // TODO: order by CPU usage, memory usage, etc.
+// TODO: stream support
 
 // StatsViewModel manages the state and rendering of the stats view
 type StatsViewModel struct {
