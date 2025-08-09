@@ -148,8 +148,7 @@ type Model struct {
 	quitConfirmation bool
 
 	// Command registry - stores all available commands
-	commandRegistry  map[string]CommandHandler
-	handlerToCommand map[uintptr]string
+	commandRegistry map[string]CommandHandler
 }
 
 // NewModel creates a new model with initial state

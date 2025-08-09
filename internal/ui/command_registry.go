@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log/slog"
 	"reflect"
 	"runtime"
 	"strings"
@@ -10,13 +11,13 @@ import (
 type CommandHandler struct {
 	Handler     KeyHandler
 	Description string
-	ViewMask    ViewType // Bitwise mask of views where this command is available (0 = all views)
+	// TODO: Following comment is completely wrong, ViewMask is not a bitwise mask.
+	ViewMask ViewType // Bitwise mask of views where this command is available (0 = all views)
 }
 
 // initCommandRegistry initializes the command registry with all available commands
 func (m *Model) initCommandRegistry() {
 	m.commandRegistry = make(map[string]CommandHandler)
-	m.handlerToCommand = make(map[uintptr]string)
 
 	// Register all key handlers as commands
 	m.registerCommands()
@@ -59,64 +60,49 @@ func (m *Model) registerCommands() {
 			}
 			registered[funcPtr] = true
 
-			// Get the function name
-			funcName := runtime.FuncForPC(funcPtr).Name()
-			// Extract just the method name (e.g., "SelectUpContainer" from "github.com/tokuhirom/dcv/internal/ui.(*Model).SelectUpContainer-fm")
-			parts := strings.Split(funcName, ".")
-			if len(parts) > 0 {
-				methodName := parts[len(parts)-1]
-				// Remove the -fm suffix if present (from method value)
-				methodName = strings.TrimSuffix(methodName, "-fm")
-				// Remove the (*Model) part if present
-				methodName = strings.TrimPrefix(methodName, "(*Model)")
-				methodName = strings.TrimPrefix(methodName, ")")
-
-				// Get shorter, more intuitive command name if available
-				shortName := getShortCommandName(methodName)
-
-				if shortName != "" {
-					// If we have a short name, use it as the primary command
-					m.commandRegistry[shortName] = CommandHandler{
-						Handler:     handler.KeyHandler,
-						Description: handler.Description,
-						ViewMask:    viewHandlers.viewMask,
-					}
-					m.handlerToCommand[funcPtr] = shortName
-				} else {
-					// Otherwise, use kebab-case version
-					cmdName := toKebabCase(methodName)
-					m.commandRegistry[cmdName] = CommandHandler{
-						Handler:     handler.KeyHandler,
-						Description: handler.Description,
-						ViewMask:    viewHandlers.viewMask,
-					}
-					m.handlerToCommand[funcPtr] = cmdName
+			cmdName := GetCommandNameFromFuncPtr(funcPtr)
+			slog.Info("Registering command",
+				slog.String("cmd", cmdName))
+			if cmdName != "" {
+				m.commandRegistry[cmdName] = CommandHandler{
+					Handler:     handler.KeyHandler,
+					Description: handler.Description,
+					ViewMask:    0, // XXX
 				}
 			}
 		}
 	}
+}
 
-	// Add additional aliases for common commands
-	aliases := map[string]string{
-		"select":  "log",     // Alternative for entering log view
-		"enter":   "log",     // Alternative for entering log view
-		"delete":  "remove",  // Alternative for remove
-		"rm":      "remove",  // Short for remove
-		"logs":    "log",     // Alternative for log
-		"exec":    "shell",   // Alternative for shell
-		"unpause": "pause",   // Same as pause (it's a toggle)
-		"q":       "quit",    // Short for quit
-		"h":       "help",    // Short for help
-		"r":       "refresh", // Already registered but good to have as alias
-		"a":       "all",     // Short for toggle all
+func GetCommandNameFromFuncPtr(funcPtr uintptr) string {
+	// Get the function name from the pointer
+	funcName := runtime.FuncForPC(funcPtr).Name()
+	// Extract just the method name (e.g., "SelectUpContainer" from "github.com/tokuhirom/dcv/internal/ui.(*Model).CmdUp-fm")
+	parts := strings.Split(funcName, ".")
+	if len(parts) == 0 {
+		return ""
 	}
 
-	// Register aliases
-	for alias, target := range aliases {
-		if cmd, exists := m.commandRegistry[target]; exists {
-			m.commandRegistry[alias] = cmd
-		}
+	methodName := parts[len(parts)-1]
+	// Remove the -fm suffix if present (from method value)
+	methodName = strings.TrimSuffix(methodName, "-fm")
+	// Remove the (*Model) part if present
+	methodName = strings.TrimPrefix(methodName, "(*Model)")
+	methodName = strings.TrimPrefix(methodName, ")")
+	methodName = strings.TrimPrefix(methodName, "Cmd")
+
+	return toKebabCase(methodName)
+}
+
+// getCommandForHandler returns the command name for a given key handler
+func (m *Model) getCommandForHandler(handler KeyHandler) string {
+	if handler == nil {
+		return ""
 	}
+
+	funcPtr := reflect.ValueOf(handler).Pointer()
+	cmdName := GetCommandNameFromFuncPtr(funcPtr)
+	return cmdName
 }
 
 // toKebabCase converts a CamelCase string to kebab-case
@@ -129,99 +115,4 @@ func toKebabCase(s string) string {
 		result.WriteRune(r)
 	}
 	return strings.ToLower(result.String())
-}
-
-// getShortCommandName returns a shorter, more intuitive command name for common commands
-func getShortCommandName(methodName string) string {
-	// Map of method names to short command names
-	shortNames := map[string]string{
-		"CmdUp":                     "up",
-		"CmdDown":                   "down",
-		"CmdLog":                    "log",
-		"CmdBack":                   "back",
-		"CmdKill":                   "kill",
-		"CmdStop":                   "stop",
-		"CmdStart":                  "start",
-		"CmdRestart":                "restart",
-		"CmdDelete":                 "remove",
-		"CmdPause":                  "pause",
-		"CmdShell":                  "shell",
-		"CmdInspect":                "inspect",
-		"CmdFileBrowse":             "files",
-		"CmdToggleAll":              "all",
-		"CmdTop":                    "top",
-		"CmdCancel":                 "cancel",
-		"CmdStats":                  "stats",
-		"CmdImages":                 "images",
-		"CmdNetworkLs":              "networks",
-		"CmdVolumeLs":               "volumes",
-		"CmdComposeLS":              "projects",
-		"CmdPS":                     "ps",
-		"CmdHelp":                   "help",
-		"CmdRefresh":                "refresh",
-		"DeleteImage":               "rmi",
-		"DeleteNetwork":             "rmnet",
-		"DeleteVolume":              "rmvol",
-		"ToggleAllImages":           "all-images",
-		"ToggleAllDockerContainers": "all-containers",
-		"CmdComposeUp":              "deploy",
-		"CmdComposeDown":            "compose-down",
-	}
-
-	if short, exists := shortNames[methodName]; exists {
-		return short
-	}
-
-	// Don't create short names for Select* methods - they will use full names
-	// This avoids conflicts with CmdUp/CmdDown
-
-	return ""
-}
-
-// getAvailableCommands returns a list of commands available in the current view
-func (m *Model) getAvailableCommands() []string {
-	var commands []string
-	for cmdName, cmd := range m.commandRegistry {
-		if cmd.ViewMask == 0 || cmd.ViewMask == m.currentView {
-			commands = append(commands, cmdName)
-		}
-	}
-	return commands
-}
-
-// getCommandSuggestions returns command suggestions based on partial input
-func (m *Model) getCommandSuggestions(partial string) []string {
-	var suggestions []string
-	availableCommands := m.getAvailableCommands()
-
-	for _, cmdName := range availableCommands {
-		if strings.HasPrefix(cmdName, partial) {
-			suggestions = append(suggestions, cmdName)
-		}
-	}
-
-	// If no prefix matches, try substring matching
-	if len(suggestions) == 0 {
-		for _, cmdName := range availableCommands {
-			if strings.Contains(cmdName, partial) {
-				suggestions = append(suggestions, cmdName)
-			}
-		}
-	}
-
-	return suggestions
-}
-
-// getCommandForHandler returns the command name for a given key handler
-func (m *Model) getCommandForHandler(handler KeyHandler) string {
-	if handler == nil {
-		return ""
-	}
-
-	funcPtr := reflect.ValueOf(handler).Pointer()
-	if cmdName, exists := m.handlerToCommand[funcPtr]; exists {
-		return cmdName
-	}
-
-	return ""
 }

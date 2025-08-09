@@ -55,28 +55,6 @@ func TestCommandRegistry(t *testing.T) {
 			assert.True(t, exists, "Command %s should exist in registry", cmd)
 		})
 	}
-
-	// Test aliases
-	aliases := map[string]string{
-		"logs": "log",
-		"exec": "shell",
-		"rm":   "remove",
-	}
-
-	for alias, target := range aliases {
-		t.Run("alias_"+alias, func(t *testing.T) {
-			aliasCmd, aliasExists := model.commandRegistry[alias]
-			targetCmd, targetExists := model.commandRegistry[target]
-
-			assert.True(t, aliasExists, "Alias %s should exist", alias)
-			assert.True(t, targetExists, "Target %s should exist", target)
-
-			if aliasExists && targetExists {
-				// Check that the handlers are the same
-				assert.Equal(t, aliasCmd.Description, targetCmd.Description)
-			}
-		})
-	}
 }
 
 func TestExecuteKeyHandlerCommand(t *testing.T) {
@@ -139,58 +117,5 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 			m.composeProcessListViewModel.selectedContainer, cmd)
 
 		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
-	})
-}
-
-func TestGetAvailableCommands(t *testing.T) {
-	// Create a model and initialize it
-	model := NewModel(ComposeProcessListView, "")
-	model.initializeKeyHandlers()
-
-	commands := model.getAvailableCommands()
-	assert.Greater(t, len(commands), 0)
-
-	// Check that we have some expected commands
-	hasUp := false
-	hasLog := false
-	for _, cmd := range commands {
-		if cmd == "up" {
-			hasUp = true
-		}
-		if cmd == "log" {
-			hasLog = true
-		}
-	}
-	assert.True(t, hasUp, "Should have up command")
-	assert.True(t, hasLog, "Should have log command")
-}
-
-func TestGetCommandSuggestions(t *testing.T) {
-	// Create a model and initialize it
-	model := NewModel(ComposeProcessListView, "")
-	model.initializeKeyHandlers()
-
-	// Test prefix matching
-	t.Run("prefix-match", func(t *testing.T) {
-		suggestions := model.getCommandSuggestions("lo")
-		assert.Greater(t, len(suggestions), 0)
-		for _, s := range suggestions {
-			assert.True(t, strings.HasPrefix(s, "lo") || strings.Contains(s, "lo"))
-		}
-	})
-
-	// Test substring matching
-	t.Run("substring-match", func(t *testing.T) {
-		suggestions := model.getCommandSuggestions("log")
-		assert.Greater(t, len(suggestions), 0)
-		for _, s := range suggestions {
-			assert.Contains(t, s, "log")
-		}
-	})
-
-	// Test no match
-	t.Run("no-match", func(t *testing.T) {
-		suggestions := model.getCommandSuggestions("xyz123")
-		assert.Empty(t, suggestions)
 	})
 }
