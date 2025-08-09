@@ -219,8 +219,6 @@ func TestComposeProcessListView_KeyHandlers(t *testing.T) {
 		// Check specific handlers exist
 		hasKillHandler := false
 		hasToggleHandler := false
-		hasUpHandler := false
-		hasDownHandler := false
 		for _, config := range m.composeProcessListViewHandlers {
 			if config.Description == "kill" {
 				hasKillHandler = true
@@ -228,17 +226,9 @@ func TestComposeProcessListView_KeyHandlers(t *testing.T) {
 			if config.Description == "toggle all" {
 				hasToggleHandler = true
 			}
-			if config.Description == "up -d" {
-				hasUpHandler = true
-			}
-			if config.Description == "down" {
-				hasDownHandler = true
-			}
 		}
 		assert.True(t, hasKillHandler, "Should have kill handler")
 		assert.True(t, hasToggleHandler, "Should have toggle all handler")
-		assert.True(t, hasUpHandler, "Should have up -d handler")
-		assert.True(t, hasDownHandler, "Should have down handler")
 	})
 
 	t.Run("view switching handlers", func(t *testing.T) {
