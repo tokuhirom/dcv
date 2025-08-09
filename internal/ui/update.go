@@ -109,15 +109,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, loadComposeProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 		}
 
-	case upActionCompleteMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		}
-		// Reload compose process list after up/down action
-		return m, loadComposeProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
-
 	case statsLoadedMsg:
 		m.loading = false
 		if msg.err != nil {

@@ -334,10 +334,6 @@ type serviceActionCompleteMsg struct {
 	err error
 }
 
-type upActionCompleteMsg struct {
-	err error
-}
-
 type statsLoadedMsg struct {
 	stats []models.ContainerStats
 	err   error
