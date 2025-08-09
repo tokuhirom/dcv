@@ -216,7 +216,7 @@ func TestLogView_Navigation(t *testing.T) {
 				isDindLog: true,
 			},
 			dindProcessListViewModel: DindProcessListViewModel{
-				hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-container-id", "host-container-id", "host-container-name"),
+				hostContainer: docker.NewDindContainer(docker.NewClient(), "host-container-id", "host-container-name", "dind-container-id", "dind-container-name"),
 			},
 		}
 

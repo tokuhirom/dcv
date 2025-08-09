@@ -6,16 +6,20 @@ type Container interface {
 	Inspect() ([]byte, error)
 	GetName() string
 	GetContainerID() string
+
+	// Title returns a title for the container, used in UI
+	Title() string
 }
 
 type ContainerImpl struct {
 	containerID string
 	client      *Client
 	name        string
+	title       string
 }
 
-func NewContainer(client *Client, containerID string, name string) Container {
-	return ContainerImpl{client: client, containerID: containerID, name: name}
+func NewContainer(client *Client, containerID string, name string, title string) Container {
+	return ContainerImpl{client: client, containerID: containerID, name: name, title: title}
 }
 
 func (c ContainerImpl) ContainerID() string {
@@ -38,15 +42,25 @@ func (c ContainerImpl) GetContainerID() string {
 	return c.containerID
 }
 
-type DindContainerImpl struct {
-	client          *Client
-	hostContainerID string
-	containerID     string
-	name            string
+func (c ContainerImpl) Title() string {
+	return c.title
 }
 
-func NewDindContainer(client *Client, hostContainerID, containerID string, name string) Container {
-	return DindContainerImpl{client: client, hostContainerID: hostContainerID, containerID: containerID, name: name}
+type DindContainerImpl struct {
+	client            *Client
+	hostContainerName string
+	hostContainerID   string
+	containerID       string
+	name              string
+}
+
+func NewDindContainer(client *Client, hostContainerID, hostContainerName, containerID, name string) Container {
+	return DindContainerImpl{
+		client:            client,
+		hostContainerID:   hostContainerID,
+		hostContainerName: hostContainerName,
+		containerID:       containerID,
+		name:              name}
 }
 
 func (c DindContainerImpl) GetContainerID() string {
@@ -63,4 +77,8 @@ func (c DindContainerImpl) Inspect() ([]byte, error) {
 
 func (c DindContainerImpl) GetName() string {
 	return c.name
+}
+
+func (c DindContainerImpl) Title() string {
+	return fmt.Sprintf("DinD: %s (%s)", c.hostContainerID, c.name)
 }

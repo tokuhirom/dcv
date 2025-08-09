@@ -152,7 +152,10 @@ func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 func (m *DindProcessListViewModel) GetContainer(model *Model) docker.Container {
 	if m.selectedDindContainer < len(m.dindContainers) {
 		container := m.dindContainers[m.selectedDindContainer]
-		return docker.NewDindContainer(model.dockerClient, m.hostContainer.GetContainerID(), container.ID, container.Names)
+		return docker.NewDindContainer(model.dockerClient,
+			m.hostContainer.GetContainerID(),
+			m.hostContainer.GetName(),
+			container.ID, container.Names)
 	}
 	return nil
 }
