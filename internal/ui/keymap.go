@@ -54,8 +54,6 @@ func (m *Model) initializeKeyHandlers() {
 		// TODO: move to containerOperations
 		{[]string{"s"}, "stats", m.CmdStats},
 		{[]string{"t"}, "top", m.CmdTop},
-		{[]string{"u"}, "up -d", m.CmdComposeUp},
-		{[]string{"x"}, "down", m.CmdComposeDown},
 	}, containerOperations...)
 	m.composeProcessListViewKeymap = m.createKeymap(m.composeProcessListViewHandlers)
 

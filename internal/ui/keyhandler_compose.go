@@ -8,10 +8,6 @@ func (m *Model) CmdComposeUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.composeProcessListViewModel.HandleCommandExecution(m, "up")
 }
 
-func (m *Model) CmdComposeDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.composeProcessListViewModel.HandleCommandExecution(m, "down")
-}
-
 func (m *Model) CmdComposeLS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.SwitchView(ComposeProjectListView)
 	m.loading = true
