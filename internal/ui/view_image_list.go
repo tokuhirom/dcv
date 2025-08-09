@@ -113,7 +113,7 @@ func (m *ImageListViewModel) HandleDelete(model *Model) tea.Cmd {
 	image := m.dockerImages[m.selectedDockerImage]
 	// Use CommandExecutionView to show real-time output
 	args := []string{"rmi", image.GetRepoTag()}
-	return model.commandExecutionViewModel.ExecuteCommand(model, args...)
+	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // rmi is aggressive
 }
 
 // HandleInspect shows the inspect view for the selected image

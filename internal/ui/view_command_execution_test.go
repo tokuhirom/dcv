@@ -6,117 +6,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCommandExecutionViewModel_NeedsConfirmation(t *testing.T) {
-	vm := &CommandExecutionViewModel{}
+func TestCommandExecutionViewModel_ExecuteCommand(t *testing.T) {
+	t.Run("aggressive command shows confirmation", func(t *testing.T) {
+		model := &Model{
+			currentView: DockerContainerListView,
+		}
+		vm := &CommandExecutionViewModel{}
+		model.commandExecutionViewModel = *vm
 
-	tests := []struct {
-		name     string
-		args     []string
-		expected bool
-	}{
-		{
-			name:     "stop command needs confirmation",
-			args:     []string{"stop", "container_id"},
-			expected: true,
-		},
-		{
-			name:     "start command needs confirmation",
-			args:     []string{"start", "container_id"},
-			expected: true,
-		},
-		{
-			name:     "restart command needs confirmation",
-			args:     []string{"restart", "container_id"},
-			expected: true,
-		},
-		{
-			name:     "kill command needs confirmation",
-			args:     []string{"kill", "container_id"},
-			expected: true,
-		},
-		{
-			name:     "pause command needs confirmation",
-			args:     []string{"pause", "container_id"},
-			expected: true,
-		},
-		{
-			name:     "unpause command needs confirmation",
-			args:     []string{"unpause", "container_id"},
-			expected: true,
-		},
-		{
-			name:     "rm command needs confirmation",
-			args:     []string{"rm", "container_id"},
-			expected: true,
-		},
-		{
-			name:     "rmi command needs confirmation",
-			args:     []string{"rmi", "image_id"},
-			expected: true,
-		},
-		{
-			name:     "compose down needs confirmation",
-			args:     []string{"compose", "-p", "project", "down"},
-			expected: true,
-		},
-		{
-			name:     "compose stop needs confirmation",
-			args:     []string{"compose", "-p", "project", "stop"},
-			expected: true,
-		},
-		{
-			name:     "compose restart needs confirmation",
-			args:     []string{"compose", "-p", "project", "restart", "service"},
-			expected: true,
-		},
-		{
-			name:     "network rm needs confirmation",
-			args:     []string{"network", "rm", "network_name"},
-			expected: true,
-		},
-		{
-			name:     "volume rm needs confirmation",
-			args:     []string{"volume", "rm", "volume_name"},
-			expected: true,
-		},
-		{
-			name:     "logs command does not need confirmation",
-			args:     []string{"logs", "container_id"},
-			expected: false,
-		},
-		{
-			name:     "ps command does not need confirmation",
-			args:     []string{"ps"},
-			expected: false,
-		},
-		{
-			name:     "inspect command does not need confirmation",
-			args:     []string{"inspect", "container_id"},
-			expected: false,
-		},
-		{
-			name:     "exec command does not need confirmation",
-			args:     []string{"exec", "-it", "container_id", "/bin/sh"},
-			expected: false,
-		},
-		{
-			name:     "compose up does not need confirmation",
-			args:     []string{"compose", "-p", "project", "up", "-d"},
-			expected: false,
-		},
-		{
-			name:     "empty args does not need confirmation",
-			args:     []string{},
-			expected: false,
-		},
-	}
+		cmd := vm.ExecuteCommand(model, true, "stop", "container_id")
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := vm.needsConfirmation(tt.args)
-			assert.Equal(t, tt.expected, result, "needsConfirmation(%v) should return %v", tt.args, tt.expected)
-		})
-	}
+		assert.Nil(t, cmd, "Should return nil when showing confirmation")
+		assert.True(t, vm.pendingConfirmation)
+		assert.Equal(t, []string{"stop", "container_id"}, vm.pendingArgs)
+		assert.Equal(t, CommandExecutionView, model.currentView)
+	})
+
+	t.Run("non-aggressive command executes immediately", func(t *testing.T) {
+		model := &Model{
+			currentView: DockerContainerListView,
+		}
+		vm := &CommandExecutionViewModel{}
+		model.commandExecutionViewModel = *vm
+
+		cmd := vm.ExecuteCommand(model, false, "logs", "container_id")
+
+		assert.NotNil(t, cmd, "Should return command for immediate execution")
+		assert.False(t, vm.pendingConfirmation)
+		assert.Equal(t, CommandExecutionView, model.currentView)
+	})
 }
 
 func TestCommandExecutionViewModel_GetConfirmationTarget(t *testing.T) {

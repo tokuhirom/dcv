@@ -64,7 +64,7 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			} else {
 				args = []string{"pause", selected.ID}
 			}
-			return m, m.commandExecutionViewModel.ExecuteCommand(m, args...)
+			return m, m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
 		}
 		return m, nil
 	case DockerContainerListView:
@@ -77,7 +77,7 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			} else {
 				args = []string{"pause", selected.ID}
 			}
-			return m, m.commandExecutionViewModel.ExecuteCommand(m, args...)
+			return m, m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
 		}
 		return m, nil
 	default:

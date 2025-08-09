@@ -157,7 +157,7 @@ func (m *CommandExecutionViewModel) HandleBack(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, args ...string) tea.Cmd {
+func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, aggressive bool, args ...string) tea.Cmd {
 	model.SwitchView(CommandExecutionView)
 
 	m.output = []string{}
@@ -165,7 +165,7 @@ func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, args ...string)
 	m.done = false
 
 	// Check if this is an aggressive command that needs confirmation
-	if m.needsConfirmation(args) {
+	if aggressive && !m.pendingConfirmation {
 		m.pendingConfirmation = true
 		m.pendingArgs = args
 		m.confirmationTarget = m.getConfirmationTarget(args)
@@ -202,10 +202,10 @@ func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, projectN
 	switch operation {
 	case "up":
 		args := []string{"compose", "-p", projectName, "up", "-d"}
-		return m.ExecuteCommand(model, args...)
+		return m.ExecuteCommand(model, false, args...) // up is not aggressive
 	case "down":
 		args := []string{"compose", "-p", projectName, "down"}
-		return m.ExecuteCommand(model, args...)
+		return m.ExecuteCommand(model, true, args...) // down is aggressive
 	default:
 		return nil
 	}
@@ -261,52 +261,6 @@ func streamCommandFromReader(m *CommandExecutionViewModel) tea.Cmd {
 		line = strings.TrimRight(line, "\n\r")
 		return commandExecOutputMsg{line: line}
 	}
-}
-
-// needsConfirmation checks if a command is aggressive and needs user confirmation
-func (m *CommandExecutionViewModel) needsConfirmation(args []string) bool {
-	if len(args) == 0 {
-		return false
-	}
-
-	// List of aggressive commands that need confirmation
-	aggressiveCommands := map[string]bool{
-		"stop":    true,
-		"start":   true,
-		"restart": true,
-		"kill":    true,
-		"pause":   true,
-		"unpause": true,
-		"rm":      true,
-		"rmi":     true,
-	}
-
-	// Check the first argument (the docker command)
-	if len(args) > 0 {
-		if aggressive, exists := aggressiveCommands[args[0]]; exists && aggressive {
-			return true
-		}
-	}
-
-	// Check for compose commands
-	if len(args) >= 2 && args[0] == "compose" {
-		for i, arg := range args {
-			if arg == "down" || arg == "stop" || arg == "restart" || arg == "kill" || arg == "rm" {
-				return true
-			}
-			// Check for service-specific commands like "compose restart service_name"
-			if i > 0 && (args[i-1] == "restart" || args[i-1] == "stop" || args[i-1] == "kill" || args[i-1] == "rm") {
-				return true
-			}
-		}
-	}
-
-	// Check for network/volume removal
-	if len(args) >= 2 && (args[0] == "network" || args[0] == "volume") && args[1] == "rm" {
-		return true
-	}
-
-	return false
 }
 
 // getConfirmationTarget extracts a human-readable target from the command args

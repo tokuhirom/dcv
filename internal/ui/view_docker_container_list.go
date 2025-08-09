@@ -114,7 +114,7 @@ func (m *DockerContainerListViewModel) HandleLog(model *Model) tea.Cmd {
 func (m *DockerContainerListViewModel) HandleKill(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, "kill", container.ID)
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "kill", container.ID) // kill is aggressive
 	}
 	return nil
 }
@@ -122,7 +122,7 @@ func (m *DockerContainerListViewModel) HandleKill(model *Model) tea.Cmd {
 func (m *DockerContainerListViewModel) HandleStop(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, "stop", container.ID)
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "stop", container.ID) // stop is aggressive
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func (m *DockerContainerListViewModel) HandleStop(model *Model) tea.Cmd {
 func (m *DockerContainerListViewModel) HandleStart(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, "start", container.ID)
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "start", container.ID) // start is aggressive
 	}
 	return nil
 }
@@ -138,7 +138,7 @@ func (m *DockerContainerListViewModel) HandleStart(model *Model) tea.Cmd {
 func (m *DockerContainerListViewModel) HandleRestart(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, "restart", container.ID)
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "restart", container.ID) // restart is aggressive
 	}
 	return nil
 }
@@ -147,7 +147,7 @@ func (m *DockerContainerListViewModel) HandleRemove(model *Model) tea.Cmd {
 	// Delete the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, "rm", container.ID)
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "rm", container.ID) // rm is aggressive
 	}
 	return nil
 }
