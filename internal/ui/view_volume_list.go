@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -48,11 +47,10 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 // Show switches to the volume list view
 func (m *VolumeListViewModel) Show(model *Model) tea.Cmd {
 	model.SwitchView(VolumeListView)
-	model.loading = true
 	m.selectedDockerVolume = 0
 	m.dockerVolumes = []models.DockerVolume{}
 	model.err = nil
-	return loadDockerVolumes(model.dockerClient)
+	return m.DoLoad(model)
 }
 
 // HandleUp moves selection up in the volume list
@@ -107,10 +105,13 @@ func (m *VolumeListViewModel) HandleBack(model *Model) tea.Cmd {
 	return nil
 }
 
-// HandleRefresh reloads the volume list
-func (m *VolumeListViewModel) HandleRefresh(model *Model) tea.Cmd {
+// DoLoad reloads the volume list
+func (m *VolumeListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadDockerVolumes(model.dockerClient)
+	return func() tea.Msg {
+		volumes, err := model.dockerClient.ListVolumes()
+		return dockerVolumesLoadedMsg{volumes: volumes, err: err}
+	}
 }
 
 // Loaded updates the volume list after loading
@@ -118,12 +119,5 @@ func (m *VolumeListViewModel) Loaded(volumes []models.DockerVolume) {
 	m.dockerVolumes = volumes
 	if len(m.dockerVolumes) > 0 && m.selectedDockerVolume >= len(m.dockerVolumes) {
 		m.selectedDockerVolume = 0
-	}
-}
-
-func loadDockerVolumes(dockerClient *docker.Client) tea.Cmd {
-	return func() tea.Msg {
-		volumes, err := dockerClient.ListVolumes()
-		return dockerVolumesLoadedMsg{volumes: volumes, err: err}
 	}
 }

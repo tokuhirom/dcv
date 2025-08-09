@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -63,14 +62,19 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 // Show switches to the stats view
 func (m *StatsViewModel) Show(model *Model) tea.Cmd {
 	model.SwitchView(StatsView)
-	model.loading = true
-	return loadStats(model.dockerClient)
+	return m.DoLoad(model)
 }
 
-// HandleRefresh reloads the stats
-func (m *StatsViewModel) HandleRefresh(model *Model) tea.Cmd {
+// DoLoad reloads the stats
+func (m *StatsViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadStats(model.dockerClient)
+	return func() tea.Msg {
+		stats, err := model.dockerClient.GetStats()
+		return statsLoadedMsg{
+			stats: stats,
+			err:   err,
+		}
+	}
 }
 
 // HandleBack returns to the compose process list view

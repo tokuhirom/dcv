@@ -147,7 +147,7 @@ func (m *FileBrowserViewModel) Loaded(files []models.ContainerFile) {
 	}
 }
 
-func (m *FileBrowserViewModel) HandleRefresh(model *Model) tea.Cmd {
+func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 	return loadContainerFiles(model.dockerClient, m.browsingContainerID, m.currentPath)
 }
 

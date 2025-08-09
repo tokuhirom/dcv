@@ -422,32 +422,12 @@ func loadComposeTop(client *docker.Client, projectName, serviceName string) tea.
 	}
 }
 
-func loadStats(client *docker.Client) tea.Cmd {
-	return func() tea.Msg {
-		stats, err := client.GetStats()
-		return statsLoadedMsg{
-			stats: stats,
-			err:   err,
-		}
-	}
-}
-
 func loadProjects(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		projects, err := client.ListComposeProjects()
 		return projectsLoadedMsg{
 			projects: projects,
 			err:      err,
-		}
-	}
-}
-
-func loadDockerImages(client *docker.Client, showAll bool) tea.Cmd {
-	return func() tea.Msg {
-		images, err := client.ListImages(showAll)
-		return dockerImagesLoadedMsg{
-			images: images,
-			err:    err,
 		}
 	}
 }

@@ -229,7 +229,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case TopView:
 			return m, m.topViewModel.HandleRefresh(m)
 		case StatsView:
-			return m, m.statsViewModel.HandleRefresh(m)
+			return m, m.statsViewModel.DoLoad(m)
 		case ComposeProjectListView:
 			return m, loadProjects(m.dockerClient)
 		case DockerContainerListView:
@@ -237,11 +237,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case ImageListView:
 			return m, m.imageListViewModel.DoLoad(m)
 		case NetworkListView:
-			return m, m.networkListViewModel.Show(m, true)
+			return m, m.networkListViewModel.DoLoad(m)
 		case VolumeListView:
-			return m, m.volumeListViewModel.HandleRefresh(m)
+			return m, m.volumeListViewModel.DoLoad(m)
 		case FileBrowserView:
-			return m, m.fileBrowserViewModel.HandleRefresh(m)
+			return m, m.fileBrowserViewModel.DoLoad(m)
 		case FileContentView:
 			// File content doesn't need refresh, it's static
 			return m, nil
