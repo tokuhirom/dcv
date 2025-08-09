@@ -103,7 +103,7 @@ func (m *Model) viewTitle() string {
 	case DindProcessListView:
 		return m.dindProcessListViewModel.Title()
 	case TopView:
-		return fmt.Sprintf("Process Info: %s", m.topViewModel.topService)
+		return m.topViewModel.Title()
 	case StatsView:
 		return "Stats"
 	case ComposeProjectListView:

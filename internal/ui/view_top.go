@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,9 +12,7 @@ import (
 type TopViewModel struct {
 	content string
 
-	container   docker.Container
-	topService  string // Deprecated: use container instead
-	projectName string // Deprecated: use container instead
+	container docker.Container
 }
 
 // render renders the top view
@@ -67,4 +66,8 @@ func (m *TopViewModel) HandleBack(model *Model) tea.Cmd {
 // Loaded updates the top output after loading
 func (m *TopViewModel) Loaded(output string) {
 	m.content = output
+}
+
+func (m *TopViewModel) Title() string {
+	return fmt.Sprintf("Process Info: %s", m.container.Title())
 }
