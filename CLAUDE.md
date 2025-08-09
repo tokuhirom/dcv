@@ -18,6 +18,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - Vim-like navigation and command-line interface
 - Built-in help system accessible with `?` key
 - Quit confirmation dialog for safer exits
+- Confirmation dialogs for aggressive operations (stop, start, kill, restart, delete, etc.)
 - Search functionality in log views
 
 ## Technical Architecture
@@ -27,6 +28,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
 - **Architecture**: Model-View-Update (MVU) pattern
 - **Core Functionality**: Wraps docker and docker-compose commands to provide an interactive interface
 - **Configuration**: TOML-based configuration file support
+- **Confirmation System**: Uses explicit `aggressive` boolean parameter in command execution to determine which operations require confirmation
 
 ## Key Views
 
@@ -38,12 +40,12 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `!`: Execute /bin/sh in container
    - `I`: Inspect container (view full config)
    - `a`: Toggle show all containers (including stopped)
-   - `K`: Kill container
-   - `S`: Stop container
-   - `U`: Start container
-   - `R`: Restart container
-   - `P`: Pause/Unpause container
-   - `D`: Delete stopped container
+   - `K`: Kill container (with confirmation)
+   - `S`: Stop container (with confirmation)
+   - `U`: Start container (with confirmation)
+   - `R`: Restart container (with confirmation)
+   - `P`: Pause/Unpause container (with confirmation)
+   - `D`: Delete stopped container (with confirmation)
    - `r`: Refresh list
    - `?`: Show help view
    - `:`: Enter command mode
@@ -64,14 +66,14 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `a`: Toggle show all containers (including stopped)
    - `t`: Show process info (docker compose top)
    - `s`: Show container stats
-   - `K`: Kill service
-   - `S`: Stop service
-   - `U`: Start service
-   - `R`: Restart service
-   - `P`: Pause/Unpause container
-   - `D`: Delete stopped container
+   - `K`: Kill service (with confirmation)
+   - `S`: Stop service (with confirmation)
+   - `U`: Start service (with confirmation)
+   - `R`: Restart service (with confirmation)
+   - `P`: Pause/Unpause container (with confirmation)
+   - `D`: Delete stopped container (with confirmation)
    - `u`: Deploy all services (docker compose up -d)
-   - `x`: Stop and remove all services (docker compose down)
+   - `x`: Stop and remove all services (docker compose down - with confirmation)
    - `r`: Refresh list
    - `?`: Show help view
    - `:`: Enter command mode
@@ -83,8 +85,8 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `I`: Inspect image (view full config)
    - `a`: Toggle show all images (including intermediate layers)
    - `r`: Refresh list
-   - `D`: Remove selected image
-   - `F`: Force remove selected image (even if used by containers)
+   - `D`: Remove selected image (with confirmation)
+   - `F`: Force remove selected image (even if used by containers - with confirmation)
    - `Esc`/`q`: Back to Docker Compose process list
 
 4. **Project List View**: Shows all Docker Compose projects
@@ -128,17 +130,16 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `↓`/`j`: Move down
    - `Enter`: Inspect network (view full config)
    - `r`: Refresh list
-   - `D`: Remove selected network (except default networks)
+   - `D`: Remove selected network (except default networks - with confirmation)
    - `Esc`/`q`: Back to Docker Compose process list
 
-10. **Volume List View**: Shows Docker volumes with name, driver, scope, size, creation date, and reference count
+10. **Volume List View**: Shows Docker volumes with name, driver, scope
     - `↑`/`k`: Move up
     - `↓`/`j`: Move down
     - `Enter`: Inspect volume (view full config)
     - `r`: Refresh list
-    - `D`: Remove selected volume
-    - `F`: Force remove selected volume
-    - `1`/`2`/`3`/`4`: Switch to other views
+    - `D`: Remove selected volume (with confirmation)
+    - `F`: Force remove selected volume (with confirmation)
     - `Esc`/`q`: Back to Docker Compose process list
 
 11. **File Browser View**: Browse filesystem inside containers
@@ -184,12 +185,31 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
     - `Enter`: Execute command
     - `Esc`: Cancel command mode
 
+16. **Command Execution View**: Shows real-time output of Docker commands
+    - Displays the exact Docker command being executed
+    - Shows confirmation dialog for aggressive operations (stop, start, kill, restart, delete, etc.)
+    - Confirmation dialog shows: "Are you sure you want to execute: docker [command]"
+    - `y`: Confirm and execute the command
+    - `n` or `Esc`: Cancel and return to previous view
+    - `↑`/`k`: Scroll up through command output
+    - `↓`/`j`: Scroll down through command output
+    - `G`: Jump to end of output
+    - `g`: Jump to start of output
+    - `Ctrl+C`: Cancel running command
+    - `Esc`: Return to previous view (after command completes)
+
 ## Development Guidelines
 
 - Follow vim-style keybindings for all shortcuts
 - The tool internally executes both docker and docker-compose commands
 - Special handling required for dind (Docker-in-Docker) containers
 - **Protected main branch**: The main branch is protected and cannot be committed to directly. Always create a feature branch and submit a pull request for code changes.
+- **Confirmation System**: 
+  - All command execution methods use `ExecuteCommand(model *Model, aggressive bool, args ...string)` signature
+  - The `aggressive` boolean parameter explicitly determines if a confirmation dialog should be shown
+  - Callers must explicitly specify whether operations are aggressive (stop, start, kill, restart, delete, etc.)
+  - The confirmation dialog displays the exact Docker command that will be executed
+  - No automatic detection or parsing - explicit parameter approach for maintainability
 
 ## Code Style and Quality
 
@@ -243,9 +263,9 @@ go build -o dcv
 - **View compose file** - Display the active docker-compose.yml
 
 ### Network & Volume Management
-- **Network inspect** - View detailed network information
-- **Volume list/inspect** - Manage Docker volumes
 - **Network connections** - Show container network relationships
+- **Create networks/volumes** - Create new networks and volumes
+- **Network/Volume usage visualization** - Show which containers use which networks/volumes
 
 ### UI/UX Enhancements
 - **Search/filter** - Filter containers/images by name, status, etc.
