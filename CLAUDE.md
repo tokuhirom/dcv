@@ -40,6 +40,8 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `!`: Execute /bin/sh in container
    - `I`: Inspect container (view full config)
    - `a`: Toggle show all containers (including stopped)
+   - `s`: Show container stats
+   - `t`: Show process info (docker top)
    - `K`: Kill container (with confirmation)
    - `S`: Stop container (with confirmation)
    - `U`: Start container (with confirmation)

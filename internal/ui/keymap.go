@@ -40,6 +40,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
+		{[]string{"s"}, "stats", m.CmdStats},
+		{[]string{"t"}, "top", m.CmdTop},
 	}, containerOperations...)
 	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
 
