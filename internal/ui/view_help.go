@@ -17,7 +17,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	// Get key configurations based on previous view
-	viewConfigs := model.GetViewKeyHandlers(m.parentView)
+	viewKeyHandlers := model.GetViewKeyHandlers(m.parentView)
 	viewName := m.parentView.String()
 
 	// Show view name
@@ -27,46 +27,15 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	var allRows [][]string
 
 	// Add view-specific configs
-	if len(viewConfigs) > 0 {
-		for _, config := range viewConfigs {
-			if len(config.Keys) > 0 {
-				key := config.Keys[0]
-				if len(config.Keys) > 1 {
-					key = strings.Join(config.Keys, "/")
-				}
-
-				// Get command name for this handler
-				cmdName := model.getCommandForHandler(config.KeyHandler)
-				if cmdName != "" {
-					cmdName = ":" + cmdName
-				}
-
-				allRows = append(allRows, []string{key, cmdName, config.Description})
-			}
-		}
+	if len(viewKeyHandlers) > 0 {
+		allRows = append(allRows, keyHandlersToTableRows(model, viewKeyHandlers)...)
 	}
-
-	allRows = append(allRows, []string{"", "", ""})
 
 	// Add global configs
 	if len(model.globalHandlers) > 0 {
-		// Add section header as a special row
-		for _, config := range model.globalHandlers {
-			if len(config.Keys) > 0 {
-				key := config.Keys[0]
-				if len(config.Keys) > 1 {
-					key = strings.Join(config.Keys, "/")
-				}
+		allRows = append(allRows, []string{"", "", ""})
 
-				// Get command name for this handler
-				cmdName := model.getCommandForHandler(config.KeyHandler)
-				if cmdName != "" {
-					cmdName = ":" + cmdName
-				}
-
-				allRows = append(allRows, []string{key, cmdName, config.Description})
-			}
-		}
+		allRows = append(allRows, keyHandlersToTableRows(model, model.globalHandlers)...)
 	}
 
 	// Create columns
@@ -97,6 +66,29 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	s.WriteString(tableString)
 
 	return s.String()
+}
+
+func keyHandlersToTableRows(model *Model, keyHandlers []KeyConfig) [][]string {
+	allRows := make([][]string, 0, len(keyHandlers))
+
+	// Add section header as a special row
+	for _, config := range keyHandlers {
+		if len(config.Keys) > 0 {
+			key := config.Keys[0]
+			if len(config.Keys) > 1 {
+				key = strings.Join(config.Keys, "/")
+			}
+
+			// Get command name for this handler
+			cmdName := model.getCommandForHandler(config.KeyHandler)
+			if cmdName != "" {
+				cmdName = ":" + cmdName
+			}
+
+			allRows = append(allRows, []string{key, cmdName, config.Description})
+		}
+	}
+	return allRows
 }
 
 func (m *HelpViewModel) Show(model *Model, parentView ViewType) tea.Cmd {
