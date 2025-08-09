@@ -236,6 +236,44 @@ func (m *Model) SwitchToPreviousView() {
 	m.currentView = previousView
 }
 
+// GetViewKeyHandlers returns the key handlers for the specified view
+func (m *Model) GetViewKeyHandlers(view ViewType) []KeyConfig {
+	switch view {
+	case ComposeProcessListView:
+		return m.composeProcessListViewHandlers
+	case LogView:
+		return m.logViewHandlers
+	case DindProcessListView:
+		return m.dindListViewHandlers
+	case TopView:
+		return m.topViewHandlers
+	case StatsView:
+		return m.statsViewHandlers
+	case ComposeProjectListView:
+		return m.composeProjectListViewHandlers
+	case DockerContainerListView:
+		return m.dockerContainerListViewHandlers
+	case ImageListView:
+		return m.imageListViewHandlers
+	case NetworkListView:
+		return m.networkListViewHandlers
+	case VolumeListView:
+		return m.volumeListViewHandlers
+	case FileBrowserView:
+		return m.fileBrowserHandlers
+	case FileContentView:
+		return m.fileContentHandlers
+	case InspectView:
+		return m.inspectViewHandlers
+	case HelpView:
+		return m.helpViewHandlers
+	case CommandExecutionView:
+		return m.commandExecHandlers
+	default:
+		return nil
+	}
+}
+
 // Messages
 
 type processesLoadedMsg struct {
