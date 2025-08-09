@@ -196,6 +196,15 @@ func (m *DockerContainerListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	return loadDockerContainers(model.dockerClient, m.showAll)
 }
 
+func (m *DockerContainerListViewModel) HandleTop(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		// Pass empty projectName to indicate this is a regular Docker container
+		return model.topViewModel.Load(model, "", container.ID)
+	}
+	return nil
+}
+
 func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]

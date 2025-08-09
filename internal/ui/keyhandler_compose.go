@@ -27,6 +27,10 @@ func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleTop(m)
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleTop(m)
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleTop(m)
 	default:
 		return m, nil
 	}

@@ -36,6 +36,7 @@ Displays `docker ps` results in a table format. Shows all Docker containers, not
 - `I`: Inspect container (view full config)
 - `a`: Toggle show all containers (including stopped)
 - `s`: Show container stats
+- `t`: Show process info (docker top)
 - `r`: Refresh list
 - `K`: Kill container
 - `S`: Stop container
@@ -71,8 +72,8 @@ Displays `docker compose ps` results in a table format.
 - `5`: Quick switch to Docker volume list view
 - `a`: Toggle show all containers (including stopped)
 - `r`: Refresh list
-- `t`: Show process info (docker compose top)
 - `s`: Show container stats
+- `t`: Show process info (docker compose top)
 - `K`: Kill service
 - `S`: Stop service
 - `U`: Start service
@@ -110,6 +111,7 @@ Shows containers running inside a dind container.
 - `↓`/`j`: Move down
 - `Enter`: View container logs
 - `d`: View dind container contents (for nested dind containers)
+- `t`: Show process info (docker top)
 - `r`: Refresh list
 - `?`: Show help view
 - `Esc`/`q`: Back to process list

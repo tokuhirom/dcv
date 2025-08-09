@@ -409,9 +409,19 @@ func loadComposeProcesses(client *docker.Client, projectName string, showAll boo
 }
 
 func loadComposeTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
-	// TODO: support normal containers
 	return func() tea.Msg {
-		output, err := client.Compose(projectName).Top(serviceName)
+		// If projectName is empty, it's a regular Docker container (containerID in serviceName)
+		var output string
+		var err error
+
+		if projectName == "" {
+			// Regular Docker container - use docker top
+			output, err = client.Top(serviceName)
+		} else {
+			// Docker Compose service - use docker compose top
+			output, err = client.Compose(projectName).Top(serviceName)
+		}
+
 		return topLoadedMsg{
 			output: output,
 			err:    err,

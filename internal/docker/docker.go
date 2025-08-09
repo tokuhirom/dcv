@@ -133,3 +133,12 @@ func (c *Client) GetStats() ([]models.ContainerStats, error) {
 
 	return ParseStatsJSON(output)
 }
+
+// Top shows the running processes of a container
+func (c *Client) Top(containerID string) (string, error) {
+	output, err := ExecuteCaptured("top", containerID)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute docker top: %w\nOutput: %s", err, string(output))
+	}
+	return string(output), nil
+}

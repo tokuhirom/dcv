@@ -17,7 +17,7 @@ func (m *Model) initializeKeyHandlers() {
 	}
 	m.globalKeymap = m.createKeymap(m.globalHandlers)
 
-	// Common container operations that work in both Docker and Compose views
+	// Common container operations that work in all container views
 	containerOperations := []KeyConfig{
 		{[]string{"d"}, "entering DinD", m.CmdDind},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
@@ -26,17 +26,13 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
 		{[]string{"s"}, "stats", m.CmdStats},
+		{[]string{"t"}, "top", m.CmdTop},
 		{[]string{"K"}, "kill", m.CmdKill},
 		{[]string{"S"}, "stop", m.CmdStop},
 		{[]string{"U"}, "start", m.CmdStart},
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
 		{[]string{"D"}, "delete", m.CmdDelete},
-	}
-
-	// Compose-specific operations
-	composeSpecificOperations := []KeyConfig{
-		{[]string{"t"}, "top", m.CmdTop},
 	}
 
 	// Docker Container List View
@@ -51,14 +47,13 @@ func (m *Model) initializeKeyHandlers() {
 	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
 
 	// Compose Process List View
-	baseHandlers := []KeyConfig{
+	m.composeProcessListViewHandlers = append([]KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
-	}
-	m.composeProcessListViewHandlers = append(append(baseHandlers, containerOperations...), composeSpecificOperations...)
+	}, containerOperations...)
 	m.composeProcessListViewKeymap = m.createKeymap(m.composeProcessListViewHandlers)
 
 	// Log View
@@ -84,6 +79,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"d"}, "entering DinD", m.CmdDind},
+		{[]string{"t"}, "top", m.CmdTop},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},

@@ -135,6 +135,19 @@ func (m *DindProcessListViewModel) HandleRefresh(model *Model) tea.Cmd {
 	return loadDindContainers(model.dockerClient, m.currentDindContainerID)
 }
 
+// HandleTop shows process info for the selected dind container
+func (m *DindProcessListViewModel) HandleTop(model *Model) tea.Cmd {
+	if m.selectedDindContainer < len(m.dindContainers) {
+		container := m.dindContainers[m.selectedDindContainer]
+		// We need to run docker top inside the dind container
+		// For this, we'll need a new function to load top for dind containers
+		model.SwitchView(TopView)
+		model.loading = true
+		return loadDindTop(model.dockerClient, m.currentDindContainerID, container.ID)
+	}
+	return nil
+}
+
 // HandleDindProcessList enters nested dind container if selected container is dind
 func (m *DindProcessListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
 	if m.selectedDindContainer < len(m.dindContainers) {
@@ -163,6 +176,16 @@ func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {
 		return dindContainersLoadedMsg{
 			containers: containers,
 			err:        err,
+		}
+	}
+}
+
+func loadDindTop(client *docker.Client, hostContainerID, containerID string) tea.Cmd {
+	return func() tea.Msg {
+		output, err := client.Dind(hostContainerID).Top(containerID)
+		return topLoadedMsg{
+			output: output,
+			err:    err,
 		}
 	}
 }

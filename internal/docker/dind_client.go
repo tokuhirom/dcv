@@ -29,3 +29,12 @@ func (d *DindClient) ListContainers() ([]models.DockerContainer, error) {
 func (d *DindClient) Execute(args ...string) *exec.Cmd {
 	return Execute(append([]string{"exec", d.hostContainerID, "docker"}, args...)...)
 }
+
+// Top shows the running processes of a container inside dind
+func (d *DindClient) Top(containerID string) (string, error) {
+	output, err := ExecuteCaptured("exec", d.hostContainerID, "docker", "top", containerID)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute docker top inside dind: %w\nOutput: %s", err, string(output))
+	}
+	return string(output), nil
+}
