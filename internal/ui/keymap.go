@@ -74,14 +74,16 @@ func (m *Model) initializeKeyHandlers() {
 	m.logViewKeymap = m.createKeymap(m.logViewHandlers)
 
 	// Dind Process List View
-	m.dindListViewHandlers = []KeyConfig{
+	m.dindListViewHandlers = append([]KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
-	}
+		{[]string{"s"}, "stats", m.CmdStats},
+		{[]string{"t"}, "top", m.CmdTop},
+	}, containerOperations...)
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 
 	// Top View
