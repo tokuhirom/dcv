@@ -52,7 +52,7 @@ func TestClient_ListNetworks(t *testing.T) {
 			// For now, we're testing the parsing logic by directly testing
 			// the models conversion
 
-			// Since we can't easily mock executeCaptured, let's at least
+			// Since we can't easily mock ExecuteCaptured, let's at least
 			// verify the parsing logic works with the expected format
 			require.NotNil(t, tc.mockOutput, "Test case setup validation")
 

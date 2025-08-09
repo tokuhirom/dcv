@@ -2,6 +2,7 @@ package docker
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"os/exec"
 	"strings"
@@ -24,23 +25,19 @@ func ExecuteCaptured(args ...string) ([]byte, error) {
 	output, err := cmd.CombinedOutput()
 	duration := time.Since(startTime)
 
-	exitCode := 0
-	errorStr := ""
-
 	if err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitCode()
+			exitCode := exitErr.ExitCode()
+			return nil, fmt.Errorf("command failed with exit code %d: %w\n%s", exitCode, err, output)
 		}
-		errorStr = err.Error()
+		return nil, fmt.Errorf("command execution failed: %w\n%s", err, output)
 	}
 
 	slog.Info("Executed command",
 		slog.String("command", cmdStr),
-		slog.Int("exitCode", exitCode),
-		slog.String("error", errorStr),
 		slog.Duration("duration", duration),
 		slog.String("output", string(output)))
 
-	return output, err
+	return output, nil
 }

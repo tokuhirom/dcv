@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os/exec"
-	"strings"
-	"time"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -15,42 +13,8 @@ type ComposeClient struct {
 	projectName string
 }
 
-func (c *ComposeClient) executeCaptured(args ...string) ([]byte, error) {
-	slog.Info("Executing docker command",
-		slog.String("args", strings.Join(args, " ")))
-
-	cmd := exec.Command("docker", args...)
-
-	startTime := time.Now()
-	cmdStr := strings.Join(cmd.Args, " ")
-
-	output, err := cmd.CombinedOutput()
-	duration := time.Since(startTime)
-
-	exitCode := 0
-	errorStr := ""
-
-	if err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitCode()
-		}
-		errorStr = err.Error()
-		slog.Info("Executed command",
-			slog.String("command", cmdStr),
-			slog.Int("exitCode", exitCode),
-			slog.String("error", errorStr),
-			slog.Duration("duration", duration),
-			slog.String("output", string(output)))
-		return output, fmt.Errorf("failed to execute command '%s': %w\n\n%s", cmdStr, err, output)
-	}
-
-	slog.Info("Executed command",
-		slog.String("command", cmdStr),
-		slog.Duration("duration", duration),
-		slog.String("output", string(output)))
-
-	return output, nil
+func (c *ComposeClient) ExecuteCaptured(args ...string) ([]byte, error) {
+	return ExecuteCaptured(args...)
 }
 
 func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer, error) {
@@ -60,7 +24,7 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer,
 		args = append(args, "--all")
 	}
 
-	output, err := c.executeCaptured(args...)
+	output, err := c.ExecuteCaptured(args...)
 	if err != nil {
 		// Check if docker compose is available
 		var execErr *exec.ExitError
@@ -73,13 +37,7 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer,
 		if len(output) == 0 || string(output) == "" {
 			return []models.ComposeContainer{}, nil
 		}
-		return nil, fmt.Errorf("failed to executeCaptured docker compose ps: %w\nOutput: %s", err, string(output))
-	}
-
-	// Handle empty output (no containers running)
-	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
-		slog.Info("No containers found")
-		return []models.ComposeContainer{}, nil
+		return nil, fmt.Errorf("failed to ExecuteCaptured docker compose ps: %w\nOutput: %s", err, string(output))
 	}
 
 	// Parse JSON format
@@ -87,53 +45,11 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer,
 	return ParseComposePSJSON(output)
 }
 
-func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
-	output, err := c.executeCaptured("compose", "-p", c.projectName, "top", serviceName)
+func (c *ComposeClient) Top(serviceName string) (string, error) {
+	output, err := c.ExecuteCaptured("compose", "-p", c.projectName, "top", serviceName)
 	if err != nil {
-		return "", fmt.Errorf("failed to executeCaptured docker compose top: %w\nOutput: %s", err, string(output))
+		return "", fmt.Errorf("failed to ExecuteCaptured docker compose top: %w\nOutput: %s", err, string(output))
 	}
 
 	return string(output), nil
-}
-
-func (c *ComposeClient) Down() error {
-	output, err := c.executeCaptured("compose", "-p", c.projectName, "down")
-	if err != nil {
-		return fmt.Errorf("failed to execute docker compose down: %w\nOutput: %s", err, string(output))
-	}
-
-	slog.Info("Executed docker compose down",
-		slog.String("output", string(output)))
-
-	return nil
-}
-
-func (c *ComposeClient) UpService(serviceName string) error {
-	args := []string{"compose", "-p", c.projectName, "up", "-d", serviceName}
-	out, err := c.executeCaptured(args...)
-	if err != nil {
-		return fmt.Errorf("failed to executeCaptured: %w", err)
-	}
-
-	slog.Info("Executed docker compose up",
-		slog.String("output", string(out)))
-
-	// TODO: show the result of the up command
-
-	return nil
-}
-
-func (c *ComposeClient) Up() error {
-	args := []string{"compose", "-p", c.projectName, "up", "-d"}
-	out, err := c.executeCaptured(args...)
-	if err != nil {
-		return fmt.Errorf("failed to executeCaptured: %w", err)
-	}
-
-	slog.Info("Executed docker compose up",
-		slog.String("output", string(out)))
-
-	// TODO: show the result/progress of the up command
-
-	return nil
 }
