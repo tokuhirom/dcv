@@ -83,26 +83,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.topViewModel.Loaded(msg.output)
 		return m, nil
 
-	case serviceActionCompleteMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		}
-		// Reload the appropriate view after action completes
-		switch m.currentView {
-		case ImageListView:
-			return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
-		case DockerContainerListView:
-			return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
-		case NetworkListView:
-			return m, m.networkListViewModel.Show(m, false)
-		case VolumeListView:
-			return m, m.volumeListViewModel.HandleRefresh(m)
-		default:
-			return m, loadComposeProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
-		}
-
 	case statsLoadedMsg:
 		m.loading = false
 		if msg.err != nil {
