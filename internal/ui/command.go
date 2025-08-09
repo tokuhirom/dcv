@@ -119,20 +119,6 @@ func (m *CommandViewModel) executeCommand(model *Model) (tea.Model, tea.Cmd) {
 		return model, tea.Quit
 
 	case "h", "help":
-		// Show help
-		if len(parts) > 1 && parts[1] == "commands" {
-			// Show available commands
-			model.err = nil
-			commands := model.getAvailableCommands()
-			helpText := "Available commands in current view:\n"
-			for _, cmd := range commands {
-				if handler, exists := model.commandRegistry[cmd]; exists {
-					helpText += fmt.Sprintf("  :%s - %s\n", cmd, handler.Description)
-				}
-			}
-			model.err = fmt.Errorf("%s", helpText)
-			return model, nil
-		}
 		return model, model.helpViewModel.Show(model, model.currentView)
 
 	default:
