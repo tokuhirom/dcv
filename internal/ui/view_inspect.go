@@ -348,10 +348,10 @@ func (m *InspectViewModel) InspectVolume(model *Model, volume models.DockerVolum
 
 func inspectVolume(dockerClient *docker.Client, volumeID string) tea.Cmd {
 	return func() tea.Msg {
-		output, err := dockerClient.InspectVolume(volumeID)
-		if err != nil {
-			return errorMsg{err: err}
+		content, err := dockerClient.ExecuteCaptured("volume", "inspect", volumeID)
+		return inspectLoadedMsg{
+			content: string(content),
+			err:     err,
 		}
-		return inspectLoadedMsg{content: output}
 	}
 }

@@ -54,29 +54,6 @@ func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 	return volumes, nil
 }
 
-// InspectVolume inspects a Docker volume and returns the formatted JSON
-func (c *Client) InspectVolume(volumeName string) (string, error) {
-	output, err := ExecuteCaptured([]string{"volume", "inspect", volumeName}...)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect volume %s: %w\nOutput: %s", volumeName, err, string(output))
-	}
-
-	// Pretty format the JSON output
-	var jsonData interface{}
-	if err := json.Unmarshal(output, &jsonData); err != nil {
-		// If we can't parse it, return raw output
-		return string(output), nil
-	}
-
-	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		// If we can't pretty print, return raw output
-		return string(output), nil
-	}
-
-	return string(prettyJSON), nil
-}
-
 // parseVolumeSize parses a size string like "1.051GB" into bytes
 func parseVolumeSize(sizeStr string) int64 {
 	if sizeStr == "" || sizeStr == "N/A" {

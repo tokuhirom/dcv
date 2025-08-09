@@ -24,11 +24,7 @@ type DockerClient interface {
 	ListContainerFiles(containerID, path string) ([]models.ContainerFile, error)
 	ReadContainerFile(containerID, path string) (string, error)
 	ExecuteInteractive(containerID string, command []string) error
-	InspectContainer(containerID string) (string, error)
-	InspectImage(imageID string) (string, error)
-	InspectNetwork(networkID string) (string, error)
 	ListVolumes() ([]models.DockerVolume, error)
-	InspectVolume(volumeName string) (string, error)
 }
 
 // ComposeClientInterface defines the interface for Docker Compose operations
