@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/tokuhirom/dcv/internal/docker"
 
 	"github.com/tokuhirom/dcv/internal/models"
