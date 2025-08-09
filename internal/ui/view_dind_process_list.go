@@ -7,7 +7,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
@@ -34,7 +33,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 	columns := []table.Column{
 		{Title: "CONTAINER ID", Width: 15},
 		{Title: "IMAGE", Width: 30},
-		{Title: "STATUS", Width: 20},
+		{Title: "STATUS", Width: 25},
 		{Title: "NAMES", Width: 30},
 	}
 
@@ -63,31 +62,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 		rows = append(rows, table.Row{id, image, status, container.Names})
 	}
 
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithHeight(availableHeight-2),
-		table.WithFocused(true),
-	)
-
-	// Apply styles
-	styles := table.DefaultStyles()
-	styles.Header = styles.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	styles.Selected = selectedStyle
-	styles.Cell = styles.Cell.
-		BorderForeground(lipgloss.Color("240"))
-	t.SetStyles(styles)
-
-	// Set cursor position
-	if m.selectedDindContainer < len(rows) {
-		t.MoveDown(m.selectedDindContainer)
-	}
-
-	return t.View()
+	return RenderTable(columns, rows, availableHeight, m.selectedDindContainer)
 }
 
 // Load switches to the dind process list view and loads containers
@@ -155,7 +130,7 @@ func (m *DindProcessListViewModel) GetContainer(model *Model) docker.Container {
 		return docker.NewDindContainer(model.dockerClient,
 			m.hostContainer.GetContainerID(),
 			m.hostContainer.GetName(),
-			container.ID, container.Names)
+			container.ID, container.Names, container.State)
 	}
 	return nil
 }

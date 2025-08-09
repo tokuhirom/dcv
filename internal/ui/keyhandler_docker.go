@@ -2,9 +2,10 @@ package ui
 
 import (
 	"log/slog"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // Docker container management commands
@@ -54,36 +55,10 @@ func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		// Check if selected container is paused
-		if m.composeProcessListViewModel.selectedContainer < len(m.composeProcessListViewModel.composeContainers) {
-			selected := m.composeProcessListViewModel.composeContainers[m.composeProcessListViewModel.selectedContainer]
-			var args []string
-			if selected.State == "paused" {
-				args = []string{"unpause", selected.ID}
-			} else {
-				args = []string{"pause", selected.ID}
-			}
-			return m, m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
-		}
-		return m, nil
-	case DockerContainerListView:
-		// Docker container list pause/unpause support
-		if m.dockerContainerListViewModel.selectedDockerContainer < len(m.dockerContainerListViewModel.dockerContainers) {
-			selected := m.dockerContainerListViewModel.dockerContainers[m.dockerContainerListViewModel.selectedDockerContainer]
-			var args []string
-			if strings.Contains(selected.Status, "Paused") {
-				args = []string{"unpause", selected.ID}
-			} else {
-				args = []string{"pause", selected.ID}
-			}
-			return m, m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
-		}
-		return m, nil
-	default:
-		return m, nil
-	}
+	return m, m.useContainerAware(func(container docker.Container) tea.Cmd {
+		args := container.PauseArgs()
+		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
+	})
 }
 
 func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -136,22 +111,28 @@ func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	return m, m.useContainerAware(func(container docker.Container) tea.Cmd {
+		return m.topViewModel.Load(m, container)
+	})
+}
+
+func (m *Model) useContainerAware(cb func(container docker.Container) tea.Cmd) tea.Cmd {
 	// if GetContainerAware, we can show top for containers
 	// GetContainerAware is the interface that provides container-aware functionality
 	vm := m.GetCurrentViewModel()
 	if vm == nil {
-		return m, nil
+		return nil
 	}
 
 	if containerAware, ok := vm.(GetContainerAware); ok {
 		container := containerAware.GetContainer(m)
 		if container == nil {
 			slog.Error("Failed to get selected container for top command")
-			return m, nil
+			return nil
 		}
-		return m, m.topViewModel.Load(m, container)
+		return cb(container)
 	}
 
 	// this view model does not support container-aware functionality.
-	return m, nil
+	return nil
 }
