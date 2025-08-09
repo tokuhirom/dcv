@@ -420,13 +420,3 @@ func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 	return m, nil
 }
-
-// containsAny checks if the string contains any of the substrings
-func containsAny(s string, substrs []string) bool {
-	for _, substr := range substrs {
-		if strings.Contains(s, substr) {
-			return true
-		}
-	}
-	return false
-}
