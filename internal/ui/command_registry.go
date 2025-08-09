@@ -11,13 +11,12 @@ import (
 type CommandHandler struct {
 	Handler     KeyHandler
 	Description string
-	// TODO: Following comment is completely wrong, ViewMask is not a bitwise mask.
-	ViewMask ViewType // Bitwise mask of views where this command is available (0 = all views)
 }
 
 // initCommandRegistry initializes the command registry with all available commands
 func (m *Model) initCommandRegistry() {
-	m.commandRegistry = make(map[string]CommandHandler)
+	m.allCommands = make(map[string]struct{})
+	m.viewCommandRegistry = make(map[ViewType]map[string]CommandHandler)
 
 	// Register all key handlers as commands
 	m.registerCommands()
@@ -46,29 +45,23 @@ func (m *Model) registerCommands() {
 		{m.helpViewHandlers, HelpView},
 	}
 
-	// Track which handlers we've already registered to avoid duplicates
-	registered := make(map[uintptr]bool)
-
 	for _, viewHandlers := range allHandlers {
+		m.viewCommandRegistry[viewHandlers.viewMask] = make(map[string]CommandHandler)
+
 		for _, handler := range viewHandlers.handlers {
 			// Get the function pointer
 			funcPtr := reflect.ValueOf(handler.KeyHandler).Pointer()
-
-			// Skip if already registered
-			if registered[funcPtr] {
-				continue
-			}
-			registered[funcPtr] = true
 
 			cmdName := GetCommandNameFromFuncPtr(funcPtr)
 			slog.Info("Registering command",
 				slog.String("cmd", cmdName))
 			if cmdName != "" {
-				m.commandRegistry[cmdName] = CommandHandler{
+				m.viewCommandRegistry[viewHandlers.viewMask][cmdName] = CommandHandler{
 					Handler:     handler.KeyHandler,
 					Description: handler.Description,
-					ViewMask:    0, // XXX
 				}
+
+				m.allCommands[cmdName] = struct{}{}
 			}
 		}
 	}

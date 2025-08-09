@@ -36,8 +36,8 @@ func TestCommandRegistry(t *testing.T) {
 	model.initializeKeyHandlers()
 
 	// Test that command registry is populated
-	assert.NotNil(t, model.commandRegistry)
-	assert.Greater(t, len(model.commandRegistry), 0)
+	assert.NotNil(t, model.viewCommandRegistry)
+	assert.Greater(t, len(model.viewCommandRegistry), 0)
 
 	// Test that some common commands exist
 	commonCommands := []string{
@@ -51,7 +51,7 @@ func TestCommandRegistry(t *testing.T) {
 
 	for _, cmd := range commonCommands {
 		t.Run(cmd, func(t *testing.T) {
-			_, exists := model.commandRegistry[cmd]
+			_, exists := model.viewCommandRegistry[cmd]
 			assert.True(t, exists, "Command %s should exist in registry", cmd)
 		})
 	}
@@ -96,10 +96,10 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 		testModel.composeProcessListViewModel.selectedContainer = 0
 
 		// Check that "down" command exists and what handler it has
-		if cmd, exists := testModel.commandRegistry["down"]; exists {
+		if cmd, exists := testModel.viewCommandRegistry["down"]; exists {
 			t.Logf("Found 'down' command with description: %s, ViewMask: %v", cmd.Description, cmd.ViewMask)
 			// List all commands that have "down" in their name
-			for name, regCmd := range testModel.commandRegistry {
+			for name, regCmd := range testModel.viewCommandRegistry {
 				if strings.Contains(name, "down") {
 					t.Logf("Command '%s' has ViewMask: %v", name, regCmd.ViewMask)
 				}

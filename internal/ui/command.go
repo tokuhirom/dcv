@@ -129,15 +129,13 @@ func (m *CommandViewModel) executeCommand(model *Model) (tea.Model, tea.Cmd) {
 
 // executeKeyHandlerCommand executes a command by name
 func (m *CommandViewModel) executeKeyHandlerCommand(model *Model, cmdName string) (tea.Model, tea.Cmd) {
-	cmd, exists := model.commandRegistry[cmdName]
+	cmd, exists := model.viewCommandRegistry[model.currentView][cmdName]
 	if !exists {
-		model.err = fmt.Errorf("unknown command: %s", cmdName)
-		return model, nil
-	}
-
-	// Check if command is available in current view
-	if cmd.ViewMask != 0 && cmd.ViewMask != model.currentView {
-		model.err = fmt.Errorf("command '%s' is not available in current view", cmdName)
+		if _, ok := model.allCommands[cmdName]; ok {
+			model.err = fmt.Errorf(":%s is not available in %s", cmdName, model.currentView.String())
+		} else {
+			model.err = fmt.Errorf("unknown command: :%s", cmdName)
+		}
 		return model, nil
 	}
 
