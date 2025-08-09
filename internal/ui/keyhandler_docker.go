@@ -56,7 +56,14 @@ func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container docker.Container) tea.Cmd {
-		args := container.PauseArgs()
+		cmd := func() string {
+			if container.GetState() == "paused" {
+				return "unpause"
+			} else {
+				return "pause"
+			}
+		}()
+		args := container.OperationArgs(cmd)
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
 	})
 }
