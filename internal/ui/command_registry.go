@@ -18,7 +18,6 @@ type CommandHandler struct {
 // initCommandRegistry initializes the command registry with all available commands
 func (m *Model) initCommandRegistry() {
 	m.commandRegistry = make(map[string]CommandHandler)
-	m.handlerToCommand = make(map[uintptr]string)
 
 	// Register all key handlers as commands
 	m.registerCommands()
@@ -70,30 +69,7 @@ func (m *Model) registerCommands() {
 					Description: handler.Description,
 					ViewMask:    0, // XXX
 				}
-				m.handlerToCommand[funcPtr] = cmdName
 			}
-		}
-	}
-
-	// Add additional aliases for common commands
-	aliases := map[string]string{
-		"select":  "log",     // Alternative for entering log view
-		"enter":   "log",     // Alternative for entering log view
-		"delete":  "remove",  // Alternative for remove
-		"rm":      "remove",  // Short for remove
-		"logs":    "log",     // Alternative for log
-		"exec":    "shell",   // Alternative for shell
-		"unpause": "pause",   // Same as pause (it's a toggle)
-		"q":       "quit",    // Short for quit
-		"h":       "help",    // Short for help
-		"r":       "refresh", // Already registered but good to have as alias
-		"a":       "all",     // Short for toggle all
-	}
-
-	// Register aliases
-	for alias, target := range aliases {
-		if cmd, exists := m.commandRegistry[target]; exists {
-			m.commandRegistry[alias] = cmd
 		}
 	}
 }
@@ -116,6 +92,17 @@ func GetCommandNameFromFuncPtr(funcPtr uintptr) string {
 	methodName = strings.TrimPrefix(methodName, "Cmd")
 
 	return toKebabCase(methodName)
+}
+
+// getCommandForHandler returns the command name for a given key handler
+func (m *Model) getCommandForHandler(handler KeyHandler) string {
+	if handler == nil {
+		return ""
+	}
+
+	funcPtr := reflect.ValueOf(handler).Pointer()
+	cmdName := GetCommandNameFromFuncPtr(funcPtr)
+	return cmdName
 }
 
 // toKebabCase converts a CamelCase string to kebab-case
@@ -162,18 +149,4 @@ func (m *Model) getCommandSuggestions(partial string) []string {
 	}
 
 	return suggestions
-}
-
-// getCommandForHandler returns the command name for a given key handler
-func (m *Model) getCommandForHandler(handler KeyHandler) string {
-	if handler == nil {
-		return ""
-	}
-
-	funcPtr := reflect.ValueOf(handler).Pointer()
-	if cmdName, exists := m.handlerToCommand[funcPtr]; exists {
-		return cmdName
-	}
-
-	return ""
 }

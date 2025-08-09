@@ -55,28 +55,6 @@ func TestCommandRegistry(t *testing.T) {
 			assert.True(t, exists, "Command %s should exist in registry", cmd)
 		})
 	}
-
-	// Test aliases
-	aliases := map[string]string{
-		"logs": "log",
-		"exec": "shell",
-		"rm":   "remove",
-	}
-
-	for alias, target := range aliases {
-		t.Run("alias_"+alias, func(t *testing.T) {
-			aliasCmd, aliasExists := model.commandRegistry[alias]
-			targetCmd, targetExists := model.commandRegistry[target]
-
-			assert.True(t, aliasExists, "Alias %s should exist", alias)
-			assert.True(t, targetExists, "Target %s should exist", target)
-
-			if aliasExists && targetExists {
-				// Check that the handlers are the same
-				assert.Equal(t, aliasCmd.Description, targetCmd.Description)
-			}
-		})
-	}
 }
 
 func TestExecuteKeyHandlerCommand(t *testing.T) {
