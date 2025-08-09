@@ -79,10 +79,13 @@ func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, 
 		return model, nil
 
 	default:
-		if msg.Type == tea.KeyRunes {
-			// Insert character at cursor position
+		switch msg.Type {
+		case tea.KeyRunes:
 			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + msg.String() + m.commandBuffer[m.commandCursorPos:]
 			m.commandCursorPos += len(msg.String())
+		case tea.KeySpace:
+			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + " " + m.commandBuffer[m.commandCursorPos:]
+			m.commandCursorPos++
 		}
 		return model, nil
 	}
@@ -129,15 +132,13 @@ func (m *CommandViewModel) executeCommand(model *Model) (tea.Model, tea.Cmd) {
 
 // executeKeyHandlerCommand executes a command by name
 func (m *CommandViewModel) executeKeyHandlerCommand(model *Model, cmdName string) (tea.Model, tea.Cmd) {
-	cmd, exists := model.commandRegistry[cmdName]
+	cmd, exists := model.viewCommandRegistry[model.currentView][cmdName]
 	if !exists {
-		model.err = fmt.Errorf("unknown command: %s", cmdName)
-		return model, nil
-	}
-
-	// Check if command is available in current view
-	if cmd.ViewMask != 0 && cmd.ViewMask != model.currentView {
-		model.err = fmt.Errorf("command '%s' is not available in current view", cmdName)
+		if _, ok := model.allCommands[cmdName]; ok {
+			model.err = fmt.Errorf(":%s is not available in %s", cmdName, model.currentView.String())
+		} else {
+			model.err = fmt.Errorf("unknown command: :%s", cmdName)
+		}
 		return model, nil
 	}
 
