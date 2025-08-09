@@ -442,6 +442,9 @@ make all
 make fmt
 ```
 
+## See also
+
+- [lazydocker](https://github.com/jesseduffield/lazydocker)
 
 ## License
 
