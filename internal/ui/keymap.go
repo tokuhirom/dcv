@@ -18,7 +18,6 @@ func (m *Model) initializeKeyHandlers() {
 	m.globalKeymap = m.createKeymap(m.globalHandlers)
 
 	containerOperations := []KeyConfig{
-		{[]string{"d"}, "entering DinD", m.CmdDind},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"i"}, "inspect", m.CmdInspect},
@@ -40,6 +39,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
+
+		{[]string{"d"}, "entering DinD", m.CmdDind},
 	}, containerOperations...)
 	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
 
@@ -54,6 +55,8 @@ func (m *Model) initializeKeyHandlers() {
 		// TODO: move to containerOperations
 		{[]string{"s"}, "stats", m.CmdStats},
 		{[]string{"t"}, "top", m.CmdTop},
+
+		{[]string{"d"}, "entering DinD", m.CmdDind},
 	}, containerOperations...)
 	m.composeProcessListViewKeymap = m.createKeymap(m.composeProcessListViewHandlers)
 
