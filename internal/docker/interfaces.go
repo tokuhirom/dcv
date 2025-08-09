@@ -17,7 +17,7 @@ type DockerClient interface {
 	StopContainer(containerID string) error
 	StartContainer(containerID string) error
 	RestartContainer(containerID string) error
-	GetStats() (string, error)
+	GetStats() ([]models.ContainerStats, error)
 	ListAllContainers(showAll bool) ([]models.DockerContainer, error)
 	ListImages(showAll bool) ([]models.DockerImage, error)
 	ListNetworks() ([]models.DockerNetwork, error)
