@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log/slog"
 	"reflect"
 	"runtime"
 	"strings"
@@ -60,25 +61,14 @@ func (m *Model) registerCommands() {
 			}
 			registered[funcPtr] = true
 
-			// Get the function name
-			funcName := runtime.FuncForPC(funcPtr).Name()
-			// Extract just the method name (e.g., "SelectUpContainer" from "github.com/tokuhirom/dcv/internal/ui.(*Model).SelectUpContainer-fm")
-			parts := strings.Split(funcName, ".")
-			if len(parts) > 0 {
-				methodName := parts[len(parts)-1]
-				// Remove the -fm suffix if present (from method value)
-				methodName = strings.TrimSuffix(methodName, "-fm")
-				// Remove the (*Model) part if present
-				methodName = strings.TrimPrefix(methodName, "(*Model)")
-				methodName = strings.TrimPrefix(methodName, ")")
-				methodName = strings.TrimPrefix(methodName, "Cmd")
-
-				// Otherwise, use kebab-case version
-				cmdName := toKebabCase(methodName)
+			cmdName := GetCommandNameFromFuncPtr(funcPtr)
+			slog.Info("Registering command",
+				slog.String("cmd", cmdName))
+			if cmdName != "" {
 				m.commandRegistry[cmdName] = CommandHandler{
 					Handler:     handler.KeyHandler,
 					Description: handler.Description,
-					ViewMask:    viewHandlers.viewMask,
+					ViewMask:    0, // XXX
 				}
 				m.handlerToCommand[funcPtr] = cmdName
 			}
@@ -106,6 +96,26 @@ func (m *Model) registerCommands() {
 			m.commandRegistry[alias] = cmd
 		}
 	}
+}
+
+func GetCommandNameFromFuncPtr(funcPtr uintptr) string {
+	// Get the function name from the pointer
+	funcName := runtime.FuncForPC(funcPtr).Name()
+	// Extract just the method name (e.g., "SelectUpContainer" from "github.com/tokuhirom/dcv/internal/ui.(*Model).CmdUp-fm")
+	parts := strings.Split(funcName, ".")
+	if len(parts) == 0 {
+		return ""
+	}
+
+	methodName := parts[len(parts)-1]
+	// Remove the -fm suffix if present (from method value)
+	methodName = strings.TrimSuffix(methodName, "-fm")
+	// Remove the (*Model) part if present
+	methodName = strings.TrimPrefix(methodName, "(*Model)")
+	methodName = strings.TrimPrefix(methodName, ")")
+	methodName = strings.TrimPrefix(methodName, "Cmd")
+
+	return toKebabCase(methodName)
 }
 
 // toKebabCase converts a CamelCase string to kebab-case
