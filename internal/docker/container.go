@@ -11,6 +11,7 @@ type Container interface {
 	Title() string
 
 	Top() ([]byte, error)
+	PauseArgs() []string
 }
 
 type ContainerImpl struct {
@@ -18,10 +19,16 @@ type ContainerImpl struct {
 	client      *Client
 	name        string
 	title       string
+	state       string
 }
 
-func NewContainer(client *Client, containerID string, name string, title string) Container {
-	return ContainerImpl{client: client, containerID: containerID, name: name, title: title}
+func NewContainer(client *Client, containerID string, name string, title string, state string) Container {
+	return ContainerImpl{
+		client:      client,
+		containerID: containerID,
+		name:        name,
+		title:       title,
+		state:       state}
 }
 
 func (c ContainerImpl) ContainerID() string {
@@ -52,21 +59,35 @@ func (c ContainerImpl) Top() ([]byte, error) {
 	return c.client.ExecuteCaptured("top", c.containerID)
 }
 
+func (c ContainerImpl) PauseArgs() []string {
+	cmd := func() string {
+		if c.state == "paused" {
+			return "unpause"
+		} else {
+			return "pause"
+		}
+	}()
+	return []string{cmd, c.containerID}
+}
+
 type DindContainerImpl struct {
 	client            *Client
 	hostContainerName string
 	hostContainerID   string
 	containerID       string
 	name              string
+	state             string
 }
 
-func NewDindContainer(client *Client, hostContainerID, hostContainerName, containerID, name string) Container {
+func NewDindContainer(client *Client, hostContainerID, hostContainerName, containerID, name, state string) Container {
 	return DindContainerImpl{
 		client:            client,
 		hostContainerID:   hostContainerID,
 		hostContainerName: hostContainerName,
 		containerID:       containerID,
-		name:              name}
+		name:              name,
+		state:             state,
+	}
 }
 
 func (c DindContainerImpl) GetContainerID() string {
@@ -91,4 +112,15 @@ func (c DindContainerImpl) Title() string {
 
 func (c DindContainerImpl) Top() ([]byte, error) {
 	return c.client.ExecuteCaptured("exec", c.hostContainerID, "docker", "top", c.containerID)
+}
+
+func (c DindContainerImpl) PauseArgs() []string {
+	cmd := func() string {
+		if c.state == "paused" {
+			return "unpause"
+		} else {
+			return "pause"
+		}
+	}()
+	return []string{"exec", c.hostContainerID, "docker", cmd, c.containerID}
 }
