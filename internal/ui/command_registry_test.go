@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,7 +50,7 @@ func TestCommandRegistry(t *testing.T) {
 
 	for _, cmd := range commonCommands {
 		t.Run(cmd, func(t *testing.T) {
-			_, exists := model.viewCommandRegistry[cmd]
+			_, exists := model.viewCommandRegistry[ComposeProcessListView][cmd]
 			assert.True(t, exists, "Command %s should exist in registry", cmd)
 		})
 	}
@@ -94,17 +93,6 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 			{Name: "container3"},
 		}
 		testModel.composeProcessListViewModel.selectedContainer = 0
-
-		// Check that "down" command exists and what handler it has
-		if cmd, exists := testModel.viewCommandRegistry["down"]; exists {
-			t.Logf("Found 'down' command with description: %s, ViewMask: %v", cmd.Description, cmd.ViewMask)
-			// List all commands that have "down" in their name
-			for name, regCmd := range testModel.viewCommandRegistry {
-				if strings.Contains(name, "down") {
-					t.Logf("Command '%s' has ViewMask: %v", name, regCmd.ViewMask)
-				}
-			}
-		}
 
 		t.Logf("Before: selectedContainer=%d, numContainers=%d",
 			testModel.composeProcessListViewModel.selectedContainer,
