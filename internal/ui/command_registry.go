@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"log/slog"
 	"reflect"
 	"runtime"
 	"strings"
@@ -53,8 +52,6 @@ func (m *Model) registerCommands() {
 			funcPtr := reflect.ValueOf(handler.KeyHandler).Pointer()
 
 			cmdName := GetCommandNameFromFuncPtr(funcPtr)
-			slog.Info("Registering command",
-				slog.String("cmd", cmdName))
 			if cmdName != "" {
 				m.viewCommandRegistry[viewHandlers.viewMask][cmdName] = CommandHandler{
 					Handler:     handler.KeyHandler,

@@ -17,12 +17,7 @@ func (m *Model) initializeKeyHandlers() {
 	}
 	m.globalKeymap = m.createKeymap(m.globalHandlers)
 
-	// Docker Container List View
-	// `docker ps`
-	m.dockerContainerListViewHandlers = []KeyConfig{
-		{[]string{"up", "k"}, "move up", m.CmdUp},
-		{[]string{"down", "j"}, "move down", m.CmdDown},
-		{[]string{"enter"}, "view logs", m.CmdLog},
+	containerOperations := []KeyConfig{
 		{[]string{"d"}, "entering DinD", m.CmdDind},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
@@ -35,35 +30,31 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
 		{[]string{"D"}, "delete", m.CmdDelete},
+	}
+
+	// Docker Container List View
+	// `docker ps`
+	m.dockerContainerListViewHandlers = append([]KeyConfig{
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
+		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
-	}
+	}, containerOperations...)
 	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
 
 	// Compose Process List View
-	m.composeProcessListViewHandlers = []KeyConfig{
+	m.composeProcessListViewHandlers = append([]KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
-		{[]string{"d"}, "entering DinD", m.CmdDind},
-		{[]string{"f"}, "browse files", m.CmdFileBrowse},
-		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
-		{[]string{"i"}, "inspect", m.CmdInspect},
-		{[]string{"r"}, "refresh", m.CmdRefresh},
-		{[]string{"a"}, "toggle all", m.CmdToggleAll},
+		{[]string{"esc"}, "back", m.CmdBack},
+		{[]string{"?"}, "help", m.CmdHelp},
+
+		// TODO: move to containerOperations
 		{[]string{"s"}, "stats", m.CmdStats},
 		{[]string{"t"}, "top", m.CmdTop},
-		{[]string{"K"}, "kill", m.CmdKill},
-		{[]string{"S"}, "stop", m.CmdStop},
-		{[]string{"U"}, "start", m.CmdStart},
-		{[]string{"R"}, "restart", m.CmdRestart},
-		{[]string{"P"}, "pause/unpause", m.CmdPause},
-		{[]string{"D"}, "delete", m.CmdDelete},
-		{[]string{"u"}, "up -d", m.CmdComposeUp},
-		{[]string{"x"}, "down", m.CmdComposeDown},
-		{[]string{"?"}, "help", m.CmdHelp},
-		{[]string{"esc"}, "back", m.CmdBack},
-	}
+	}, containerOperations...)
 	m.composeProcessListViewKeymap = m.createKeymap(m.composeProcessListViewHandlers)
 
 	// Log View
