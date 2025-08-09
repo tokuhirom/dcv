@@ -22,7 +22,7 @@ func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeP
 	model.projectName = project.Name
 	model.SwitchView(ComposeProcessListView)
 	model.loading = true
-	return loadProcesses(model.dockerClient, model.projectName, m.showAll)
+	return loadComposeProcesses(model.dockerClient, model.projectName, m.showAll)
 }
 
 func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
@@ -131,7 +131,7 @@ func (m *ComposeProcessListViewModel) HandleLog(model *Model) tea.Cmd {
 func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	m.showAll = !m.showAll
 	model.loading = true
-	return loadProcesses(model.dockerClient, model.projectName, m.showAll)
+	return loadComposeProcesses(model.dockerClient, model.projectName, m.showAll)
 }
 
 func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
@@ -200,4 +200,11 @@ func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
+}
+
+func (m *ComposeProcessListViewModel) Loaded(processes []models.ComposeContainer) {
+	m.composeContainers = processes
+	if len(m.composeContainers) > 0 && m.selectedContainer >= len(m.composeContainers) {
+		m.selectedContainer = 0
+	}
 }

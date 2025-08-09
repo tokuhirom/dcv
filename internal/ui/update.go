@@ -26,24 +26,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case processesLoadedMsg:
 		m.loading = false
-		// Example debug logging
-		slog.Debug("Loaded composeContainers", slog.Int("count", len(msg.processes)))
 		if msg.err != nil {
-			// Check if error is due to missing compose file
-			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
-				// Switch to project list view
-				m.SwitchView(ComposeProjectListView)
-				m.loading = true
-				return m, loadProjects(m.dockerClient)
-			}
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
-		m.composeProcessListViewModel.composeContainers = msg.processes
-		m.err = nil
-		if len(m.composeProcessListViewModel.composeContainers) > 0 && m.composeProcessListViewModel.selectedContainer >= len(m.composeProcessListViewModel.composeContainers) {
-			m.composeProcessListViewModel.selectedContainer = 0
-		}
+
+		m.composeProcessListViewModel.Loaded(msg.processes)
 		return m, nil
 
 	case dindContainersLoadedMsg:
@@ -51,9 +41,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.dindProcessListViewModel.Loaded(msg.containers)
-		m.err = nil
 		return m, nil
 
 	// Following 2 cases seems very similar, so we can combine them?
@@ -84,9 +76,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.topViewModel.Loaded(msg.output)
-		m.err = nil
 		return m, nil
 
 	case serviceActionCompleteMsg:
@@ -106,26 +100,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case VolumeListView:
 			return m, m.volumeListViewModel.HandleRefresh(m)
 		default:
-			return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
+			return m, loadComposeProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 		}
-
-	case upActionCompleteMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		}
-		// Reload process list after up/down action
-		return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 
 	case statsLoadedMsg:
 		m.loading = false
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.statsViewModel.Loaded(msg.stats)
-		m.err = nil
 		return m, nil
 
 	case projectsLoadedMsg:
@@ -144,9 +131,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.dockerContainerListViewModel.dockerContainers = msg.containers
-		m.err = nil
 		if len(m.dockerContainerListViewModel.dockerContainers) > 0 && m.dockerContainerListViewModel.selectedDockerContainer >= len(m.dockerContainerListViewModel.dockerContainers) {
 			m.dockerContainerListViewModel.selectedDockerContainer = 0
 		}
@@ -157,9 +146,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.imageListViewModel.Loaded(msg.images)
-		m.err = nil
 		return m, nil
 
 	case dockerNetworksLoadedMsg:
@@ -167,9 +158,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.networkListViewModel.Loaded(msg.networks)
-		m.err = nil
 		return m, nil
 
 	case dockerVolumesLoadedMsg:
@@ -177,9 +170,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.volumeListViewModel.Loaded(msg.volumes)
-		m.err = nil
 		return m, nil
 
 	case containerFilesLoadedMsg:
@@ -187,9 +182,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
-		m.err = nil
-		m.fileBrowserViewModel.SetFiles(msg.files)
+
+		m.fileBrowserViewModel.Loaded(msg.files)
 		return m, nil
 
 	case fileContentLoadedMsg:
@@ -197,12 +194,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
-		m.fileContentViewModel.content = msg.content
-		m.fileContentViewModel.contentPath = msg.path
-		m.fileContentViewModel.scrollY = 0
-		m.err = nil
-		m.SwitchView(FileContentView)
+
+		m.fileContentViewModel.Loaded(msg.content, msg.path)
 		return m, nil
 
 	case executeCommandMsg:
@@ -218,8 +214,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
-		m.err = nil
 
 		m.inspectViewModel.Set(msg.content)
 		m.SwitchView(InspectView)
@@ -243,7 +240,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch m.currentView {
 		case ComposeProcessListView:
-			return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+			return m, loadComposeProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 		case DindProcessListView:
 			return m, loadDindContainers(m.dockerClient, m.dindProcessListViewModel.currentDindContainerID)
 		case LogView:
@@ -422,14 +419,4 @@ func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.logViewModel.performFilter()
 	}
 	return m, nil
-}
-
-// containsAny checks if the string contains any of the substrings
-func containsAny(s string, substrs []string) bool {
-	for _, substr := range substrs {
-		if strings.Contains(s, substr) {
-			return true
-		}
-	}
-	return false
 }
