@@ -79,12 +79,11 @@ func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, 
 		return model, nil
 
 	default:
-		if msg.Type == tea.KeyRunes {
-			// Insert character at cursor position
+		switch {
+		case msg.Type == tea.KeyRunes:
 			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + msg.String() + m.commandBuffer[m.commandCursorPos:]
 			m.commandCursorPos += len(msg.String())
-		} else if msg.Type == tea.KeySpace {
-			// Handle space as a regular character
+		case msg.Type == tea.KeySpace:
 			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + " " + m.commandBuffer[m.commandCursorPos:]
 			m.commandCursorPos++
 		}
