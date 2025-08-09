@@ -101,7 +101,7 @@ func (m *Model) viewTitle() string {
 	case LogView:
 		return m.logViewModel.Title()
 	case DindProcessListView:
-		return fmt.Sprintf("Docker in Docker: %s", m.dindProcessListViewModel.currentDindHost)
+		return fmt.Sprintf("Docker in Docker: %s", m.dindProcessListViewModel.currentDindHostName)
 	case TopView:
 		return fmt.Sprintf("Process Info: %s", m.topViewModel.topService)
 	case StatsView:

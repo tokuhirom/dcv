@@ -147,11 +147,14 @@ func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
 }
 
 func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.dindProcessListViewModel.Load(model, container)
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for DIND process list",
+			slog.Any("error", fmt.Errorf("no container selected")))
+		return nil
 	}
-	return nil
+
+	return model.dindProcessListViewModel.Load(model, container)
 }
 
 func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, operation string, aggressive bool) tea.Cmd {
@@ -191,19 +194,18 @@ func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) GetContainer(model *Model) (docker.Container, error) {
+func (m *ComposeProcessListViewModel) GetContainer(model *Model) docker.Container {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return docker.NewContainer(model.dockerClient, container.ID, container.Name), nil
+		return docker.NewContainer(model.dockerClient, container.ID, container.Name)
 	}
-	return nil, fmt.Errorf("no container selected")
+	return nil
 }
 
 func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
-	container, err := m.GetContainer(model)
-	if err != nil {
-		slog.Error("Failed to get selected container for inspection",
-			slog.Any("error", err))
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for inspection")
 		return nil
 	}
 

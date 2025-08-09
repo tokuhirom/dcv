@@ -91,7 +91,7 @@ func TestHandleKeyPress(t *testing.T) {
 			wantView:    DindProcessListView,
 			wantLoading: true,
 			checkFunc: func(t *testing.T, m *Model) {
-				assert.Equal(t, "dind-1", m.dindProcessListViewModel.currentDindHost)
+				assert.Equal(t, "dind-1", m.dindProcessListViewModel.currentDindHostName)
 			},
 		},
 		{
@@ -277,7 +277,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	model := Model{
 		currentView: DindProcessListView,
 		dindProcessListViewModel: DindProcessListViewModel{
-			currentDindHost: "dind-1",
+			currentDindHostName: "dind-1",
 			dindContainers: []models.DockerContainer{
 				{ID: "abc123", Names: "test-1"},
 				{ID: "def456", Names: "test-2"},

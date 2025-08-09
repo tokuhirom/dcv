@@ -48,7 +48,7 @@ func (m *LogViewModel) StreamComposeLogs(model *Model, composeContainer models.C
 
 func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
 	m.SwitchToLogView(model, container.Names)
-	m.hostContainer = model.dindProcessListViewModel.currentDindHost
+	m.hostContainer = model.dindProcessListViewModel.currentDindHostName
 	m.isDindLog = true
 
 	cmd := model.dockerClient.Dind(dindHostContainerID).Execute(

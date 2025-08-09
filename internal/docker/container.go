@@ -4,8 +4,8 @@ import "fmt"
 
 type Container interface {
 	Inspect() ([]byte, error)
-	ContainerID() string
 	GetName() string
+	GetContainerID() string
 }
 
 type ContainerImpl struct {
@@ -34,6 +34,10 @@ func (c ContainerImpl) GetName() string {
 	return c.name
 }
 
+func (c ContainerImpl) GetContainerID() string {
+	return c.containerID
+}
+
 type DindContainerImpl struct {
 	client          *Client
 	hostContainerID string
@@ -45,7 +49,7 @@ func NewDindContainer(client *Client, hostContainerID, containerID string, name 
 	return DindContainerImpl{client: client, hostContainerID: hostContainerID, containerID: containerID, name: name}
 }
 
-func (c DindContainerImpl) ContainerID() string {
+func (c DindContainerImpl) GetContainerID() string {
 	return c.containerID
 }
 
