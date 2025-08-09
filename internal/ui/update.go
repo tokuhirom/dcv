@@ -275,6 +275,21 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleQuitConfirmation(msg)
 	}
 
+	// Handle command execution confirmation dialog
+	if m.currentView == CommandExecutionView && m.commandExecutionViewModel.pendingConfirmation {
+		switch msg.String() {
+		case "y", "Y":
+			cmd := m.commandExecutionViewModel.HandleConfirmation(m, true)
+			return m, cmd
+		case "n", "N", "esc":
+			cmd := m.commandExecutionViewModel.HandleConfirmation(m, false)
+			return m, cmd
+		default:
+			// Ignore other keys during confirmation
+			return m, nil
+		}
+	}
+
 	// Handle search mode
 	if m.currentView == LogView && m.logViewModel.searchMode {
 		return m.handleSearchMode(msg, &m.logViewModel.SearchViewModel)
