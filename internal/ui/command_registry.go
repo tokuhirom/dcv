@@ -116,37 +116,3 @@ func toKebabCase(s string) string {
 	}
 	return strings.ToLower(result.String())
 }
-
-// getAvailableCommands returns a list of commands available in the current view
-func (m *Model) getAvailableCommands() []string {
-	var commands []string
-	for cmdName, cmd := range m.commandRegistry {
-		if cmd.ViewMask == 0 || cmd.ViewMask == m.currentView {
-			commands = append(commands, cmdName)
-		}
-	}
-	return commands
-}
-
-// getCommandSuggestions returns command suggestions based on partial input
-func (m *Model) getCommandSuggestions(partial string) []string {
-	var suggestions []string
-	availableCommands := m.getAvailableCommands()
-
-	for _, cmdName := range availableCommands {
-		if strings.HasPrefix(cmdName, partial) {
-			suggestions = append(suggestions, cmdName)
-		}
-	}
-
-	// If no prefix matches, try substring matching
-	if len(suggestions) == 0 {
-		for _, cmdName := range availableCommands {
-			if strings.Contains(cmdName, partial) {
-				suggestions = append(suggestions, cmdName)
-			}
-		}
-	}
-
-	return suggestions
-}
