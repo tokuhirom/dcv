@@ -89,3 +89,129 @@ func ParseNetworkJSON(output []byte) ([]models.DockerNetwork, error) {
 	}
 	return networks, nil
 }
+
+// ParseComposePSJSON parses docker compose ps JSON output
+func ParseComposePSJSON(output []byte) ([]models.ComposeContainer, error) {
+	containers := make([]models.ComposeContainer, 0)
+
+	// Docker compose outputs each container as a separate JSON object on its own line
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	hasValidJSON := false
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var container models.ComposeContainer
+		if err := json.Unmarshal(line, &container); err != nil {
+			// If we have content that's not valid JSON, return error
+			if len(line) > 0 && !hasValidJSON {
+				return nil, fmt.Errorf("invalid JSON: %v", err)
+			}
+			continue
+		}
+		hasValidJSON = true
+
+		containers = append(containers, container)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return containers, nil
+}
+
+// ParseVolumeJSON parses docker volume ls JSON output
+func ParseVolumeJSON(output []byte) ([]models.DockerVolume, error) {
+	// Handle empty output
+	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
+		return []models.DockerVolume{}, nil
+	}
+
+	// Parse line-delimited JSON
+	volumes := make([]models.DockerVolume, 0)
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var volume models.DockerVolume
+		if err := json.Unmarshal(line, &volume); err != nil {
+			// Skip invalid lines
+			continue
+		}
+
+		volumes = append(volumes, volume)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error scanning volume output: %w", err)
+	}
+
+	return volumes, nil
+}
+
+// ParseComposeProjectsJSON parses docker compose ls JSON output
+func ParseComposeProjectsJSON(output []byte) ([]models.ComposeProject, error) {
+	// Handle empty output
+	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
+		return []models.ComposeProject{}, nil
+	}
+
+	// Parse JSON output - docker compose ls returns an array
+	var projects []models.ComposeProject
+	if err := json.Unmarshal(output, &projects); err != nil {
+		// Fallback to line-delimited JSON parsing for older versions
+		scanner := bufio.NewScanner(bytes.NewReader(output))
+		for scanner.Scan() {
+			line := scanner.Bytes()
+			if len(line) == 0 {
+				continue
+			}
+
+			var project models.ComposeProject
+			if err := json.Unmarshal(line, &project); err != nil {
+				return nil, fmt.Errorf("failed to parse project JSON: %w", err)
+			}
+			projects = append(projects, project)
+		}
+
+		if err := scanner.Err(); err != nil {
+			return nil, err
+		}
+	}
+
+	return projects, nil
+}
+
+// ParseImagesJSON parses docker images JSON output
+func ParseImagesJSON(output []byte) ([]models.DockerImage, error) {
+	// Docker images outputs each image as a separate JSON object on its own line
+	images := make([]models.DockerImage, 0)
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var image models.DockerImage
+		if err := json.Unmarshal(line, &image); err != nil {
+			// Skip invalid lines
+			continue
+		}
+
+		images = append(images, image)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return images, nil
+}
