@@ -135,9 +135,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.dockerContainerListViewModel.dockerContainers = msg.containers
-		m.err = nil
 		if len(m.dockerContainerListViewModel.dockerContainers) > 0 && m.dockerContainerListViewModel.selectedDockerContainer >= len(m.dockerContainerListViewModel.dockerContainers) {
 			m.dockerContainerListViewModel.selectedDockerContainer = 0
 		}
@@ -148,9 +150,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.imageListViewModel.Loaded(msg.images)
-		m.err = nil
 		return m, nil
 
 	case dockerNetworksLoadedMsg:
@@ -158,9 +162,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.networkListViewModel.Loaded(msg.networks)
-		m.err = nil
 		return m, nil
 
 	case dockerVolumesLoadedMsg:
@@ -168,9 +174,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.volumeListViewModel.Loaded(msg.volumes)
-		m.err = nil
 		return m, nil
 
 	case containerFilesLoadedMsg:
@@ -178,9 +186,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
-		m.err = nil
-		m.fileBrowserViewModel.SetFiles(msg.files)
+
+		m.fileBrowserViewModel.Loaded(msg.files)
 		return m, nil
 
 	case fileContentLoadedMsg:
@@ -188,11 +198,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.fileContentViewModel.content = msg.content
 		m.fileContentViewModel.contentPath = msg.path
 		m.fileContentViewModel.scrollY = 0
-		m.err = nil
 		m.SwitchView(FileContentView)
 		return m, nil
 
@@ -209,8 +221,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
-		m.err = nil
 
 		m.inspectViewModel.Set(msg.content)
 		m.SwitchView(InspectView)

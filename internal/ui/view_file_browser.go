@@ -140,7 +140,7 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *FileBrowserViewModel) SetFiles(files []models.ContainerFile) {
+func (m *FileBrowserViewModel) Loaded(files []models.ContainerFile) {
 	m.containerFiles = files
 	if len(m.containerFiles) > 0 && m.selectedFile >= len(m.containerFiles) {
 		m.selectedFile = 0
