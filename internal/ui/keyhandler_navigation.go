@@ -52,7 +52,7 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case NetworkListView:
 		return m, m.networkListViewModel.HandleDown()
 	case HelpView:
-		return m, m.helpViewModel.HandleDown()
+		return m, m.helpViewModel.HandleDown(m)
 	case DindProcessListView:
 		return m, m.dindProcessListViewModel.HandleDown()
 	case VolumeListView:

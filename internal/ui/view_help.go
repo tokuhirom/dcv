@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -14,29 +13,7 @@ type HelpViewModel struct {
 }
 
 func (m *HelpViewModel) render(model *Model, availableHeight int) string {
-	var s strings.Builder
-
-	// Get key configurations based on previous view
-	viewKeyHandlers := model.GetViewKeyHandlers(m.parentView)
-	viewName := m.parentView.String()
-
-	// Show view name
-	s.WriteString(headerStyle.Render(fmt.Sprintf("Keyboard shortcuts for: %s", viewName)) + "\n\n")
-
-	// Build table rows
-	var allRows [][]string
-
-	// Add view-specific configs
-	if len(viewKeyHandlers) > 0 {
-		allRows = append(allRows, keyHandlersToTableRows(model, viewKeyHandlers)...)
-	}
-
-	// Add global configs
-	if len(model.globalHandlers) > 0 {
-		allRows = append(allRows, []string{"", "", ""})
-
-		allRows = append(allRows, keyHandlersToTableRows(model, model.globalHandlers)...)
-	}
+	allRows := m.buildRows(model)
 
 	// Create columns
 	columns := []table.Column{
@@ -56,16 +33,27 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		}
 	}
 
-	// Create the table
-	tableHeight := availableHeight - 2
-	if tableHeight <= 0 {
-		tableHeight = 10
+	return RenderTable(columns, rows, availableHeight-2, m.scrollY)
+}
+
+func (m *HelpViewModel) buildRows(model *Model) [][]string {
+	// Build table rows
+	var allRows [][]string
+
+	// Add view-specific configs
+	viewKeyHandlers := model.GetViewKeyHandlers(m.parentView)
+	if len(viewKeyHandlers) > 0 {
+		allRows = append(allRows, keyHandlersToTableRows(model, viewKeyHandlers)...)
 	}
 
-	tableString := RenderTable(columns, rows, tableHeight, m.scrollY)
-	s.WriteString(tableString)
+	// Add global configs
+	if len(model.globalHandlers) > 0 {
+		allRows = append(allRows, []string{"", "", ""})
 
-	return s.String()
+		allRows = append(allRows, keyHandlersToTableRows(model, model.globalHandlers)...)
+	}
+
+	return allRows
 }
 
 func keyHandlersToTableRows(model *Model, keyHandlers []KeyConfig) [][]string {
@@ -105,8 +93,10 @@ func (m *HelpViewModel) HandleUp() tea.Cmd {
 	return nil
 }
 
-func (m *HelpViewModel) HandleDown() tea.Cmd {
-	m.scrollY++
+func (m *HelpViewModel) HandleDown(model *Model) tea.Cmd {
+	if m.scrollY < len(m.buildRows(model))-1 { // Assuming buildRows returns all rows
+		m.scrollY++
+	}
 	return nil
 }
 

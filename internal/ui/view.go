@@ -122,7 +122,7 @@ func (m *Model) viewTitle() string {
 	case InspectView:
 		return m.inspectViewModel.Title()
 	case HelpView:
-		return "Help"
+		return fmt.Sprintf("Help for %s", headerStyle.Render(m.helpViewModel.parentView.String()))
 	case CommandExecutionView:
 		return "Command Execution"
 	default:
