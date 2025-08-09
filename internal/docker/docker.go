@@ -171,3 +171,13 @@ func (c *Client) ExecuteInteractive(containerID string, command []string) error 
 	// Run the command
 	return cmd.Run()
 }
+
+// GetStats retrieves container statistics
+func (c *Client) GetStats() ([]models.ContainerStats, error) {
+	output, err := c.ExecuteCaptured("stats", "--no-stream", "--format", "json", "--all")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats: %w", err)
+	}
+
+	return ParseStatsJSON(output)
+}

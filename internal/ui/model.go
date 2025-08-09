@@ -1,31 +1,15 @@
 package ui
 
 import (
-	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"os/exec"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
-
-// ContainerStats holds resource usage statistics for a container
-type ContainerStats struct {
-	Container string `json:"Container"`
-	Name      string `json:"Name"`
-	Service   string `json:"Service"`
-	CPUPerc   string `json:"CPUPerc"`
-	MemUsage  string `json:"MemUsage"`
-	MemPerc   string `json:"MemPerc"`
-	NetIO     string `json:"NetIO"`
-	BlockIO   string `json:"BlockIO"`
-	PIDs      string `json:"PIDs"`
-}
 
 // ViewType represents the current view
 type ViewType int
@@ -352,7 +336,7 @@ type upActionCompleteMsg struct {
 }
 
 type statsLoadedMsg struct {
-	stats []ContainerStats
+	stats []models.ContainerStats
 	err   error
 }
 
@@ -442,36 +426,10 @@ func loadTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
 
 func loadStats(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
-		// TODO: support periodic update
-		output, err := client.ExecuteCaptured("stats", "--no-stream", "--format", "json", "--all")
-		if err != nil {
-			return statsLoadedMsg{
-				stats: nil,
-				err:   err,
-			}
-		}
-
-		// Parse JSON lines format
-		var stats []ContainerStats
-		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-		for _, line := range lines {
-			if line == "" {
-				continue
-			}
-
-			var stat ContainerStats
-			if err := json.Unmarshal([]byte(line), &stat); err != nil {
-				return statsLoadedMsg{
-					stats: nil,
-					err:   fmt.Errorf("failed to parse stats JSON: %w", err),
-				}
-			}
-			stats = append(stats, stat)
-		}
-
+		stats, err := client.GetStats()
 		return statsLoadedMsg{
 			stats: stats,
-			err:   nil,
+			err:   err,
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -34,6 +35,32 @@ func ParsePSJSON(output []byte) ([]models.DockerContainer, error) {
 	}
 
 	return containers, nil
+}
+
+// ParseStatsJSON parses docker stats JSON output
+func ParseStatsJSON(output []byte) ([]models.ContainerStats, error) {
+	var stats []models.ContainerStats
+
+	// Docker stats outputs each stat as a separate JSON object on its own line
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var stat models.ContainerStats
+		if err := json.Unmarshal(line, &stat); err != nil {
+			return nil, fmt.Errorf("failed to parse stats JSON: %w", err)
+		}
+		stats = append(stats, stat)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return stats, nil
 }
 
 func ParseNetworkJSON(output []byte) ([]models.DockerNetwork, error) {

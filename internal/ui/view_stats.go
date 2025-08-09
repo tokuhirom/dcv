@@ -7,11 +7,13 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
 // StatsViewModel manages the state and rendering of the stats view
 type StatsViewModel struct {
-	stats []ContainerStats
+	stats []models.ContainerStats
 }
 
 // render renders the stats view
@@ -100,6 +102,6 @@ func (m *StatsViewModel) HandleBack(model *Model) tea.Cmd {
 }
 
 // Loaded updates the stats list after loading
-func (m *StatsViewModel) Loaded(stats []ContainerStats) {
+func (m *StatsViewModel) Loaded(stats []models.ContainerStats) {
 	m.stats = stats
 }
