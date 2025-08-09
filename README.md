@@ -442,26 +442,6 @@ make all
 make fmt
 ```
 
-### Starting sample environment
-
-The repository includes a Docker Compose sample environment:
-
-```bash
-# Start sample environment
-make up
-
-# Monitor with dcv
-./dcv
-
-# Stop sample environment
-make down
-```
-
-The sample environment includes:
-- `web`: Nginx server
-- `db`: PostgreSQL database
-- `redis`: Redis cache
-- `dind`: Docker-in-Docker (automatically starts test containers inside)
 
 ## License
 
