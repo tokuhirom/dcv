@@ -71,28 +71,16 @@ func (m *Model) registerCommands() {
 				// Remove the (*Model) part if present
 				methodName = strings.TrimPrefix(methodName, "(*Model)")
 				methodName = strings.TrimPrefix(methodName, ")")
+				methodName = strings.TrimPrefix(methodName, "Cmd")
 
-				// Get shorter, more intuitive command name if available
-				shortName := getShortCommandName(methodName)
-
-				if shortName != "" {
-					// If we have a short name, use it as the primary command
-					m.commandRegistry[shortName] = CommandHandler{
-						Handler:     handler.KeyHandler,
-						Description: handler.Description,
-						ViewMask:    viewHandlers.viewMask,
-					}
-					m.handlerToCommand[funcPtr] = shortName
-				} else {
-					// Otherwise, use kebab-case version
-					cmdName := toKebabCase(methodName)
-					m.commandRegistry[cmdName] = CommandHandler{
-						Handler:     handler.KeyHandler,
-						Description: handler.Description,
-						ViewMask:    viewHandlers.viewMask,
-					}
-					m.handlerToCommand[funcPtr] = cmdName
+				// Otherwise, use kebab-case version
+				cmdName := toKebabCase(methodName)
+				m.commandRegistry[cmdName] = CommandHandler{
+					Handler:     handler.KeyHandler,
+					Description: handler.Description,
+					ViewMask:    viewHandlers.viewMask,
 				}
+				m.handlerToCommand[funcPtr] = cmdName
 			}
 		}
 	}
@@ -130,53 +118,6 @@ func toKebabCase(s string) string {
 		result.WriteRune(r)
 	}
 	return strings.ToLower(result.String())
-}
-
-// getShortCommandName returns a shorter, more intuitive command name for common commands
-func getShortCommandName(methodName string) string {
-	// Map of method names to short command names
-	shortNames := map[string]string{
-		"CmdUp":                     "up",
-		"CmdDown":                   "down",
-		"CmdLog":                    "log",
-		"CmdBack":                   "back",
-		"CmdKill":                   "kill",
-		"CmdStop":                   "stop",
-		"CmdStart":                  "start",
-		"CmdRestart":                "restart",
-		"CmdDelete":                 "remove",
-		"CmdPause":                  "pause",
-		"CmdShell":                  "shell",
-		"CmdInspect":                "inspect",
-		"CmdFileBrowse":             "files",
-		"CmdToggleAll":              "all",
-		"CmdTop":                    "top",
-		"CmdCancel":                 "cancel",
-		"CmdStats":                  "stats",
-		"CmdImages":                 "images",
-		"CmdNetworkLs":              "networks",
-		"CmdVolumeLs":               "volumes",
-		"CmdComposeLS":              "projects",
-		"CmdPS":                     "ps",
-		"CmdHelp":                   "help",
-		"CmdRefresh":                "refresh",
-		"DeleteImage":               "rmi",
-		"DeleteNetwork":             "rmnet",
-		"DeleteVolume":              "rmvol",
-		"ToggleAllImages":           "all-images",
-		"ToggleAllDockerContainers": "all-containers",
-		"CmdComposeUp":              "deploy",
-		"CmdComposeDown":            "compose-down",
-	}
-
-	if short, exists := shortNames[methodName]; exists {
-		return short
-	}
-
-	// Don't create short names for Select* methods - they will use full names
-	// This avoids conflicts with CmdUp/CmdDown
-
-	return ""
 }
 
 // getAvailableCommands returns a list of commands available in the current view
