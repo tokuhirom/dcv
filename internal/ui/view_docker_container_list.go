@@ -120,14 +120,6 @@ func (m *DockerContainerListViewModel) HandleKill(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleStop(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "stop", container.ID) // stop is aggressive
-	}
-	return nil
-}
-
 func (m *DockerContainerListViewModel) HandleStart(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
