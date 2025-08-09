@@ -308,62 +308,6 @@ func (mr *MockDockerClientMockRecorder) ReadContainerFile(containerID, path any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadContainerFile", reflect.TypeOf((*MockDockerClient)(nil).ReadContainerFile), containerID, path)
 }
 
-// RemoveContainer mocks base method.
-func (m *MockDockerClient) RemoveContainer(containerID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveContainer", containerID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveContainer indicates an expected call of RemoveContainer.
-func (mr *MockDockerClientMockRecorder) RemoveContainer(containerID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveContainer", reflect.TypeOf((*MockDockerClient)(nil).RemoveContainer), containerID)
-}
-
-// RemoveImage mocks base method.
-func (m *MockDockerClient) RemoveImage(imageID string, force bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveImage", imageID, force)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveImage indicates an expected call of RemoveImage.
-func (mr *MockDockerClientMockRecorder) RemoveImage(imageID, force any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveImage", reflect.TypeOf((*MockDockerClient)(nil).RemoveImage), imageID, force)
-}
-
-// RemoveNetwork mocks base method.
-func (m *MockDockerClient) RemoveNetwork(networkID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveNetwork", networkID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveNetwork indicates an expected call of RemoveNetwork.
-func (mr *MockDockerClientMockRecorder) RemoveNetwork(networkID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveNetwork", reflect.TypeOf((*MockDockerClient)(nil).RemoveNetwork), networkID)
-}
-
-// RemoveVolume mocks base method.
-func (m *MockDockerClient) RemoveVolume(volumeName string, force bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveVolume", volumeName, force)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveVolume indicates an expected call of RemoveVolume.
-func (mr *MockDockerClientMockRecorder) RemoveVolume(volumeName, force any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveVolume", reflect.TypeOf((*MockDockerClient)(nil).RemoveVolume), volumeName, force)
-}
-
 // RestartContainer mocks base method.
 func (m *MockDockerClient) RestartContainer(containerID string) error {
 	m.ctrl.T.Helper()
@@ -471,20 +415,6 @@ func (m *MockComposeClientInterface) ListContainers(showAll bool) ([]models.Comp
 func (mr *MockComposeClientInterfaceMockRecorder) ListContainers(showAll any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContainers", reflect.TypeOf((*MockComposeClientInterface)(nil).ListContainers), showAll)
-}
-
-// RemoveService mocks base method.
-func (m *MockComposeClientInterface) RemoveService(serviceName string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveService", serviceName)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveService indicates an expected call of RemoveService.
-func (mr *MockComposeClientInterfaceMockRecorder) RemoveService(serviceName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveService", reflect.TypeOf((*MockComposeClientInterface)(nil).RemoveService), serviceName)
 }
 
 // RestartService mocks base method.

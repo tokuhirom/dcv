@@ -54,26 +54,6 @@ func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 	return volumes, nil
 }
 
-// RemoveVolume removes a Docker volume
-func (c *Client) RemoveVolume(volumeName string, force bool) error {
-	args := []string{"volume", "rm"}
-	if force {
-		args = append(args, "-f")
-	}
-	args = append(args, volumeName)
-
-	output, err := ExecuteCaptured(args...)
-	if err != nil {
-		return fmt.Errorf("failed to remove volume %s: %w\nOutput: %s", volumeName, err, string(output))
-	}
-
-	slog.Info("Removed volume",
-		slog.String("volumeName", volumeName),
-		slog.String("output", string(output)))
-
-	return nil
-}
-
 // InspectVolume inspects a Docker volume and returns the formatted JSON
 func (c *Client) InspectVolume(volumeName string) (string, error) {
 	output, err := ExecuteCaptured([]string{"volume", "inspect", volumeName}...)

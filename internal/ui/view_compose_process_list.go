@@ -163,10 +163,10 @@ func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, opera
 func (m *ComposeProcessListViewModel) HandleRemove(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		// Only allow removing stopped composeContainers
+		// Only allow removing stopped containers
 		if !strings.Contains(container.GetStatus(), "Up") && !strings.Contains(container.State, "running") {
-			model.loading = true
-			return removeService(model.dockerClient, container.ID)
+			// Use CommandExecutionView to show real-time output
+			return model.commandExecutionViewModel.ExecuteCommand(model, "rm", "-f", container.ID)
 		}
 	}
 	return nil

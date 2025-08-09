@@ -268,8 +268,7 @@ type topLoadedMsg struct {
 }
 
 type serviceActionCompleteMsg struct {
-	service string
-	err     error
+	err error
 }
 
 type upActionCompleteMsg struct {
@@ -361,17 +360,6 @@ func loadTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
 		return topLoadedMsg{
 			output: output,
 			err:    err,
-		}
-	}
-}
-
-func removeService(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		cmd := client.Execute("rm", "-f", containerID)
-		err := cmd.Wait()
-		return serviceActionCompleteMsg{
-			service: containerID,
-			err:     err,
 		}
 	}
 }
