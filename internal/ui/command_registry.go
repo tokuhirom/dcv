@@ -10,7 +10,8 @@ import (
 type CommandHandler struct {
 	Handler     KeyHandler
 	Description string
-	ViewMask    ViewType // Bitwise mask of views where this command is available (0 = all views)
+	// TODO: Following comment is completely wrong, ViewMask is not a bitwise mask.
+	ViewMask ViewType // Bitwise mask of views where this command is available (0 = all views)
 }
 
 // initCommandRegistry initializes the command registry with all available commands
