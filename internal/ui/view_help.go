@@ -17,56 +17,8 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	// Get key configurations based on previous view
-	var viewConfigs []KeyConfig
-	viewName := ""
-
-	switch m.parentView {
-	case ComposeProcessListView:
-		viewConfigs = model.composeProcessListViewHandlers
-		viewName = "Compose Process List"
-	case LogView:
-		viewConfigs = model.logViewHandlers
-		viewName = "Log View"
-	case DindProcessListView:
-		viewConfigs = model.dindListViewHandlers
-		viewName = "Docker in Docker"
-	case TopView:
-		viewConfigs = model.topViewHandlers
-		viewName = "Process Info"
-	case StatsView:
-		viewConfigs = model.statsViewHandlers
-		viewName = "Container Stats"
-	case ComposeProjectListView:
-		viewConfigs = model.composeProjectListViewHandlers
-		viewName = "Project List"
-	case DockerContainerListView:
-		viewConfigs = model.dockerContainerListViewHandlers
-		viewName = "Docker Containers"
-	case ImageListView:
-		viewConfigs = model.imageListViewHandlers
-		viewName = "Docker Images"
-	case NetworkListView:
-		viewConfigs = model.networkListViewHandlers
-		viewName = "Docker Networks"
-	case VolumeListView:
-		viewConfigs = model.volumeListViewHandlers
-		viewName = "Docker Volumes"
-	case FileBrowserView:
-		viewConfigs = model.fileBrowserHandlers
-		viewName = "File Browser"
-	case FileContentView:
-		viewConfigs = model.fileContentHandlers
-		viewName = "File Content"
-	case InspectView:
-		viewConfigs = model.inspectViewHandlers
-		viewName = "Inspect"
-	case HelpView:
-		viewConfigs = model.helpViewHandlers
-		viewName = "Help"
-	case CommandExecutionView:
-		viewConfigs = model.commandExecHandlers
-		viewName = "Command Execution"
-	}
+	viewConfigs := model.GetViewKeyHandlers(m.parentView)
+	viewName := m.parentView.String()
 
 	// Show view name
 	s.WriteString(headerStyle.Render(fmt.Sprintf("Keyboard shortcuts for: %s", viewName)) + "\n\n")
