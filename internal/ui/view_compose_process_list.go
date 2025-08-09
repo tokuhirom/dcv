@@ -201,3 +201,10 @@ func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
 }
+
+func (m *ComposeProcessListViewModel) Loaded(processes []models.ComposeContainer) {
+	m.composeContainers = processes
+	if len(m.composeContainers) > 0 && m.selectedContainer >= len(m.composeContainers) {
+		m.selectedContainer = 0
+	}
+}

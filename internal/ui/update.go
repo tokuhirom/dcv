@@ -33,10 +33,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = nil
 		}
 
-		m.composeProcessListViewModel.composeContainers = msg.processes
-		if len(m.composeProcessListViewModel.composeContainers) > 0 && m.composeProcessListViewModel.selectedContainer >= len(m.composeProcessListViewModel.composeContainers) {
-			m.composeProcessListViewModel.selectedContainer = 0
-		}
+		m.composeProcessListViewModel.Loaded(msg.processes)
 		return m, nil
 
 	case dindContainersLoadedMsg:
