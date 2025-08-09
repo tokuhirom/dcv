@@ -153,7 +153,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case DindProcessListView:
 		return m.dindProcessListViewModel.render(availableHeight)
 	case TopView:
-		return m.topViewModel.render(m, availableHeight)
+		return m.topViewModel.render(availableHeight)
 	case StatsView:
 		return m.statsViewModel.render(m, availableHeight)
 	case ComposeProjectListView:

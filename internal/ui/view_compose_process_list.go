@@ -150,11 +150,14 @@ func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 }
 
 func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.topViewModel.Load(model, m.projectName, container.Service)
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for top view",
+			slog.Any("error", fmt.Errorf("no container selected")))
+		return nil
 	}
-	return nil
+
+	return model.topViewModel.Load(model, container)
 }
 
 func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cmd {

@@ -9,6 +9,8 @@ type Container interface {
 
 	// Title returns a title for the container, used in UI
 	Title() string
+
+	Top() ([]byte, error)
 }
 
 type ContainerImpl struct {
@@ -46,6 +48,10 @@ func (c ContainerImpl) Title() string {
 	return c.title
 }
 
+func (c ContainerImpl) Top() ([]byte, error) {
+	return c.client.ExecuteCaptured("top", c.containerID)
+}
+
 type DindContainerImpl struct {
 	client            *Client
 	hostContainerName string
@@ -81,4 +87,8 @@ func (c DindContainerImpl) GetName() string {
 
 func (c DindContainerImpl) Title() string {
 	return fmt.Sprintf("DinD: %s (%s)", c.hostContainerID, c.name)
+}
+
+func (c DindContainerImpl) Top() ([]byte, error) {
+	return c.client.ExecuteCaptured("exec", c.hostContainerID, "docker", "top", c.containerID)
 }
