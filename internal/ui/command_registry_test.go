@@ -31,7 +31,7 @@ func TestToKebabCase(t *testing.T) {
 
 func TestCommandRegistry(t *testing.T) {
 	// Create a model and initialize it
-	model := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView)
 	model.initializeKeyHandlers()
 
 	// Test that command registry is populated
@@ -58,7 +58,7 @@ func TestCommandRegistry(t *testing.T) {
 
 func TestExecuteKeyHandlerCommand(t *testing.T) {
 	// Create a model and initialize it
-	model := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView)
 	model.initializeKeyHandlers()
 	model.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 		{Name: "container1"},
@@ -85,7 +85,7 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 	// Test executing alias
 	t.Run("down-alias", func(t *testing.T) {
 		// Create a fresh model for this test
-		testModel := NewModel(ComposeProcessListView, "")
+		testModel := NewModel(ComposeProcessListView)
 		testModel.initializeKeyHandlers()
 		testModel.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{Name: "container1"},

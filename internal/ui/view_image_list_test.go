@@ -326,7 +326,7 @@ func TestImageListViewModel_EmptySelection(t *testing.T) {
 }
 
 func TestImageListViewModel_KeyHandlers(t *testing.T) {
-	model := NewModel(ImageListView, "")
+	model := NewModel(ImageListView)
 	model.initializeKeyHandlers()
 
 	// Verify key handlers are registered

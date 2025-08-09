@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewModel(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	m := NewModel(ComposeProcessListView)
 
 	assert.Equal(t, ComposeProcessListView, m.currentView)
 	assert.NotNil(t, m.dockerClient)
@@ -20,7 +20,7 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestModelInit(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	m := NewModel(ComposeProcessListView)
 	cmd := m.Init()
 
 	// Init should return a batch command
@@ -28,7 +28,7 @@ func TestModelInit(t *testing.T) {
 }
 
 func TestProcessesLoadedMsg(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	m := NewModel(ComposeProcessListView)
 
 	// Test successful load
 	containers := []models.ComposeContainer{
@@ -64,7 +64,7 @@ func TestProcessesLoadedMsg(t *testing.T) {
 }
 
 func TestWindowSizeMsg(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	m := NewModel(ComposeProcessListView)
 
 	msg := tea.WindowSizeMsg{
 		Width:  80,
@@ -80,7 +80,7 @@ func TestWindowSizeMsg(t *testing.T) {
 }
 
 func TestKeyNavigation(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	m := NewModel(ComposeProcessListView)
 	m.Init() // Initialize key handlers
 	m.loading = false
 	m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
@@ -120,7 +120,7 @@ func TestKeyNavigation(t *testing.T) {
 }
 
 func TestViewSwitching(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	m := NewModel(ComposeProcessListView)
 	m.Init() // Initialize key handlers
 	m.loading = false
 	m.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
@@ -165,7 +165,7 @@ func TestViewSwitching(t *testing.T) {
 }
 
 func TestSearchMode(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	m := NewModel(ComposeProcessListView)
 	m.Init() // Initialize key handlers
 	m.currentView = LogView
 	m.logViewModel.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
@@ -196,7 +196,7 @@ func TestSearchMode(t *testing.T) {
 }
 
 func TestErrorHandling(t *testing.T) {
-	m := NewModel(ComposeProcessListView, "")
+	m := NewModel(ComposeProcessListView)
 
 	// Test error message
 	msg := errorMsg{err: assert.AnError}
@@ -236,7 +236,7 @@ func TestQuitBehavior(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewModel(ComposeProcessListView, "")
+			m := NewModel(ComposeProcessListView)
 			m.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
 			m.currentView = tt.currentView
 			m.loading = false

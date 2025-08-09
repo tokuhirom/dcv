@@ -254,7 +254,7 @@ func TestComposeProjectListViewModel_EmptySelection(t *testing.T) {
 }
 
 func TestComposeProjectListViewModel_KeyHandlers(t *testing.T) {
-	model := NewModel(ComposeProjectListView, "")
+	model := NewModel(ComposeProjectListView)
 	model.initializeKeyHandlers()
 
 	// Verify key handlers are registered

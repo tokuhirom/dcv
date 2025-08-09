@@ -150,7 +150,7 @@ type Model struct {
 }
 
 // NewModel creates a new model with initial state
-func NewModel(initialView ViewType, projectName string) *Model {
+func NewModel(initialView ViewType) *Model {
 	client := docker.NewClient()
 
 	slog.Info("Creating new model",
@@ -161,10 +161,6 @@ func NewModel(initialView ViewType, projectName string) *Model {
 		dockerClient: client,
 		loading:      true,
 	}
-
-	// Initialize project name in the appropriate view models
-	m.composeProcessListViewModel.projectName = projectName
-	m.composeProjectListViewModel.projectName = projectName
 
 	return m
 }
