@@ -202,7 +202,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.fileContentViewModel.contentPath = msg.path
 		m.fileContentViewModel.scrollY = 0
 		m.err = nil
-		m.currentView = FileContentView
+		m.SwitchView(FileContentView)
 		return m, nil
 
 	case executeCommandMsg:

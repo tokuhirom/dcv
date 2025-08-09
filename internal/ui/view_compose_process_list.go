@@ -20,7 +20,7 @@ type ComposeProcessListViewModel struct {
 
 func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeProject) tea.Cmd {
 	model.projectName = project.Name
-	model.currentView = ComposeProcessListView
+	model.SwitchView(ComposeProcessListView)
 	model.loading = true
 	return loadProcesses(model.dockerClient, model.projectName, m.showAll)
 }
