@@ -442,7 +442,7 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 	m := newModel.(*Model)
 
 	assert.Equal(t, "/app", m.fileBrowserViewModel.currentPath)
-	assert.Equal(t, 2, len(m.fileBrowserViewModel.pathHistory)) // Should have removed the last entry
+	assert.Equal(t, 4, len(m.fileBrowserViewModel.pathHistory)) // Should have added parent to history
 	assert.True(t, m.loading)
 	assert.Equal(t, 0, m.fileBrowserViewModel.selectedFile) // Should reset selection
 	assert.NotNil(t, cmd)                                   // Should trigger loading parent directory files

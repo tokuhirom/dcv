@@ -21,6 +21,25 @@ type FileBrowserViewModel struct {
 	pathHistory           []string
 }
 
+// pushHistory adds a new path to the history
+func (m *FileBrowserViewModel) pushHistory(path string) {
+	m.pathHistory = append(m.pathHistory, path)
+	m.currentPath = path
+}
+
+// popHistory removes the last path from history and returns to the previous one
+// Returns false if there's no more history to pop
+func (m *FileBrowserViewModel) popHistory() bool {
+	if len(m.pathHistory) <= 1 {
+		return false
+	}
+	// Remove current path from history
+	m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
+	// Set current path to the new last item
+	m.currentPath = m.pathHistory[len(m.pathHistory)-1]
+	return true
+}
+
 // render renders the file browser view
 func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string {
 	if len(m.containerFiles) == 0 {
@@ -62,14 +81,19 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 func (m *FileBrowserViewModel) Load(model *Model, containerID, containerName string) tea.Cmd {
 	m.browsingContainerID = containerID
 	m.browsingContainerName = containerName
-	m.currentPath = "/"
-	m.pathHistory = []string{"/"}
+	m.pathHistory = []string{}
+	m.pushHistory("/")
 	model.SwitchView(FileBrowserView)
-	model.loading = true
 	return m.DoLoad(model)
 }
 
 func (m *FileBrowserViewModel) HandleBack(model *Model) tea.Cmd {
+	// Try to go back in path history
+	if m.popHistory() {
+		m.selectedFile = 0
+		return m.DoLoad(model)
+	}
+	// If no more history, go back to the previous view
 	model.SwitchToPreviousView()
 	return nil
 }
@@ -91,11 +115,8 @@ func (m *FileBrowserViewModel) HandleDown() tea.Cmd {
 func (m *FileBrowserViewModel) HandleGoToParentDirectory(model *Model) tea.Cmd {
 	// Go up one directory
 	if m.currentPath != "/" {
-		m.currentPath = filepath.Dir(m.currentPath)
-		if len(m.pathHistory) > 1 {
-			m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
-		}
-		model.loading = true
+		parentPath := filepath.Dir(m.currentPath)
+		m.pushHistory(parentPath)
 		m.selectedFile = 0
 		return m.DoLoad(model)
 	}
@@ -113,21 +134,19 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 		if file.Name == ".." {
 			// Go up one directory
 			if m.currentPath != "/" {
-				m.currentPath = filepath.Dir(m.currentPath)
-				if len(m.pathHistory) > 1 {
-					m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
-				}
+				parentPath := filepath.Dir(m.currentPath)
+				m.pushHistory(parentPath)
+				m.selectedFile = 0
+				return m.DoLoad(model)
 			}
-			m.selectedFile = 0
-			return m.DoLoad(model)
+			return nil
 		}
 
 		newPath := filepath.Join(m.currentPath, file.Name)
 
 		if file.IsDir {
 			// Navigate into directory
-			m.currentPath = newPath
-			m.pathHistory = append(m.pathHistory, newPath)
+			m.pushHistory(newPath)
 			m.selectedFile = 0
 			return m.DoLoad(model)
 		} else {
