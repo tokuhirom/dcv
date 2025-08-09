@@ -153,12 +153,9 @@ func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cm
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, operation string) tea.Cmd {
+func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, operation string, aggressive bool) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		// Determine if operation is aggressive
-		aggressive := operation == "stop" || operation == "start" || operation == "restart" ||
-			operation == "kill" || operation == "pause" || operation == "unpause"
 		return model.commandExecutionViewModel.ExecuteCommand(model, aggressive, operation, container.ID)
 	}
 	return nil
