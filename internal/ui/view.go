@@ -90,8 +90,8 @@ func (m *Model) View() string {
 func (m *Model) viewTitle() string {
 	switch m.currentView {
 	case ComposeProcessListView:
-		if m.projectName != "" {
-			return fmt.Sprintf("Docker Compose: %s", m.projectName)
+		if m.composeProcessListViewModel.projectName != "" {
+			return fmt.Sprintf("Docker Compose: %s", m.composeProcessListViewModel.projectName)
 		}
 		return "Docker Compose"
 	case LogView:

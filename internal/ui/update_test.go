@@ -311,7 +311,7 @@ func TestHandleDindListKeys(t *testing.T) {
 }
 
 func TestUpdateMessages(t *testing.T) {
-	model := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView)
 
 	// Test window size message
 	newModel, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})

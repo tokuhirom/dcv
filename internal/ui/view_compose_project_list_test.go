@@ -173,8 +173,8 @@ func TestComposeProjectListViewModel_Operations(t *testing.T) {
 	t.Run("HandleSelectProject does nothing when no projects", func(t *testing.T) {
 		model := &Model{
 			currentView: ComposeProjectListView,
-			projectName: "old-project",
 		}
+		model.composeProcessListViewModel.projectName = "old-project"
 		vm := &ComposeProjectListViewModel{
 			projects:        []models.ComposeProject{},
 			selectedProject: 0,
@@ -183,7 +183,7 @@ func TestComposeProjectListViewModel_Operations(t *testing.T) {
 		cmd := vm.HandleSelectProject(model)
 
 		assert.Equal(t, ComposeProjectListView, model.currentView)
-		assert.Equal(t, "old-project", model.projectName, "Should not change project name")
+		assert.Equal(t, "old-project", model.composeProcessListViewModel.projectName, "Should not change project name")
 		assert.Nil(t, cmd)
 	})
 
@@ -254,7 +254,7 @@ func TestComposeProjectListViewModel_EmptySelection(t *testing.T) {
 }
 
 func TestComposeProjectListViewModel_KeyHandlers(t *testing.T) {
-	model := NewModel(ComposeProjectListView, "")
+	model := NewModel(ComposeProjectListView)
 	model.initializeKeyHandlers()
 
 	// Verify key handlers are registered

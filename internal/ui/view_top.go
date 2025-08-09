@@ -8,8 +8,9 @@ import (
 
 // TopViewModel manages the state and rendering of the process info view
 type TopViewModel struct {
-	topOutput  string
-	topService string
+	topOutput   string
+	topService  string
+	projectName string
 }
 
 // render renders the top view
@@ -37,6 +38,7 @@ func (m *TopViewModel) render(model *Model, availableHeight int) string {
 // Load switches to the top view and loads process info
 func (m *TopViewModel) Load(model *Model, projectName string, service string) tea.Cmd {
 	m.topService = service
+	m.projectName = projectName
 	model.SwitchView(TopView)
 	model.loading = true
 	return loadComposeTop(model.dockerClient, projectName, service)
@@ -45,7 +47,7 @@ func (m *TopViewModel) Load(model *Model, projectName string, service string) te
 // HandleRefresh reloads the process info
 func (m *TopViewModel) HandleRefresh(model *Model) tea.Cmd {
 	model.loading = true
-	return loadComposeTop(model.dockerClient, model.projectName, m.topService)
+	return loadComposeTop(model.dockerClient, m.projectName, m.topService)
 }
 
 // HandleBack returns to the compose process list view

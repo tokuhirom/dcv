@@ -50,10 +50,10 @@ func main() {
 	slog.Info("Starting dcv", slog.String("initial_view", cfg.General.InitialView))
 
 	// Create the initial model with configured view
-	m := ui.NewModel(initialView, "")
+	m := ui.NewModel(initialView)
 
 	// Create the program
-	p := tea.NewProgram(&m, tea.WithAltScreen())
+	p := tea.NewProgram(m, tea.WithAltScreen())
 
 	// Run the program
 	if _, err := p.Run(); err != nil {

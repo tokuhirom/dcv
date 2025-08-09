@@ -31,7 +31,7 @@ func TestToKebabCase(t *testing.T) {
 
 func TestCommandRegistry(t *testing.T) {
 	// Create a model and initialize it
-	model := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView)
 	model.initializeKeyHandlers()
 
 	// Test that command registry is populated
@@ -58,7 +58,7 @@ func TestCommandRegistry(t *testing.T) {
 
 func TestExecuteKeyHandlerCommand(t *testing.T) {
 	// Create a model and initialize it
-	model := NewModel(ComposeProcessListView, "")
+	model := NewModel(ComposeProcessListView)
 	model.initializeKeyHandlers()
 	model.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 		{Name: "container1"},
@@ -69,14 +69,14 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 
 	// Test executing a navigation command
 	t.Run("down", func(t *testing.T) {
-		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(&model, "down")
+		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(model, "down")
 		m := newModel.(*Model)
 		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
 	})
 
 	// Test executing an unknown command
 	t.Run("unknown-command", func(t *testing.T) {
-		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(&model, "unknown-command")
+		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(model, "unknown-command")
 		m := newModel.(*Model)
 		assert.NotNil(t, m.err)
 		assert.Contains(t, m.err.Error(), "unknown command")
@@ -85,7 +85,7 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 	// Test executing alias
 	t.Run("down-alias", func(t *testing.T) {
 		// Create a fresh model for this test
-		testModel := NewModel(ComposeProcessListView, "")
+		testModel := NewModel(ComposeProcessListView)
 		testModel.initializeKeyHandlers()
 		testModel.composeProcessListViewModel.composeContainers = []models.ComposeContainer{
 			{Name: "container1"},
@@ -98,7 +98,7 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 			testModel.composeProcessListViewModel.selectedContainer,
 			len(testModel.composeProcessListViewModel.composeContainers))
 
-		newModel, cmd := testModel.commandViewModel.executeKeyHandlerCommand(&testModel, "down")
+		newModel, cmd := testModel.commandViewModel.executeKeyHandlerCommand(testModel, "down")
 		m := newModel.(*Model)
 
 		t.Logf("After: selectedContainer=%d, cmd=%v",

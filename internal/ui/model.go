@@ -104,9 +104,6 @@ type Model struct {
 	// Loading state
 	loading bool
 
-	// Command line options
-	projectName string // TODO: Make this a part of the model?
-
 	globalKeymap   map[string]KeyHandler
 	globalHandlers []KeyConfig
 
@@ -153,18 +150,19 @@ type Model struct {
 }
 
 // NewModel creates a new model with initial state
-func NewModel(initialView ViewType, projectName string) Model {
+func NewModel(initialView ViewType) *Model {
 	client := docker.NewClient()
 
 	slog.Info("Creating new model",
 		slog.String("initial_view", initialView.String()))
 
-	return Model{
+	m := &Model{
 		currentView:  initialView,
 		dockerClient: client,
 		loading:      true,
-		projectName:  projectName,
 	}
+
+	return m
 }
 
 // Init returns an initial command for the application
@@ -186,7 +184,7 @@ func (m *Model) Init() tea.Cmd {
 		// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
 		// we'll switch to the project list view in the update
 		return tea.Batch(
-			loadComposeProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll),
+			loadComposeProcesses(m.dockerClient, m.composeProcessListViewModel.projectName, m.dockerContainerListViewModel.showAll),
 			tea.WindowSize(),
 		)
 	}

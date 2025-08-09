@@ -15,14 +15,15 @@ type ComposeProcessListViewModel struct {
 	// Process list state
 	composeContainers []models.ComposeContainer
 	selectedContainer int
-	showAll           bool // Toggle to show all composeContainers including stopped ones
+	showAll           bool   // Toggle to show all composeContainers including stopped ones
+	projectName       string // Current Docker Compose project name
 }
 
 func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeProject) tea.Cmd {
-	model.projectName = project.Name
+	m.projectName = project.Name
 	model.SwitchView(ComposeProcessListView)
 	model.loading = true
-	return loadComposeProcesses(model.dockerClient, model.projectName, m.showAll)
+	return loadComposeProcesses(model.dockerClient, m.projectName, m.showAll)
 }
 
 func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
@@ -131,13 +132,13 @@ func (m *ComposeProcessListViewModel) HandleLog(model *Model) tea.Cmd {
 func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	m.showAll = !m.showAll
 	model.loading = true
-	return loadComposeProcesses(model.dockerClient, model.projectName, m.showAll)
+	return loadComposeProcesses(model.dockerClient, m.projectName, m.showAll)
 }
 
 func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return model.topViewModel.Load(model, model.projectName, container.Service)
+		return model.topViewModel.Load(model, m.projectName, container.Service)
 	}
 	return nil
 }

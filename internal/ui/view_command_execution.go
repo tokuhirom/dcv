@@ -182,13 +182,13 @@ func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, args ...string)
 	}
 }
 
-func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, operation string) tea.Cmd {
+func (m *CommandExecutionViewModel) ExecuteComposeCommand(model *Model, projectName string, operation string) tea.Cmd {
 	switch operation {
 	case "up":
-		args := []string{"compose", "-p", model.projectName, "up", "-d"}
+		args := []string{"compose", "-p", projectName, "up", "-d"}
 		return m.ExecuteCommand(model, args...)
 	case "down":
-		args := []string{"compose", "-p", model.projectName, "down"}
+		args := []string{"compose", "-p", projectName, "down"}
 		return m.ExecuteCommand(model, args...)
 	default:
 		return nil
