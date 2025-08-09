@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -141,6 +143,30 @@ func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 	if len(m.dindContainers) > 0 && m.selectedDindContainer >= len(m.dindContainers) {
 		m.selectedDindContainer = 0
 	}
+}
+
+func (m *DindProcessListViewModel) GetContainer(model *Model) docker.Container {
+	if m.selectedDindContainer < len(m.dindContainers) {
+		container := m.dindContainers[m.selectedDindContainer]
+		return docker.NewDindContainer(model.dockerClient, m.currentDindHost, container.ID, container.Names)
+	}
+	return nil
+}
+
+func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for inspection",
+			slog.Any("error", fmt.Errorf("no container selected")))
+		return nil
+	}
+
+	return model.inspectViewModel.Inspect(model,
+		fmt.Sprintf("DinD: %s (%s)", m.currentDindHost, container.GetName()),
+		func() ([]byte, error) {
+			return container.Inspect()
+		},
+	)
 }
 
 func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {

@@ -117,6 +117,8 @@ func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleInspect(m)
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleInspect(m)
 	case DockerContainerListView:

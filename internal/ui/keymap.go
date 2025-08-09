@@ -84,6 +84,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
+
+		{[]string{"i"}, "inspect", m.CmdInspect},
 	}
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 
