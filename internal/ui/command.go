@@ -151,11 +151,6 @@ func (m *CommandViewModel) executeKeyHandlerCommand(model *Model, cmdName string
 
 	// Check if command is available in current view
 	if cmd.ViewMask != 0 && cmd.ViewMask != model.currentView {
-		// Try to find a similar command for the current view
-		currentViewCmd := model.findCommandForCurrentView(cmdName)
-		if currentViewCmd != nil {
-			return currentViewCmd.Handler(tea.KeyMsg{})
-		}
 		model.err = fmt.Errorf("command '%s' is not available in current view", cmdName)
 		return model, nil
 	}

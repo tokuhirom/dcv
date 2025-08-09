@@ -184,14 +184,6 @@ func getShortCommandName(methodName string) string {
 	return ""
 }
 
-// findCommandForCurrentView tries to find a similar command for the current view
-func (m *Model) findCommandForCurrentView(baseCmdName string) *CommandHandler {
-	// This function is no longer needed as we don't have view-specific
-	// command variants anymore. All commands are either global or
-	// properly scoped to their views.
-	return nil
-}
-
 // getAvailableCommands returns a list of commands available in the current view
 func (m *Model) getAvailableCommands() []string {
 	var commands []string
