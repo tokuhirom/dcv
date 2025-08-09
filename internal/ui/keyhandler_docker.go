@@ -29,25 +29,17 @@ func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "start", true) // start is aggressive
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleStart(m)
-	default:
-		return m, nil
-	}
+	return m, m.useContainerAware(func(container docker.Container) tea.Cmd {
+		args := container.OperationArgs("start")
+		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // start is aggressive
+	})
 }
 
 func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "restart", true) // restart is aggressive
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleRestart(m)
-	default:
-		return m, nil
-	}
+	return m, m.useContainerAware(func(container docker.Container) tea.Cmd {
+		args := container.OperationArgs("restart")
+		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // start is aggressive
+	})
 }
 
 func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

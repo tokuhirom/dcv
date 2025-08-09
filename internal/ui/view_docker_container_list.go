@@ -22,6 +22,7 @@ type DockerContainerListViewModel struct {
 type ColumnMap struct {
 	containerID table.Column
 	image       table.Column
+	state       table.Column
 	status      table.Column
 	ports       table.Column
 	names       table.Column
@@ -31,11 +32,13 @@ func NewColumnMap(model *Model) ColumnMap {
 	sideMargin := 2 * 2    // 2 for left and right padding
 	cellMargin := 2        // 2 for cell margin
 	containerIDWidth := 12 // Fixed width for container ID
-	widthPerColumn := (model.width - containerIDWidth - cellMargin*4 - sideMargin) / 4
+	stateWidth := 10
+	widthPerColumn := (model.width - containerIDWidth - stateWidth - cellMargin*4 - sideMargin) / 4
 
 	return ColumnMap{
 		containerID: table.Column{Title: "CONTAINER ID", Width: containerIDWidth},
 		image:       table.Column{Title: "IMAGE", Width: widthPerColumn},
+		state:       table.Column{Title: "STATE", Width: stateWidth}, // Fixed width for state
 		status:      table.Column{Title: "STATUS", Width: widthPerColumn},
 		ports:       table.Column{Title: "PORTS", Width: widthPerColumn},
 		names:       table.Column{Title: "NAMES", Width: widthPerColumn},
@@ -46,6 +49,7 @@ func (c *ColumnMap) ToArray() []table.Column {
 	return []table.Column{
 		c.containerID,
 		c.image,
+		c.state,
 		c.status,
 		c.ports,
 		c.names,
@@ -73,6 +77,8 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		// Truncate image name
 		image := container.Image
 
+		state := container.State
+
 		// Status with color
 		status := container.Status
 
@@ -84,7 +90,7 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 			name = dindStyle.Render("⬢ ") + name
 		}
 
-		rows = append(rows, table.Row{id, image, status, ports, name})
+		rows = append(rows, table.Row{id, image, state, status, ports, name})
 	}
 
 	return RenderTable(columns.ToArray(), rows, availableHeight, m.selectedDockerContainer)
@@ -116,22 +122,6 @@ func (m *DockerContainerListViewModel) HandleKill(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
 		return model.commandExecutionViewModel.ExecuteCommand(model, true, "kill", container.ID) // kill is aggressive
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleStart(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "start", container.ID) // start is aggressive
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleRestart(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "restart", container.ID) // restart is aggressive
 	}
 	return nil
 }
