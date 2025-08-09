@@ -13,16 +13,10 @@ type CommandHandler struct {
 	ViewMask    ViewType // Bitwise mask of views where this command is available (0 = all views)
 }
 
-// commandRegistry maps command names to their handlers
-var commandRegistry map[string]CommandHandler
-
-// handlerToCommand maps handler function pointers to command names
-var handlerToCommand map[uintptr]string
-
 // initCommandRegistry initializes the command registry with all available commands
 func (m *Model) initCommandRegistry() {
-	commandRegistry = make(map[string]CommandHandler)
-	handlerToCommand = make(map[uintptr]string)
+	m.commandRegistry = make(map[string]CommandHandler)
+	m.handlerToCommand = make(map[uintptr]string)
 
 	// Register all key handlers as commands
 	m.registerCommands()
@@ -82,21 +76,21 @@ func (m *Model) registerCommands() {
 
 				if shortName != "" {
 					// If we have a short name, use it as the primary command
-					commandRegistry[shortName] = CommandHandler{
+					m.commandRegistry[shortName] = CommandHandler{
 						Handler:     handler.KeyHandler,
 						Description: handler.Description,
 						ViewMask:    viewHandlers.viewMask,
 					}
-					handlerToCommand[funcPtr] = shortName
+					m.handlerToCommand[funcPtr] = shortName
 				} else {
 					// Otherwise, use kebab-case version
 					cmdName := toKebabCase(methodName)
-					commandRegistry[cmdName] = CommandHandler{
+					m.commandRegistry[cmdName] = CommandHandler{
 						Handler:     handler.KeyHandler,
 						Description: handler.Description,
 						ViewMask:    viewHandlers.viewMask,
 					}
-					handlerToCommand[funcPtr] = cmdName
+					m.handlerToCommand[funcPtr] = cmdName
 				}
 			}
 		}
@@ -119,8 +113,8 @@ func (m *Model) registerCommands() {
 
 	// Register aliases
 	for alias, target := range aliases {
-		if cmd, exists := commandRegistry[target]; exists {
-			commandRegistry[alias] = cmd
+		if cmd, exists := m.commandRegistry[target]; exists {
+			m.commandRegistry[alias] = cmd
 		}
 	}
 }
@@ -187,7 +181,7 @@ func getShortCommandName(methodName string) string {
 // getAvailableCommands returns a list of commands available in the current view
 func (m *Model) getAvailableCommands() []string {
 	var commands []string
-	for cmdName, cmd := range commandRegistry {
+	for cmdName, cmd := range m.commandRegistry {
 		if cmd.ViewMask == 0 || cmd.ViewMask == m.currentView {
 			commands = append(commands, cmdName)
 		}
@@ -219,13 +213,13 @@ func (m *Model) getCommandSuggestions(partial string) []string {
 }
 
 // getCommandForHandler returns the command name for a given key handler
-func getCommandForHandler(handler KeyHandler) string {
+func (m *Model) getCommandForHandler(handler KeyHandler) string {
 	if handler == nil {
 		return ""
 	}
 
 	funcPtr := reflect.ValueOf(handler).Pointer()
-	if cmdName, exists := handlerToCommand[funcPtr]; exists {
+	if cmdName, exists := m.handlerToCommand[funcPtr]; exists {
 		return cmdName
 	}
 
