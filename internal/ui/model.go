@@ -274,6 +274,44 @@ func (m *Model) GetViewKeyHandlers(view ViewType) []KeyConfig {
 	}
 }
 
+// GetViewKeymap returns the keymap for the specified view
+func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
+	switch view {
+	case ComposeProcessListView:
+		return m.composeProcessListViewKeymap
+	case LogView:
+		return m.logViewKeymap
+	case DindProcessListView:
+		return m.dindListViewKeymap
+	case TopView:
+		return m.topViewKeymap
+	case StatsView:
+		return m.statsViewKeymap
+	case ComposeProjectListView:
+		return m.composeProjectListViewKeymap
+	case DockerContainerListView:
+		return m.dockerListViewKeymap
+	case ImageListView:
+		return m.imageListViewKeymap
+	case NetworkListView:
+		return m.networkListViewKeymap
+	case VolumeListView:
+		return m.volumeListViewKeymap
+	case FileBrowserView:
+		return m.fileBrowserKeymap
+	case FileContentView:
+		return m.fileContentKeymap
+	case InspectView:
+		return m.inspectViewKeymap
+	case HelpView:
+		return m.helpViewKeymap
+	case CommandExecutionView:
+		return m.commandExecKeymap
+	default:
+		return nil
+	}
+}
+
 // Messages
 
 type processesLoadedMsg struct {
