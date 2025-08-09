@@ -234,13 +234,3 @@ func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.C
 
 	return model.dindProcessListViewModel.Load(model, container)
 }
-
-func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
-	return func() tea.Msg {
-		containers, err := client.ListContainers(showAll)
-		return dockerContainersLoadedMsg{
-			containers: containers,
-			err:        err,
-		}
-	}
-}
