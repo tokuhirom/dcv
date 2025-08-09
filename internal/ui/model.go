@@ -411,16 +411,6 @@ func loadProjects(client *docker.Client) tea.Cmd {
 	}
 }
 
-func loadContainerFiles(client *docker.Client, containerID, path string) tea.Cmd {
-	return func() tea.Msg {
-		files, err := client.ListContainerFiles(containerID, path)
-		return containerFilesLoadedMsg{
-			files: files,
-			err:   err,
-		}
-	}
-}
-
 func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
 	return func() tea.Msg {
 		return executeCommandMsg{

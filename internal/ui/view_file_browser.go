@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -66,7 +65,7 @@ func (m *FileBrowserViewModel) Load(model *Model, containerID, containerName str
 	m.pathHistory = []string{"/"}
 	model.SwitchView(FileBrowserView)
 	model.loading = true
-	return loadContainerFiles(model.dockerClient, containerID, "/")
+	return m.DoLoad(model)
 }
 
 func (m *FileBrowserViewModel) HandleBack(model *Model) tea.Cmd {
@@ -97,7 +96,7 @@ func (m *FileBrowserViewModel) HandleGoToParentDirectory(model *Model) tea.Cmd {
 		}
 		model.loading = true
 		m.selectedFile = 0
-		return loadContainerFiles(model.dockerClient, m.browsingContainerID, m.currentPath)
+		return m.DoLoad(model)
 	}
 	return nil
 }
@@ -118,9 +117,8 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 					m.pathHistory = m.pathHistory[:len(m.pathHistory)-1]
 				}
 			}
-			model.loading = true
 			m.selectedFile = 0
-			return loadContainerFiles(model.dockerClient, m.browsingContainerID, m.currentPath)
+			return m.DoLoad(model)
 		}
 
 		newPath := filepath.Join(m.currentPath, file.Name)
@@ -129,9 +127,8 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 			// Navigate into directory
 			m.currentPath = newPath
 			m.pathHistory = append(m.pathHistory, newPath)
-			model.loading = true
 			m.selectedFile = 0
-			return loadContainerFiles(model.dockerClient, m.browsingContainerID, newPath)
+			return m.DoLoad(model)
 		} else {
 			// View file content
 			return model.fileContentViewModel.Load(model, m.browsingContainerID, m.browsingContainerName, newPath)
@@ -148,7 +145,14 @@ func (m *FileBrowserViewModel) Loaded(files []models.ContainerFile) {
 }
 
 func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
-	return loadContainerFiles(model.dockerClient, m.browsingContainerID, m.currentPath)
+	model.loading = true
+	return func() tea.Msg {
+		files, err := model.dockerClient.ListContainerFiles(m.browsingContainerID, m.currentPath)
+		return containerFilesLoadedMsg{
+			files: files,
+			err:   err,
+		}
+	}
 }
 
 func (m *FileBrowserViewModel) Title() string {

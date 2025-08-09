@@ -87,6 +87,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"?"}, "help", m.CmdHelp},
 
 		{[]string{"i"}, "inspect", m.CmdInspect},
+		// TODO: support file browser
 	}
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 
