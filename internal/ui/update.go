@@ -26,21 +26,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case processesLoadedMsg:
 		m.loading = false
-		// Example debug logging
-		slog.Debug("Loaded composeContainers", slog.Int("count", len(msg.processes)))
 		if msg.err != nil {
-			// Check if error is due to missing compose file
-			if containsAny(msg.err.Error(), []string{"no configuration file provided", "not found", "no such file"}) {
-				// Switch to project list view
-				m.SwitchView(ComposeProjectListView)
-				m.loading = true
-				return m, loadProjects(m.dockerClient)
-			}
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.composeProcessListViewModel.composeContainers = msg.processes
-		m.err = nil
 		if len(m.composeProcessListViewModel.composeContainers) > 0 && m.composeProcessListViewModel.selectedContainer >= len(m.composeProcessListViewModel.composeContainers) {
 			m.composeProcessListViewModel.selectedContainer = 0
 		}
@@ -51,9 +44,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.dindProcessListViewModel.Loaded(msg.containers)
-		m.err = nil
 		return m, nil
 
 	// Following 2 cases seems very similar, so we can combine them?
