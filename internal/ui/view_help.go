@@ -13,7 +13,7 @@ type HelpViewModel struct {
 }
 
 func (m *HelpViewModel) render(model *Model, availableHeight int) string {
-	allRows := m.buildRows(model)
+	rows := m.buildRows(model)
 
 	// Create columns
 	columns := []table.Column{
@@ -22,23 +22,12 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		{Title: "Description", Width: 40},
 	}
 
-	// Convert visible table rows to table.Row format
-	rows := make([]table.Row, len(allRows))
-	for i, row := range allRows {
-		if len(row) >= 3 {
-			rows[i] = table.Row{row[0], row[1], row[2]}
-		} else {
-			// Handle empty separator rows
-			rows[i] = table.Row{"", "", ""}
-		}
-	}
-
 	return RenderTable(columns, rows, availableHeight-2, m.scrollY)
 }
 
-func (m *HelpViewModel) buildRows(model *Model) [][]string {
+func (m *HelpViewModel) buildRows(model *Model) []table.Row {
 	// Build table rows
-	var allRows [][]string
+	var allRows []table.Row
 
 	// Add view-specific configs
 	viewKeyHandlers := model.GetViewKeyHandlers(m.parentView)
@@ -56,8 +45,8 @@ func (m *HelpViewModel) buildRows(model *Model) [][]string {
 	return allRows
 }
 
-func keyHandlersToTableRows(model *Model, keyHandlers []KeyConfig) [][]string {
-	allRows := make([][]string, 0, len(keyHandlers))
+func keyHandlersToTableRows(model *Model, keyHandlers []KeyConfig) []table.Row {
+	allRows := make([]table.Row, 0, len(keyHandlers))
 
 	// Add section header as a special row
 	for _, config := range keyHandlers {
@@ -73,7 +62,7 @@ func keyHandlersToTableRows(model *Model, keyHandlers []KeyConfig) [][]string {
 				cmdName = ":" + cmdName
 			}
 
-			allRows = append(allRows, []string{key, cmdName, config.Description})
+			allRows = append(allRows, table.Row{key, cmdName, config.Description})
 		}
 	}
 	return allRows
