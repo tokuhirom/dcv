@@ -80,7 +80,9 @@ func (m *VolumeListViewModel) HandleInspect(model *Model) tea.Cmd {
 	volume := m.dockerVolumes[m.selectedDockerVolume]
 	model.loading = true
 	model.err = nil
-	return model.inspectViewModel.InspectVolume(model, volume)
+	return model.inspectViewModel.Inspect(model, "volume "+volume.Name, func() ([]byte, error) {
+		return model.dockerClient.ExecuteCaptured("volume", "inspect", volume.Name)
+	})
 }
 
 // HandleDelete removes the selected volume

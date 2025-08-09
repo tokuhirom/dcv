@@ -124,7 +124,9 @@ func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 	}
 
 	image := m.dockerImages[m.selectedDockerImage]
-	return model.inspectViewModel.InspectImage(model, image, fmt.Sprintf("Image: %s:%s %s", image.Repository, image.Tag, image.ID))
+	return model.inspectViewModel.Inspect(model, fmt.Sprintf("Image: %s:%s %s", image.Repository, image.Tag, image.ID), func() ([]byte, error) {
+		return model.dockerClient.ExecuteCaptured("image", "inspect", image.ID)
+	})
 }
 
 // HandleBack returns to the compose process list view

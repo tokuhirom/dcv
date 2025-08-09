@@ -7,8 +7,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type InspectViewModel struct {
@@ -269,18 +267,6 @@ func (m *InspectViewModel) Title() string {
 	return base
 }
 
-func (m *InspectViewModel) InspectImage(model *Model, image models.DockerImage, targetName string) tea.Cmd {
-	model.loading = true
-	return func() tea.Msg {
-		content, err := model.dockerClient.ExecuteCaptured("image", "inspect", image.ID)
-		return inspectLoadedMsg{
-			content:    string(content),
-			targetName: targetName,
-			err:        err,
-		}
-	}
-}
-
 type InspectProvider func() ([]byte, error)
 
 func (m *InspectViewModel) Inspect(model *Model, targetName string, inspectProvider InspectProvider) tea.Cmd {
@@ -291,18 +277,6 @@ func (m *InspectViewModel) Inspect(model *Model, targetName string, inspectProvi
 			content:    string(content),
 			err:        err,
 			targetName: targetName,
-		}
-	}
-}
-
-func (m *InspectViewModel) InspectVolume(model *Model, volume models.DockerVolume) tea.Cmd {
-	model.SwitchView(InspectView)
-	return func() tea.Msg {
-		content, err := model.dockerClient.ExecuteCaptured("volume", "inspect", volume.Name)
-		return inspectLoadedMsg{
-			content:    string(content),
-			err:        err,
-			targetName: "volume " + volume.Name,
 		}
 	}
 }
