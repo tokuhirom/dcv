@@ -10,7 +10,7 @@ func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, 
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(availableHeight-4),
+		table.WithHeight(availableHeight-3),
 	)
 
 	// Set styles
