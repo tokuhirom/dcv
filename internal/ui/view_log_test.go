@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tokuhirom/dcv/internal/docker"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -215,7 +216,7 @@ func TestLogView_Navigation(t *testing.T) {
 				isDindLog: true,
 			},
 			dindProcessListViewModel: DindProcessListViewModel{
-				currentDindContainerID: "dind-container",
+				hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-container-id", "host-container-id", "host-container-name"),
 			},
 		}
 
@@ -340,7 +341,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		model := &Model{
 			currentView: DindProcessListView,
 			dindProcessListViewModel: DindProcessListViewModel{
-				currentDindHostName: "host-container",
+				hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-container-id", "host-container-id", "host-container-name"),
 			},
 		}
 		container := models.DockerContainer{
@@ -352,7 +353,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "/docker-test", model.logViewModel.containerName)
-		assert.Equal(t, "host-container", model.logViewModel.hostContainer)
+		assert.Equal(t, "host-container", model.logViewModel.hostContainerName)
 		assert.True(t, model.logViewModel.isDindLog)
 		assert.Equal(t, 0, model.logViewModel.logScrollY)
 		assert.NotNil(t, cmd)
