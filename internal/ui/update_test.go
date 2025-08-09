@@ -279,7 +279,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	model := Model{
 		currentView: DindProcessListView,
 		dindProcessListViewModel: DindProcessListViewModel{
-			hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-1", "dind-1", "dind-1", "dockerd"),
+			hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-1", "dind-1", "dind-1", "dind-1"),
 			dindContainers: []models.DockerContainer{
 				{ID: "abc123", Names: "test-1"},
 				{ID: "def456", Names: "test-2"},

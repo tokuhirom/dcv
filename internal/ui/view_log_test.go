@@ -342,7 +342,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 		model := &Model{
 			currentView: DindProcessListView,
 			dindProcessListViewModel: DindProcessListViewModel{
-				hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-container-id", "host-container-id", "host-container-name"),
+				hostContainer: docker.NewDindContainer(docker.NewClient(), "host-container-id", "host-container-name", "dind-container-id", "dind-container-name"),
 			},
 		}
 		container := models.DockerContainer{
@@ -354,7 +354,7 @@ func TestLogViewModel_ShowMethods(t *testing.T) {
 
 		assert.Equal(t, LogView, model.currentView)
 		assert.Equal(t, "/docker-test", model.logViewModel.containerName)
-		assert.Equal(t, "host-container", model.logViewModel.hostContainerName)
+		assert.Equal(t, "dind-container-name", model.logViewModel.hostContainerName)
 		assert.True(t, model.logViewModel.isDindLog)
 		assert.Equal(t, 0, model.logViewModel.logScrollY)
 		assert.NotNil(t, cmd)
