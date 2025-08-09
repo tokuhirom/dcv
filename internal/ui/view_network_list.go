@@ -50,10 +50,18 @@ func (m *NetworkListViewModel) render(availableHeight int) string {
 }
 
 // Show switches to the network list view
-func (m *NetworkListViewModel) Show(model *Model) tea.Cmd {
-	model.SwitchView(NetworkListView)
+func (m *NetworkListViewModel) Show(model *Model, refresh bool) tea.Cmd {
+	if !refresh {
+		model.SwitchView(NetworkListView)
+	}
 	model.loading = true
-	return loadDockerNetworks(model.dockerClient)
+	return func() tea.Msg {
+		networks, err := model.dockerClient.ListNetworks()
+		return dockerNetworksLoadedMsg{
+			networks: networks,
+			err:      err,
+		}
+	}
 }
 
 // HandleUp moves the selection up
@@ -101,12 +109,6 @@ func (m *NetworkListViewModel) HandleInspect(model *Model) tea.Cmd {
 func (m *NetworkListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
-}
-
-// HandleRefresh reloads the network list
-func (m *NetworkListViewModel) HandleRefresh(model *Model) tea.Cmd {
-	model.loading = true
-	return loadDockerNetworks(model.dockerClient)
 }
 
 // Loaded updates the networks list after loading
