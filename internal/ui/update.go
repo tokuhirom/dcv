@@ -316,66 +316,24 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	// Handle view-specific keys
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m.handleComposeProcessListKeys(msg)
-	case LogView:
-		return m.handleLogViewKeys(msg)
-	case DindProcessListView:
-		return m.handleDindListKeys(msg)
-	case TopView:
-		return m.handleTopViewKeys(msg)
-	case StatsView:
-		return m.handleStatsViewKeys(msg)
-	case ComposeProjectListView:
-		return m.handleProjectListKeys(msg)
-	case DockerContainerListView:
-		return m.handleDockerListKeys(msg)
-	case ImageListView:
-		return m.handleImageListKeys(msg)
-	case NetworkListView:
-		return m.handleNetworkListKeys(msg)
-	case VolumeListView:
-		return m.handleVolumeListKeys(msg)
-	case FileBrowserView:
-		return m.handleFileBrowserKeys(msg)
-	case FileContentView:
-		return m.handleFileContentKeys(msg)
-	case InspectView:
-		return m.handleInspectKeys(msg)
-	case HelpView:
-		return m.handleHelpKeys(msg)
-	case CommandExecutionView:
-		return m.handleCommandExecutionKeys(msg)
-	default:
-		// TODO: support some key shortcuts like '1', '2', '3', '4', '5'.
-		return m, nil
-	}
+	return m.handleViewKeys(msg)
 }
 
-func (m *Model) handleComposeProcessListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.composeProcessListViewKeymap[msg.String()]
-	slog.Info(fmt.Sprintf("Key: %s", msg.String()),
-		slog.Bool("ok", ok),
-		slog.Any("handler", m.composeProcessListViewKeymap))
-	if ok {
-		return handler(msg)
+// handleViewKeys handles key presses for the current view using the generic keymap
+func (m *Model) handleViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Special case for ComposeProcessListView logging
+	if m.currentView == ComposeProcessListView {
+		slog.Info(fmt.Sprintf("Key: %s", msg.String()),
+			slog.Bool("ok", m.composeProcessListViewKeymap != nil),
+			slog.Any("handler", m.composeProcessListViewKeymap))
 	}
-	return m, nil
-}
 
-func (m *Model) handleLogViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.logViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleDindListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.dindListViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
+	keymap := m.GetViewKeymap(m.currentView)
+	if keymap != nil {
+		handler, ok := keymap[msg.String()]
+		if ok {
+			return handler(msg)
+		}
 	}
 	return m, nil
 }
@@ -451,78 +409,6 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) handleTopViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.topViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleStatsViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.statsViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleProjectListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.composeProjectListViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleDockerListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.dockerListViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleImageListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.imageListViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleNetworkListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.networkListViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleVolumeListKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.volumeListViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleFileBrowserKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.fileBrowserKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleFileContentKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.fileContentKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
 func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Check if ESC was pressed to clear filter
 	if msg.Type == tea.KeyEsc {
@@ -534,30 +420,6 @@ func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	perform := m.logViewModel.HandleKey(msg)
 	if perform {
 		m.logViewModel.performFilter()
-	}
-	return m, nil
-}
-
-func (m *Model) handleInspectKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.inspectViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleHelpKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.helpViewKeymap[msg.String()]
-	if ok {
-		return handler(msg)
-	}
-	return m, nil
-}
-
-func (m *Model) handleCommandExecutionKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	handler, ok := m.commandExecKeymap[msg.String()]
-	if ok {
-		return handler(msg)
 	}
 	return m, nil
 }

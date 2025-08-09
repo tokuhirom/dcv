@@ -289,12 +289,12 @@ func TestHandleDindListKeys(t *testing.T) {
 	model.initializeKeyHandlers()
 
 	// Test navigation
-	newModel, _ := model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyDown})
+	newModel, _ := model.handleViewKeys(tea.KeyMsg{Type: tea.KeyDown})
 	m := newModel.(*Model)
 	assert.Equal(t, 1, m.dindProcessListViewModel.selectedDindContainer)
 
 	// Test entering log view
-	newModel, cmd := m.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEnter})
+	newModel, cmd := m.handleViewKeys(tea.KeyMsg{Type: tea.KeyEnter})
 	m = newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView)
 	assert.Equal(t, "test-2", m.logViewModel.containerName)
@@ -305,7 +305,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	// Test escape - add viewHistory for proper navigation
 	model.currentView = DindProcessListView
 	model.viewHistory = []ViewType{ComposeProcessListView}
-	newModel, _ = model.handleDindListKeys(tea.KeyMsg{Type: tea.KeyEsc})
+	newModel, _ = model.handleViewKeys(tea.KeyMsg{Type: tea.KeyEsc})
 	m = newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView)
 }
