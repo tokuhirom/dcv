@@ -233,7 +233,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case ComposeProjectListView:
 			return m, loadProjects(m.dockerClient)
 		case DockerContainerListView:
-			return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
+			return m, m.dockerContainerListViewModel.DoLoad(m)
 		case ImageListView:
 			return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
 		case NetworkListView:

@@ -177,7 +177,9 @@ func (m *Model) Init() tea.Cmd {
 		)
 	case DockerContainerListView:
 		return tea.Batch(
-			loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll),
+			func() tea.Msg {
+				return RefreshMsg{}
+			},
 			tea.WindowSize(),
 		)
 	default:

@@ -196,8 +196,7 @@ func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
 
 func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {
 	model.SwitchView(DockerContainerListView)
-	model.loading = true
-	return loadDockerContainers(model.dockerClient, m.showAll)
+	return m.DoLoad(model)
 }
 
 func (m *DockerContainerListViewModel) HandleBack(model *Model) tea.Cmd {
@@ -207,8 +206,18 @@ func (m *DockerContainerListViewModel) HandleBack(model *Model) tea.Cmd {
 
 func (m *DockerContainerListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	m.showAll = !m.showAll
+	return m.DoLoad(model)
+}
+
+func (m *DockerContainerListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadDockerContainers(model.dockerClient, m.showAll)
+	return func() tea.Msg {
+		containers, err := model.dockerClient.ListContainers(m.showAll)
+		return dockerContainersLoadedMsg{
+			containers: containers,
+			err:        err,
+		}
+	}
 }
 
 func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
