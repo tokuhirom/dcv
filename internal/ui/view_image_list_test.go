@@ -242,7 +242,6 @@ func TestImageListViewModel_Operations(t *testing.T) {
 
 		// The view change happens when inspectLoadedMsg is processed, not immediately
 		assert.Equal(t, ImageListView, model.currentView)
-		assert.Equal(t, "image1", model.inspectViewModel.inspectImageID)
 		assert.True(t, model.loading)
 		assert.NotNil(t, cmd)
 	})

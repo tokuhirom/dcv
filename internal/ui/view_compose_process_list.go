@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/tokuhirom/dcv/internal/docker"
 
 	"github.com/tokuhirom/dcv/internal/models"
@@ -148,9 +149,7 @@ func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
 func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		if container.IsDind() {
-			return model.dindProcessListViewModel.Load(model, container)
-		}
+		return model.dindProcessListViewModel.Load(model, container)
 	}
 	return nil
 }

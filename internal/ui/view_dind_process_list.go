@@ -95,8 +95,19 @@ func (m *DindProcessListViewModel) Load(model *Model, container models.GenericCo
 	m.currentDindHost = container.GetName()
 	m.currentDindContainerID = container.GetID()
 	model.SwitchView(DindProcessListView)
+	return m.DoLoad(model)
+}
+
+// DoLoad reloads the dind container list
+func (m *DindProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadDindContainers(model.dockerClient, container.GetID())
+	return func() tea.Msg {
+		containers, err := model.dockerClient.Dind(m.currentDindContainerID).ListContainers()
+		return dindContainersLoadedMsg{
+			containers: containers,
+			err:        err,
+		}
+	}
 }
 
 // HandleUp moves selection up in the dind container list
@@ -131,12 +142,6 @@ func (m *DindProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	return nil
 }
 
-// HandleRefresh reloads the dind container list
-func (m *DindProcessListViewModel) HandleRefresh(model *Model) tea.Cmd {
-	model.loading = true
-	return loadDindContainers(model.dockerClient, m.currentDindContainerID)
-}
-
 // Loaded updates the dind container list after loading
 func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 	m.dindContainers = containers
@@ -167,14 +172,4 @@ func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 			return container.Inspect()
 		},
 	)
-}
-
-func loadDindContainers(client *docker.Client, containerID string) tea.Cmd {
-	return func() tea.Msg {
-		containers, err := client.Dind(containerID).ListContainers()
-		return dindContainersLoadedMsg{
-			containers: containers,
-			err:        err,
-		}
-	}
 }
