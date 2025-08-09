@@ -30,6 +30,7 @@ Displays `docker ps` results in a table format. Shows all Docker containers, not
 - `↑`/`k`: Move up
 - `↓`/`j`: Move down
 - `Enter`: View container logs
+- `d`: View dind container contents (only for dind containers)
 - `f`: Browse container files
 - `!`: Execute /bin/sh in container
 - `I`: Inspect container (view full config)

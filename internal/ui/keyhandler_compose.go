@@ -40,6 +40,8 @@ func (m *Model) CmdDind(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleDindProcessList(m)
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleDindProcessList(m)
 	default:
 		return m, nil
 	}

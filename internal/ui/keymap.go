@@ -19,6 +19,7 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Common container operations that work in both Docker and Compose views
 	containerOperations := []KeyConfig{
+		{[]string{"d"}, "entering DinD", m.CmdDind},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"i"}, "inspect", m.CmdInspect},
@@ -35,7 +36,6 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Compose-specific operations
 	composeSpecificOperations := []KeyConfig{
-		{[]string{"d"}, "entering DinD", m.CmdDind},
 		{[]string{"t"}, "top", m.CmdTop},
 	}
 
