@@ -109,6 +109,7 @@ Shows containers running inside a dind container.
 - `↑`/`k`: Move up
 - `↓`/`j`: Move down
 - `Enter`: View container logs
+- `d`: View dind container contents (for nested dind containers)
 - `r`: Refresh list
 - `?`: Show help view
 - `Esc`/`q`: Back to process list

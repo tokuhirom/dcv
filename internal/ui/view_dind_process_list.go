@@ -135,6 +135,20 @@ func (m *DindProcessListViewModel) HandleRefresh(model *Model) tea.Cmd {
 	return loadDindContainers(model.dockerClient, m.currentDindContainerID)
 }
 
+// HandleDindProcessList enters nested dind container if selected container is dind
+func (m *DindProcessListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
+	if m.selectedDindContainer < len(m.dindContainers) {
+		container := m.dindContainers[m.selectedDindContainer]
+		// Check if the selected container is also a dind container
+		if container.IsDind() {
+			// This would be a nested dind - we need to execute docker commands inside the already-nested container
+			// For now, return the Load command to enter the nested dind
+			return m.Load(model, container)
+		}
+	}
+	return nil
+}
+
 // Loaded updates the dind container list after loading
 func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 	m.dindContainers = containers

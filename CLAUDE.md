@@ -102,6 +102,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
    - `↑`/`k`: Move up
    - `↓`/`j`: Move down
    - `Enter`: View logs of containers running inside dind
+   - `d`: Navigate to dind process list (for nested dind containers)
    - `r`: Refresh list
    - `?`: Show help view
    - `Esc`/`q`: Back to process list
