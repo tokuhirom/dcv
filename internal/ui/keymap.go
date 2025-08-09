@@ -14,6 +14,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"3"}, "docker images", m.CmdImages},
 		{[]string{"4"}, "docker networks", m.CmdNetworkLs},
 		{[]string{"5"}, "docker volumes", m.CmdVolumeLs},
+		{[]string{"6"}, "stats", m.CmdStats},
 	}
 	m.globalKeymap = m.createKeymap(m.globalHandlers)
 
@@ -53,8 +54,8 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"?"}, "help", m.CmdHelp},
 
 		// TODO: move to containerOperations
-		{[]string{"s"}, "stats", m.CmdStats},
 		{[]string{"t"}, "top", m.CmdTop},
+		// TODO: support compose stats
 
 		{[]string{"d"}, "entering DinD", m.CmdDind},
 	}, containerOperations...)
