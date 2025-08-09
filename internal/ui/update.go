@@ -227,7 +227,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Logs are continuously streamed, no need to refresh
 			return m, nil
 		case TopView:
-			return m, m.topViewModel.HandleRefresh(m)
+			return m, m.topViewModel.DoLoad(m)
 		case StatsView:
 			return m, m.statsViewModel.DoLoad(m)
 		case ComposeProjectListView:

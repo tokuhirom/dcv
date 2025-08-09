@@ -401,29 +401,6 @@ type commandExecStartedMsg struct {
 
 // Commands
 
-func loadComposeProcesses(client *docker.Client, projectName string, showAll bool) tea.Cmd {
-	return func() tea.Msg {
-		slog.Info("Loading composeContainers",
-			slog.Bool("showAll", showAll))
-		processes, err := client.Compose(projectName).ListContainers(showAll)
-		return processesLoadedMsg{
-			processes: processes,
-			err:       err,
-		}
-	}
-}
-
-func loadComposeTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
-	// TODO: support normal containers
-	return func() tea.Msg {
-		output, err := client.Compose(projectName).Top(serviceName)
-		return topLoadedMsg{
-			output: output,
-			err:    err,
-		}
-	}
-}
-
 func loadProjects(client *docker.Client) tea.Cmd {
 	return func() tea.Msg {
 		projects, err := client.ListComposeProjects()
