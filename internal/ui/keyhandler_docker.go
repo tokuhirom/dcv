@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log/slog"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -135,14 +136,24 @@ func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleTop(m)
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleTop(m)
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleTop(m)
-	default:
+	// if GetContainerAware, we can show top for containers
+	// GetContainerAware is the interface that provides container-aware functionality
+	vm := m.GetCurrentViewModel()
+	if vm == nil {
 		return m, nil
 	}
+
+	slog.Info("CmdTop, vm")
+	if containerAware, ok := vm.(GetContainerAware); ok {
+		slog.Info("CmdTop, aware")
+		container := containerAware.GetContainer(m)
+		if container == nil {
+			slog.Error("Failed to get selected container for top command")
+			return m, nil
+		}
+		return m, m.topViewModel.Load(m, container)
+	}
+
+	// this view model does not support container-aware functionality.
+	return m, nil
 }

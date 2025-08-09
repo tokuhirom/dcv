@@ -179,13 +179,3 @@ func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 func (m *DindProcessListViewModel) Title() string {
 	return fmt.Sprintf("Docker in Docker: %s", m.hostContainer.GetName())
 }
-
-func (m *DindProcessListViewModel) HandleTop(model *Model) tea.Cmd {
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for top view",
-			slog.Any("error", fmt.Errorf("no container selected")))
-		return nil
-	}
-	return model.topViewModel.Load(model, container)
-}

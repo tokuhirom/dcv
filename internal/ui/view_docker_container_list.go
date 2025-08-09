@@ -234,13 +234,3 @@ func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.C
 
 	return model.dindProcessListViewModel.Load(model, container)
 }
-
-func (m *DockerContainerListViewModel) HandleTop(model *Model) tea.Cmd {
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for DinD process list")
-		return nil
-	}
-
-	return model.topViewModel.Load(model, container)
-}

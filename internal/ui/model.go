@@ -209,6 +209,45 @@ func (m *Model) SwitchToPreviousView() {
 	m.currentView = previousView
 }
 
+func (m *Model) GetCurrentViewModel() interface{} {
+	switch m.currentView {
+	case ComposeProcessListView:
+		return &m.composeProcessListViewModel
+	case LogView:
+		return &m.logViewModel
+	case DindProcessListView:
+		return &m.dindProcessListViewModel
+	case TopView:
+		return &m.topViewModel
+	case StatsView:
+		return &m.statsViewModel
+	case ComposeProjectListView:
+		return &m.composeProjectListViewModel
+	case DockerContainerListView:
+		return &m.dockerContainerListViewModel
+	case ImageListView:
+		return &m.imageListViewModel
+	case NetworkListView:
+		return &m.networkListViewModel
+	case VolumeListView:
+		return &m.volumeListViewModel
+	case FileBrowserView:
+		return &m.fileBrowserViewModel
+	case FileContentView:
+		return &m.fileContentViewModel
+	case InspectView:
+		return &m.inspectViewModel
+	case HelpView:
+		return &m.helpViewModel
+	case CommandExecutionView:
+		return &m.commandExecutionViewModel
+	default:
+		slog.Error("GetCurrentViewModel called with unknown view",
+			slog.String("view", m.currentView.String()))
+		return nil
+	}
+}
+
 // GetViewKeyHandlers returns the key handlers for the specified view
 func (m *Model) GetViewKeyHandlers(view ViewType) []KeyConfig {
 	switch view {
