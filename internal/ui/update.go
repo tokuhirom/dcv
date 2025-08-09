@@ -84,9 +84,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.topViewModel.Loaded(msg.output)
-		m.err = nil
 		return m, nil
 
 	case serviceActionCompleteMsg:
@@ -114,9 +116,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = msg.err
 			return m, nil
+		} else {
+			m.err = nil
 		}
+
 		m.statsViewModel.Loaded(msg.stats)
-		m.err = nil
 		return m, nil
 
 	case projectsLoadedMsg:
@@ -202,10 +206,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = nil
 		}
 
-		m.fileContentViewModel.content = msg.content
-		m.fileContentViewModel.contentPath = msg.path
-		m.fileContentViewModel.scrollY = 0
-		m.SwitchView(FileContentView)
+		m.fileContentViewModel.Loaded(msg.content, msg.path)
 		return m, nil
 
 	case executeCommandMsg:

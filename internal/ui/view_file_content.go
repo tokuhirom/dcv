@@ -83,3 +83,9 @@ func (m *FileContentViewModel) Title() string {
 		m.containerName,
 	)
 }
+
+func (m *FileContentViewModel) Loaded(content string, path string) {
+	m.content = content
+	m.contentPath = path
+	m.scrollY = 0
+}
