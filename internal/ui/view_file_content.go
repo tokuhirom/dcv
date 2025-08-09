@@ -34,7 +34,15 @@ func (m *FileContentViewModel) Load(model *Model, containerID, containerName, pa
 	model.loading = true
 	m.scrollY = 0
 	m.containerName = containerName
-	return loadFileContent(model.dockerClient, containerID, path)
+
+	return func() tea.Msg {
+		content, err := model.dockerClient.ExecuteCaptured("exec", containerID, "cat", path)
+		return fileContentLoadedMsg{
+			content: string(content),
+			path:    path,
+			err:     err,
+		}
+	}
 }
 
 func (m *FileContentViewModel) HandleUp() tea.Cmd {

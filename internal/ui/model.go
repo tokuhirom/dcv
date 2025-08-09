@@ -474,17 +474,6 @@ func loadContainerFiles(client *docker.Client, containerID, path string) tea.Cmd
 	}
 }
 
-func loadFileContent(client *docker.Client, containerID, path string) tea.Cmd {
-	return func() tea.Msg {
-		content, err := client.ExecuteCaptured("exec", containerID, "cat", path)
-		return fileContentLoadedMsg{
-			content: string(content),
-			path:    path,
-			err:     err,
-		}
-	}
-}
-
 func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
 	return func() tea.Msg {
 		return executeCommandMsg{
