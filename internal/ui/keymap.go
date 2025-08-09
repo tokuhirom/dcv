@@ -17,21 +17,26 @@ func (m *Model) initializeKeyHandlers() {
 	}
 	m.globalKeymap = m.createKeymap(m.globalHandlers)
 
+	// Common container operations that work in both Docker and Compose views
 	containerOperations := []KeyConfig{
-		{[]string{"d"}, "entering DinD", m.CmdDind},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
 		{[]string{"s"}, "stats", m.CmdStats},
-		{[]string{"t"}, "top", m.CmdTop},
 		{[]string{"K"}, "kill", m.CmdKill},
 		{[]string{"S"}, "stop", m.CmdStop},
 		{[]string{"U"}, "start", m.CmdStart},
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
 		{[]string{"D"}, "delete", m.CmdDelete},
+	}
+
+	// Compose-specific operations
+	composeSpecificOperations := []KeyConfig{
+		{[]string{"d"}, "entering DinD", m.CmdDind},
+		{[]string{"t"}, "top", m.CmdTop},
 	}
 
 	// Docker Container List View
@@ -46,13 +51,14 @@ func (m *Model) initializeKeyHandlers() {
 	m.dockerListViewKeymap = m.createKeymap(m.dockerContainerListViewHandlers)
 
 	// Compose Process List View
-	m.composeProcessListViewHandlers = append([]KeyConfig{
+	baseHandlers := []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
-	}, containerOperations...)
+	}
+	m.composeProcessListViewHandlers = append(append(baseHandlers, containerOperations...), composeSpecificOperations...)
 	m.composeProcessListViewKeymap = m.createKeymap(m.composeProcessListViewHandlers)
 
 	// Log View
@@ -72,13 +78,15 @@ func (m *Model) initializeKeyHandlers() {
 	m.logViewKeymap = m.createKeymap(m.logViewHandlers)
 
 	// Dind Process List View
-	m.dindListViewHandlers = append([]KeyConfig{
+	// Note: Only basic operations are supported for containers inside dind
+	m.dindListViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
+		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
-	}, containerOperations...)
+	}
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 
 	// Top View
