@@ -143,9 +143,7 @@ func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	slog.Info("CmdTop, vm")
 	if containerAware, ok := vm.(GetContainerAware); ok {
-		slog.Info("CmdTop, aware")
 		container := containerAware.GetContainer(m)
 		if container == nil {
 			slog.Error("Failed to get selected container for top command")
