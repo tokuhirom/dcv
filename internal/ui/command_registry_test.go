@@ -16,7 +16,7 @@ func TestToKebabCase(t *testing.T) {
 	}{
 		{"SelectUpContainer", "select-up-container"},
 		{"ShowComposeLog", "show-compose-log"},
-		{"BackFromLogView", "back-from-log-view"},
+		{"CmdBack", "cmd-back"},
 		{"simple", "simple"},
 		{"ABC", "a-b-c"},
 		{"", ""},
