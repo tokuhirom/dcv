@@ -133,3 +133,16 @@ func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 }
+
+func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleTop(m)
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleTop(m)
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleTop(m)
+	default:
+		return m, nil
+	}
+}

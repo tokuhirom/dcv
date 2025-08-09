@@ -24,7 +24,7 @@ func (m *TopViewModel) render(availableHeight int) string {
 	} else {
 		// Display the raw top output
 		lines := strings.Split(m.content, "\n")
-		visibleHeight := availableHeight
+		visibleHeight := availableHeight - 2
 
 		for i, line := range lines {
 			if i >= visibleHeight {

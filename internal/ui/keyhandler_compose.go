@@ -21,15 +21,6 @@ func (m *Model) CmdSelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleTop(m)
-	default:
-		return m, nil
-	}
-}
-
 func (m *Model) CmdStats(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.statsViewModel.Show(m)
 }
