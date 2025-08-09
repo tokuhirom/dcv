@@ -184,32 +184,6 @@ func getShortCommandName(methodName string) string {
 	return ""
 }
 
-// findCommandForCurrentView tries to find a similar command for the current view
-func (m *Model) findCommandForCurrentView(baseCmdName string) *CommandHandler {
-	// Common command patterns that might have view-specific variants
-	patterns := []string{
-		"select-up-",
-		"select-down-",
-		"refresh-",
-		"back-from-",
-		"show-",
-	}
-
-	for _, pattern := range patterns {
-		if strings.HasPrefix(baseCmdName, pattern) {
-			// Try to find a view-specific version
-			for cmdName, cmd := range commandRegistry {
-				if strings.HasPrefix(cmdName, pattern) &&
-					(cmd.ViewMask == 0 || cmd.ViewMask == m.currentView) {
-					return &cmd
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
 // getAvailableCommands returns a list of commands available in the current view
 func (m *Model) getAvailableCommands() []string {
 	var commands []string
