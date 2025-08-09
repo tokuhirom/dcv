@@ -220,7 +220,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch m.currentView {
 		case ComposeProcessListView:
-			return m, loadComposeProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+			return m, loadComposeProcesses(m.dockerClient, m.composeProcessListViewModel.projectName, m.composeProcessListViewModel.showAll)
 		case DindProcessListView:
 			return m, loadDindContainers(m.dockerClient, m.dindProcessListViewModel.currentDindContainerID)
 		case LogView:

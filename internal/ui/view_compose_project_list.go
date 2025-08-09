@@ -14,6 +14,7 @@ type ComposeProjectListViewModel struct {
 	// Compose list state
 	projects        []models.ComposeProject
 	selectedProject int
+	projectName     string // Current selected project name
 }
 
 func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) string {

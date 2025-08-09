@@ -311,7 +311,7 @@ func TestComposeProcessListView_FullOutput(t *testing.T) {
 		}
 		m.width = 120
 		m.Height = 30
-		m.projectName = "test-project"
+		m.composeProcessListViewModel.projectName = "test-project"
 		m.loading = false
 		m.initializeKeyHandlers()
 

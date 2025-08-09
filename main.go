@@ -53,7 +53,7 @@ func main() {
 	m := ui.NewModel(initialView, "")
 
 	// Create the program
-	p := tea.NewProgram(&m, tea.WithAltScreen())
+	p := tea.NewProgram(m, tea.WithAltScreen())
 
 	// Run the program
 	if _, err := p.Run(); err != nil {
