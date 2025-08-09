@@ -58,6 +58,7 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 	columns := []table.Column{
 		{Title: "SERVICE", Width: 20},
 		{Title: "IMAGE", Width: 30},
+		{Title: "STATE", Width: 10},
 		{Title: "STATUS", Width: 20},
 		{Title: "PORTS", Width: model.width - 75},
 	}
@@ -77,6 +78,8 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 			image = image[:27] + "..."
 		}
 
+		state := container.State
+
 		// Status with color
 		status := container.GetStatus()
 		if strings.Contains(status, "Up") || strings.Contains(status, "running") {
@@ -91,7 +94,7 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 			ports = ports[:37] + "..."
 		}
 
-		rows = append(rows, table.Row{service, image, status, ports})
+		rows = append(rows, table.Row{service, image, state, status, ports})
 	}
 
 	t := table.New(

@@ -33,6 +33,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 	columns := []table.Column{
 		{Title: "CONTAINER ID", Width: 15},
 		{Title: "IMAGE", Width: 30},
+		{Title: "STATE", Width: 10},
 		{Title: "STATUS", Width: 25},
 		{Title: "NAMES", Width: 30},
 	}
@@ -51,6 +52,8 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			image = image[:27] + "..."
 		}
 
+		state := container.State
+
 		// Status with color
 		status := container.Status
 		if strings.Contains(status, "Up") {
@@ -59,7 +62,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			status = statusDownStyle.Render(status)
 		}
 
-		rows = append(rows, table.Row{id, image, status, container.Names})
+		rows = append(rows, table.Row{id, image, state, status, container.Names})
 	}
 
 	return RenderTable(columns, rows, availableHeight, m.selectedDindContainer)
