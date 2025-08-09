@@ -77,7 +77,7 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 
 // Show switches to the image list view
 func (m *ImageListViewModel) Show(model *Model) tea.Cmd {
-	model.currentView = ImageListView
+	model.SwitchView(ImageListView)
 	model.loading = true
 	return loadDockerImages(model.dockerClient, m.showAll)
 }

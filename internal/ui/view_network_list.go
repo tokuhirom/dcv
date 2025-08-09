@@ -51,7 +51,7 @@ func (m *NetworkListViewModel) render(availableHeight int) string {
 
 // Show switches to the network list view
 func (m *NetworkListViewModel) Show(model *Model) tea.Cmd {
-	model.currentView = NetworkListView
+	model.SwitchView(NetworkListView)
 	model.loading = true
 	return loadDockerNetworks(model.dockerClient)
 }

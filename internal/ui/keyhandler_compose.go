@@ -13,7 +13,7 @@ func (m *Model) CmdComposeDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdComposeLS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.currentView = ComposeProjectListView
+	m.SwitchView(ComposeProjectListView)
 	m.loading = true
 	return m, loadProjects(m.dockerClient)
 }

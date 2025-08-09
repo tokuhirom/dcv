@@ -37,7 +37,7 @@ func (m *TopViewModel) render(model *Model, availableHeight int) string {
 // Load switches to the top view and loads process info
 func (m *TopViewModel) Load(model *Model, projectName string, service string) tea.Cmd {
 	m.topService = service
-	model.currentView = TopView
+	model.SwitchView(TopView)
 	model.loading = true
 	return loadTop(model.dockerClient, projectName, service)
 }

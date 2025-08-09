@@ -47,7 +47,7 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 
 // Show switches to the volume list view
 func (m *VolumeListViewModel) Show(model *Model) tea.Cmd {
-	model.currentView = VolumeListView
+	model.SwitchView(VolumeListView)
 	model.loading = true
 	m.selectedDockerVolume = 0
 	m.dockerVolumes = []models.DockerVolume{}

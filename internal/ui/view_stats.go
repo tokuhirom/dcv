@@ -82,7 +82,7 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 
 // Show switches to the stats view
 func (m *StatsViewModel) Show(model *Model) tea.Cmd {
-	model.currentView = StatsView
+	model.SwitchView(StatsView)
 	model.loading = true
 	return loadStats(model.dockerClient)
 }
