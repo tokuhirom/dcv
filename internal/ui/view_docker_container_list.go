@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -170,13 +172,24 @@ func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
-	// Inspect the selected Docker container
+func (m *DockerContainerListViewModel) GetContainer(model *Model) (docker.Container, error) {
+	// Get the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.inspectViewModel.InspectContainer(model, container.ID)
+		return docker.NewContainer(model.dockerClient, container.ID, container.Names), nil
 	}
-	return nil
+	return nil, fmt.Errorf("no container selected")
+}
+
+func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
+	container, err := m.GetContainer(model)
+	if err != nil {
+		slog.Error("Failed to get selected container for inspection",
+			slog.Any("error", err))
+		return nil
+	}
+
+	return model.inspectViewModel.InspectContainer(model, container, "container "+container.GetName())
 }
 
 func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {

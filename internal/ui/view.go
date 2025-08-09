@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // Styles
@@ -43,7 +44,9 @@ var (
 			Bold(true)
 )
 
-const ResetForeground = "\x1b[39m"
+type ContainerAware interface {
+	GetContainer(model *Model) (docker.Container, error)
+}
 
 const ResetAll = "\x1b[0m"
 

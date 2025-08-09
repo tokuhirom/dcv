@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -123,7 +124,7 @@ func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 	}
 
 	image := m.dockerImages[m.selectedDockerImage]
-	return model.inspectViewModel.InspectImage(model, image)
+	return model.inspectViewModel.InspectImage(model, image, fmt.Sprintf("Image: %s:%s %s", image.Repository, image.Tag, image.ID))
 }
 
 // HandleBack returns to the compose process list view

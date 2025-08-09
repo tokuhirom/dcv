@@ -198,7 +198,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = nil
 		}
 
-		m.inspectViewModel.Set(msg.content)
+		m.inspectViewModel.Set(msg.content, msg.targetName)
 		m.SwitchView(InspectView)
 		return m, nil
 
