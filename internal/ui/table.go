@@ -51,7 +51,6 @@ func RenderUnfocusedTable(columns []table.Column, rows []table.Row, availableHei
 		BorderBottom(true).
 		Bold(false)
 	tableStyle.Cell = tableStyle.Cell.
-		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("240"))
 
 	t.SetStyles(tableStyle)

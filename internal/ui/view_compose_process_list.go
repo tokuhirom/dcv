@@ -25,8 +25,20 @@ type ComposeProcessListViewModel struct {
 func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeProject) tea.Cmd {
 	m.projectName = project.Name
 	model.SwitchView(ComposeProcessListView)
+	return m.DoLoad(model)
+}
+
+func (m *ComposeProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadComposeProcesses(model.dockerClient, m.projectName, m.showAll)
+	return func() tea.Msg {
+		slog.Info("Loading composeContainers",
+			slog.Bool("showAll", m.showAll))
+		processes, err := model.dockerClient.Compose(m.projectName).ListContainers(m.showAll)
+		return processesLoadedMsg{
+			processes: processes,
+			err:       err,
+		}
+	}
 }
 
 func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
@@ -134,8 +146,7 @@ func (m *ComposeProcessListViewModel) HandleLog(model *Model) tea.Cmd {
 
 func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	m.showAll = !m.showAll
-	model.loading = true
-	return loadComposeProcesses(model.dockerClient, m.projectName, m.showAll)
+	return m.DoLoad(model)
 }
 
 func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
@@ -189,7 +200,12 @@ func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
 		// Default to /bin/sh as it's most commonly available
-		return executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+		return func() tea.Msg {
+			return executeCommandMsg{
+				containerID: container.ID,
+				command:     []string{"/bin/sh"},
+			}
+		}
 	}
 	return nil
 }

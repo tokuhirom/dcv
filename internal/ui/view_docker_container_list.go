@@ -166,7 +166,12 @@ func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
 		// Default to /bin/sh as it's most commonly available
-		return executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+		return func() tea.Msg {
+			return executeCommandMsg{
+				containerID: container.ID,
+				command:     []string{"/bin/sh"},
+			}
+		}
 	}
 	return nil
 }
@@ -196,8 +201,7 @@ func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
 
 func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {
 	model.SwitchView(DockerContainerListView)
-	model.loading = true
-	return loadDockerContainers(model.dockerClient, m.showAll)
+	return m.DoLoad(model)
 }
 
 func (m *DockerContainerListViewModel) HandleBack(model *Model) tea.Cmd {
@@ -207,8 +211,18 @@ func (m *DockerContainerListViewModel) HandleBack(model *Model) tea.Cmd {
 
 func (m *DockerContainerListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	m.showAll = !m.showAll
+	return m.DoLoad(model)
+}
+
+func (m *DockerContainerListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadDockerContainers(model.dockerClient, m.showAll)
+	return func() tea.Msg {
+		containers, err := model.dockerClient.ListContainers(m.showAll)
+		return dockerContainersLoadedMsg{
+			containers: containers,
+			err:        err,
+		}
+	}
 }
 
 func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
@@ -219,14 +233,4 @@ func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.C
 	}
 
 	return model.dindProcessListViewModel.Load(model, container)
-}
-
-func loadDockerContainers(client *docker.Client, showAll bool) tea.Cmd {
-	return func() tea.Msg {
-		containers, err := client.ListContainers(showAll)
-		return dockerContainersLoadedMsg{
-			containers: containers,
-			err:        err,
-		}
-	}
 }

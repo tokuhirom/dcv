@@ -169,25 +169,12 @@ func NewModel(initialView ViewType) *Model {
 func (m *Model) Init() tea.Cmd {
 	m.initializeKeyHandlers()
 
-	switch m.currentView {
-	case ComposeProjectListView:
-		return tea.Batch(
-			loadProjects(m.dockerClient),
-			tea.WindowSize(),
-		)
-	case DockerContainerListView:
-		return tea.Batch(
-			loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll),
-			tea.WindowSize(),
-		)
-	default:
-		// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
-		// we'll switch to the project list view in the update
-		return tea.Batch(
-			loadComposeProcesses(m.dockerClient, m.composeProcessListViewModel.projectName, m.dockerContainerListViewModel.showAll),
-			tea.WindowSize(),
-		)
-	}
+	return tea.Batch(
+		func() tea.Msg {
+			return RefreshMsg{}
+		},
+		tea.WindowSize(),
+	)
 }
 
 func (m *Model) SwitchView(view ViewType) {
@@ -393,78 +380,4 @@ type commandExecStartedMsg struct {
 	cmd    *exec.Cmd
 	stdout io.ReadCloser
 	stderr io.ReadCloser
-}
-
-// Commands
-
-func loadComposeProcesses(client *docker.Client, projectName string, showAll bool) tea.Cmd {
-	return func() tea.Msg {
-		slog.Info("Loading composeContainers",
-			slog.Bool("showAll", showAll))
-		processes, err := client.Compose(projectName).ListContainers(showAll)
-		return processesLoadedMsg{
-			processes: processes,
-			err:       err,
-		}
-	}
-}
-
-func loadComposeTop(client *docker.Client, projectName, serviceName string) tea.Cmd {
-	// TODO: support normal containers
-	return func() tea.Msg {
-		output, err := client.Compose(projectName).Top(serviceName)
-		return topLoadedMsg{
-			output: output,
-			err:    err,
-		}
-	}
-}
-
-func loadStats(client *docker.Client) tea.Cmd {
-	return func() tea.Msg {
-		stats, err := client.GetStats()
-		return statsLoadedMsg{
-			stats: stats,
-			err:   err,
-		}
-	}
-}
-
-func loadProjects(client *docker.Client) tea.Cmd {
-	return func() tea.Msg {
-		projects, err := client.ListComposeProjects()
-		return projectsLoadedMsg{
-			projects: projects,
-			err:      err,
-		}
-	}
-}
-
-func loadDockerImages(client *docker.Client, showAll bool) tea.Cmd {
-	return func() tea.Msg {
-		images, err := client.ListImages(showAll)
-		return dockerImagesLoadedMsg{
-			images: images,
-			err:    err,
-		}
-	}
-}
-
-func loadContainerFiles(client *docker.Client, containerID, path string) tea.Cmd {
-	return func() tea.Msg {
-		files, err := client.ListContainerFiles(containerID, path)
-		return containerFilesLoadedMsg{
-			files: files,
-			err:   err,
-		}
-	}
-}
-
-func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
-	return func() tea.Msg {
-		return executeCommandMsg{
-			containerID: containerID,
-			command:     command,
-		}
-	}
 }

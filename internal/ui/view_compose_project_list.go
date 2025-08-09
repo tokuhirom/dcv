@@ -86,3 +86,20 @@ func (m *ComposeProjectListViewModel) Loaded(projects []models.ComposeProject) {
 		m.selectedProject = 0
 	}
 }
+
+func (m *ComposeProjectListViewModel) DoLoad(model *Model) tea.Cmd {
+	model.loading = true
+
+	return func() tea.Msg {
+		projects, err := model.dockerClient.ListComposeProjects()
+		return projectsLoadedMsg{
+			projects: projects,
+			err:      err,
+		}
+	}
+}
+
+func (m *ComposeProjectListViewModel) Show(model *Model) tea.Cmd {
+	model.SwitchView(ComposeProjectListView)
+	return m.DoLoad(model)
+}

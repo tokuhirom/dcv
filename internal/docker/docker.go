@@ -125,8 +125,12 @@ func (c *Client) ExecuteInteractive(containerID string, command []string) error 
 }
 
 // GetStats retrieves container statistics
-func (c *Client) GetStats() ([]models.ContainerStats, error) {
-	output, err := c.ExecuteCaptured("stats", "--no-stream", "--format", "json", "--all")
+func (c *Client) GetStats(all bool) ([]models.ContainerStats, error) {
+	args := []string{"stats", "--no-stream", "--format", "json"}
+	if all {
+		args = append(args, "--all")
+	}
+	output, err := c.ExecuteCaptured(args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %w", err)
 	}

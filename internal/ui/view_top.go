@@ -40,14 +40,21 @@ func (m *TopViewModel) Load(model *Model, projectName string, service string) te
 	m.topService = service
 	m.projectName = projectName
 	model.SwitchView(TopView)
-	model.loading = true
-	return loadComposeTop(model.dockerClient, projectName, service)
+	return m.DoLoad(model)
 }
 
-// HandleRefresh reloads the process info
-func (m *TopViewModel) HandleRefresh(model *Model) tea.Cmd {
+// DoLoad reloads the process info
+func (m *TopViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadComposeTop(model.dockerClient, m.projectName, m.topService)
+
+	// TODO: support normal containers
+	return func() tea.Msg {
+		output, err := model.dockerClient.Compose(m.projectName).Top(m.topService)
+		return topLoadedMsg{
+			output: output,
+			err:    err,
+		}
+	}
 }
 
 // HandleBack returns to the compose process list view

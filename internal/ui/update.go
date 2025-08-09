@@ -220,28 +220,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch m.currentView {
 		case ComposeProcessListView:
-			return m, loadComposeProcesses(m.dockerClient, m.composeProcessListViewModel.projectName, m.composeProcessListViewModel.showAll)
+			return m, m.composeProcessListViewModel.DoLoad(m)
 		case DindProcessListView:
 			return m, m.dindProcessListViewModel.DoLoad(m)
 		case LogView:
 			// Logs are continuously streamed, no need to refresh
 			return m, nil
 		case TopView:
-			return m, m.topViewModel.HandleRefresh(m)
+			return m, m.topViewModel.DoLoad(m)
 		case StatsView:
-			return m, m.statsViewModel.HandleRefresh(m)
+			return m, m.statsViewModel.DoLoad(m)
 		case ComposeProjectListView:
-			return m, loadProjects(m.dockerClient)
+			return m, m.composeProjectListViewModel.DoLoad(m)
 		case DockerContainerListView:
-			return m, loadDockerContainers(m.dockerClient, m.dockerContainerListViewModel.showAll)
+			return m, m.dockerContainerListViewModel.DoLoad(m)
 		case ImageListView:
-			return m, loadDockerImages(m.dockerClient, m.imageListViewModel.showAll)
+			return m, m.imageListViewModel.DoLoad(m)
 		case NetworkListView:
-			return m, m.networkListViewModel.Show(m, true)
+			return m, m.networkListViewModel.DoLoad(m)
 		case VolumeListView:
-			return m, m.volumeListViewModel.HandleRefresh(m)
+			return m, m.volumeListViewModel.DoLoad(m)
 		case FileBrowserView:
-			return m, m.fileBrowserViewModel.HandleRefresh(m)
+			return m, m.fileBrowserViewModel.DoLoad(m)
 		case FileContentView:
 			// File content doesn't need refresh, it's static
 			return m, nil

@@ -105,7 +105,7 @@ func (m *Model) viewTitle() string {
 	case TopView:
 		return fmt.Sprintf("Process Info: %s", m.topViewModel.topService)
 	case StatsView:
-		return "Container Resource Usage"
+		return "Stats"
 	case ComposeProjectListView:
 		return "Docker Compose Projects"
 	case DockerContainerListView:

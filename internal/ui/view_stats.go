@@ -10,6 +10,10 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// TODO: support compose-stats
+// TODO: order by CPU usage, memory usage, etc.
+// TODO: stream support
+
 // StatsViewModel manages the state and rendering of the stats view
 type StatsViewModel struct {
 	stats []models.ContainerStats
@@ -18,9 +22,7 @@ type StatsViewModel struct {
 // render renders the stats view
 func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 	if len(m.stats) == 0 {
-		var s strings.Builder
-		s.WriteString("\nNo stats available.\n")
-		return s.String()
+		return "\nNo stats available.\n"
 	}
 
 	// Stats table
@@ -33,7 +35,7 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 		{Title: "BLOCK I/O", Width: 15},
 	}
 
-	rows := []table.Row{}
+	rows := make([]table.Row, 0, len(m.stats))
 	for _, stat := range m.stats {
 		// Truncate name if too long
 		name := stat.Name
@@ -63,14 +65,20 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 // Show switches to the stats view
 func (m *StatsViewModel) Show(model *Model) tea.Cmd {
 	model.SwitchView(StatsView)
-	model.loading = true
-	return loadStats(model.dockerClient)
+	return m.DoLoad(model)
 }
 
-// HandleRefresh reloads the stats
-func (m *StatsViewModel) HandleRefresh(model *Model) tea.Cmd {
+// DoLoad reloads the stats
+func (m *StatsViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadStats(model.dockerClient)
+	return func() tea.Msg {
+		// TODO: suppport toggle-all stats
+		stats, err := model.dockerClient.GetStats(false)
+		return statsLoadedMsg{
+			stats: stats,
+			err:   err,
+		}
+	}
 }
 
 // HandleBack returns to the compose process list view
