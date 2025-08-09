@@ -126,7 +126,7 @@ func (m *CommandViewModel) executeCommand(model *Model) (tea.Model, tea.Cmd) {
 			commands := model.getAvailableCommands()
 			helpText := "Available commands in current view:\n"
 			for _, cmd := range commands {
-				if handler, exists := commandRegistry[cmd]; exists {
+				if handler, exists := model.commandRegistry[cmd]; exists {
 					helpText += fmt.Sprintf("  :%s - %s\n", cmd, handler.Description)
 				}
 			}
@@ -143,7 +143,7 @@ func (m *CommandViewModel) executeCommand(model *Model) (tea.Model, tea.Cmd) {
 
 // executeKeyHandlerCommand executes a command by name
 func (m *CommandViewModel) executeKeyHandlerCommand(model *Model, cmdName string) (tea.Model, tea.Cmd) {
-	cmd, exists := commandRegistry[cmdName]
+	cmd, exists := model.commandRegistry[cmdName]
 	if !exists {
 		model.err = fmt.Errorf("unknown command: %s", cmdName)
 		return model, nil

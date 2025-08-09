@@ -146,6 +146,10 @@ type Model struct {
 	commandViewModel CommandViewModel
 
 	quitConfirmation bool
+
+	// Command registry - stores all available commands
+	commandRegistry  map[string]CommandHandler
+	handlerToCommand map[uintptr]string
 }
 
 // NewModel creates a new model with initial state

@@ -36,7 +36,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 				}
 
 				// Get command name for this handler
-				cmdName := getCommandForHandler(config.KeyHandler)
+				cmdName := model.getCommandForHandler(config.KeyHandler)
 				if cmdName != "" {
 					cmdName = ":" + cmdName
 				}
@@ -59,7 +59,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 				}
 
 				// Get command name for this handler
-				cmdName := getCommandForHandler(config.KeyHandler)
+				cmdName := model.getCommandForHandler(config.KeyHandler)
 				if cmdName != "" {
 					cmdName = ":" + cmdName
 				}
