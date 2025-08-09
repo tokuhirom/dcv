@@ -1,9 +1,6 @@
 package docker
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -39,30 +36,7 @@ func (c *Client) ListComposeProjects() ([]models.ComposeProject, error) {
 		return nil, fmt.Errorf("failed to executeCaptured docker compose ls: %w\nOutput: %s", err, string(output))
 	}
 
-	// Handle empty output
-	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
-		return []models.ComposeProject{}, nil
-	}
-
-	// Parse JSON output - docker compose ls returns an array
-	var projects []models.ComposeProject
-	if err := json.Unmarshal(output, &projects); err != nil {
-		// Fallback to line-delimited JSON parsing for older versions
-		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-		for _, line := range lines {
-			if line == "" {
-				continue
-			}
-
-			var project models.ComposeProject
-			if err := json.Unmarshal([]byte(line), &project); err != nil {
-				return nil, fmt.Errorf("failed to parse project JSON: %w", err)
-			}
-			projects = append(projects, project)
-		}
-	}
-
-	return projects, nil
+	return ParseComposeProjectsJSON(output)
 }
 
 func (c *Client) Execute(args ...string) *exec.Cmd {
@@ -103,29 +77,7 @@ func (c *Client) ListImages(showAll bool) ([]models.DockerImage, error) {
 		return nil, fmt.Errorf("failed to execute docker images: %w\nOutput: %s", err, string(output))
 	}
 
-	// Docker images outputs each image as a separate JSON object on its own line
-	images := make([]models.DockerImage, 0)
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-
-		var image models.DockerImage
-		if err := json.Unmarshal(line, &image); err != nil {
-			// Skip invalid lines
-			continue
-		}
-
-		images = append(images, image)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return images, nil
+	return ParseImagesJSON(output)
 }
 
 func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {

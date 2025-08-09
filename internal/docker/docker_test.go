@@ -7,7 +7,7 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
-func TestComposeClient_parseComposePSJSON(t *testing.T) {
+func TestParseComposePSJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   []byte
@@ -50,16 +50,15 @@ func TestComposeClient_parseComposePSJSON(t *testing.T) {
 		},
 	}
 
-	c := &ComposeClient{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := c.parseComposePSJSON(tt.input)
+			got, err := ParseComposePSJSON(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseComposePSJSON() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseComposePSJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseComposePSJSON() = %v, want %v", got, tt.want)
+				t.Errorf("ParseComposePSJSON() = %v, want %v", got, tt.want)
 			}
 		})
 	}

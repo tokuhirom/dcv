@@ -1,9 +1,6 @@
 package docker
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -21,34 +18,13 @@ func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
 	}
 
 	// Handle empty output
-	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
+	volumes, err := ParseVolumeJSON(output)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(volumes) == 0 {
 		slog.Info("No volumes found")
-		return []models.DockerVolume{}, nil
-	}
-
-	// Parse line-delimited JSON
-	volumes := make([]models.DockerVolume, 0)
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-
-		var volume models.DockerVolume
-		if err := json.Unmarshal(line, &volume); err != nil {
-			slog.Warn("Failed to parse volume JSON",
-				slog.String("line", string(line)),
-				slog.String("error", err.Error()))
-			continue
-		}
-
-		volumes = append(volumes, volume)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error scanning volume output: %w", err)
 	}
 
 	return volumes, nil

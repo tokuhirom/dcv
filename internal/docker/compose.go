@@ -1,9 +1,6 @@
 package docker
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -87,39 +84,7 @@ func (c *ComposeClient) ListContainers(showAll bool) ([]models.ComposeContainer,
 
 	// Parse JSON format
 	slog.Info("Parsing docker compose ps output")
-	return c.parseComposePSJSON(output)
-}
-
-func (c *ComposeClient) parseComposePSJSON(output []byte) ([]models.ComposeContainer, error) {
-	containers := make([]models.ComposeContainer, 0)
-
-	// Docker compose outputs each container as a separate JSON object on its own line
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-	hasValidJSON := false
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-
-		var container models.ComposeContainer
-		if err := json.Unmarshal(line, &container); err != nil {
-			// If we have content that's not valid JSON, return error
-			if len(line) > 0 && !hasValidJSON {
-				return nil, fmt.Errorf("invalid JSON: %v", err)
-			}
-			continue
-		}
-		hasValidJSON = true
-
-		containers = append(containers, container)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return containers, nil
+	return ParseComposePSJSON(output)
 }
 
 func (c *ComposeClient) GetContainerTop(serviceName string) (string, error) {
