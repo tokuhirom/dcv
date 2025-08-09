@@ -166,7 +166,12 @@ func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
 		// Default to /bin/sh as it's most commonly available
-		return executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+		return func() tea.Msg {
+			return executeCommandMsg{
+				containerID: container.ID,
+				command:     []string{"/bin/sh"},
+			}
+		}
 	}
 	return nil
 }

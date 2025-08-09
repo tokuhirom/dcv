@@ -169,29 +169,12 @@ func NewModel(initialView ViewType) *Model {
 func (m *Model) Init() tea.Cmd {
 	m.initializeKeyHandlers()
 
-	switch m.currentView {
-	case ComposeProjectListView:
-		return tea.Batch(
-			loadProjects(m.dockerClient),
-			tea.WindowSize(),
-		)
-	case DockerContainerListView:
-		return tea.Batch(
-			func() tea.Msg {
-				return RefreshMsg{}
-			},
-			tea.WindowSize(),
-		)
-	default:
-		// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
-		// we'll switch to the project list view in the update
-		return tea.Batch(
-			func() tea.Msg {
-				return RefreshMsg{}
-			},
-			tea.WindowSize(),
-		)
-	}
+	return tea.Batch(
+		func() tea.Msg {
+			return RefreshMsg{}
+		},
+		tea.WindowSize(),
+	)
 }
 
 func (m *Model) SwitchView(view ViewType) {
@@ -397,25 +380,4 @@ type commandExecStartedMsg struct {
 	cmd    *exec.Cmd
 	stdout io.ReadCloser
 	stderr io.ReadCloser
-}
-
-// Commands
-
-func loadProjects(client *docker.Client) tea.Cmd {
-	return func() tea.Msg {
-		projects, err := client.ListComposeProjects()
-		return projectsLoadedMsg{
-			projects: projects,
-			err:      err,
-		}
-	}
-}
-
-func executeInteractiveCommand(containerID string, command []string) tea.Cmd {
-	return func() tea.Msg {
-		return executeCommandMsg{
-			containerID: containerID,
-			command:     command,
-		}
-	}
 }

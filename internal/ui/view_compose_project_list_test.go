@@ -361,17 +361,3 @@ func TestComposeProjectListViewModel_StatusColors(t *testing.T) {
 		})
 	}
 }
-
-func TestComposeProjectListViewModel_Refresh(t *testing.T) {
-	model := &Model{
-		loading: false,
-	}
-
-	// The project list view uses CmdRefresh handler which calls loadProjects
-	cmd := loadProjects(model.dockerClient)
-	msg := cmd()
-
-	// Should return projectsLoadedMsg
-	_, ok := msg.(projectsLoadedMsg)
-	assert.True(t, ok, "Should return projectsLoadedMsg")
-}

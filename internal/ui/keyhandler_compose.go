@@ -9,9 +9,7 @@ func (m *Model) CmdComposeUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdComposeLS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	m.SwitchView(ComposeProjectListView)
-	m.loading = true
-	return m, loadProjects(m.dockerClient)
+	return m, m.composeProjectListViewModel.Show(m)
 }
 
 func (m *Model) CmdSelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

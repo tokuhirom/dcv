@@ -200,7 +200,12 @@ func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
 		// Default to /bin/sh as it's most commonly available
-		return executeInteractiveCommand(container.ID, []string{"/bin/sh"})
+		return func() tea.Msg {
+			return executeCommandMsg{
+				containerID: container.ID,
+				command:     []string{"/bin/sh"},
+			}
+		}
 	}
 	return nil
 }
