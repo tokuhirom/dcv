@@ -172,16 +172,6 @@ func getShortCommandName(methodName string) string {
 		"ToggleAllDockerContainers": "all-containers",
 		"CmdComposeUp":              "deploy",
 		"CmdComposeDown":            "compose-down",
-		"BackFromLogView":           "back",
-		"BackFromHelp":              "back",
-		"BackFromInspect":           "back",
-		"BackFromImageList":         "back",
-		"BackFromNetworkList":       "back",
-		"BackFromVolumeList":        "back",
-		"BackFromFileContent":       "back",
-		"BackFromDockerList":        "back",
-		"BackToProcessList":         "back",
-		"BackToDindList":            "back",
 	}
 
 	if short, exists := shortNames[methodName]; exists {
