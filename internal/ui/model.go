@@ -185,7 +185,7 @@ func (m *Model) Init() tea.Cmd {
 		// Otherwise, try to load composeContainers first - if it fails due to a missing compose file,
 		// we'll switch to the project list view in the update
 		return tea.Batch(
-			loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll),
+			loadComposeProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll),
 			tea.WindowSize(),
 		)
 	}
@@ -405,7 +405,7 @@ type commandExecStartedMsg struct {
 
 // Commands
 
-func loadProcesses(client *docker.Client, projectName string, showAll bool) tea.Cmd {
+func loadComposeProcesses(client *docker.Client, projectName string, showAll bool) tea.Cmd {
 	return func() tea.Msg {
 		slog.Info("Loading composeContainers",
 			slog.Bool("showAll", showAll))

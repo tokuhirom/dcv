@@ -106,7 +106,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case VolumeListView:
 			return m, m.volumeListViewModel.HandleRefresh(m)
 		default:
-			return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
+			return m, loadComposeProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 		}
 
 	case upActionCompleteMsg:
@@ -115,8 +115,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		// Reload process list after up/down action
-		return m, loadProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
+		// Reload compose process list after up/down action
+		return m, loadComposeProcesses(m.dockerClient, m.projectName, m.dockerContainerListViewModel.showAll)
 
 	case statsLoadedMsg:
 		m.loading = false
@@ -243,7 +243,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch m.currentView {
 		case ComposeProcessListView:
-			return m, loadProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
+			return m, loadComposeProcesses(m.dockerClient, m.projectName, m.composeProcessListViewModel.showAll)
 		case DindProcessListView:
 			return m, loadDindContainers(m.dockerClient, m.dindProcessListViewModel.currentDindContainerID)
 		case LogView:
