@@ -23,7 +23,6 @@ type CommandExecutionViewModel struct {
 	reader              *bufio.Reader
 	pendingConfirmation bool
 	pendingArgs         []string
-	confirmationTarget  string // e.g., "container nginx" or "service web"
 }
 
 func (m *CommandExecutionViewModel) render(model *Model) string {
@@ -168,7 +167,6 @@ func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, aggressive bool
 	if aggressive && !m.pendingConfirmation {
 		m.pendingConfirmation = true
 		m.pendingArgs = args
-		m.confirmationTarget = m.getConfirmationTarget(args)
 		return nil
 	}
 
@@ -263,52 +261,6 @@ func streamCommandFromReader(m *CommandExecutionViewModel) tea.Cmd {
 	}
 }
 
-// getConfirmationTarget extracts a human-readable target from the command args
-func (m *CommandExecutionViewModel) getConfirmationTarget(args []string) string {
-	if len(args) == 0 {
-		return "unknown"
-	}
-
-	// For compose commands
-	if len(args) >= 2 && args[0] == "compose" {
-		// Find the project name
-		projectName := ""
-		for i, arg := range args {
-			if arg == "-p" && i+1 < len(args) {
-				projectName = args[i+1]
-				break
-			}
-		}
-		if projectName != "" {
-			return fmt.Sprintf("project '%s'", projectName)
-		}
-		return "compose services"
-	}
-
-	// For network/volume commands
-	if len(args) >= 3 && (args[0] == "network" || args[0] == "volume") {
-		return fmt.Sprintf("%s '%s'", args[0], args[2])
-	}
-
-	// For image commands
-	if len(args) >= 2 && args[0] == "rmi" {
-		return fmt.Sprintf("image '%s'", args[len(args)-1])
-	}
-
-	// For direct container commands (e.g., "stop container_id")
-	if len(args) >= 2 {
-		// Try to extract container name or ID
-		containerID := args[len(args)-1]
-		if len(containerID) > 12 {
-			// Likely a container ID, truncate for display
-			containerID = containerID[:12]
-		}
-		return fmt.Sprintf("container %s", containerID)
-	}
-
-	return strings.Join(args, " ")
-}
-
 // renderConfirmationDialog renders the confirmation prompt
 func (m *CommandExecutionViewModel) renderConfirmationDialog(model *Model) string {
 	var content strings.Builder
@@ -327,7 +279,7 @@ func (m *CommandExecutionViewModel) renderConfirmationDialog(model *Model) strin
 	questionStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("15"))
 
-	targetStyle := lipgloss.NewStyle().
+	commandStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("14")).
 		Bold(true)
 
@@ -340,14 +292,14 @@ func (m *CommandExecutionViewModel) renderConfirmationDialog(model *Model) strin
 	))
 	content.WriteString("\n\n")
 
-	// Parse the command for display
-	commandDisplay := m.getCommandDisplay(m.pendingArgs)
+	// Show the actual command
+	commandStr := fmt.Sprintf("docker %s", strings.Join(m.pendingArgs, " "))
 	content.WriteString(lipgloss.NewStyle().Width(model.width).Align(lipgloss.Center).Render(
-		questionStyle.Render(fmt.Sprintf("Are you sure you want to %s", commandDisplay)),
+		questionStyle.Render("Are you sure you want to execute:"),
 	))
 	content.WriteString("\n")
 	content.WriteString(lipgloss.NewStyle().Width(model.width).Align(lipgloss.Center).Render(
-		targetStyle.Render(m.confirmationTarget),
+		commandStyle.Render(commandStr),
 	))
 	content.WriteString("\n\n")
 	content.WriteString(lipgloss.NewStyle().Width(model.width).Align(lipgloss.Center).Render(
@@ -355,57 +307,6 @@ func (m *CommandExecutionViewModel) renderConfirmationDialog(model *Model) strin
 	))
 
 	return content.String()
-}
-
-// getCommandDisplay returns a human-readable command description
-func (m *CommandExecutionViewModel) getCommandDisplay(args []string) string {
-	if len(args) == 0 {
-		return "execute command"
-	}
-
-	// Map Docker commands to human-readable descriptions
-	commandDescriptions := map[string]string{
-		"stop":    "stop",
-		"start":   "start",
-		"restart": "restart",
-		"kill":    "forcefully stop",
-		"pause":   "pause",
-		"unpause": "unpause",
-		"rm":      "remove",
-		"rmi":     "remove image",
-	}
-
-	// For direct Docker commands
-	if desc, exists := commandDescriptions[args[0]]; exists {
-		return desc
-	}
-
-	// For compose commands
-	if len(args) >= 2 && args[0] == "compose" {
-		for _, arg := range args {
-			if desc, exists := commandDescriptions[arg]; exists {
-				return desc
-			}
-			if arg == "down" {
-				return "stop and remove all services in"
-			}
-			if arg == "up" {
-				return "start all services in"
-			}
-		}
-	}
-
-	// For network/volume commands
-	if len(args) >= 2 {
-		if args[0] == "network" && args[1] == "rm" {
-			return "remove network"
-		}
-		if args[0] == "volume" && args[1] == "rm" {
-			return "remove volume"
-		}
-	}
-
-	return args[0]
 }
 
 // HandleConfirmation processes user's confirmation response
@@ -419,7 +320,6 @@ func (m *CommandExecutionViewModel) HandleConfirmation(model *Model, confirm boo
 		m.pendingConfirmation = false
 		args := m.pendingArgs
 		m.pendingArgs = nil
-		m.confirmationTarget = ""
 
 		return func() tea.Msg {
 			m.cmdString = fmt.Sprintf("docker %s", strings.Join(args, " "))
@@ -450,7 +350,6 @@ func (m *CommandExecutionViewModel) HandleConfirmation(model *Model, confirm boo
 	// User cancelled, go back to previous view
 	m.pendingConfirmation = false
 	m.pendingArgs = nil
-	m.confirmationTarget = ""
 	model.SwitchToPreviousView()
 	return nil
 }
