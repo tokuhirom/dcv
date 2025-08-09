@@ -294,7 +294,7 @@ func TestImageListViewModel_Messages(t *testing.T) {
 	})
 }
 
-func TestImageListViewModel_HandleRefresh(t *testing.T) {
+func TestImageListViewModel_DoLoad(t *testing.T) {
 	model := &Model{
 		loading: false,
 	}
@@ -302,7 +302,7 @@ func TestImageListViewModel_HandleRefresh(t *testing.T) {
 		showAll: true,
 	}
 
-	cmd := vm.HandleRefresh(model)
+	cmd := vm.DoLoad(model)
 
 	assert.True(t, model.loading)
 	assert.NotNil(t, cmd)

@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -79,8 +78,18 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 // Show switches to the image list view
 func (m *ImageListViewModel) Show(model *Model) tea.Cmd {
 	model.SwitchView(ImageListView)
+	return m.DoLoad(model)
+}
+
+func (m *ImageListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
-	return loadDockerImages(model.dockerClient, m.showAll)
+	return func() tea.Msg {
+		images, err := model.dockerClient.ListImages(m.showAll)
+		return dockerImagesLoadedMsg{
+			images: images,
+			err:    err,
+		}
+	}
 }
 
 // HandleUp moves selection up in the image list
@@ -102,8 +111,7 @@ func (m *ImageListViewModel) HandleDown() tea.Cmd {
 // HandleToggleAll toggles showing all images including intermediate layers
 func (m *ImageListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	m.showAll = !m.showAll
-	model.loading = true
-	return loadDockerImages(model.dockerClient, m.showAll)
+	return m.DoLoad(model)
 }
 
 // HandleDelete removes the selected image
@@ -133,12 +141,6 @@ func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 func (m *ImageListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
-}
-
-// HandleRefresh reloads the image list
-func (m *ImageListViewModel) HandleRefresh(model *Model) tea.Cmd {
-	model.loading = true
-	return loadDockerImages(model.dockerClient, m.showAll)
 }
 
 // Loaded updates the image list after loading
