@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -18,9 +17,8 @@ type StatsViewModel struct {
 
 // render renders the stats view
 func (m *StatsViewModel) render(model *Model, availableHeight int) string {
-	var s strings.Builder
-
 	if len(m.stats) == 0 {
+		var s strings.Builder
 		s.WriteString("\nNo stats available.\n")
 		return s.String()
 	}
@@ -59,27 +57,7 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 		rows = append(rows, table.Row{name, cpu, stat.MemUsage, stat.MemPerc, stat.NetIO, stat.BlockIO})
 	}
 
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(false),
-	)
-
-	// Apply styles
-	styles := table.DefaultStyles()
-	styles.Header = styles.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	styles.Cell = styles.Cell.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240"))
-	t.SetStyles(styles)
-
-	s.WriteString(t.View() + "\n")
-
-	return s.String()
+	return RenderUnfocusedTable(columns, rows, availableHeight)
 }
 
 // Show switches to the stats view
