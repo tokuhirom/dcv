@@ -17,13 +17,10 @@ type DockerClient interface {
 	StopContainer(containerID string) error
 	StartContainer(containerID string) error
 	RestartContainer(containerID string) error
-	RemoveContainer(containerID string) error
 	GetStats() (string, error)
 	ListAllContainers(showAll bool) ([]models.DockerContainer, error)
 	ListImages(showAll bool) ([]models.DockerImage, error)
-	RemoveImage(imageID string, force bool) error
 	ListNetworks() ([]models.DockerNetwork, error)
-	RemoveNetwork(networkID string) error
 	ListContainerFiles(containerID, path string) ([]models.ContainerFile, error)
 	ReadContainerFile(containerID, path string) (string, error)
 	ExecuteInteractive(containerID string, command []string) error
@@ -31,7 +28,6 @@ type DockerClient interface {
 	InspectImage(imageID string) (string, error)
 	InspectNetwork(networkID string) (string, error)
 	ListVolumes() ([]models.DockerVolume, error)
-	RemoveVolume(volumeName string, force bool) error
 	InspectVolume(volumeName string) (string, error)
 }
 
@@ -42,7 +38,6 @@ type ComposeClientInterface interface {
 	StopService(serviceName string) error
 	StartService(serviceName string) error
 	RestartService(serviceName string) error
-	RemoveService(serviceName string) error
 	Top() (string, error)
 	Up(detach bool) error
 	Down() error

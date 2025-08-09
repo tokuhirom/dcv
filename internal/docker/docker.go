@@ -128,25 +128,6 @@ func (c *Client) ListImages(showAll bool) ([]models.DockerImage, error) {
 	return images, nil
 }
 
-func (c *Client) RemoveImage(imageID string, force bool) error {
-	args := []string{"rmi"}
-	if force {
-		args = append(args, "-f")
-	}
-	args = append(args, imageID)
-
-	output, err := ExecuteCaptured(args...)
-	if err != nil {
-		return fmt.Errorf("failed to remove image: %w\nOutput: %s", err, string(output))
-	}
-
-	slog.Info("Removed image",
-		slog.String("imageID", imageID),
-		slog.String("output", string(output)))
-
-	return nil
-}
-
 func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
 	output, err := ExecuteCaptured("network", "ls", "--format", "json")
 	if err != nil {
@@ -159,19 +140,6 @@ func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
 	}
 
 	return networks, nil
-}
-
-func (c *Client) RemoveNetwork(networkID string) error {
-	output, err := ExecuteCaptured([]string{"network", "rm", networkID}...)
-	if err != nil {
-		return fmt.Errorf("failed to remove network: %w\nOutput: %s", err, string(output))
-	}
-
-	slog.Info("Removed network",
-		slog.String("networkID", networkID),
-		slog.String("output", string(output)))
-
-	return nil
 }
 
 func (c *Client) ListContainerFiles(containerID, path string) ([]models.ContainerFile, error) {
