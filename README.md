@@ -30,10 +30,13 @@ Displays `docker ps` results in a table format. Shows all Docker containers, not
 - `↑`/`k`: Move up
 - `↓`/`j`: Move down
 - `Enter`: View container logs
+- `d`: View dind container contents (only for dind containers)
 - `f`: Browse container files
 - `!`: Execute /bin/sh in container
 - `I`: Inspect container (view full config)
 - `a`: Toggle show all containers (including stopped)
+- `s`: Show container stats
+- `t`: Show process info (docker top)
 - `r`: Refresh list
 - `K`: Kill container
 - `S`: Stop container
@@ -107,6 +110,19 @@ Shows containers running inside a dind container.
 - `↑`/`k`: Move up
 - `↓`/`j`: Move down
 - `Enter`: View container logs
+- `d`: View dind container contents (for nested dind containers)
+- `f`: Browse container files
+- `!`: Execute /bin/sh in container
+- `I`: Inspect container (view full config)
+- `a`: Toggle show all containers (including stopped)
+- `s`: Show container stats
+- `t`: Show process info (docker top)
+- `K`: Kill container
+- `S`: Stop container
+- `U`: Start container
+- `R`: Restart container
+- `P`: Pause/Unpause container
+- `D`: Delete stopped container
 - `r`: Refresh list
 - `?`: Show help view
 - `Esc`/`q`: Back to process list
