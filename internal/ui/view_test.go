@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/tokuhirom/dcv/internal/docker"
+
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -133,7 +135,7 @@ func TestView(t *testing.T) {
 				Height:      24,
 				loading:     false,
 				dindProcessListViewModel: DindProcessListViewModel{
-					currentDindHostName: "dind-1",
+					hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-1", "dind-1", "dind-1", "dind-1"),
 					dindContainers: []models.DockerContainer{
 						{
 							ID:     "abc123def456",
@@ -243,7 +245,7 @@ func TestRenderDindList(t *testing.T) {
 		Height:      24,
 		loading:     false,
 		dindProcessListViewModel: DindProcessListViewModel{
-			currentDindHostName: "dind-1",
+			hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-1", "dind-1", "dind-1", "dind-1"),
 			dindContainers: []models.DockerContainer{
 				{
 					ID:     "abc123def456789",

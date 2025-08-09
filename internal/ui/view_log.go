@@ -15,11 +15,11 @@ type LogViewModel struct {
 	SearchViewModel
 	FilterViewModel
 
-	logs          []string
-	logScrollY    int
-	containerName string
-	isDindLog     bool
-	hostContainer string
+	logs              []string
+	logScrollY        int
+	containerName     string
+	isDindLog         bool
+	hostContainerName string
 
 	LogReaderManager
 }
@@ -48,7 +48,7 @@ func (m *LogViewModel) StreamComposeLogs(model *Model, composeContainer models.C
 
 func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
 	m.SwitchToLogView(model, container.Names)
-	m.hostContainer = model.dindProcessListViewModel.currentDindHostName
+	m.hostContainerName = model.dindProcessListViewModel.hostContainer.GetName()
 	m.isDindLog = true
 
 	cmd := model.dockerClient.Dind(dindHostContainerID).Execute(
@@ -362,7 +362,7 @@ func (m *LogViewModel) FilterDeleteLastChar() {
 func (m *LogViewModel) Title() string {
 	title := ""
 	if m.isDindLog {
-		title = fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainer)
+		title = fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainerName)
 	} else {
 		title = fmt.Sprintf("Logs: %s", m.containerName)
 	}

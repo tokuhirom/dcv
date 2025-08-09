@@ -101,9 +101,9 @@ func (m *Model) viewTitle() string {
 	case LogView:
 		return m.logViewModel.Title()
 	case DindProcessListView:
-		return fmt.Sprintf("Docker in Docker: %s", m.dindProcessListViewModel.currentDindHostName)
+		return m.dindProcessListViewModel.Title()
 	case TopView:
-		return fmt.Sprintf("Process Info: %s", m.topViewModel.topService)
+		return m.topViewModel.Title()
 	case StatsView:
 		return "Stats"
 	case ComposeProjectListView:
@@ -153,7 +153,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case DindProcessListView:
 		return m.dindProcessListViewModel.render(availableHeight)
 	case TopView:
-		return m.topViewModel.render(m, availableHeight)
+		return m.topViewModel.render(availableHeight)
 	case StatsView:
 		return m.statsViewModel.render(m, availableHeight)
 	case ComposeProjectListView:

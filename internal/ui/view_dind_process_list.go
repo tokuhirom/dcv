@@ -15,10 +15,10 @@ import (
 
 // DindProcessListViewModel manages the state and rendering of the Docker-in-Docker process list view
 type DindProcessListViewModel struct {
-	dindContainers         []models.DockerContainer
-	selectedDindContainer  int
-	currentDindHostName    string // Container name (for display)
-	currentDindContainerID string // Service name (for docker compose exec)
+	dindContainers        []models.DockerContainer
+	selectedDindContainer int
+
+	hostContainer docker.Container
 }
 
 // render renders the dind process list view
@@ -92,8 +92,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 
 // Load switches to the dind process list view and loads containers
 func (m *DindProcessListViewModel) Load(model *Model, hostContainer docker.Container) tea.Cmd {
-	m.currentDindHostName = hostContainer.GetName()
-	m.currentDindContainerID = hostContainer.GetContainerID()
+	m.hostContainer = hostContainer
 	model.SwitchView(DindProcessListView)
 	return m.DoLoad(model)
 }
@@ -102,7 +101,7 @@ func (m *DindProcessListViewModel) Load(model *Model, hostContainer docker.Conta
 func (m *DindProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		containers, err := model.dockerClient.Dind(m.currentDindContainerID).ListContainers()
+		containers, err := model.dockerClient.Dind(m.hostContainer.GetContainerID()).ListContainers()
 		return dindContainersLoadedMsg{
 			containers: containers,
 			err:        err,
@@ -133,7 +132,7 @@ func (m *DindProcessListViewModel) HandleLog(model *Model) tea.Cmd {
 	}
 
 	container := m.dindContainers[m.selectedDindContainer]
-	return model.logViewModel.StreamLogsDind(model, m.currentDindContainerID, container)
+	return model.logViewModel.StreamLogsDind(model, m.hostContainer.GetContainerID(), container)
 }
 
 // HandleBack returns to the compose process list view
@@ -153,7 +152,10 @@ func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 func (m *DindProcessListViewModel) GetContainer(model *Model) docker.Container {
 	if m.selectedDindContainer < len(m.dindContainers) {
 		container := m.dindContainers[m.selectedDindContainer]
-		return docker.NewDindContainer(model.dockerClient, m.currentDindHostName, container.ID, container.Names)
+		return docker.NewDindContainer(model.dockerClient,
+			m.hostContainer.GetContainerID(),
+			m.hostContainer.GetName(),
+			container.ID, container.Names)
 	}
 	return nil
 }
@@ -167,9 +169,13 @@ func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 	}
 
 	return model.inspectViewModel.Inspect(model,
-		fmt.Sprintf("DinD: %s (%s)", m.currentDindHostName, container.GetName()),
+		fmt.Sprintf("DinD: %s (%s)", m.hostContainer.GetName(), container.GetName()),
 		func() ([]byte, error) {
 			return container.Inspect()
 		},
 	)
+}
+
+func (m *DindProcessListViewModel) Title() string {
+	return fmt.Sprintf("Docker in Docker: %s", m.hostContainer.GetName())
 }

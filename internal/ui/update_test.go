@@ -7,6 +7,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/tokuhirom/dcv/internal/docker"
+
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -91,7 +93,7 @@ func TestHandleKeyPress(t *testing.T) {
 			wantView:    DindProcessListView,
 			wantLoading: true,
 			checkFunc: func(t *testing.T, m *Model) {
-				assert.Equal(t, "dind-1", m.dindProcessListViewModel.currentDindHostName)
+				assert.Equal(t, "dind-1", m.dindProcessListViewModel.hostContainer.GetName())
 			},
 		},
 		{
@@ -277,7 +279,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	model := Model{
 		currentView: DindProcessListView,
 		dindProcessListViewModel: DindProcessListViewModel{
-			currentDindHostName: "dind-1",
+			hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-1", "dind-1", "dind-1", "dind-1"),
 			dindContainers: []models.DockerContainer{
 				{ID: "abc123", Names: "test-1"},
 				{ID: "def456", Names: "test-2"},
@@ -298,7 +300,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	m = newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView)
 	assert.Equal(t, "test-2", m.logViewModel.containerName)
-	assert.Equal(t, "dind-1", m.logViewModel.hostContainer)
+	assert.Equal(t, "dind-1", m.logViewModel.hostContainerName)
 	assert.True(t, m.logViewModel.isDindLog)
 	assert.NotNil(t, cmd)
 

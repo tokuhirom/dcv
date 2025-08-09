@@ -149,14 +149,6 @@ func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	return m.DoLoad(model)
 }
 
-func (m *ComposeProcessListViewModel) HandleTop(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.topViewModel.Load(model, m.projectName, container.Service)
-	}
-	return nil
-}
-
 func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
 	container := m.GetContainer(model)
 	if container == nil {
@@ -213,7 +205,8 @@ func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
 func (m *ComposeProcessListViewModel) GetContainer(model *Model) docker.Container {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
-		return docker.NewContainer(model.dockerClient, container.ID, container.Name)
+		return docker.NewContainer(model.dockerClient, container.ID, container.Name,
+			fmt.Sprintf("%s(project:%s)", container.Service, m.projectName))
 	}
 	return nil
 }

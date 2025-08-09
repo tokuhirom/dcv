@@ -18,6 +18,7 @@ func (m *Model) initializeKeyHandlers() {
 	}
 	m.globalKeymap = m.createKeymap(m.globalHandlers)
 
+	// TODO: support following commands in dind view
 	containerOperations := []KeyConfig{
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
@@ -30,6 +31,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"R"}, "restart", m.CmdRestart},
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
 		{[]string{"D"}, "delete", m.CmdDelete},
+		{[]string{"t"}, "top", m.CmdTop},
 	}
 
 	// Docker Container List View
@@ -53,8 +55,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 
-		// TODO: move to containerOperations
-		{[]string{"t"}, "top", m.CmdTop},
 		// TODO: support compose stats
 
 		{[]string{"d"}, "entering DinD", m.CmdDind},
@@ -88,6 +88,18 @@ func (m *Model) initializeKeyHandlers() {
 
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		// TODO: support file browser
+
+		// TODO: support all containerOperations.
+		// TODO: {[]string{"f"}, "browse files", m.CmdFileBrowse},
+		// TODO: {[]string{"!"}, "exec /bin/sh", m.CmdShell},
+		// TODO: {[]string{"a"}, "toggle all", m.CmdToggleAll},
+		// TODO: {[]string{"K"}, "kill", m.CmdKill},
+		// TODO: {[]string{"S"}, "stop", m.CmdStop},
+		// TODO: {[]string{"U"}, "start", m.CmdStart},
+		// TODO: {[]string{"R"}, "restart", m.CmdRestart},
+		// TODO: {[]string{"P"}, "pause/unpause", m.CmdPause},
+		// TODO: {[]string{"D"}, "delete", m.CmdDelete},
+		{[]string{"t"}, "top", m.CmdTop},
 	}
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 

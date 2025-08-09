@@ -1,28 +1,31 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // TopViewModel manages the state and rendering of the process info view
 type TopViewModel struct {
-	topOutput   string
-	topService  string
-	projectName string
+	content string
+
+	container docker.Container
 }
 
 // render renders the top view
-func (m *TopViewModel) render(model *Model, availableHeight int) string {
+func (m *TopViewModel) render(availableHeight int) string {
 	var s strings.Builder
 
-	if m.topOutput == "" {
+	if m.content == "" {
 		s.WriteString("No process information available.\n")
 	} else {
 		// Display the raw top output
-		lines := strings.Split(m.topOutput, "\n")
-		visibleHeight := availableHeight
+		lines := strings.Split(m.content, "\n")
+		visibleHeight := availableHeight - 2
 
 		for i, line := range lines {
 			if i >= visibleHeight {
@@ -36,9 +39,8 @@ func (m *TopViewModel) render(model *Model, availableHeight int) string {
 }
 
 // Load switches to the top view and loads process info
-func (m *TopViewModel) Load(model *Model, projectName string, service string) tea.Cmd {
-	m.topService = service
-	m.projectName = projectName
+func (m *TopViewModel) Load(model *Model, container docker.Container) tea.Cmd {
+	m.container = container
 	model.SwitchView(TopView)
 	return m.DoLoad(model)
 }
@@ -47,11 +49,10 @@ func (m *TopViewModel) Load(model *Model, projectName string, service string) te
 func (m *TopViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 
-	// TODO: support normal containers
 	return func() tea.Msg {
-		output, err := model.dockerClient.Compose(m.projectName).Top(m.topService)
+		output, err := m.container.Top()
 		return topLoadedMsg{
-			output: output,
+			output: string(output),
 			err:    err,
 		}
 	}
@@ -65,5 +66,9 @@ func (m *TopViewModel) HandleBack(model *Model) tea.Cmd {
 
 // Loaded updates the top output after loading
 func (m *TopViewModel) Loaded(output string) {
-	m.topOutput = output
+	m.content = output
+}
+
+func (m *TopViewModel) Title() string {
+	return fmt.Sprintf("Process Info: %s", m.container.Title())
 }
