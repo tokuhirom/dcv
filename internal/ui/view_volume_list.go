@@ -96,7 +96,7 @@ func (m *VolumeListViewModel) HandleDelete(model *Model, force bool) tea.Cmd {
 		args = append(args, "-f")
 	}
 	args = append(args, volume.Name)
-	return model.commandExecutionViewModel.ExecuteCommand(model, args...)
+	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // volume rm is aggressive
 }
 
 // HandleBack returns to the compose process list view

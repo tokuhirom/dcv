@@ -5,7 +5,7 @@ import tea "github.com/charmbracelet/bubbletea"
 // Docker Compose specific commands
 
 func (m *Model) CmdComposeUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.composeProcessListViewModel.HandleCommandExecution(m, "up")
+	return m, m.composeProcessListViewModel.HandleCommandExecution(m, "up", false) // up is not aggressive
 }
 
 func (m *Model) CmdComposeLS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

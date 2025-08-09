@@ -191,19 +191,26 @@ func TestImageListViewModel_Operations(t *testing.T) {
 		model := &Model{
 			loading:                   false,
 			commandExecutionViewModel: CommandExecutionViewModel{},
+			currentView:               ImageListView,
 		}
 		vm := &ImageListViewModel{
 			dockerImages: []models.DockerImage{
-				{ID: "image1"},
-				{ID: "image2"},
+				{ID: "image1", Repository: "test", Tag: "latest"},
+				{ID: "image2", Repository: "test2", Tag: "v1"},
 			},
 			selectedDockerImage: 1,
 		}
 
 		cmd := vm.HandleDelete(model)
 
-		// Command execution doesn't set loading anymore, it switches view
-		assert.NotNil(t, cmd)
+		// HandleDelete now shows confirmation dialog, so returns nil
+		assert.Nil(t, cmd)
+		// Should switch to CommandExecutionView
+		assert.Equal(t, CommandExecutionView, model.currentView)
+		// Should set pending confirmation
+		assert.True(t, model.commandExecutionViewModel.pendingConfirmation)
+		// Should have the correct pending args
+		assert.Equal(t, []string{"rmi", "test2:v1"}, model.commandExecutionViewModel.pendingArgs)
 	})
 
 	t.Run("HandleDelete does nothing when no images", func(t *testing.T) {

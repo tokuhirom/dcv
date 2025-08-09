@@ -11,7 +11,7 @@ import (
 func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "kill")
+		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "kill", true) // kill is aggressive
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleKill(m)
 	default:
@@ -22,7 +22,7 @@ func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "stop")
+		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "stop", true) // stop is aggressive
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleStop(m)
 	default:
@@ -33,7 +33,7 @@ func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "start")
+		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "start", true) // start is aggressive
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleStart(m)
 	default:
@@ -44,7 +44,7 @@ func (m *Model) CmdStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "restart")
+		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "restart", true) // restart is aggressive
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleRestart(m)
 	default:
@@ -64,7 +64,7 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			} else {
 				args = []string{"pause", selected.ID}
 			}
-			return m, m.commandExecutionViewModel.ExecuteCommand(m, args...)
+			return m, m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
 		}
 		return m, nil
 	case DockerContainerListView:
@@ -77,7 +77,7 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 			} else {
 				args = []string{"pause", selected.ID}
 			}
-			return m, m.commandExecutionViewModel.ExecuteCommand(m, args...)
+			return m, m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // pause/unpause is aggressive
 		}
 		return m, nil
 	default:

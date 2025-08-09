@@ -91,7 +91,7 @@ func (m *NetworkListViewModel) HandleDelete(model *Model) tea.Cmd {
 		}
 		// Use CommandExecutionView to show real-time output
 		args := []string{"network", "rm", network.ID}
-		return model.commandExecutionViewModel.ExecuteCommand(model, args...)
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // network rm is aggressive
 	}
 	return nil
 }
