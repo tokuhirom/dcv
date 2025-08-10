@@ -13,6 +13,8 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+var _ ContainerAware = (*DockerContainerListViewModel)(nil)
+
 type DockerContainerListViewModel struct {
 	dockerContainers        []models.DockerContainer
 	selectedDockerContainer int
@@ -165,21 +167,6 @@ func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Contai
 		return docker.NewContainer(container.ID, container.Names, container.Names, container.State)
 	}
 	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for inspection")
-		return nil
-	}
-
-	return model.inspectViewModel.Inspect(model,
-		"container "+container.GetName(),
-		func() ([]byte, error) {
-			args := container.OperationArgs("inspect")
-			return model.dockerClient.ExecuteCaptured(args...)
-		})
 }
 
 func (m *DockerContainerListViewModel) Show(model *Model) tea.Cmd {

@@ -162,7 +162,7 @@ func TestTopViewModel_Title(t *testing.T) {
 		{
 			name:      "dind container title",
 			container: docker.NewDindContainer("host-1", "host-container", "inner-1", "inner-container", "running"),
-			expected:  "Process Info: DinD: host-container (inner-container)",
+			expected:  "Process Info: DinD: inner-container (host-container)",
 		},
 	}
 

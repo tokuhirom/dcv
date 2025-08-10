@@ -32,7 +32,7 @@ func NewDindContainer(hostContainerID, hostContainerName, containerID, name, sta
 	return &Container{
 		containerID:       containerID,
 		name:              name,
-		title:             fmt.Sprintf("DinD: %s (%s)", hostContainerName, name),
+		title:             fmt.Sprintf("DinD: %s (%s)", name, hostContainerName),
 		state:             state,
 		hostContainerName: hostContainerName,
 		hostContainerID:   hostContainerID,

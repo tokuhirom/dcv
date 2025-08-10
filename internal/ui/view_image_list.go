@@ -10,6 +10,8 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+var _ HandleInspectAware = (*ImageListViewModel)(nil)
+
 // ImageListViewModel manages the state and rendering of the Docker image list view
 type ImageListViewModel struct {
 	dockerImages        []models.DockerImage

@@ -341,38 +341,6 @@ func TestDindProcessListViewModel_GetContainer(t *testing.T) {
 	})
 }
 
-func TestDindProcessListViewModel_HandleInspect(t *testing.T) {
-	t.Run("HandleInspect returns nil when no container selected", func(t *testing.T) {
-		model := &Model{
-			dockerClient: docker.NewClient(),
-		}
-		vm := &DindProcessListViewModel{
-			dindContainers:        []models.DockerContainer{},
-			selectedDindContainer: 0,
-		}
-
-		cmd := vm.HandleInspect(model)
-		assert.Nil(t, cmd)
-	})
-
-	t.Run("HandleInspect initiates inspection for selected container", func(t *testing.T) {
-		model := &Model{
-			dockerClient:     docker.NewClient(),
-			inspectViewModel: InspectViewModel{},
-		}
-		vm := &DindProcessListViewModel{
-			dindContainers: []models.DockerContainer{
-				{ID: "abc123", Names: "container-1"},
-			},
-			selectedDindContainer: 0,
-			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
-		}
-
-		cmd := vm.HandleInspect(model)
-		assert.NotNil(t, cmd)
-	})
-}
-
 func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 	t.Run("HandleDelete returns nil when no container selected", func(t *testing.T) {
 		model := &Model{

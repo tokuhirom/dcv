@@ -10,6 +10,8 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+var _ HandleInspectAware = (*NetworkListViewModel)(nil)
+
 // NetworkListViewModel manages the state and rendering of the network list view
 type NetworkListViewModel struct {
 	dockerNetworks        []models.DockerNetwork

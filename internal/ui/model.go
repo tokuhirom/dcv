@@ -272,9 +272,7 @@ func (m *Model) GetCurrentViewModel() interface{} {
 	case CommandActionView:
 		return &m.commandActionViewModel
 	default:
-		slog.Error("GetCurrentViewModel called with unknown view",
-			slog.String("view", m.currentView.String()))
-		return nil
+		panic("GetCurrentViewModel called with unknown view: " + m.currentView.String())
 	}
 }
 
