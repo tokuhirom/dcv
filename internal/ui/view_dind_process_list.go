@@ -80,7 +80,7 @@ func (m *DindProcessListViewModel) Load(model *Model, hostContainer docker.Conta
 func (m *DindProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		containers, err := model.dockerClient.Dind(m.hostContainer.GetContainerID()).ListContainers(m.showAll)
+		containers, err := model.dockerClient.ListDindContainers(m.hostContainer.GetContainerID(), m.showAll)
 		return dindContainersLoadedMsg{
 			containers: containers,
 			err:        err,

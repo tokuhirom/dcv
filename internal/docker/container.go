@@ -140,11 +140,26 @@ func (c DindContainerImpl) OperationArgs(op string) []string {
 }
 
 func (c DindContainerImpl) ListContainerFiles(path string) ([]models.ContainerFile, error) {
-	dindClient := c.client.Dind(c.hostContainerID)
-	return dindClient.ListContainerFiles(c.containerID, path)
+	// Use ls -la to get detailed file information through the host container
+	// docker exec <host-container> docker exec <nested-container> ls -la <path>
+	args := []string{"exec", c.hostContainerID, "docker", "exec", c.containerID, "ls", "-la", path}
+	output, err := ExecuteCaptured(args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files in dind container: %w\nOutput: %s", err, string(output))
+	}
+
+	files := models.ParseLsOutput(string(output))
+	return files, nil
 }
 
 func (c DindContainerImpl) ReadContainerFile(path string) (string, error) {
-	dindClient := c.client.Dind(c.hostContainerID)
-	return dindClient.ReadContainerFile(c.containerID, path)
+	// Read file content through the host container
+	// docker exec <host-container> docker exec <nested-container> cat <path>
+	args := []string{"exec", c.hostContainerID, "docker", "exec", c.containerID, "cat", path}
+	output, err := ExecuteCaptured(args...)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file in dind container: %w\nOutput: %s", err, string(output))
+	}
+
+	return string(output), nil
 }

@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
@@ -51,8 +52,8 @@ func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, 
 	m.hostContainerName = model.dindProcessListViewModel.hostContainer.GetName()
 	m.isDindLog = true
 
-	cmd := model.dockerClient.Dind(dindHostContainerID).Execute(
-		"logs", container.ID, "--tail", "1000", "--timestamps", "--follow")
+	cmd := docker.Execute(append([]string{"exec", dindHostContainerID, "docker"},
+		"logs", container.ID, "--tail", "1000", "--timestamps", "--follow")...)
 	return m.streamLogsReal(cmd)
 }
 
