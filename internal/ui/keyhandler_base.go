@@ -17,5 +17,5 @@ type KeyConfig struct {
 }
 
 type GetContainerAware interface {
-	GetContainer(model *Model) docker.Container
+	GetContainer(model *Model) *docker.Container
 }

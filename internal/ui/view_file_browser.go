@@ -17,7 +17,7 @@ type FileBrowserViewModel struct {
 	containerFiles    []models.ContainerFile
 	selectedFile      int
 	currentPath       string
-	browsingContainer docker.Container // The container we're browsing
+	browsingContainer *docker.Container // The container we're browsing
 	pathHistory       []string
 }
 
@@ -78,7 +78,7 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 	return RenderTable(columns, rows, availableHeight-3, m.selectedFile)
 }
 
-func (m *FileBrowserViewModel) LoadContainer(model *Model, container docker.Container) tea.Cmd {
+func (m *FileBrowserViewModel) LoadContainer(model *Model, container *docker.Container) tea.Cmd {
 	m.browsingContainer = container
 	m.pathHistory = []string{}
 	m.pushHistory("/")

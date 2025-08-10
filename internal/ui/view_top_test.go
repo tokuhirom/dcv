@@ -150,7 +150,7 @@ root         1  0.0  0.1   4188  3380 ?        Ss   10:00   0:00 /bin/sh`
 func TestTopViewModel_Title(t *testing.T) {
 	tests := []struct {
 		name      string
-		container docker.Container
+		container *docker.Container
 		expected  string
 	}{
 		{

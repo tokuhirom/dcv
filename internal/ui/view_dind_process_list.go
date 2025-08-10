@@ -18,7 +18,7 @@ type DindProcessListViewModel struct {
 	selectedDindContainer int
 	showAll               bool
 
-	hostContainer docker.Container
+	hostContainer *docker.Container
 }
 
 // render renders the dind process list view
@@ -70,7 +70,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 }
 
 // Load switches to the dind process list view and loads containers
-func (m *DindProcessListViewModel) Load(model *Model, hostContainer docker.Container) tea.Cmd {
+func (m *DindProcessListViewModel) Load(model *Model, hostContainer *docker.Container) tea.Cmd {
 	m.hostContainer = hostContainer
 	model.SwitchView(DindProcessListView)
 	return m.DoLoad(model)
@@ -134,7 +134,7 @@ func (m *DindProcessListViewModel) Loaded(containers []models.DockerContainer) {
 	}
 }
 
-func (m *DindProcessListViewModel) GetContainer(model *Model) docker.Container {
+func (m *DindProcessListViewModel) GetContainer(model *Model) *docker.Container {
 	if m.selectedDindContainer < len(m.dindContainers) {
 		container := m.dindContainers[m.selectedDindContainer]
 		return docker.NewDindContainer(model.dockerClient,

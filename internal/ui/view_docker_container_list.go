@@ -158,7 +158,7 @@ func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) GetContainer(model *Model) docker.Container {
+func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Container {
 	// Get the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]

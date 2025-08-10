@@ -203,7 +203,7 @@ func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) GetContainer(model *Model) docker.Container {
+func (m *ComposeProcessListViewModel) GetContainer(model *Model) *docker.Container {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
 		return docker.NewContainer(model.dockerClient, container.ID, container.Name,
