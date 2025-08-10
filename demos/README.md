@@ -5,15 +5,18 @@ This directory contains a Docker Compose demo environment for testing and demons
 ## Quick Start
 
 ```bash
+# Make scripts executable (first time only)
+chmod +x start-demo.sh stop-demo.sh
+
 # Start the demo environment
-docker compose up -d
+./start-demo.sh
 
 # View with DCV from the parent directory
 cd ..
 ./dcv
 
 # Stop the demo environment
-docker compose down
+./stop-demo.sh
 ```
 
 ## Services
@@ -30,7 +33,12 @@ The demo environment includes several services to showcase DCV's capabilities:
 - **Service**: `dind`
 - **Image**: `docker:28-dind`
 - **Purpose**: Demonstrates DCV's ability to view containers inside dind containers
-- **Features**: Automatically starts test containers on startup
+- **Features**: Automatically starts lightweight test containers on startup:
+  - `echo-server`: HTTP echo server (hashicorp/http-echo)
+  - `web-server`: Nginx web server (nginx:alpine)
+  - `cache`: Redis cache (redis:alpine)
+  - `worker-1` & `worker-2`: Background workers (alpine)
+  - `healthcheck-demo`: Container with health checks (busybox)
 - **Network**: development (isolated)
 
 ### Logger Service
