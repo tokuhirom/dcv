@@ -39,10 +39,25 @@ func (c *Client) ListComposeContainers(projectName string, showAll bool) ([]mode
 	return ParseComposePSJSON(output)
 }
 
-func (c *Client) Dind(dindHostContainerID string) *DindClient {
-	return &DindClient{
-		hostContainerID: dindHostContainerID,
+// ListDindContainers lists containers inside a Docker-in-Docker container
+func (c *Client) ListDindContainers(hostContainerID string, showAll bool) ([]models.DockerContainer, error) {
+	args := []string{"exec", hostContainerID, "docker", "ps", "--format", "json", "--no-trunc"}
+	if showAll {
+		args = append(args, "--all")
 	}
+
+	output, err := ExecuteCaptured(args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to ExecuteCaptured docker ps: %w\nOutput: %s", err, string(output))
+	}
+
+	// Try to parse as JSON first
+	containers, err := ParsePSJSON(output)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse docker ps JSON output: %w\nOutput: %s", err, string(output))
+	}
+
+	return containers, nil
 }
 
 // ListComposeProjects lists all Docker Compose projects
