@@ -17,14 +17,10 @@ func NewClient() *Client {
 	return &Client{}
 }
 
-// composeClient provides compose-specific operations
-type composeClient struct {
-	projectName string
-}
-
-func (c *composeClient) ListContainers(showAll bool) ([]models.ComposeContainer, error) {
+// ListComposeContainers lists containers for a Docker Compose project
+func (c *Client) ListComposeContainers(projectName string, showAll bool) ([]models.ComposeContainer, error) {
 	// Always use JSON format for reliable parsing
-	args := []string{"compose", "-p", c.projectName, "ps", "--format", "json", "--no-trunc"}
+	args := []string{"compose", "-p", projectName, "ps", "--format", "json", "--no-trunc"}
 	if showAll {
 		args = append(args, "--all")
 	}
@@ -41,12 +37,6 @@ func (c *composeClient) ListContainers(showAll bool) ([]models.ComposeContainer,
 	// Parse JSON format
 	slog.Info("Parsing docker compose ps output")
 	return ParseComposePSJSON(output)
-}
-
-func (c *Client) Compose(projectName string) *composeClient {
-	return &composeClient{
-		projectName: projectName,
-	}
 }
 
 func (c *Client) Dind(dindHostContainerID string) *DindClient {
