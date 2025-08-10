@@ -182,9 +182,10 @@ func TestStatsViewModel_HandleBack(t *testing.T) {
 }
 
 func TestStatsViewModel_Loaded(t *testing.T) {
-	t.Run("Loaded updates stats", func(t *testing.T) {
+	t.Run("Loaded updates stats and resets scroll", func(t *testing.T) {
 		vm := &StatsViewModel{
-			stats: []models.ContainerStats{},
+			stats:   []models.ContainerStats{},
+			scrollY: 5,
 		}
 
 		newStats := []models.ContainerStats{
@@ -208,6 +209,7 @@ func TestStatsViewModel_Loaded(t *testing.T) {
 
 		vm.Loaded(newStats)
 		assert.Equal(t, newStats, vm.stats)
+		assert.Equal(t, 0, vm.scrollY) // Should reset scroll position
 	})
 
 	t.Run("Loaded replaces existing stats", func(t *testing.T) {
@@ -226,6 +228,155 @@ func TestStatsViewModel_Loaded(t *testing.T) {
 		assert.Len(t, vm.stats, 1)
 		assert.Equal(t, "new-container", vm.stats[0].Name)
 	})
+}
+
+func TestStatsViewModel_Sorting(t *testing.T) {
+	vm := &StatsViewModel{
+		stats: []models.ContainerStats{
+			{Name: "container-b", CPUPerc: "50.0%", MemPerc: "20.0%"},
+			{Name: "container-a", CPUPerc: "30.0%", MemPerc: "40.0%"},
+			{Name: "container-c", CPUPerc: "70.0%", MemPerc: "10.0%"},
+		},
+	}
+
+	t.Run("sort by name ascending", func(t *testing.T) {
+		vm.sortField = StatsSortByName
+		vm.sortReverse = false
+		vm.sortStats()
+
+		assert.Equal(t, "container-a", vm.stats[0].Name)
+		assert.Equal(t, "container-b", vm.stats[1].Name)
+		assert.Equal(t, "container-c", vm.stats[2].Name)
+	})
+
+	t.Run("sort by CPU descending", func(t *testing.T) {
+		vm.sortField = StatsSortByCPU
+		vm.sortReverse = true
+		vm.sortStats()
+
+		assert.Equal(t, "70.0%", vm.stats[0].CPUPerc)
+		assert.Equal(t, "50.0%", vm.stats[1].CPUPerc)
+		assert.Equal(t, "30.0%", vm.stats[2].CPUPerc)
+	})
+
+	t.Run("sort by memory descending", func(t *testing.T) {
+		vm.sortField = StatsSortByMem
+		vm.sortReverse = true
+		vm.sortStats()
+
+		assert.Equal(t, "40.0%", vm.stats[0].MemPerc)
+		assert.Equal(t, "20.0%", vm.stats[1].MemPerc)
+		assert.Equal(t, "10.0%", vm.stats[2].MemPerc)
+	})
+}
+
+func TestStatsViewModel_SortHandlers(t *testing.T) {
+	vm := &StatsViewModel{}
+
+	t.Run("HandleSortByCPU defaults to descending", func(t *testing.T) {
+		vm.HandleSortByCPU()
+		assert.Equal(t, StatsSortByCPU, vm.sortField)
+		assert.True(t, vm.sortReverse)
+
+		// Second call toggles
+		vm.HandleSortByCPU()
+		assert.Equal(t, StatsSortByCPU, vm.sortField)
+		assert.False(t, vm.sortReverse)
+	})
+
+	t.Run("HandleSortByMem defaults to descending", func(t *testing.T) {
+		vm.sortField = StatsSortByName
+		vm.HandleSortByMem()
+		assert.Equal(t, StatsSortByMem, vm.sortField)
+		assert.True(t, vm.sortReverse)
+	})
+
+	t.Run("HandleSortByName defaults to ascending", func(t *testing.T) {
+		vm.sortField = StatsSortByCPU
+		vm.HandleSortByName()
+		assert.Equal(t, StatsSortByName, vm.sortField)
+		assert.False(t, vm.sortReverse)
+	})
+
+	t.Run("HandleReverseSort toggles order", func(t *testing.T) {
+		vm.sortReverse = false
+		vm.HandleReverseSort()
+		assert.True(t, vm.sortReverse)
+
+		vm.HandleReverseSort()
+		assert.False(t, vm.sortReverse)
+	})
+}
+
+func TestStatsViewModel_Navigation(t *testing.T) {
+	vm := &StatsViewModel{
+		stats: []models.ContainerStats{
+			{Name: "container-1"},
+			{Name: "container-2"},
+			{Name: "container-3"},
+		},
+		scrollY: 1,
+	}
+
+	t.Run("HandleUp scrolls up", func(t *testing.T) {
+		vm.HandleUp()
+		assert.Equal(t, 0, vm.scrollY)
+
+		// Shouldn't go below 0
+		vm.HandleUp()
+		assert.Equal(t, 0, vm.scrollY)
+	})
+
+	t.Run("HandleDown scrolls down", func(t *testing.T) {
+		vm.scrollY = 0
+		vm.HandleDown()
+		assert.Equal(t, 1, vm.scrollY)
+
+		vm.HandleDown()
+		assert.Equal(t, 2, vm.scrollY)
+
+		// Shouldn't go beyond last container
+		vm.HandleDown()
+		assert.Equal(t, 2, vm.scrollY)
+	})
+}
+
+func TestStatsSortField_String(t *testing.T) {
+	tests := []struct {
+		field    StatsSortField
+		expected string
+	}{
+		{StatsSortByName, "NAME"},
+		{StatsSortByCPU, "CPU%"},
+		{StatsSortByMem, "MEM%"},
+		{StatsSortField(999), "NAME"}, // Default case
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expected, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.field.String())
+		})
+	}
+}
+
+func TestParsePercentage(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected float64
+	}{
+		{"25.5%", 25.5},
+		{"100%", 100.0},
+		{"0.5%", 0.5},
+		{"", 0.0},
+		{"invalid", 0.0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := models.ParsePercentage(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }
 
 func TestStatsViewModel_CPUColoring(t *testing.T) {

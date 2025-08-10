@@ -92,6 +92,14 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Top View
 	m.topViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "scroll up", m.CmdUp},
+		{[]string{"down", "j"}, "scroll down", m.CmdDown},
+		{[]string{"c"}, "sort by CPU", m.CmdSortByCPU},
+		{[]string{"m"}, "sort by memory", m.CmdSortByMem},
+		{[]string{"p"}, "sort by PID", m.CmdSortByPID},
+		{[]string{"t"}, "sort by time", m.CmdSortByTime},
+		{[]string{"n"}, "sort by name", m.CmdSortByCommand},
+		{[]string{"R"}, "reverse sort", m.CmdReverseSort},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
@@ -100,6 +108,12 @@ func (m *Model) initializeKeyHandlers() {
 
 	// Stats View
 	m.statsViewHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "scroll up", m.CmdUp},
+		{[]string{"down", "j"}, "scroll down", m.CmdDown},
+		{[]string{"c"}, "sort by CPU", m.CmdSortByCPU},
+		{[]string{"m"}, "sort by memory", m.CmdSortByMem},
+		{[]string{"n"}, "sort by name", m.CmdSortByCommand},
+		{[]string{"R"}, "reverse sort", m.CmdReverseSort},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},

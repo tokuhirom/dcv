@@ -1,56 +1,66 @@
 package ui
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/models"
 )
 
 func TestTopViewModel_Rendering(t *testing.T) {
 	tests := []struct {
-		name      string
-		viewModel TopViewModel
-		height    int
-		expected  []string
+		name        string
+		viewModel   TopViewModel
+		height      int
+		expected    []string
+		notExpected []string
 	}{
 		{
 			name: "displays no process info message when empty",
 			viewModel: TopViewModel{
-				content: "",
+				processes: nil,
 			},
 			height:   20,
 			expected: []string{"No process information available"},
 		},
 		{
-			name: "displays process information",
+			name: "displays process information with stats",
 			viewModel: TopViewModel{
-				content: `USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root         1  0.0  0.1   4188  3380 ?        Ss   10:00   0:00 /bin/sh
-root        42  0.5  1.2  45678 12345 ?        S    10:01   0:15 node app.js
-www-data   123  0.1  0.5  23456  5678 ?        S    10:02   0:05 nginx`,
+				processes: []models.Process{
+					{UID: "root", PID: "1", PPID: "0", CPUPerc: 5.5, MemPerc: 2.3, STIME: "10:00", TIME: "00:01:30", CMD: "/bin/sh"},
+					{UID: "www", PID: "42", PPID: "1", CPUPerc: 25.0, MemPerc: 10.5, STIME: "10:01", TIME: "00:05:00", CMD: "nginx"},
+				},
+				containerStats: &models.ContainerStats{
+					CPUPerc:  "30.5%",
+					MemUsage: "512MiB / 4GiB",
+					MemPerc:  "12.8%",
+					PIDs:     "10",
+				},
+				sortField:   SortByCPU,
+				sortReverse: true,
 			},
 			height: 20,
 			expected: []string{
-				"USER",
-				"PID",
-				"%CPU",
-				"COMMAND",
-				"root",
-				"/bin/sh",
-				"node app.js",
+				"CPU", "Memory", "PIDs", // Stats header
+				"Sort: CPU%", "(desc)", // Sort info
+				"PID", "CPU%", "MEM%", "COMMAND", // Column headers
+				"root", "/bin/sh",
 				"nginx",
 			},
 		},
 		{
-			name: "truncates content when too tall",
+			name: "displays sorting shortcuts",
 			viewModel: TopViewModel{
-				content: strings.Repeat("Line\n", 50),
+				processes: []models.Process{
+					{PID: "1", CMD: "test"},
+				},
 			},
-			height:   10, // Only 8 lines visible (height - 2)
-			expected: []string{"Line"},
+			height: 20,
+			expected: []string{
+				"[c]PU [m]EM [p]ID [t]IME [n]ame [r]everse",
+			},
 		},
 	}
 
@@ -62,10 +72,8 @@ www-data   123  0.1  0.5  23456  5678 ?        S    10:02   0:05 nginx`,
 				assert.Contains(t, result, expected, "Expected to find '%s' in output", expected)
 			}
 
-			// Check truncation
-			if tt.name == "truncates content when too tall" {
-				lines := strings.Split(strings.TrimSpace(result), "\n")
-				assert.LessOrEqual(t, len(lines), tt.height-2, "Should not exceed visible height")
+			for _, notExpected := range tt.notExpected {
+				assert.NotContains(t, result, notExpected, "Should not find '%s' in output", notExpected)
 			}
 		})
 	}
@@ -120,26 +128,25 @@ func TestTopViewModel_HandleBack(t *testing.T) {
 }
 
 func TestTopViewModel_Loaded(t *testing.T) {
-	t.Run("Loaded updates content", func(t *testing.T) {
+	t.Run("Loaded updates processes and stats", func(t *testing.T) {
 		vm := &TopViewModel{
-			content: "",
+			scrollY: 5,
 		}
 
-		output := `USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root         1  0.0  0.1   4188  3380 ?        Ss   10:00   0:00 /bin/sh`
-
-		vm.Loaded(output)
-		assert.Equal(t, output, vm.content)
-	})
-
-	t.Run("Loaded replaces existing content", func(t *testing.T) {
-		vm := &TopViewModel{
-			content: "old content",
+		processes := []models.Process{
+			{PID: "100", CMD: "process1"},
+			{PID: "200", CMD: "process2"},
+		}
+		stats := &models.ContainerStats{
+			Name:    "test-container",
+			CPUPerc: "25.5%",
+			MemPerc: "10.2%",
 		}
 
-		newOutput := "new process info"
-		vm.Loaded(newOutput)
-		assert.Equal(t, newOutput, vm.content)
+		vm.Loaded(processes, stats)
+		assert.Equal(t, processes, vm.processes)
+		assert.Equal(t, stats, vm.containerStats)
+		assert.Equal(t, 0, vm.scrollY) // Should reset scroll position
 	})
 }
 
@@ -177,41 +184,127 @@ func TestTopViewModel_Title(t *testing.T) {
 	}
 }
 
-func TestTopViewModel_Integration(t *testing.T) {
-	t.Run("Complete flow from load to display", func(t *testing.T) {
-		// Setup
-		model := &Model{
-			dockerClient: docker.NewClient(),
-			currentView:  ComposeProcessListView,
-			loading:      false,
-			Height:       20,
-		}
-		vm := &TopViewModel{}
-		container := docker.NewContainer("test-container", "web-1", "web-1 (test-project)", "running")
+func TestTopViewModel_ParseProcesses(t *testing.T) {
+	vm := &TopViewModel{}
 
-		// Load
-		cmd := vm.Load(model, container)
-		assert.NotNil(t, cmd)
-		assert.Equal(t, TopView, model.currentView)
+	t.Run("parses docker top output correctly", func(t *testing.T) {
+		output := `UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                1234                1000                5                   10:00               ?                   00:01:30            /usr/bin/process1
+www-data            5678                1234                10                  10:05               pts/0               00:00:45            nginx: worker process
+999                 9012                1234                2                   10:10               ?                   00:02:15            redis-server *:6379`
 
-		// Simulate loading completion
-		output := `USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root         1  0.0  0.1   4188  3380 ?        Ss   10:00   0:00 /bin/sh`
-		vm.Loaded(output)
+		processes := vm.parseProcesses(output)
 
-		// Render
-		rendered := vm.render(model.Height)
-		assert.Contains(t, rendered, "USER")
-		assert.Contains(t, rendered, "root")
-		assert.Contains(t, rendered, "/bin/sh")
+		assert.Len(t, processes, 3)
 
-		// Check title
-		title := vm.Title()
-		assert.Equal(t, "Process Info: web-1 (test-project)", title)
+		// Check first process
+		assert.Equal(t, "root", processes[0].UID)
+		assert.Equal(t, "1234", processes[0].PID)
+		assert.Equal(t, "1000", processes[0].PPID)
+		assert.Equal(t, "5", processes[0].C)
+		assert.Equal(t, "10:00", processes[0].STIME)
+		assert.Equal(t, "?", processes[0].TTY)
+		assert.Equal(t, "00:01:30", processes[0].TIME)
+		assert.Equal(t, "/usr/bin/process1", processes[0].CMD)
+	})
 
-		// Go back
-		cmd = vm.HandleBack(model)
-		assert.Nil(t, cmd)
-		assert.Equal(t, ComposeProcessListView, model.currentView)
+	t.Run("handles empty output", func(t *testing.T) {
+		processes := vm.parseProcesses("")
+		assert.Nil(t, processes)
+	})
+}
+
+func TestTopViewModel_Sorting(t *testing.T) {
+	vm := &TopViewModel{
+		processes: []models.Process{
+			{PID: "100", CMD: "process1", CPUPerc: 50.0, MemPerc: 20.0, TIME: "00:10:00"},
+			{PID: "200", CMD: "process2", CPUPerc: 30.0, MemPerc: 40.0, TIME: "00:05:00"},
+			{PID: "150", CMD: "process3", CPUPerc: 70.0, MemPerc: 10.0, TIME: "00:15:00"},
+		},
+	}
+
+	t.Run("sort by CPU descending", func(t *testing.T) {
+		vm.sortField = SortByCPU
+		vm.sortReverse = true
+		vm.sortProcesses()
+
+		assert.Equal(t, 70.0, vm.processes[0].CPUPerc)
+		assert.Equal(t, 50.0, vm.processes[1].CPUPerc)
+		assert.Equal(t, 30.0, vm.processes[2].CPUPerc)
+	})
+
+	t.Run("sort by memory descending", func(t *testing.T) {
+		vm.sortField = SortByMem
+		vm.sortReverse = true
+		vm.sortProcesses()
+
+		assert.Equal(t, 40.0, vm.processes[0].MemPerc)
+		assert.Equal(t, 20.0, vm.processes[1].MemPerc)
+		assert.Equal(t, 10.0, vm.processes[2].MemPerc)
+	})
+}
+
+func TestTopViewModel_SortHandlers(t *testing.T) {
+	vm := &TopViewModel{}
+
+	t.Run("HandleSortByCPU toggles correctly", func(t *testing.T) {
+		// First call sets CPU sort with reverse=true
+		vm.HandleSortByCPU()
+		assert.Equal(t, SortByCPU, vm.sortField)
+		assert.True(t, vm.sortReverse)
+
+		// Second call toggles reverse
+		vm.HandleSortByCPU()
+		assert.Equal(t, SortByCPU, vm.sortField)
+		assert.False(t, vm.sortReverse)
+	})
+
+	t.Run("HandleSortByMem defaults to descending", func(t *testing.T) {
+		vm.sortField = SortByPID
+		vm.HandleSortByMem()
+		assert.Equal(t, SortByMem, vm.sortField)
+		assert.True(t, vm.sortReverse)
+	})
+
+	t.Run("HandleReverseSort toggles order", func(t *testing.T) {
+		vm.sortReverse = false
+		vm.HandleReverseSort()
+		assert.True(t, vm.sortReverse)
+
+		vm.HandleReverseSort()
+		assert.False(t, vm.sortReverse)
+	})
+}
+
+func TestTopViewModel_Navigation(t *testing.T) {
+	vm := &TopViewModel{
+		processes: []models.Process{
+			{PID: "100"},
+			{PID: "200"},
+			{PID: "300"},
+		},
+		scrollY: 1,
+	}
+
+	t.Run("HandleUp scrolls up", func(t *testing.T) {
+		vm.HandleUp()
+		assert.Equal(t, 0, vm.scrollY)
+
+		// Shouldn't go below 0
+		vm.HandleUp()
+		assert.Equal(t, 0, vm.scrollY)
+	})
+
+	t.Run("HandleDown scrolls down", func(t *testing.T) {
+		vm.scrollY = 0
+		vm.HandleDown()
+		assert.Equal(t, 1, vm.scrollY)
+
+		vm.HandleDown()
+		assert.Equal(t, 2, vm.scrollY)
+
+		// Shouldn't go beyond last process
+		vm.HandleDown()
+		assert.Equal(t, 2, vm.scrollY)
 	})
 }

@@ -34,6 +34,12 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProjectListViewModel.HandleUp(m)
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleUp()
+	case TopView:
+		m.topViewModel.HandleUp()
+		return m, nil
+	case StatsView:
+		m.statsViewModel.HandleUp()
+		return m, nil
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleUp()
 	case CommandActionView:
@@ -75,6 +81,12 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProjectListViewModel.HandleDown(m)
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleDown()
+	case TopView:
+		m.topViewModel.HandleDown()
+		return m, nil
+	case StatsView:
+		m.statsViewModel.HandleDown()
+		return m, nil
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleDown(m)
 	case CommandActionView:

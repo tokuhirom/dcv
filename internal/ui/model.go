@@ -378,8 +378,9 @@ type commandExecutedMsg struct {
 }
 
 type topLoadedMsg struct {
-	output string
-	err    error
+	processes []models.Process
+	stats     *models.ContainerStats
+	err       error
 }
 
 type statsLoadedMsg struct {
