@@ -17,8 +17,34 @@ func NewClient() *Client {
 	return &Client{}
 }
 
-func (c *Client) Compose(projectName string) *ComposeClient {
-	return &ComposeClient{
+// composeClient provides compose-specific operations
+type composeClient struct {
+	projectName string
+}
+
+func (c *composeClient) ListContainers(showAll bool) ([]models.ComposeContainer, error) {
+	// Always use JSON format for reliable parsing
+	args := []string{"compose", "-p", c.projectName, "ps", "--format", "json", "--no-trunc"}
+	if showAll {
+		args = append(args, "--all")
+	}
+
+	output, err := ExecuteCaptured(args...)
+	if err != nil {
+		// Check if it's just empty (no containers)
+		if len(output) == 0 || string(output) == "" {
+			return []models.ComposeContainer{}, nil
+		}
+		return nil, fmt.Errorf("failed to ExecuteCaptured docker compose ps: %w\nOutput: %s", err, string(output))
+	}
+
+	// Parse JSON format
+	slog.Info("Parsing docker compose ps output")
+	return ParseComposePSJSON(output)
+}
+
+func (c *Client) Compose(projectName string) *composeClient {
+	return &composeClient{
 		projectName: projectName,
 	}
 }
