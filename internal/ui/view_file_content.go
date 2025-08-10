@@ -12,7 +12,7 @@ import (
 )
 
 type FileContentViewModel struct {
-	container   docker.Container
+	container   *docker.Container
 	content     string
 	contentPath string
 	scrollY     int
@@ -31,7 +31,7 @@ func (m *FileContentViewModel) render(model *Model) string {
 	return v.View()
 }
 
-func (m *FileContentViewModel) LoadContainer(model *Model, container docker.Container, path string) tea.Cmd {
+func (m *FileContentViewModel) LoadContainer(model *Model, container *docker.Container, path string) tea.Cmd {
 	model.SwitchView(FileContentView)
 	model.loading = true
 	m.scrollY = 0

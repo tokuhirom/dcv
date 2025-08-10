@@ -13,7 +13,7 @@ import (
 type TopViewModel struct {
 	content string
 
-	container docker.Container
+	container *docker.Container
 }
 
 // render renders the top view
@@ -39,7 +39,7 @@ func (m *TopViewModel) render(availableHeight int) string {
 }
 
 // Load switches to the top view and loads process info
-func (m *TopViewModel) Load(model *Model, container docker.Container) tea.Cmd {
+func (m *TopViewModel) Load(model *Model, container *docker.Container) tea.Cmd {
 	m.container = container
 	model.SwitchView(TopView)
 	return m.DoLoad(model)

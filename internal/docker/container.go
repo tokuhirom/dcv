@@ -4,102 +4,71 @@ import (
 	"fmt"
 )
 
-type Container interface {
-	GetName() string
-	GetContainerID() string
-	GetState() string
-
-	// Title returns a formatted title string for UI display.
-	// For regular containers: returns the container name or title
-	// For Compose containers: includes project name (e.g., "project-name/service-name")
-	// For DinD containers: includes host container info (e.g., "DinD: host-container (nested-container)")
-	Title() string
-
-	// OperationArgs returns Docker command arguments for operations on this container.
-	// For regular containers: [cmd, containerID, extraArgs...]
-	// For DinD containers: [exec, hostID, docker, cmd, containerID, extraArgs...]
-	// For exec operations: pass "exec" as cmd and the actual command as extraArgs
-	OperationArgs(cmd string, extraArgs ...string) []string
-}
-
-type ContainerImpl struct {
+// Container represents a Docker container with command execution capabilities
+type Container struct {
 	containerID string
 	name        string
 	title       string
 	state       string
+	// For DinD containers
+	hostContainerName string
+	hostContainerID   string
+	isDind            bool
 }
 
-func NewContainer(client *Client, containerID string, name string, title string, state string) Container {
-	return ContainerImpl{
+// NewContainer creates a regular container
+func NewContainer(client *Client, containerID string, name string, title string, state string) *Container {
+	return &Container{
 		containerID: containerID,
 		name:        name,
 		title:       title,
-		state:       state}
-}
-
-func (c ContainerImpl) ContainerID() string {
-	return c.containerID
-}
-
-func (c ContainerImpl) GetName() string {
-	return c.name
-}
-
-func (c ContainerImpl) GetContainerID() string {
-	return c.containerID
-}
-
-func (c ContainerImpl) GetState() string {
-	return c.state
-}
-
-func (c ContainerImpl) Title() string {
-	return c.title
-}
-
-func (c ContainerImpl) OperationArgs(cmd string, extraArgs ...string) []string {
-	args := []string{cmd, c.containerID}
-	return append(args, extraArgs...)
-}
-
-type DindContainerImpl struct {
-	hostContainerName string
-	hostContainerID   string
-	containerID       string
-	name              string
-	state             string
-}
-
-func NewDindContainer(client *Client, hostContainerID, hostContainerName, containerID, name, state string) Container {
-	return DindContainerImpl{
-		hostContainerID:   hostContainerID,
-		hostContainerName: hostContainerName,
-		containerID:       containerID,
-		name:              name,
-		state:             state,
+		state:       state,
+		isDind:      false,
 	}
 }
 
-func (c DindContainerImpl) GetContainerID() string {
+// NewDindContainer creates a Docker-in-Docker container
+func NewDindContainer(client *Client, hostContainerID, hostContainerName, containerID, name, state string) *Container {
+	return &Container{
+		containerID:       containerID,
+		name:              name,
+		title:             fmt.Sprintf("DinD: %s (%s)", hostContainerName, name),
+		state:             state,
+		hostContainerName: hostContainerName,
+		hostContainerID:   hostContainerID,
+		isDind:            true,
+	}
+}
+
+func (c *Container) ContainerID() string {
 	return c.containerID
 }
 
-func (c DindContainerImpl) GetState() string {
-	return c.state
-}
-
-func (c DindContainerImpl) GetName() string {
+func (c *Container) GetName() string {
 	return c.name
 }
 
-func (c DindContainerImpl) Title() string {
-	return fmt.Sprintf("DinD: %s (%s)", c.hostContainerName, c.name)
+func (c *Container) GetContainerID() string {
+	return c.containerID
 }
 
-func (c DindContainerImpl) OperationArgs(op string, extraArgs ...string) []string {
-	// For DinD containers, we need to exec into the host container first,
-	// then run docker commands inside it
-	// docker exec <host> docker <op> <container> <extraArgs>
-	args := []string{"exec", c.hostContainerID, "docker", op, c.containerID}
+func (c *Container) GetState() string {
+	return c.state
+}
+
+func (c *Container) Title() string {
+	return c.title
+}
+
+func (c *Container) OperationArgs(cmd string, extraArgs ...string) []string {
+	if c.isDind {
+		// For DinD containers, we need to exec into the host container first,
+		// then run docker commands inside it
+		// docker exec <host> docker <cmd> <container> <extraArgs>
+		args := []string{"exec", c.hostContainerID, "docker", cmd, c.containerID}
+		return append(args, extraArgs...)
+	}
+	// For regular containers: [cmd, containerID, extraArgs...]
+	args := []string{cmd, c.containerID}
 	return append(args, extraArgs...)
 }
