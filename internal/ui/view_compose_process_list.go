@@ -222,7 +222,8 @@ func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 	return model.inspectViewModel.Inspect(model,
 		fmt.Sprintf("compose process: %s(%s)", container.GetName(), m.projectName),
 		func() ([]byte, error) {
-			return container.Inspect()
+			args := container.OperationArgs("inspect")
+			return model.dockerClient.ExecuteCaptured(args...)
 		})
 }
 

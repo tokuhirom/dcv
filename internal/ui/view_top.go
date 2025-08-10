@@ -50,7 +50,8 @@ func (m *TopViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 
 	return func() tea.Msg {
-		output, err := m.container.Top()
+		args := m.container.OperationArgs("top")
+		output, err := model.dockerClient.ExecuteCaptured(args...)
 		return topLoadedMsg{
 			output: string(output),
 			err:    err,
