@@ -130,15 +130,6 @@ func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
-	// TODO: abstract this to a common interface for all container types
-	container := m.GetContainer(model)
-	if container != nil {
-		return model.fileBrowserViewModel.LoadContainer(model, container)
-	}
-	return nil
-}
-
 func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Container {
 	// Get the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {

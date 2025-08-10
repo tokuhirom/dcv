@@ -75,7 +75,7 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 		rows = append(rows, table.Row{file.Permissions, name})
 	}
 
-	return RenderTable(columns, rows, availableHeight-3, m.selectedFile)
+	return RenderTable(columns, rows, availableHeight, m.selectedFile)
 }
 
 func (m *FileBrowserViewModel) LoadContainer(model *Model, container *docker.Container) tea.Cmd {

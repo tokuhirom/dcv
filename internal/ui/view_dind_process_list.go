@@ -157,17 +157,6 @@ func (m *DindProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
 	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // rm is aggressive
 }
 
-func (m *DindProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
-	// TODO: abstract this into a common method for all process list views
-	container := m.GetContainer(model)
-	if container != nil {
-		return model.fileBrowserViewModel.LoadContainer(model, container)
-	}
-	slog.Error("Failed to get selected container for file browser",
-		slog.Any("error", fmt.Errorf("no container selected")))
-	return nil
-}
-
 func (m *DindProcessListViewModel) Title() string {
 	if m.showAll {
 		return fmt.Sprintf("Docker in Docker: %s (all)", m.hostContainer.GetName())
