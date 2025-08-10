@@ -279,7 +279,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	model := Model{
 		currentView: DindProcessListView,
 		dindProcessListViewModel: DindProcessListViewModel{
-			hostContainer: docker.NewDindContainer(docker.NewClient(), "dind-1", "dind-1", "dind-1", "dind-1", "running"),
+			hostContainer: docker.NewDindContainer("dind-1", "dind-1", "dind-1", "dind-1", "running"),
 			dindContainers: []models.DockerContainer{
 				{ID: "abc123", Names: "test-1"},
 				{ID: "def456", Names: "test-2"},
@@ -424,7 +424,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 func TestFileBrowserParentDirectory(t *testing.T) {
 	// Test 'u' key to go to parent directory
 	dockerClient := docker.NewClient()
-	container := docker.NewContainer(dockerClient, "test-container", "test", "test", "running")
+	container := docker.NewContainer("test-container", "test", "test", "running")
 	model := Model{
 		currentView:  FileBrowserView,
 		dockerClient: dockerClient,

@@ -162,7 +162,7 @@ func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Contai
 	// Get the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
-		return docker.NewContainer(model.dockerClient, container.ID, container.Names, container.Names, container.State)
+		return docker.NewContainer(container.ID, container.Names, container.Names, container.State)
 	}
 	return nil
 }

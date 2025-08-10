@@ -298,7 +298,7 @@ func TestFileBrowserViewModel_FileOperations(t *testing.T) {
 			},
 			selectedFile:      0,
 			currentPath:       "/usr",
-			browsingContainer: docker.NewContainer(model.dockerClient, "container123", "test-container", "test-container", "running"),
+			browsingContainer: docker.NewContainer("container123", "test-container", "test-container", "running"),
 		}
 
 		cmd := vm.HandleOpenFileOrDirectory(model)
@@ -355,7 +355,7 @@ func TestFileBrowserViewModel_LoadContainer(t *testing.T) {
 			loading:      false,
 		}
 		vm := &FileBrowserViewModel{}
-		container := docker.NewContainer(model.dockerClient, "container123", "test-container", "test-container", "running")
+		container := docker.NewContainer("container123", "test-container", "test-container", "running")
 
 		cmd := vm.LoadContainer(model, container)
 		assert.NotNil(t, cmd)
@@ -435,8 +435,7 @@ func TestFileBrowserViewModel_Loaded(t *testing.T) {
 }
 
 func TestFileBrowserViewModel_Title(t *testing.T) {
-	dockerClient := docker.NewClient()
-	container := docker.NewContainer(dockerClient, "test123", "test-container", "test-container", "running")
+	container := docker.NewContainer("test123", "test-container", "test-container", "running")
 	vm := &FileBrowserViewModel{
 		browsingContainer: container,
 		currentPath:       "/usr/local",
@@ -451,7 +450,7 @@ func TestFileBrowserViewModel_DoLoad(t *testing.T) {
 		model := &Model{
 			dockerClient: docker.NewClient(),
 		}
-		container := docker.NewContainer(model.dockerClient, "container123", "test", "test", "running")
+		container := docker.NewContainer("container123", "test", "test", "running")
 		vm := &FileBrowserViewModel{
 			browsingContainer: container,
 			currentPath:       "/usr/local",

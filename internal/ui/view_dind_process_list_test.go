@@ -21,9 +21,7 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 			name: "displays no containers message when empty",
 			viewModel: DindProcessListViewModel{
 				dindContainers: []models.DockerContainer{},
-				hostContainer: docker.NewDindContainer(
-					docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-				),
+				hostContainer:  docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 			},
 			height:   20,
 			expected: []string{"No containers running inside this dind container"},
@@ -48,9 +46,7 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 					},
 				},
 				selectedDindContainer: 0,
-				hostContainer: docker.NewDindContainer(
-					docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-				),
+				hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 			},
 			height: 20,
 			expected: []string{
@@ -77,9 +73,7 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 					},
 				},
 				selectedDindContainer: 0,
-				hostContainer: docker.NewDindContainer(
-					docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-				),
+				hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 			},
 			height:   20,
 			expected: []string{"very-long-registry-url.exa"},
@@ -149,9 +143,7 @@ func TestDindProcessListViewModel_Load(t *testing.T) {
 			loading:      false,
 		}
 		vm := &DindProcessListViewModel{}
-		hostContainer := docker.NewDindContainer(
-			docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-		)
+		hostContainer := docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running")
 
 		cmd := vm.Load(model, hostContainer)
 		assert.NotNil(t, cmd)
@@ -168,10 +160,8 @@ func TestDindProcessListViewModel_ToggleAll(t *testing.T) {
 			loading:      false,
 		}
 		vm := &DindProcessListViewModel{
-			showAll: false,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			showAll:       false,
+			hostContainer: docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		// Test direct method call
@@ -197,10 +187,8 @@ func TestDindProcessListViewModel_ToggleAll(t *testing.T) {
 			loading:      false,
 		}
 		model.dindProcessListViewModel = DindProcessListViewModel{
-			showAll: false,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			showAll:       false,
+			hostContainer: docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 		model.initializeKeyHandlers()
 
@@ -251,9 +239,7 @@ func TestDindProcessListViewModel_HandleLog(t *testing.T) {
 	})
 
 	t.Run("HandleLog initiates log streaming for selected container", func(t *testing.T) {
-		hostContainer := docker.NewDindContainer(
-			docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-		)
+		hostContainer := docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running")
 		model := &Model{
 			dockerClient: docker.NewClient(),
 			logViewModel: LogViewModel{},
@@ -333,9 +319,7 @@ func TestDindProcessListViewModel_GetContainer(t *testing.T) {
 				{ID: "def456", Names: "container-2"},
 			},
 			selectedDindContainer: 1,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		container := vm.GetContainer(model)
@@ -381,9 +365,7 @@ func TestDindProcessListViewModel_HandleInspect(t *testing.T) {
 				{ID: "abc123", Names: "container-1"},
 			},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		cmd := vm.HandleInspect(model)
@@ -415,9 +397,7 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 				{ID: "abc123", Names: "running-container", State: "running"},
 			},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		cmd := vm.HandleDelete(model)
@@ -437,9 +417,7 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 				{ID: "abc123", Names: "stopped-container", State: "exited"},
 			},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		cmd := vm.HandleDelete(model)
@@ -460,9 +438,7 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 				{ID: "abc123", Names: "stopped-container", State: "exited"},
 			},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 		model.initializeKeyHandlers()
 
@@ -485,9 +461,7 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 				{ID: "abc123", Names: "running-container", State: "running"},
 			},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 		model.initializeKeyHandlers()
 
@@ -508,9 +482,7 @@ func TestDindProcessListViewModel_HandleShell(t *testing.T) {
 		vm := &DindProcessListViewModel{
 			dindContainers:        []models.DockerContainer{},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		cmd := vm.HandleShell(model)
@@ -526,9 +498,7 @@ func TestDindProcessListViewModel_HandleShell(t *testing.T) {
 				{ID: "1", Names: "container-1"},
 			},
 			selectedDindContainer: 5, // Out of bounds
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		cmd := vm.HandleShell(model)
@@ -545,9 +515,7 @@ func TestDindProcessListViewModel_HandleShell(t *testing.T) {
 				{ID: "def456", Names: "container-2"},
 			},
 			selectedDindContainer: 1,
-			hostContainer: docker.NewContainer(
-				docker.NewClient(), "host-1", "host-container", "test", "running",
-			),
+			hostContainer:         docker.NewContainer("host-1", "host-container", "test", "running"),
 		}
 
 		cmd := vm.HandleShell(model)
@@ -572,9 +540,7 @@ func TestDindProcessListViewModel_HandleShell(t *testing.T) {
 				{ID: "abc123", Names: "container-1", State: "running"},
 			},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewContainer(
-				docker.NewClient(), "host-1", "host-container", "test", "running",
-			),
+			hostContainer:         docker.NewContainer("host-1", "host-container", "test", "running"),
 		}
 		model.initializeKeyHandlers()
 
@@ -600,9 +566,7 @@ func TestDindProcessListViewModel_HandleFileBrowse(t *testing.T) {
 		vm := &DindProcessListViewModel{
 			dindContainers:        []models.DockerContainer{},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewContainer(
-				docker.NewClient(), "host-1", "host-container", "test", "running",
-			),
+			hostContainer:         docker.NewContainer("host-1", "host-container", "test", "running"),
 		}
 
 		cmd := vm.HandleFileBrowse(model)
@@ -618,9 +582,7 @@ func TestDindProcessListViewModel_HandleFileBrowse(t *testing.T) {
 				{ID: "1", Names: "container-1"},
 			},
 			selectedDindContainer: 5, // Out of bounds
-			hostContainer: docker.NewContainer(
-				docker.NewClient(), "host-1", "host-container", "test", "running",
-			),
+			hostContainer:         docker.NewContainer("host-1", "host-container", "test", "running"),
 		}
 
 		cmd := vm.HandleFileBrowse(model)
@@ -638,9 +600,7 @@ func TestDindProcessListViewModel_HandleFileBrowse(t *testing.T) {
 				{ID: "def456", Names: "container-2"},
 			},
 			selectedDindContainer: 1,
-			hostContainer: docker.NewContainer(
-				docker.NewClient(), "host-1", "host-container", "test", "running",
-			),
+			hostContainer:         docker.NewContainer("host-1", "host-container", "test", "running"),
 		}
 
 		cmd := vm.HandleFileBrowse(model)
@@ -660,9 +620,7 @@ func TestDindProcessListViewModel_HandleFileBrowse(t *testing.T) {
 				{ID: "abc123", Names: "container-1", State: "running"},
 			},
 			selectedDindContainer: 0,
-			hostContainer: docker.NewContainer(
-				docker.NewClient(), "host-1", "host-container", "test", "running",
-			),
+			hostContainer:         docker.NewContainer("host-1", "host-container", "test", "running"),
 		}
 		model.initializeKeyHandlers()
 
@@ -675,10 +633,8 @@ func TestDindProcessListViewModel_HandleFileBrowse(t *testing.T) {
 func TestDindProcessListViewModel_Title(t *testing.T) {
 	t.Run("normal title without all", func(t *testing.T) {
 		vm := &DindProcessListViewModel{
-			showAll: false,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "my-dind-container", "container-1", "test", "running",
-			),
+			showAll:       false,
+			hostContainer: docker.NewDindContainer("host-1", "my-dind-container", "container-1", "test", "running"),
 		}
 
 		title := vm.Title()
@@ -687,10 +643,8 @@ func TestDindProcessListViewModel_Title(t *testing.T) {
 
 	t.Run("title with all indicator when showAll is true", func(t *testing.T) {
 		vm := &DindProcessListViewModel{
-			showAll: true,
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "my-dind-container", "container-1", "test", "running",
-			),
+			showAll:       true,
+			hostContainer: docker.NewDindContainer("host-1", "my-dind-container", "container-1", "test", "running"),
 		}
 
 		title := vm.Title()
@@ -704,9 +658,7 @@ func TestDindProcessListViewModel_DoLoad(t *testing.T) {
 			dockerClient: docker.NewClient(),
 		}
 		vm := &DindProcessListViewModel{
-			hostContainer: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
-			),
+			hostContainer: docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		cmd := vm.DoLoad(model)
