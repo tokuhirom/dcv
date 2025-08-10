@@ -106,3 +106,30 @@ func TestCommandExecutionViewModel_RenderConfirmationDialog(t *testing.T) {
 	assert.Contains(t, result, "docker stop container_id")
 	assert.Contains(t, result, "Press 'y' to confirm, 'n' to cancel")
 }
+
+func TestCommandExecutionViewModel_HandleBack(t *testing.T) {
+	t.Run("returns RefreshMsg when going back", func(t *testing.T) {
+		model := &Model{
+			currentView: CommandExecutionView,
+			viewHistory: []ViewType{ComposeProcessListView, CommandExecutionView},
+		}
+		vm := &CommandExecutionViewModel{
+			done:     true,
+			exitCode: 0,
+		}
+		model.commandExecutionViewModel = *vm
+
+		cmd := vm.HandleBack(model)
+
+		// Should switch to previous view
+		assert.Equal(t, ComposeProcessListView, model.currentView)
+
+		// Should return a command that generates RefreshMsg
+		assert.NotNil(t, cmd, "Should return a command to trigger refresh")
+
+		// Execute the command to verify it returns RefreshMsg
+		msg := cmd()
+		_, isRefreshMsg := msg.(RefreshMsg)
+		assert.True(t, isRefreshMsg, "Command should return RefreshMsg")
+	})
+}
