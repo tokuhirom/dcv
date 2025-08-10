@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -142,19 +141,6 @@ func (m *DindProcessListViewModel) GetContainer(model *Model) *docker.Container 
 		return docker.NewDindContainer(m.hostContainer.GetContainerID(), m.hostContainer.GetName(), container.ID, container.Names, container.State)
 	}
 	return nil
-}
-
-func (m *DindProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
-	// TODO: abstract this into a common method for all process list views
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for deletion",
-			slog.Any("error", fmt.Errorf("no container selected")))
-		return nil
-	}
-
-	args := container.OperationArgs("rm")
-	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // rm is aggressive
 }
 
 func (m *DindProcessListViewModel) Title() string {

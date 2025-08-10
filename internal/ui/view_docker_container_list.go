@@ -113,19 +113,10 @@ func (m *DockerContainerListViewModel) HandleDown() tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) HandleLog(model *Model) tea.Cmd {
+	// TODO: abstract this into a common interface
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
 		return model.logViewModel.StreamContainerLogs(model, container)
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
-	// TODO: abstract this to a common interface for all container types
-	// Delete the selected Docker container
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "rm", container.ID) // rm is aggressive
 	}
 	return nil
 }
@@ -166,7 +157,6 @@ func (m *DockerContainerListViewModel) DoLoad(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
-	// TODO: abstract this to a common interface for all container types
 	container := m.GetContainer(model)
 	if container == nil {
 		slog.Error("Failed to get selected container for DinD process list")
