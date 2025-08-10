@@ -189,6 +189,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return nil
 		})
 
+	case executeDindCommandMsg:
+		// Execute the interactive command in a nested container (DinD)
+		// docker exec <host-container> docker exec -it <nested-container> /bin/sh
+		args := []string{"exec", "-it", msg.hostContainerID, "docker", "exec", "-it", msg.containerID}
+		args = append(args, msg.command...)
+		c := exec.Command("docker", args...)
+		return m, tea.ExecProcess(c, func(err error) tea.Msg {
+			// After the command exits, we'll get this message
+			return nil
+		})
+
 	case inspectLoadedMsg:
 		m.loading = false
 		if msg.err != nil {

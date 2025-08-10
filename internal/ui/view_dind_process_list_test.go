@@ -500,6 +500,98 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 	})
 }
 
+func TestDindProcessListViewModel_HandleShell(t *testing.T) {
+	t.Run("HandleShell returns nil when no containers", func(t *testing.T) {
+		model := &Model{
+			dockerClient: docker.NewClient(),
+		}
+		vm := &DindProcessListViewModel{
+			dindContainers:        []models.DockerContainer{},
+			selectedDindContainer: 0,
+			hostContainer: docker.NewDindContainer(
+				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
+			),
+		}
+
+		cmd := vm.HandleShell(model)
+		assert.Nil(t, cmd)
+	})
+
+	t.Run("HandleShell returns nil when selection out of bounds", func(t *testing.T) {
+		model := &Model{
+			dockerClient: docker.NewClient(),
+		}
+		vm := &DindProcessListViewModel{
+			dindContainers: []models.DockerContainer{
+				{ID: "1", Names: "container-1"},
+			},
+			selectedDindContainer: 5, // Out of bounds
+			hostContainer: docker.NewDindContainer(
+				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
+			),
+		}
+
+		cmd := vm.HandleShell(model)
+		assert.Nil(t, cmd)
+	})
+
+	t.Run("HandleShell returns executeDindCommandMsg for selected container", func(t *testing.T) {
+		model := &Model{
+			dockerClient: docker.NewClient(),
+		}
+		vm := &DindProcessListViewModel{
+			dindContainers: []models.DockerContainer{
+				{ID: "abc123", Names: "container-1"},
+				{ID: "def456", Names: "container-2"},
+			},
+			selectedDindContainer: 1,
+			hostContainer: docker.NewContainer(
+				docker.NewClient(), "host-1", "host-container", "test", "running",
+			),
+		}
+
+		cmd := vm.HandleShell(model)
+		assert.NotNil(t, cmd)
+
+		// Execute the command to get the message
+		msg := cmd()
+		execMsg, ok := msg.(executeDindCommandMsg)
+		assert.True(t, ok, "Should return executeDindCommandMsg")
+		assert.Equal(t, "host-1", execMsg.hostContainerID)
+		assert.Equal(t, "def456", execMsg.containerID)
+		assert.Equal(t, []string{"/bin/sh"}, execMsg.command)
+	})
+
+	t.Run("CmdShell works with DinD view", func(t *testing.T) {
+		model := &Model{
+			currentView:  DindProcessListView,
+			dockerClient: docker.NewClient(),
+		}
+		model.dindProcessListViewModel = DindProcessListViewModel{
+			dindContainers: []models.DockerContainer{
+				{ID: "abc123", Names: "container-1", State: "running"},
+			},
+			selectedDindContainer: 0,
+			hostContainer: docker.NewContainer(
+				docker.NewClient(), "host-1", "host-container", "test", "running",
+			),
+		}
+		model.initializeKeyHandlers()
+
+		// Test shell via CmdShell
+		_, cmd := model.CmdShell(tea.KeyMsg{})
+		assert.NotNil(t, cmd)
+
+		// Execute the command to get the message
+		msg := cmd()
+		execMsg, ok := msg.(executeDindCommandMsg)
+		assert.True(t, ok, "Should return executeDindCommandMsg")
+		assert.Equal(t, "host-1", execMsg.hostContainerID)
+		assert.Equal(t, "abc123", execMsg.containerID)
+		assert.Equal(t, []string{"/bin/sh"}, execMsg.command)
+	})
+}
+
 func TestDindProcessListViewModel_Title(t *testing.T) {
 	t.Run("normal title without all", func(t *testing.T) {
 		vm := &DindProcessListViewModel{
