@@ -270,7 +270,7 @@ func (m *DindProcessListViewModel) HandleShowActions(model *Model) tea.Cmd {
 	}
 
 	// Initialize the action view with the selected container
-	model.commandActionViewModel.Initialize(container, DindProcessListView)
+	model.commandActionViewModel.Initialize(container)
 	model.SwitchView(CommandActionView)
 	return nil
 }
