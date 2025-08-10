@@ -177,57 +177,36 @@ func (c *Client) ListComposeContainers(projectName string, showAll bool) ([]mode
 	return ParseComposePSJSON(output)
 }
 
-// ComposeTop gets the top output for a specific service in a Docker Compose project
-func (c *Client) ComposeTop(projectName string, serviceName string) (string, error) {
-	output, err := c.ExecuteCaptured("compose", "-p", projectName, "top", serviceName)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute docker compose top: %w\nOutput: %s", err, string(output))
-	}
-
-	return string(output), nil
-}
-
 // Adapter methods for ComposeClientInterface
 func (a *composeClientAdapter) ListContainers(showAll bool) ([]models.ComposeContainer, error) {
 	return a.client.ListComposeContainers(a.projectName, showAll)
 }
 
+// The following methods are required by ComposeClientInterface but not used in the codebase
 func (a *composeClientAdapter) Top() (string, error) {
-	// Docker compose top without service name shows all services
-	output, err := a.client.ExecuteCaptured("compose", "-p", a.projectName, "top")
-	if err != nil {
-		return "", fmt.Errorf("failed to execute docker compose top: %w\nOutput: %s", err, string(output))
-	}
-	return string(output), nil
+	return "", fmt.Errorf("Top not implemented")
 }
 
-// Stub methods for unimplemented interface methods
 func (a *composeClientAdapter) KillService(serviceName string) error {
-	// TODO: Implement if needed
 	return fmt.Errorf("KillService not implemented")
 }
 
 func (a *composeClientAdapter) StopService(serviceName string) error {
-	// TODO: Implement if needed
 	return fmt.Errorf("StopService not implemented")
 }
 
 func (a *composeClientAdapter) StartService(serviceName string) error {
-	// TODO: Implement if needed
 	return fmt.Errorf("StartService not implemented")
 }
 
 func (a *composeClientAdapter) RestartService(serviceName string) error {
-	// TODO: Implement if needed
 	return fmt.Errorf("RestartService not implemented")
 }
 
 func (a *composeClientAdapter) Up(detach bool) error {
-	// TODO: Implement if needed
 	return fmt.Errorf("Up not implemented")
 }
 
 func (a *composeClientAdapter) Down() error {
-	// TODO: Implement if needed
 	return fmt.Errorf("Down not implemented")
 }
