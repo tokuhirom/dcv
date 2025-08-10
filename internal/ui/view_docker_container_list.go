@@ -200,17 +200,3 @@ func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.C
 
 	return model.dindProcessListViewModel.Load(model, container)
 }
-
-func (m *DockerContainerListViewModel) HandleShowActions(model *Model) tea.Cmd {
-	// TODO: abstract this to a common interface for all container types
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for actions")
-		return nil
-	}
-
-	// Initialize the action view with the selected container
-	model.commandActionViewModel.Initialize(container)
-	model.SwitchView(CommandActionView)
-	return nil
-}

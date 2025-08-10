@@ -1,6 +1,10 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/tokuhirom/dcv/internal/docker"
+)
 
 // View switching commands
 
@@ -47,16 +51,12 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdShowActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleShowActions(m)
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleShowActions(m)
-	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleShowActions(m)
-	default:
-		return m, nil
-	}
+	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
+		// Initialize the action view with the selected container
+		m.commandActionViewModel.Initialize(container)
+		m.SwitchView(CommandActionView)
+		return nil
+	})
 }
 
 func (m *Model) CmdSelectAction(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
