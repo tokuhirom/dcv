@@ -17,8 +17,15 @@ func NewClient() *Client {
 	return &Client{}
 }
 
-func (c *Client) Compose(projectName string) *ComposeClient {
-	return &ComposeClient{
+// composeClientAdapter wraps Client methods to implement ComposeClientInterface
+type composeClientAdapter struct {
+	client      *Client
+	projectName string
+}
+
+func (c *Client) Compose(projectName string) ComposeClientInterface {
+	return &composeClientAdapter{
+		client:      c,
 		projectName: projectName,
 	}
 }
@@ -146,4 +153,81 @@ func (c *Client) GetStats(all bool) ([]models.ContainerStats, error) {
 	}
 
 	return ParseStatsJSON(output)
+}
+
+// ListComposeContainers lists containers for a specific Docker Compose project
+func (c *Client) ListComposeContainers(projectName string, showAll bool) ([]models.ComposeContainer, error) {
+	// Always use JSON format for reliable parsing
+	args := []string{"compose", "-p", projectName, "ps", "--format", "json", "--no-trunc"}
+	if showAll {
+		args = append(args, "--all")
+	}
+
+	output, err := c.ExecuteCaptured(args...)
+	if err != nil {
+		// Check if it's just empty (no containers)
+		if len(output) == 0 || string(output) == "" {
+			return []models.ComposeContainer{}, nil
+		}
+		return nil, fmt.Errorf("failed to execute docker compose ps: %w\nOutput: %s", err, string(output))
+	}
+
+	// Parse JSON format
+	slog.Info("Parsing docker compose ps output")
+	return ParseComposePSJSON(output)
+}
+
+// ComposeTop gets the top output for a specific service in a Docker Compose project
+func (c *Client) ComposeTop(projectName string, serviceName string) (string, error) {
+	output, err := c.ExecuteCaptured("compose", "-p", projectName, "top", serviceName)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute docker compose top: %w\nOutput: %s", err, string(output))
+	}
+
+	return string(output), nil
+}
+
+// Adapter methods for ComposeClientInterface
+func (a *composeClientAdapter) ListContainers(showAll bool) ([]models.ComposeContainer, error) {
+	return a.client.ListComposeContainers(a.projectName, showAll)
+}
+
+func (a *composeClientAdapter) Top() (string, error) {
+	// Docker compose top without service name shows all services
+	output, err := a.client.ExecuteCaptured("compose", "-p", a.projectName, "top")
+	if err != nil {
+		return "", fmt.Errorf("failed to execute docker compose top: %w\nOutput: %s", err, string(output))
+	}
+	return string(output), nil
+}
+
+// Stub methods for unimplemented interface methods
+func (a *composeClientAdapter) KillService(serviceName string) error {
+	// TODO: Implement if needed
+	return fmt.Errorf("KillService not implemented")
+}
+
+func (a *composeClientAdapter) StopService(serviceName string) error {
+	// TODO: Implement if needed
+	return fmt.Errorf("StopService not implemented")
+}
+
+func (a *composeClientAdapter) StartService(serviceName string) error {
+	// TODO: Implement if needed
+	return fmt.Errorf("StartService not implemented")
+}
+
+func (a *composeClientAdapter) RestartService(serviceName string) error {
+	// TODO: Implement if needed
+	return fmt.Errorf("RestartService not implemented")
+}
+
+func (a *composeClientAdapter) Up(detach bool) error {
+	// TODO: Implement if needed
+	return fmt.Errorf("Up not implemented")
+}
+
+func (a *composeClientAdapter) Down() error {
+	// TODO: Implement if needed
+	return fmt.Errorf("Down not implemented")
 }
