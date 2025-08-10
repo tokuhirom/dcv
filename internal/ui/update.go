@@ -68,7 +68,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = nil
 		}
 
-		m.topViewModel.Loaded(msg.output)
+		m.topViewModel.Loaded(msg.processes, msg.stats)
 		return m, nil
 
 	case statsLoadedMsg:
