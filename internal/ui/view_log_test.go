@@ -195,6 +195,122 @@ func TestLogView_Navigation(t *testing.T) {
 		assert.Equal(t, 2, model.logViewModel.logScrollY)
 	})
 
+	t.Run("HandlePageDown moves down by page", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10", "Line 11", "Line 12", "Line 13", "Line 14", "Line 15"},
+				logScrollY: 0,
+			},
+			Height: 10, // 10 - 4 = 6 visible lines (page size)
+		}
+
+		// First page down
+		cmd := model.logViewModel.HandlePageDown(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 6, model.logViewModel.logScrollY) // Should move down by page size (6)
+
+		// Second page down
+		cmd = model.logViewModel.HandlePageDown(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 9, model.logViewModel.logScrollY) // Should stop at maxScroll (15 - 6 = 9)
+
+		// Try to scroll beyond max
+		cmd = model.logViewModel.HandlePageDown(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 9, model.logViewModel.logScrollY) // Should stay at maxScroll
+	})
+
+	t.Run("HandlePageDown with filtered logs", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs:       []string{"Error 1", "Info 1", "Error 2", "Info 2", "Error 3", "Info 3", "Error 4", "Info 4", "Error 5"},
+				logScrollY: 0,
+				FilterViewModel: FilterViewModel{
+					filterMode:   true,
+					filterText:   "Error",
+					filteredLogs: []string{"Error 1", "Error 2", "Error 3", "Error 4", "Error 5"},
+				},
+			},
+			Height: 8, // 8 - 4 = 4 visible lines (page size)
+		}
+
+		cmd := model.logViewModel.HandlePageDown(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 1, model.logViewModel.logScrollY) // maxScroll for filtered = 5 - 4 = 1
+
+		// Should not scroll beyond max
+		cmd = model.logViewModel.HandlePageDown(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 1, model.logViewModel.logScrollY)
+	})
+
+	t.Run("HandlePageUp moves up by page", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10", "Line 11", "Line 12", "Line 13", "Line 14", "Line 15"},
+				logScrollY: 12,
+			},
+			Height: 10, // 10 - 4 = 6 visible lines (page size)
+		}
+
+		// First page up
+		cmd := model.logViewModel.HandlePageUp(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 6, model.logViewModel.logScrollY) // Should move up by page size (12 - 6 = 6)
+
+		// Second page up
+		cmd = model.logViewModel.HandlePageUp(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 0, model.logViewModel.logScrollY) // Should stop at 0
+
+		// Try to scroll above 0
+		cmd = model.logViewModel.HandlePageUp(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 0, model.logViewModel.logScrollY) // Should stay at 0
+	})
+
+	t.Run("HandlePageUp with small scroll position", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs:       []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8"},
+				logScrollY: 3,
+			},
+			Height: 8, // 8 - 4 = 4 visible lines (page size)
+		}
+
+		cmd := model.logViewModel.HandlePageUp(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 0, model.logViewModel.logScrollY) // Should stop at 0 when page up would go negative
+	})
+
+	t.Run("HandlePageDown with empty logs", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs:       []string{},
+				logScrollY: 0,
+			},
+			Height: 10,
+		}
+
+		cmd := model.logViewModel.HandlePageDown(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 0, model.logViewModel.logScrollY) // Should stay at 0 for empty logs
+	})
+
+	t.Run("HandlePageUp with empty logs", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs:       []string{},
+				logScrollY: 0,
+			},
+			Height: 10,
+		}
+
+		cmd := model.logViewModel.HandlePageUp(model)
+		assert.Nil(t, cmd)
+		assert.Equal(t, 0, model.logViewModel.logScrollY) // Should stay at 0 for empty logs
+	})
+
 	t.Run("HandleBack returns to process list", func(t *testing.T) {
 		model := &Model{
 			currentView: LogView,
