@@ -162,5 +162,8 @@ func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 }
 
 func (m *DindProcessListViewModel) Title() string {
+	if m.showAll {
+		return fmt.Sprintf("Docker in Docker: %s (all)", m.hostContainer.GetName())
+	}
 	return fmt.Sprintf("Docker in Docker: %s", m.hostContainer.GetName())
 }

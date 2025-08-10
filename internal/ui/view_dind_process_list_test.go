@@ -392,14 +392,29 @@ func TestDindProcessListViewModel_HandleInspect(t *testing.T) {
 }
 
 func TestDindProcessListViewModel_Title(t *testing.T) {
-	vm := &DindProcessListViewModel{
-		hostContainer: docker.NewDindContainer(
-			docker.NewClient(), "host-1", "my-dind-container", "container-1", "test", "running",
-		),
-	}
+	t.Run("normal title without all", func(t *testing.T) {
+		vm := &DindProcessListViewModel{
+			showAll: false,
+			hostContainer: docker.NewDindContainer(
+				docker.NewClient(), "host-1", "my-dind-container", "container-1", "test", "running",
+			),
+		}
 
-	title := vm.Title()
-	assert.Equal(t, "Docker in Docker: test", title)
+		title := vm.Title()
+		assert.Equal(t, "Docker in Docker: test", title)
+	})
+
+	t.Run("title with all indicator when showAll is true", func(t *testing.T) {
+		vm := &DindProcessListViewModel{
+			showAll: true,
+			hostContainer: docker.NewDindContainer(
+				docker.NewClient(), "host-1", "my-dind-container", "container-1", "test", "running",
+			),
+		}
+
+		title := vm.Title()
+		assert.Equal(t, "Docker in Docker: test (all)", title)
+	})
 }
 
 func TestDindProcessListViewModel_DoLoad(t *testing.T) {
