@@ -1,20 +1,19 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/tokuhirom/dcv/internal/docker"
+)
 
 // File browser specific commands
 
+// CmdFileBrowse is triggered when the user wants to browse files in a container
+// It loads the file browser view model for the specified container.
 func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleFileBrowse(m)
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleFileBrowse(m)
-	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleFileBrowse(m)
-	default:
-		return m, nil
-	}
+	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
+		return m.fileBrowserViewModel.LoadContainer(m, container)
+	})
 }
 
 func (m *Model) CmdOpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {

@@ -166,25 +166,6 @@ func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cm
 	return model.dindProcessListViewModel.Load(model, container)
 }
 
-func (m *ComposeProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
-	// TODO: abstract this into a common method for all process list views
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		// Use CommandExecutionView to show real-time output
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "rm", container.ID) // rm is aggressive
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
-	// TODO: abstract this into a common method for all process list views
-	container := m.GetContainer(model)
-	if container != nil {
-		return model.fileBrowserViewModel.LoadContainer(model, container)
-	}
-	return nil
-}
-
 func (m *ComposeProcessListViewModel) GetContainer(model *Model) *docker.Container {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
