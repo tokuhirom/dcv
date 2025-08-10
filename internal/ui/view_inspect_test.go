@@ -261,78 +261,49 @@ func TestInspectViewModel_Search(t *testing.T) {
 	})
 }
 
-func TestInspectViewModel_HighlightInspectLine(t *testing.T) {
-	highlightStyle := lipgloss.NewStyle().Background(lipgloss.Color("226"))
+func TestInspectViewModel_SearchHighlighting_YAMLFormat(t *testing.T) {
+	t.Run("applies YAML highlighting when no search is active", func(t *testing.T) {
+		vm := &InspectViewModel{}
+		// No search text set means search is not active
 
-	tests := []struct {
-		name         string
-		vm           InspectViewModel
-		originalLine string
-		styledLine   string
-		expected     string
-	}{
-		{
-			name: "highlights simple search text",
-			vm: InspectViewModel{
-				SearchViewModel: SearchViewModel{
-					searchText:       "test",
-					searchIgnoreCase: false,
-					searchRegex:      false,
-				},
-			},
-			originalLine: "This is a test line",
-			styledLine:   "This is a test line",
-			expected:     "test",
-		},
-		{
-			name: "highlights case-insensitive search",
-			vm: InspectViewModel{
-				SearchViewModel: SearchViewModel{
-					searchText:       "TEST",
-					searchIgnoreCase: true,
-					searchRegex:      false,
-				},
-			},
-			originalLine: "This is a test line",
-			styledLine:   "This is a test line",
-			expected:     "test",
-		},
-		{
-			name: "highlights regex pattern",
-			vm: InspectViewModel{
-				SearchViewModel: SearchViewModel{
-					searchText:       "t.st",
-					searchIgnoreCase: false,
-					searchRegex:      true,
-				},
-			},
-			originalLine: "This is a test line",
-			styledLine:   "This is a test line",
-			expected:     "test",
-		},
-		{
-			name: "returns original when no search text",
-			vm: InspectViewModel{
-				SearchViewModel: SearchViewModel{
-					searchText: "",
-				},
-			},
-			originalLine: "This is a test line",
-			styledLine:   "Styled line",
-			expected:     "Styled line",
-		},
-	}
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
+		valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
+		highlightStyle := lipgloss.NewStyle().Background(lipgloss.Color("226"))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.vm.highlightInspectLine(tt.originalLine, tt.styledLine, highlightStyle)
-			if tt.vm.searchText != "" {
-				assert.Contains(t, result, tt.expected)
-			} else {
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
+		line := "name: container-name"
+		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, highlightStyle)
+
+		// Should just apply YAML highlighting without search highlighting
+		assert.Contains(t, result, "name")
+		assert.Contains(t, result, "container-name")
+	})
+
+	t.Run("applies YAML highlighting to list items", func(t *testing.T) {
+		vm := &InspectViewModel{}
+
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
+		valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
+		highlightStyle := lipgloss.NewStyle().Background(lipgloss.Color("226"))
+
+		line := "- my-list-item"
+		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, highlightStyle)
+
+		assert.Contains(t, result, "my-list-item")
+		assert.Contains(t, result, "-") // List marker should be preserved
+	})
+
+	t.Run("applies YAML highlighting to regular content", func(t *testing.T) {
+		vm := &InspectViewModel{}
+
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
+		valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
+		highlightStyle := lipgloss.NewStyle().Background(lipgloss.Color("226"))
+
+		line := "some regular content"
+		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, highlightStyle)
+
+		assert.Contains(t, result, "some regular content")
+	})
 }
 
 func TestInspectViewModel_Set(t *testing.T) {

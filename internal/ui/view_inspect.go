@@ -57,32 +57,8 @@ func (m *InspectViewModel) render(availableHeight int) string {
 				lineNum = lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Render("▶") + lineNum[1:]
 			}
 
-			// Apply YAML syntax highlighting
-			highlightedLine := line
-			trimmed := strings.TrimSpace(line)
-
-			// Check if this line is a YAML key-value pair
-			if idx := strings.Index(line, ": "); idx != -1 && !strings.HasPrefix(trimmed, "-") {
-				// Split into key and value parts
-				keyPart := line[:idx]
-				valuePart := line[idx+2:]
-
-				// Apply styles
-				highlightedLine = keyStyle.Render(keyPart) + ": " + valueStyle.Render(valuePart)
-			} else if strings.HasPrefix(trimmed, "- ") {
-				// YAML list item
-				indent := line[:len(line)-len(trimmed)]
-				content := trimmed[2:] // Remove "- "
-				highlightedLine = indent + "- " + valueStyle.Render(content)
-			} else if trimmed != "" {
-				// Other content
-				highlightedLine = valueStyle.Render(line)
-			}
-
-			// Apply search highlighting if needed
-			if m.searchText != "" && !m.searchMode {
-				highlightedLine = m.highlightInspectLine(line, highlightedLine, highlightStyle)
-			}
+			// Apply both YAML syntax highlighting and search highlighting
+			highlightedLine := m.renderLineWithHighlighting(line, keyStyle, valueStyle, highlightStyle)
 
 			content.WriteString(lineNum + highlightedLine + "\n")
 		}
@@ -107,53 +83,176 @@ func (m *InspectViewModel) render(availableHeight int) string {
 	return content.String()
 }
 
-// HighlightInspectLine highlights search matches in a line that may already have JSON syntax highlighting
-func (m *InspectViewModel) highlightInspectLine(originalLine, styledLine string, highlightStyle lipgloss.Style) string {
-	if m.searchText == "" {
-		return styledLine
+// renderLineWithHighlighting applies both YAML syntax highlighting and search highlighting
+func (m *InspectViewModel) renderLineWithHighlighting(line string, keyStyle, valueStyle, highlightStyle lipgloss.Style) string {
+	// If no search is active, just apply YAML highlighting
+	if m.searchText == "" || m.searchMode {
+		return m.applyYAMLHighlighting(line, keyStyle, valueStyle)
 	}
 
-	// For inspect view, we need to be careful not to break the existing JSON syntax highlighting
-	// We'll use a simpler approach - just highlight in the original line for display
+	// Apply search highlighting with preserved YAML styling
+	return m.applySearchWithYAMLHighlighting(line, keyStyle, valueStyle, highlightStyle)
+}
+
+// applyYAMLHighlighting applies YAML syntax highlighting to a line
+func (m *InspectViewModel) applyYAMLHighlighting(line string, keyStyle, valueStyle lipgloss.Style) string {
+	trimmed := strings.TrimSpace(line)
+
+	// Check if this line is a YAML key-value pair
+	if idx := strings.Index(line, ": "); idx != -1 && !strings.HasPrefix(trimmed, "-") {
+		// Split into key and value parts
+		keyPart := line[:idx]
+		valuePart := line[idx+2:]
+		return keyStyle.Render(keyPart) + ": " + valueStyle.Render(valuePart)
+	} else if strings.HasPrefix(trimmed, "- ") {
+		// YAML list item
+		indent := line[:len(line)-len(trimmed)]
+		content := trimmed[2:] // Remove "- "
+		return indent + "- " + valueStyle.Render(content)
+	} else if trimmed != "" {
+		// Other content
+		return valueStyle.Render(line)
+	}
+
+	return line
+}
+
+// applySearchWithYAMLHighlighting applies search highlighting while preserving YAML syntax colors
+func (m *InspectViewModel) applySearchWithYAMLHighlighting(line string, keyStyle, valueStyle, highlightStyle lipgloss.Style) string {
+	trimmed := strings.TrimSpace(line)
+
+	// Find search matches first
+	searchMatches := m.findSearchMatches(line)
+	if len(searchMatches) == 0 {
+		return m.applyYAMLHighlighting(line, keyStyle, valueStyle)
+	}
+
+	// Build the result by applying both highlighting types
+	var result strings.Builder
+
+	// Check if this line is a YAML key-value pair
+	if idx := strings.Index(line, ": "); idx != -1 && !strings.HasPrefix(trimmed, "-") {
+		// Handle key-value pair with search highlighting
+		keyPart := line[:idx]
+		separatorPart := line[idx : idx+2] // ": "
+		valuePart := line[idx+2:]
+
+		// Apply highlighting to each part
+		result.WriteString(m.applyHighlightingToPart(keyPart, keyStyle, highlightStyle, searchMatches, 0))
+		result.WriteString(separatorPart)
+		result.WriteString(m.applyHighlightingToPart(valuePart, valueStyle, highlightStyle, searchMatches, idx+2))
+
+	} else if strings.HasPrefix(trimmed, "- ") {
+		// YAML list item
+		indent := line[:len(line)-len(trimmed)]
+		prefix := trimmed[:2] // "- "
+		content := trimmed[2:]
+		prefixStart := len(indent)
+		contentStart := prefixStart + 2
+
+		result.WriteString(indent)
+		result.WriteString(prefix)
+		result.WriteString(m.applyHighlightingToPart(content, valueStyle, highlightStyle, searchMatches, contentStart))
+
+	} else {
+		// Other content
+		result.WriteString(m.applyHighlightingToPart(line, valueStyle, highlightStyle, searchMatches, 0))
+	}
+
+	return result.String()
+}
+
+// findSearchMatches finds all search match positions in a line
+func (m *InspectViewModel) findSearchMatches(line string) [][]int {
+	var matches [][]int
+
 	if m.searchRegex {
 		pattern := m.searchText
 		if m.searchIgnoreCase {
 			pattern = "(?i)" + pattern
 		}
 		if re, err := regexp.Compile(pattern); err == nil {
-			return re.ReplaceAllStringFunc(originalLine, func(match string) string {
-				return highlightStyle.Render(match)
-			})
+			matches = re.FindAllStringIndex(line, -1)
 		}
 	} else {
-		// Simple string search
 		searchStr := m.searchText
-		lineToSearch := originalLine
+		lineToSearch := line
 
 		if m.searchIgnoreCase {
 			searchStr = strings.ToLower(searchStr)
-			lineToSearch = strings.ToLower(originalLine)
+			lineToSearch = strings.ToLower(lineToSearch)
 		}
 
-		// Find all occurrences
-		var result strings.Builder
-		lastEnd := 0
+		start := 0
 		for {
-			idx := strings.Index(lineToSearch[lastEnd:], searchStr)
+			idx := strings.Index(lineToSearch[start:], searchStr)
 			if idx == -1 {
 				break
 			}
-
-			realIdx := lastEnd + idx
-			result.WriteString(originalLine[lastEnd:realIdx])
-			result.WriteString(highlightStyle.Render(originalLine[realIdx : realIdx+len(m.searchText)]))
-			lastEnd = realIdx + len(m.searchText)
+			realIdx := start + idx
+			matches = append(matches, []int{realIdx, realIdx + len(searchStr)})
+			start = realIdx + 1
 		}
-		result.WriteString(originalLine[lastEnd:])
-		return result.String()
 	}
 
-	return styledLine
+	return matches
+}
+
+// applyHighlightingToPart applies highlighting to a part of the line
+func (m *InspectViewModel) applyHighlightingToPart(part string, baseStyle, highlightStyle lipgloss.Style, allMatches [][]int, partOffset int) string {
+	if len(allMatches) == 0 {
+		return baseStyle.Render(part)
+	}
+
+	// Find matches that overlap with this part
+	var partMatches [][]int
+	for _, match := range allMatches {
+		start, end := match[0], match[1]
+
+		// Adjust match positions relative to the part
+		relStart := start - partOffset
+		relEnd := end - partOffset
+
+		// Check if the match overlaps with this part
+		if relEnd > 0 && relStart < len(part) {
+			// Clamp to part boundaries
+			if relStart < 0 {
+				relStart = 0
+			}
+			if relEnd > len(part) {
+				relEnd = len(part)
+			}
+			partMatches = append(partMatches, []int{relStart, relEnd})
+		}
+	}
+
+	if len(partMatches) == 0 {
+		return baseStyle.Render(part)
+	}
+
+	// Apply highlighting to the part
+	var result strings.Builder
+	lastEnd := 0
+
+	for _, match := range partMatches {
+		start, end := match[0], match[1]
+
+		// Add non-highlighted text before the match
+		if start > lastEnd {
+			result.WriteString(baseStyle.Render(part[lastEnd:start]))
+		}
+
+		// Add highlighted match
+		result.WriteString(highlightStyle.Render(part[start:end]))
+		lastEnd = end
+	}
+
+	// Add remaining non-highlighted text
+	if lastEnd < len(part) {
+		result.WriteString(baseStyle.Render(part[lastEnd:]))
+	}
+
+	return result.String()
 }
 
 func (m *InspectViewModel) HandleBack(model *Model) tea.Cmd {
