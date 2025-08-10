@@ -98,14 +98,14 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 	return RenderTable(columns.ToArray(), rows, availableHeight, m.selectedDockerContainer)
 }
 
-func (m *DockerContainerListViewModel) HandleUp(_ *Model) tea.Cmd {
+func (m *DockerContainerListViewModel) HandleUp() tea.Cmd {
 	if m.selectedDockerContainer > 0 {
 		m.selectedDockerContainer--
 	}
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleDown(*Model) tea.Cmd {
+func (m *DockerContainerListViewModel) HandleDown() tea.Cmd {
 	if m.selectedDockerContainer < len(m.dockerContainers)-1 {
 		m.selectedDockerContainer++
 	}
@@ -120,15 +120,8 @@ func (m *DockerContainerListViewModel) HandleLog(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleKill(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "kill", container.ID) // kill is aggressive
-	}
-	return nil
-}
-
 func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
+	// TODO: abstract this to a common interface for all container types
 	// Delete the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
@@ -138,24 +131,10 @@ func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
+	// TODO: abstract this to a common interface for all container types
 	container := m.GetContainer(model)
 	if container != nil {
 		return model.fileBrowserViewModel.LoadContainer(model, container)
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
-	// Execute shell in the selected Docker container
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		// Default to /bin/sh as it's most commonly available
-		return func() tea.Msg {
-			return executeCommandMsg{
-				containerID: container.ID,
-				command:     []string{"/bin/sh"},
-			}
-		}
 	}
 	return nil
 }
@@ -196,6 +175,7 @@ func (m *DockerContainerListViewModel) DoLoad(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.Cmd {
+	// TODO: abstract this to a common interface for all container types
 	container := m.GetContainer(model)
 	if container == nil {
 		slog.Error("Failed to get selected container for DinD process list")
@@ -203,56 +183,4 @@ func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.C
 	}
 
 	return model.dindProcessListViewModel.Load(model, container)
-}
-
-func (m *DockerContainerListViewModel) HandleViewLog(model *Model) tea.Cmd {
-	return m.HandleLog(model)
-}
-
-func (m *DockerContainerListViewModel) HandleStop(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "stop", container.ID)
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleStart(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, false, "start", container.ID)
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleRestart(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "restart", container.ID)
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandlePause(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		if container.State == "paused" {
-			return model.commandExecutionViewModel.ExecuteCommand(model, true, "unpause", container.ID)
-		}
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "pause", container.ID)
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleShowActions(model *Model) tea.Cmd {
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for actions")
-		return nil
-	}
-
-	// Initialize the action view with the selected container
-	model.commandActionViewModel.Initialize(container)
-	model.SwitchView(CommandActionView)
-	return nil
 }

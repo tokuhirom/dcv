@@ -72,3 +72,17 @@ func (c *Container) OperationArgs(cmd string, extraArgs ...string) []string {
 	args := []string{cmd, c.containerID}
 	return append(args, extraArgs...)
 }
+
+func (c *Container) InteractiveExecArgs(extraArgs ...string) []string {
+	if c.isDind {
+		// For DinD containers, we need to exec into the host container first,
+		// then run docker commands inside it
+		// docker exec -it <host> docker exec -it <container> <extraArgs>
+		args := []string{"exec", "-it", c.hostContainerID, "docker", "exec", "-it", c.containerID}
+		return append(args, extraArgs...)
+	}
+
+	// For regular containers: ["exec", "-it", containerID, extraArgs...]
+	args := []string{"exec", "-it", c.containerID}
+	return append(args, extraArgs...)
+}

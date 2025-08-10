@@ -141,6 +141,7 @@ func (m *ComposeProcessListViewModel) HandleDown() tea.Cmd {
 }
 
 func (m *ComposeProcessListViewModel) HandleLog(model *Model) tea.Cmd {
+	// TODO: abstract this into a common method for all process list views
 	if m.selectedContainer < len(m.composeContainers) {
 		composeContainer := m.composeContainers[m.selectedContainer]
 		model.logViewModel.SwitchToLogView(model, composeContainer.Name)
@@ -165,16 +166,8 @@ func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cm
 	return model.dindProcessListViewModel.Load(model, container)
 }
 
-func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, operation string, aggressive bool) tea.Cmd {
-	// TODO: deprecate this
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, aggressive, operation, container.ID)
-	}
-	return nil
-}
-
 func (m *ComposeProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
+	// TODO: abstract this into a common method for all process list views
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
 		// Use CommandExecutionView to show real-time output
@@ -183,67 +176,11 @@ func (m *ComposeProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) HandleStop(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "stop", container.ID)
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleStart(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, false, "start", container.ID)
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleRestart(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "restart", container.ID)
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleKill(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "kill", container.ID)
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandlePause(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		if container.State == "paused" {
-			return model.commandExecutionViewModel.ExecuteCommand(model, true, "unpause", container.ID)
-		}
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "pause", container.ID)
-	}
-	return nil
-}
-
 func (m *ComposeProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
+	// TODO: abstract this into a common method for all process list views
 	container := m.GetContainer(model)
 	if container != nil {
 		return model.fileBrowserViewModel.LoadContainer(model, container)
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		// Default to /bin/sh as it's most commonly available
-		return func() tea.Msg {
-			return executeCommandMsg{
-				containerID: container.ID,
-				command:     []string{"/bin/sh"},
-			}
-		}
 	}
 	return nil
 }
@@ -258,19 +195,6 @@ func (m *ComposeProcessListViewModel) GetContainer(model *Model) *docker.Contain
 
 func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleShowActions(model *Model) tea.Cmd {
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for actions")
-		return nil
-	}
-
-	// Initialize the action view with the selected container
-	model.commandActionViewModel.Initialize(container)
-	model.SwitchView(CommandActionView)
 	return nil
 }
 
