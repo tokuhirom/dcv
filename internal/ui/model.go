@@ -436,6 +436,9 @@ type inspectLoadedMsg struct {
 	targetName string
 }
 
+// autoRefreshTickMsg is sent periodically to refresh views
+type autoRefreshTickMsg struct{}
+
 type commandExecOutputMsg struct {
 	line string
 }

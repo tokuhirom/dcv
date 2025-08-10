@@ -2,6 +2,7 @@ package ui
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -306,5 +307,56 @@ func TestTopViewModel_Navigation(t *testing.T) {
 		// Shouldn't go beyond last process
 		vm.HandleDown()
 		assert.Equal(t, 2, vm.scrollY)
+	})
+}
+
+func TestTopViewModel_AutoRefresh(t *testing.T) {
+	vm := &TopViewModel{}
+
+	t.Run("HandleToggleAutoRefresh toggles state", func(t *testing.T) {
+		// Initially off
+		assert.False(t, vm.autoRefresh)
+
+		// Turn on
+		vm.HandleToggleAutoRefresh()
+		assert.True(t, vm.autoRefresh)
+
+		// Turn off
+		vm.HandleToggleAutoRefresh()
+		assert.False(t, vm.autoRefresh)
+	})
+
+	t.Run("Load enables auto-refresh by default", func(t *testing.T) {
+		model := &Model{
+			dockerClient: docker.NewClient(),
+			currentView:  ComposeProcessListView,
+		}
+		vm := &TopViewModel{}
+		container := docker.NewContainer("test-container", "web-1", "web-1 (test-project)", "running")
+
+		cmd := vm.Load(model, container)
+		assert.NotNil(t, cmd)
+		assert.True(t, vm.autoRefresh)
+		assert.Equal(t, 2*time.Second, vm.refreshInterval)
+	})
+
+	t.Run("startAutoRefresh returns tick command", func(t *testing.T) {
+		vm.refreshInterval = 3 * time.Second
+		cmd := vm.startAutoRefresh()
+		assert.NotNil(t, cmd)
+	})
+
+	t.Run("DoLoadSilent does not set loading indicator", func(t *testing.T) {
+		model := &Model{
+			dockerClient: docker.NewClient(),
+			loading:      false,
+		}
+		vm := &TopViewModel{
+			container: docker.NewContainer("test-container", "web-1", "web-1 (test-project)", "running"),
+		}
+
+		cmd := vm.DoLoadSilent(model)
+		assert.NotNil(t, cmd)
+		assert.False(t, model.loading) // Should remain false
 	})
 }

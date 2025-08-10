@@ -262,6 +262,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+	case autoRefreshTickMsg:
+		// Handle auto-refresh for views that support it (without loading indicator)
+		switch m.currentView {
+		case TopView:
+			if m.topViewModel.autoRefresh {
+				// Don't show loading indicator for auto-refresh
+				return m, tea.Batch(
+					m.topViewModel.DoLoadSilent(m),
+					m.topViewModel.startAutoRefresh(),
+				)
+			}
+		case StatsView:
+			if m.statsViewModel.autoRefresh {
+				// Don't show loading indicator for auto-refresh
+				return m, tea.Batch(
+					m.statsViewModel.DoLoadSilent(m),
+					m.statsViewModel.startAutoRefresh(),
+				)
+			}
+		}
+		return m, nil
+
 	default:
 		// if UpdateAware
 		vm := m.GetCurrentViewModel()

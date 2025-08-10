@@ -77,3 +77,22 @@ func (m *Model) CmdReverseSort(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 }
+
+func (m *Model) CmdToggleAutoRefresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case TopView:
+		m.topViewModel.HandleToggleAutoRefresh()
+		if m.topViewModel.autoRefresh {
+			return m, m.topViewModel.startAutoRefresh()
+		}
+		return m, nil
+	case StatsView:
+		m.statsViewModel.HandleToggleAutoRefresh()
+		if m.statsViewModel.autoRefresh {
+			return m, m.statsViewModel.startAutoRefresh()
+		}
+		return m, nil
+	default:
+		return m, nil
+	}
+}

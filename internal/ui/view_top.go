@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -44,11 +45,13 @@ func (s SortField) String() string {
 
 // TopViewModel manages the state and rendering of the process info view
 type TopViewModel struct {
-	processes      []models.Process
-	containerStats *models.ContainerStats
-	sortField      SortField
-	sortReverse    bool
-	scrollY        int
+	processes       []models.Process
+	containerStats  *models.ContainerStats
+	sortField       SortField
+	sortReverse     bool
+	scrollY         int
+	autoRefresh     bool
+	refreshInterval time.Duration
 
 	container *docker.Container
 }
@@ -68,7 +71,7 @@ func (m *TopViewModel) render(availableHeight int) string {
 		s.WriteString("\n\n")
 	}
 
-	// Display sorting info
+	// Display sorting info and auto-refresh status
 	sortInfo := fmt.Sprintf("Sort: %s", m.sortField.String())
 	if m.sortReverse {
 		sortInfo += " (desc)"
@@ -77,7 +80,17 @@ func (m *TopViewModel) render(availableHeight int) string {
 	}
 	s.WriteString(helpStyle.Render(sortInfo))
 	s.WriteString("  ")
-	s.WriteString(helpStyle.Render("[c]PU [m]EM [p]ID [t]IME [n]ame [r]everse"))
+
+	// Show auto-refresh status
+	if m.autoRefresh {
+		refreshStatus := fmt.Sprintf("Auto-refresh: ON (%ds)", int(m.refreshInterval.Seconds()))
+		s.WriteString(searchStyle.Render(refreshStatus))
+	} else {
+		s.WriteString(helpStyle.Render("Auto-refresh: OFF"))
+	}
+	s.WriteString("  ")
+
+	s.WriteString(helpStyle.Render("[c]PU [m]EM [p]ID [t]IME [n]ame [r]everse [a]uto-refresh"))
 	s.WriteString("\n\n")
 
 	// Sort processes
@@ -211,14 +224,28 @@ func (m *TopViewModel) sortProcesses() {
 // Load switches to the top view and loads process info
 func (m *TopViewModel) Load(model *Model, container *docker.Container) tea.Cmd {
 	m.container = container
+	m.autoRefresh = true                // Enable auto-refresh by default
+	m.refreshInterval = 2 * time.Second // Default refresh interval
 	model.SwitchView(TopView)
-	return m.DoLoad(model)
+	return tea.Batch(
+		m.DoLoad(model),
+		m.startAutoRefresh(),
+	)
 }
 
 // DoLoad reloads the process info
 func (m *TopViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
+	return m.doLoadInternal(model)
+}
 
+// DoLoadSilent reloads the process info without showing loading indicator
+func (m *TopViewModel) DoLoadSilent(model *Model) tea.Cmd {
+	// Don't set loading = true for silent refresh
+	return m.doLoadInternal(model)
+}
+
+func (m *TopViewModel) doLoadInternal(model *Model) tea.Cmd {
 	return func() tea.Msg {
 		// Get process list
 		args := m.container.OperationArgs("top")
@@ -387,4 +414,16 @@ func (m *TopViewModel) HandleSortByCommand() {
 // HandleReverseSort reverses the current sort order
 func (m *TopViewModel) HandleReverseSort() {
 	m.sortReverse = !m.sortReverse
+}
+
+// HandleToggleAutoRefresh toggles the auto-refresh feature
+func (m *TopViewModel) HandleToggleAutoRefresh() {
+	m.autoRefresh = !m.autoRefresh
+}
+
+// startAutoRefresh returns a command to trigger periodic refresh
+func (m *TopViewModel) startAutoRefresh() tea.Cmd {
+	return tea.Tick(m.refreshInterval, func(time.Time) tea.Msg {
+		return autoRefreshTickMsg{}
+	})
 }
