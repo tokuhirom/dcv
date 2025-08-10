@@ -398,3 +398,29 @@ func (m *LogViewModel) HandleCancel() tea.Cmd {
 	m.stopLogReader()
 	return nil
 }
+
+func (m *LogViewModel) HandlePageUp(model *Model) tea.Cmd {
+	pageSize := model.Height - 4
+	m.logScrollY -= pageSize
+	if m.logScrollY < 0 {
+		m.logScrollY = 0
+	}
+	return nil
+}
+
+func (m *LogViewModel) HandlePageDown(model *Model) tea.Cmd {
+	pageSize := model.Height - 4
+	logsToDisplay := m.logs
+	if m.filterMode && m.filterText != "" {
+		logsToDisplay = m.filteredLogs
+	}
+
+	maxScroll := len(logsToDisplay) - pageSize
+	m.logScrollY += pageSize
+	if m.logScrollY > maxScroll && maxScroll > 0 {
+		m.logScrollY = maxScroll
+	} else if maxScroll <= 0 {
+		m.logScrollY = 0
+	}
+	return nil
+}
