@@ -198,7 +198,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = nil
 		}
 
-		m.inspectViewModel.Set(msg.content, msg.targetName)
+		// Format the JSON content using the new formatter
+		formatter := NewInspectFormatter()
+		formattedContent, err := formatter.FormatJSON(msg.content)
+		if err != nil {
+			// Fall back to original JSON if formatting fails
+			m.inspectViewModel.Set(msg.content, msg.targetName)
+		} else {
+			m.inspectViewModel.Set(formattedContent, msg.targetName)
+		}
 		m.SwitchView(InspectView)
 		return m, nil
 

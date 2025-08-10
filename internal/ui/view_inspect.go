@@ -33,11 +33,10 @@ func (m *InspectViewModel) render(availableHeight int) string {
 		endIdx = len(lines)
 	}
 
-	// Render the JSON content with syntax highlighting
+	// Line number style
 	lineNumStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-	jsonKeyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
-	jsonValueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
-	jsonBraceStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
 
 	// Define highlight style for search matches
 	highlightStyle := lipgloss.NewStyle().
@@ -58,31 +57,29 @@ func (m *InspectViewModel) render(availableHeight int) string {
 				lineNum = lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Render("▶") + lineNum[1:]
 			}
 
-			// Apply JSON syntax highlighting first
+			// Apply YAML syntax highlighting
 			highlightedLine := line
-			if strings.Contains(line, "\":") {
-				// This line likely contains a key-value pair
-				parts := strings.SplitN(line, "\":", 2)
-				if len(parts) == 2 {
-					// Extract key part
-					keyStart := strings.LastIndex(parts[0], "\"")
-					if keyStart >= 0 {
-						indent := parts[0][:keyStart]
-						key := parts[0][keyStart:]
-						value := parts[1]
+			trimmed := strings.TrimSpace(line)
 
-						// Apply styles
-						highlightedLine = indent + jsonKeyStyle.Render(key+"\":") + jsonValueStyle.Render(value)
-					}
-				}
-			} else if strings.TrimSpace(line) == "{" || strings.TrimSpace(line) == "}" ||
-				strings.TrimSpace(line) == "[" || strings.TrimSpace(line) == "]" ||
-				strings.TrimSpace(line) == "}," || strings.TrimSpace(line) == "]," {
-				// Highlight braces and brackets
-				highlightedLine = jsonBraceStyle.Render(line)
+			// Check if this line is a YAML key-value pair
+			if idx := strings.Index(line, ": "); idx != -1 && !strings.HasPrefix(trimmed, "-") {
+				// Split into key and value parts
+				keyPart := line[:idx]
+				valuePart := line[idx+2:]
+
+				// Apply styles
+				highlightedLine = keyStyle.Render(keyPart) + ": " + valueStyle.Render(valuePart)
+			} else if strings.HasPrefix(trimmed, "- ") {
+				// YAML list item
+				indent := line[:len(line)-len(trimmed)]
+				content := trimmed[2:] // Remove "- "
+				highlightedLine = indent + "- " + valueStyle.Render(content)
+			} else if trimmed != "" {
+				// Other content
+				highlightedLine = valueStyle.Render(line)
 			}
 
-			// Then apply search highlighting if in search mode and have search text
+			// Apply search highlighting if needed
 			if m.searchText != "" && !m.searchMode {
 				highlightedLine = m.highlightInspectLine(line, highlightedLine, highlightStyle)
 			}
