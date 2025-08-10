@@ -92,7 +92,7 @@ func (m *Model) initializeKeyHandlers() {
 		// TODO: support all containerOperations.
 		// TODO: {[]string{"f"}, "browse files", m.CmdFileBrowse},
 		// TODO: {[]string{"!"}, "exec /bin/sh", m.CmdShell},
-		// TODO: {[]string{"a"}, "toggle all", m.CmdToggleAll},
+		{[]string{"a"}, "toggle all", m.CmdToggleAll},
 		{[]string{"K"}, "kill", m.CmdKill},
 		{[]string{"S"}, "stop", m.CmdStop},
 		{[]string{"U"}, "start", m.CmdStart},
