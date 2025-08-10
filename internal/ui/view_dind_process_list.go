@@ -156,7 +156,8 @@ func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 	return model.inspectViewModel.Inspect(model,
 		fmt.Sprintf("DinD: %s (%s)", m.hostContainer.GetName(), container.GetName()),
 		func() ([]byte, error) {
-			return container.Inspect()
+			args := container.OperationArgs("inspect")
+			return model.dockerClient.ExecuteCaptured(args...)
 		},
 	)
 }

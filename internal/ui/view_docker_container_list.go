@@ -177,7 +177,8 @@ func (m *DockerContainerListViewModel) HandleInspect(model *Model) tea.Cmd {
 	return model.inspectViewModel.Inspect(model,
 		"container "+container.GetName(),
 		func() ([]byte, error) {
-			return container.Inspect()
+			args := container.OperationArgs("inspect")
+			return model.dockerClient.ExecuteCaptured(args...)
 		})
 }
 
