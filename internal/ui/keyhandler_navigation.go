@@ -120,6 +120,8 @@ func (m *Model) CmdPageUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandlePageUp(m)
+	case InspectView:
+		return m, m.inspectViewModel.HandlePageUp(m)
 	default:
 		slog.Info("PageUp not supported in current view",
 			slog.String("view", m.currentView.String()))
@@ -131,6 +133,8 @@ func (m *Model) CmdPageDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandlePageDown(m)
+	case InspectView:
+		return m, m.inspectViewModel.HandlePageDown(m)
 	default:
 		slog.Info("PageDown not supported in current view",
 			slog.String("view", m.currentView.String()))
