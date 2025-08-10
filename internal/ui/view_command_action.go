@@ -24,12 +24,14 @@ type CommandActionViewModel struct {
 	actions         []CommandAction
 	selectedAction  int
 	targetContainer *docker.Container
+	originView      ViewType // Track which view we came from
 }
 
 // Initialize sets up the action view with available commands for a container
-func (m *CommandActionViewModel) Initialize(container *docker.Container) {
+func (m *CommandActionViewModel) Initialize(container *docker.Container, originView ViewType) {
 	m.targetContainer = container
 	m.selectedAction = 0
+	m.originView = originView
 
 	// Define available actions based on container state
 	m.actions = []CommandAction{}
@@ -41,7 +43,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "Show container logs",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			return model.dockerContainerListViewModel.HandleViewLog(model)
+			return m.getViewLogHandler(model)
 		},
 	})
 
@@ -51,7 +53,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "View container configuration",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			return model.dockerContainerListViewModel.HandleInspect(model)
+			return m.getInspectHandler(model)
 		},
 	})
 
@@ -61,7 +63,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "Browse container filesystem",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			return model.dockerContainerListViewModel.HandleFileBrowse(model)
+			return m.getFileBrowseHandler(model)
 		},
 	})
 
@@ -71,7 +73,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "Execute /bin/sh in container",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			return model.dockerContainerListViewModel.HandleShell(model)
+			return m.getShellHandler(model)
 		},
 	})
 
@@ -83,7 +85,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Stop the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				return model.dockerContainerListViewModel.HandleStop(model)
+				return m.getStopHandler(model)
 			},
 		})
 
@@ -93,7 +95,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Restart the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				return model.dockerContainerListViewModel.HandleRestart(model)
+				return m.getRestartHandler(model)
 			},
 		})
 
@@ -103,7 +105,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Force kill the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				return model.dockerContainerListViewModel.HandleKill(model)
+				return m.getKillHandler(model)
 			},
 		})
 
@@ -113,7 +115,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Pause the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				return model.dockerContainerListViewModel.HandlePause(model)
+				return m.getPauseHandler(model)
 			},
 		})
 	} else if container.GetState() == "paused" {
@@ -123,7 +125,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Resume the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				return model.dockerContainerListViewModel.HandlePause(model)
+				return m.getPauseHandler(model)
 			},
 		})
 	} else if container.GetState() == "exited" || container.GetState() == "created" {
@@ -133,7 +135,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Start the container",
 			Aggressive:  false,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				return model.dockerContainerListViewModel.HandleStart(model)
+				return m.getStartHandler(model)
 			},
 		})
 
@@ -143,7 +145,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Remove the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				return model.dockerContainerListViewModel.HandleDelete(model)
+				return m.getDeleteHandler(model)
 			},
 		})
 	}
@@ -242,4 +244,135 @@ func (m *CommandActionViewModel) HandleSelect(model *Model) tea.Cmd {
 func (m *CommandActionViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
+}
+
+// Helper methods to get the appropriate handler based on origin view
+func (m *CommandActionViewModel) getViewLogHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleLog(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleViewLog(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleLog(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getInspectHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleInspect(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleInspect(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleInspect(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getFileBrowseHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleFileBrowse(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleFileBrowse(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleFileBrowse(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getShellHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleShell()
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleShell(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleShell(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getStopHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleStop(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleStop(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleStop(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getRestartHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleRestart(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleRestart(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleRestart(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getKillHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleKill(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleKill(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleKill(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getPauseHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandlePause(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandlePause(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandlePause(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getStartHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleStart(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleStart(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleStart(model)
+	default:
+		return nil
+	}
+}
+
+func (m *CommandActionViewModel) getDeleteHandler(model *Model) tea.Cmd {
+	switch m.originView {
+	case ComposeProcessListView:
+		return model.composeProcessListViewModel.HandleDelete(model)
+	case DockerContainerListView:
+		return model.dockerContainerListViewModel.HandleDelete(model)
+	case DindProcessListView:
+		return model.dindProcessListViewModel.HandleDelete(model)
+	default:
+		return nil
+	}
 }

@@ -20,6 +20,7 @@ func (m *Model) initializeKeyHandlers() {
 
 	// TODO: support following commands in dind view
 	containerOperations := []KeyConfig{
+		{[]string{"x"}, "show actions", m.CmdShowActions},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"i"}, "inspect", m.CmdInspect},
@@ -40,7 +41,6 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
-		{[]string{"x"}, "show actions", m.CmdShowActions},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 
