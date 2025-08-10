@@ -55,7 +55,7 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.isContainerAware() {
 		return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
-			args := container.OperationArgs("rm")
+			args := container.OperationArgs("rm", "--force")
 			return m.commandExecutionViewModel.ExecuteCommand(m, true, args...)
 		})
 	}
