@@ -423,12 +423,15 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 
 func TestFileBrowserParentDirectory(t *testing.T) {
 	// Test 'u' key to go to parent directory
+	dockerClient := docker.NewClient()
+	container := docker.NewContainer(dockerClient, "test-container", "test", "test", "running")
 	model := Model{
-		currentView: FileBrowserView,
+		currentView:  FileBrowserView,
+		dockerClient: dockerClient,
 		fileBrowserViewModel: FileBrowserViewModel{
-			browsingContainerID: "test-container",
-			currentPath:         "/app/src",
-			pathHistory:         []string{"/", "/app", "/app/src"},
+			browsingContainer: container,
+			currentPath:       "/app/src",
+			pathHistory:       []string{"/", "/app", "/app/src"},
 			containerFiles: []models.ContainerFile{
 				{Name: "..", IsDir: true},
 				{Name: "file.txt", IsDir: false},

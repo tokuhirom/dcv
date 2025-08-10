@@ -136,9 +136,9 @@ func (m *DockerContainerListViewModel) HandleRemove(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.fileBrowserViewModel.Load(model, container.ID, container.Names)
+	container := m.GetContainer(model)
+	if container != nil {
+		return model.fileBrowserViewModel.LoadContainer(model, container)
 	}
 	return nil
 }

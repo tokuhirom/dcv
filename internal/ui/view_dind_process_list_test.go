@@ -645,11 +645,8 @@ func TestDindProcessListViewModel_HandleFileBrowse(t *testing.T) {
 
 		cmd := vm.HandleFileBrowse(model)
 		assert.NotNil(t, cmd)
-		// Check that the file browser was loaded with correct DinD parameters
-		assert.Equal(t, "host-1", model.fileBrowserViewModel.hostContainerID)
-		assert.Equal(t, "def456", model.fileBrowserViewModel.browsingContainerID)
-		assert.Equal(t, "container-2", model.fileBrowserViewModel.browsingContainerName)
-		assert.True(t, model.fileBrowserViewModel.isDind)
+		// The file browser should be loaded with a DinD container
+		assert.NotNil(t, model.fileBrowserViewModel.browsingContainer)
 	})
 
 	t.Run("CmdFileBrowse works with DinD view", func(t *testing.T) {

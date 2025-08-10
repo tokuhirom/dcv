@@ -7,13 +7,15 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 type FileContentViewModel struct {
-	containerName string
-	content       string
-	contentPath   string
-	scrollY       int
+	container   docker.Container
+	content     string
+	contentPath string
+	scrollY     int
 }
 
 // render renders the file content view
@@ -29,31 +31,14 @@ func (m *FileContentViewModel) render(model *Model) string {
 	return v.View()
 }
 
-func (m *FileContentViewModel) Load(model *Model, containerID, containerName, path string) tea.Cmd {
+func (m *FileContentViewModel) LoadContainer(model *Model, container docker.Container, path string) tea.Cmd {
 	model.SwitchView(FileContentView)
 	model.loading = true
 	m.scrollY = 0
-	m.containerName = containerName
+	m.container = container
 
 	return func() tea.Msg {
-		content, err := model.dockerClient.ReadContainerFile(containerID, path)
-		return fileContentLoadedMsg{
-			content: content,
-			path:    path,
-			err:     err,
-		}
-	}
-}
-
-func (m *FileContentViewModel) LoadDind(model *Model, hostContainerID, containerID, containerName, path string) tea.Cmd {
-	model.SwitchView(FileContentView)
-	model.loading = true
-	m.scrollY = 0
-	m.containerName = containerName
-
-	return func() tea.Msg {
-		dindClient := model.dockerClient.Dind(hostContainerID)
-		content, err := dindClient.ReadContainerFile(containerID, path)
+		content, err := container.ReadContainerFile(path)
 		return fileContentLoadedMsg{
 			content: content,
 			path:    path,
@@ -102,10 +87,14 @@ func (m *FileContentViewModel) HandleBack(model *Model) tea.Cmd {
 }
 
 func (m *FileContentViewModel) Title() string {
+	containerName := ""
+	if m.container != nil {
+		containerName = m.container.GetName()
+	}
 	return fmt.Sprintf("File: [%d/%d] %s [%s] ",
 		m.scrollY, len(strings.Split(m.content, "\n")),
 		m.contentPath,
-		m.containerName,
+		containerName,
 	)
 }
 

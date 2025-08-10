@@ -140,18 +140,19 @@ func TestFileContentViewModel_Navigation(t *testing.T) {
 	})
 }
 
-func TestFileContentViewModel_Load(t *testing.T) {
-	t.Run("Load initializes file content view", func(t *testing.T) {
+func TestFileContentViewModel_LoadContainer(t *testing.T) {
+	t.Run("LoadContainer initializes file content view", func(t *testing.T) {
 		model := &Model{
 			dockerClient: docker.NewClient(),
 			currentView:  FileBrowserView,
 			loading:      false,
 		}
+		container := docker.NewContainer(model.dockerClient, "container123", "test-container", "test-container", "running")
 		vm := &FileContentViewModel{}
 
-		cmd := vm.Load(model, "container123", "test-container", "/etc/config.conf")
+		cmd := vm.LoadContainer(model, container, "/etc/config.conf")
 		assert.NotNil(t, cmd)
-		assert.Equal(t, "test-container", vm.containerName)
+		assert.Equal(t, container, vm.container)
 		assert.Equal(t, 0, vm.scrollY)
 		assert.Equal(t, FileContentView, model.currentView)
 		assert.True(t, model.loading)
@@ -167,11 +168,13 @@ func TestFileContentViewModel_HandleBack(t *testing.T) {
 			currentView: FileContentView,
 			viewHistory: []ViewType{FileBrowserView, FileContentView},
 		}
+		dockerClient := docker.NewClient()
+		container := docker.NewContainer(dockerClient, "test123", "test-container", "test-container", "running")
 		vm := &FileContentViewModel{
-			content:       "some content",
-			contentPath:   "/file.txt",
-			containerName: "test-container",
-			scrollY:       5,
+			content:     "some content",
+			contentPath: "/file.txt",
+			container:   container,
+			scrollY:     5,
 		}
 
 		cmd := vm.HandleBack(model)
@@ -200,11 +203,13 @@ func TestFileContentViewModel_Loaded(t *testing.T) {
 }
 
 func TestFileContentViewModel_Title(t *testing.T) {
+	dockerClient := docker.NewClient()
+	container := docker.NewContainer(dockerClient, "test123", "test-container", "test-container", "running")
 	vm := &FileContentViewModel{
-		content:       "Line 1\nLine 2\nLine 3\nLine 4\nLine 5",
-		contentPath:   "/etc/config.conf",
-		containerName: "test-container",
-		scrollY:       2,
+		content:     "Line 1\nLine 2\nLine 3\nLine 4\nLine 5",
+		contentPath: "/etc/config.conf",
+		container:   container,
+		scrollY:     2,
 	}
 
 	title := vm.Title()
@@ -228,8 +233,9 @@ func TestFileContentViewModel_Integration(t *testing.T) {
 		}
 
 		// Load file content from file browser
+		container := docker.NewContainer(model.dockerClient, "container123", "test-container", "test-container", "running")
 		vm := &FileContentViewModel{}
-		cmd := vm.Load(model, "container123", "test-container", "/etc/config.conf")
+		cmd := vm.LoadContainer(model, container, "/etc/config.conf")
 		assert.NotNil(t, cmd)
 		assert.Equal(t, FileContentView, model.currentView)
 
