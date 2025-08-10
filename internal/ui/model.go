@@ -115,6 +115,9 @@ type Model struct {
 	// Loading state
 	loading bool
 
+	// Navigation bar visibility
+	navbarHidden bool
+
 	globalKeymap   map[string]KeyHandler
 	globalHandlers []KeyConfig
 

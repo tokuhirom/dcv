@@ -70,9 +70,13 @@ func (m *Model) View() string {
 		return "Loading..."
 	}
 
-	// Get navigation header
-	navHeader := m.viewNavigationHeader()
-	navHeight := lipgloss.Height(navHeader)
+	// Get navigation header (only if not hidden)
+	var navHeader string
+	var navHeight int
+	if !m.navbarHidden {
+		navHeader = m.viewNavigationHeader()
+		navHeight = lipgloss.Height(navHeader)
+	}
 
 	// Get title
 	title := m.viewTitle()
@@ -100,12 +104,15 @@ func (m *Model) View() string {
 	}
 
 	// Join all components
+	components := []string{}
+	if !m.navbarHidden {
+		components = append(components, navHeader)
+	}
+	components = append(components, titleStyle.Render(title), body, footer)
+
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		navHeader,
-		titleStyle.Render(title),
-		body,
-		footer,
+		components...,
 	)
 }
 
@@ -131,6 +138,10 @@ func (m *Model) viewNavigationHeader() string {
 	navItems = append(navItems, createNavItem("4", "Networks", NetworkListView))
 	navItems = append(navItems, createNavItem("5", "Volumes", VolumeListView))
 	navItems = append(navItems, createNavItem("6", "Stats", StatsView))
+
+	// Add toggle hint
+	toggleHint := helpStyle.Render("[H]ide navbar")
+	navItems = append(navItems, toggleHint)
 
 	// Join items with separator
 	separator := navSeparatorStyle.Render(" | ")
@@ -310,6 +321,10 @@ func (m *Model) viewFooter() string {
 	} else if m.currentView == HelpView {
 		return helpStyle.Render("Press ESC or q to go back")
 	} else {
-		return helpStyle.Render("Press ? for help")
+		helpText := "Press ? for help"
+		if m.navbarHidden {
+			helpText += " | Press H to show navbar"
+		}
+		return helpStyle.Render(helpText)
 	}
 }
