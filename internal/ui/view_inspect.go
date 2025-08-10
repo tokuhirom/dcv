@@ -278,7 +278,7 @@ func (m *InspectViewModel) HandleUp() tea.Cmd {
 
 func (m *InspectViewModel) HandleDown(model *Model) tea.Cmd {
 	lines := strings.Split(m.inspectContent, "\n")
-	maxScroll := len(lines) - (model.Height - 5)
+	maxScroll := len(lines) - model.PageSize()
 	if m.inspectScrollY < maxScroll && maxScroll > 0 {
 		m.inspectScrollY++
 	}
@@ -287,7 +287,7 @@ func (m *InspectViewModel) HandleDown(model *Model) tea.Cmd {
 
 func (m *InspectViewModel) HandleGoToEnd(model *Model) tea.Cmd {
 	lines := strings.Split(m.inspectContent, "\n")
-	maxScroll := len(lines) - (model.Height - 5)
+	maxScroll := len(lines) - model.PageSize()
 	if maxScroll > 0 {
 		m.inspectScrollY = maxScroll
 	}
@@ -300,7 +300,7 @@ func (m *InspectViewModel) HandleGoToStart() tea.Cmd {
 }
 
 func (m *InspectViewModel) HandlePageUp(model *Model) tea.Cmd {
-	pageSize := model.Height - 5
+	pageSize := model.PageSize()
 	m.inspectScrollY -= pageSize
 	if m.inspectScrollY < 0 {
 		m.inspectScrollY = 0
@@ -309,7 +309,7 @@ func (m *InspectViewModel) HandlePageUp(model *Model) tea.Cmd {
 }
 
 func (m *InspectViewModel) HandlePageDown(model *Model) tea.Cmd {
-	pageSize := model.Height - 5
+	pageSize := model.PageSize()
 	lines := strings.Split(m.inspectContent, "\n")
 	maxScroll := len(lines) - pageSize
 
