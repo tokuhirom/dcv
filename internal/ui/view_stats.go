@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -38,10 +39,12 @@ func (s StatsSortField) String() string {
 
 // StatsViewModel manages the state and rendering of the stats view
 type StatsViewModel struct {
-	stats       []models.ContainerStats
-	sortField   StatsSortField
-	sortReverse bool
-	scrollY     int
+	stats           []models.ContainerStats
+	sortField       StatsSortField
+	sortReverse     bool
+	scrollY         int
+	autoRefresh     bool
+	refreshInterval time.Duration
 }
 
 // render renders the stats view
@@ -50,7 +53,7 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 		return "\nNo stats available.\n"
 	}
 
-	// Display sorting info
+	// Display sorting info and auto-refresh status
 	var s strings.Builder
 	sortInfo := fmt.Sprintf("Sort: %s", m.sortField.String())
 	if m.sortReverse {
@@ -60,7 +63,17 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 	}
 	s.WriteString(helpStyle.Render(sortInfo))
 	s.WriteString("  ")
-	s.WriteString(helpStyle.Render("[c]PU [m]EM [n]ame [R]everse"))
+
+	// Show auto-refresh status
+	if m.autoRefresh {
+		refreshStatus := fmt.Sprintf("Auto-refresh: ON (%ds)", int(m.refreshInterval.Seconds()))
+		s.WriteString(searchStyle.Render(refreshStatus))
+	} else {
+		s.WriteString(helpStyle.Render("Auto-refresh: OFF"))
+	}
+	s.WriteString("  ")
+
+	s.WriteString(helpStyle.Render("[c]PU [m]EM [n]ame [R]everse [a]uto-refresh"))
 	s.WriteString("\n\n")
 
 	// Sort stats
@@ -118,13 +131,28 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 
 // Show switches to the stats view
 func (m *StatsViewModel) Show(model *Model) tea.Cmd {
+	m.autoRefresh = true                // Enable auto-refresh by default
+	m.refreshInterval = 2 * time.Second // Default refresh interval
 	model.SwitchView(StatsView)
-	return m.DoLoad(model)
+	return tea.Batch(
+		m.DoLoad(model),
+		m.startAutoRefresh(),
+	)
 }
 
 // DoLoad reloads the stats
 func (m *StatsViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
+	return m.doLoadInternal(model)
+}
+
+// DoLoadSilent reloads the stats without showing loading indicator
+func (m *StatsViewModel) DoLoadSilent(model *Model) tea.Cmd {
+	// Don't set loading = true for silent refresh
+	return m.doLoadInternal(model)
+}
+
+func (m *StatsViewModel) doLoadInternal(model *Model) tea.Cmd {
 	return func() tea.Msg {
 		// TODO: suppport toggle-all stats
 		stats, err := model.dockerClient.GetStats(false)
@@ -219,4 +247,16 @@ func (m *StatsViewModel) HandleSortByName() {
 // HandleReverseSort reverses the current sort order
 func (m *StatsViewModel) HandleReverseSort() {
 	m.sortReverse = !m.sortReverse
+}
+
+// HandleToggleAutoRefresh toggles the auto-refresh feature
+func (m *StatsViewModel) HandleToggleAutoRefresh() {
+	m.autoRefresh = !m.autoRefresh
+}
+
+// startAutoRefresh returns a command to trigger periodic refresh
+func (m *StatsViewModel) startAutoRefresh() tea.Cmd {
+	return tea.Tick(m.refreshInterval, func(time.Time) tea.Msg {
+		return autoRefreshTickMsg{}
+	})
 }

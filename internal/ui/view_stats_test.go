@@ -2,6 +2,7 @@ package ui
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -305,6 +306,54 @@ func TestStatsViewModel_SortHandlers(t *testing.T) {
 
 		vm.HandleReverseSort()
 		assert.False(t, vm.sortReverse)
+	})
+}
+
+func TestStatsViewModel_AutoRefresh(t *testing.T) {
+	vm := &StatsViewModel{}
+
+	t.Run("HandleToggleAutoRefresh toggles state", func(t *testing.T) {
+		// Initially off
+		assert.False(t, vm.autoRefresh)
+
+		// Turn on
+		vm.HandleToggleAutoRefresh()
+		assert.True(t, vm.autoRefresh)
+
+		// Turn off
+		vm.HandleToggleAutoRefresh()
+		assert.False(t, vm.autoRefresh)
+	})
+
+	t.Run("Show enables auto-refresh by default", func(t *testing.T) {
+		model := &Model{
+			dockerClient: docker.NewClient(),
+			currentView:  ComposeProcessListView,
+		}
+		vm := &StatsViewModel{}
+
+		cmd := vm.Show(model)
+		assert.NotNil(t, cmd)
+		assert.True(t, vm.autoRefresh)
+		assert.Equal(t, 2*time.Second, vm.refreshInterval)
+	})
+
+	t.Run("startAutoRefresh returns tick command", func(t *testing.T) {
+		vm.refreshInterval = 3 * time.Second
+		cmd := vm.startAutoRefresh()
+		assert.NotNil(t, cmd)
+	})
+
+	t.Run("DoLoadSilent does not set loading indicator", func(t *testing.T) {
+		model := &Model{
+			dockerClient: docker.NewClient(),
+			loading:      false,
+		}
+		vm := &StatsViewModel{}
+
+		cmd := vm.DoLoadSilent(model)
+		assert.NotNil(t, cmd)
+		assert.False(t, model.loading) // Should remain false
 	})
 }
 
