@@ -38,7 +38,7 @@ func (m *FileContentViewModel) LoadContainer(model *Model, container docker.Cont
 	m.container = container
 
 	return func() tea.Msg {
-		args := container.FileOperationArgs("cat", path)
+		args := container.OperationArgs("exec", "cat", path)
 		output, err := model.dockerClient.ExecuteCaptured(args...)
 		return fileContentLoadedMsg{
 			content: string(output),

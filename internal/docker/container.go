@@ -16,14 +16,10 @@ type Container interface {
 	Title() string
 
 	// OperationArgs returns Docker command arguments for operations on this container.
-	// For regular containers: [cmd, containerID]
-	// For DinD containers: [exec, hostID, docker, cmd, containerID]
-	OperationArgs(cmd string) []string
-
-	// FileOperationArgs returns Docker command arguments for file operations.
-	// For regular containers: [exec, containerID, fileCmd...]
-	// For DinD containers: [exec, hostID, docker, exec, containerID, fileCmd...]
-	FileOperationArgs(fileCmd ...string) []string
+	// For regular containers: [cmd, containerID, extraArgs...]
+	// For DinD containers: [exec, hostID, docker, cmd, containerID, extraArgs...]
+	// For exec operations: pass "exec" as cmd and the actual command as extraArgs
+	OperationArgs(cmd string, extraArgs ...string) []string
 }
 
 type ContainerImpl struct {
@@ -61,13 +57,9 @@ func (c ContainerImpl) Title() string {
 	return c.title
 }
 
-func (c ContainerImpl) OperationArgs(cmd string) []string {
-	return []string{cmd, c.containerID}
-}
-
-func (c ContainerImpl) FileOperationArgs(fileCmd ...string) []string {
-	args := []string{"exec", c.containerID}
-	return append(args, fileCmd...)
+func (c ContainerImpl) OperationArgs(cmd string, extraArgs ...string) []string {
+	args := []string{cmd, c.containerID}
+	return append(args, extraArgs...)
 }
 
 type DindContainerImpl struct {
@@ -104,11 +96,10 @@ func (c DindContainerImpl) Title() string {
 	return fmt.Sprintf("DinD: %s (%s)", c.hostContainerName, c.name)
 }
 
-func (c DindContainerImpl) OperationArgs(op string) []string {
-	return []string{"exec", c.hostContainerID, "docker", op, c.containerID}
-}
-
-func (c DindContainerImpl) FileOperationArgs(fileCmd ...string) []string {
-	args := []string{"exec", c.hostContainerID, "docker", "exec", c.containerID}
-	return append(args, fileCmd...)
+func (c DindContainerImpl) OperationArgs(op string, extraArgs ...string) []string {
+	// For DinD containers, we need to exec into the host container first,
+	// then run docker commands inside it
+	// docker exec <host> docker <op> <container> <extraArgs>
+	args := []string{"exec", c.hostContainerID, "docker", op, c.containerID}
+	return append(args, extraArgs...)
 }

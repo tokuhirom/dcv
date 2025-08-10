@@ -166,7 +166,7 @@ func (m *FileBrowserViewModel) Loaded(files []models.ContainerFile) {
 func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		args := m.browsingContainer.FileOperationArgs("ls", "-la", m.currentPath)
+		args := m.browsingContainer.OperationArgs("exec", "ls", "-la", m.currentPath)
 		output, err := model.dockerClient.ExecuteCaptured(args...)
 
 		var files []models.ContainerFile
