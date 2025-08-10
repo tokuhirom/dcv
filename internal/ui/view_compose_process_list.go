@@ -172,7 +172,7 @@ func (m *ComposeProcessListViewModel) HandleCommandExecution(model *Model, opera
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) HandleRemove(model *Model) tea.Cmd {
+func (m *ComposeProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
 		// Use CommandExecutionView to show real-time output
@@ -222,10 +222,6 @@ func (m *ComposeProcessListViewModel) HandlePause(model *Model) tea.Cmd {
 		return model.commandExecutionViewModel.ExecuteCommand(model, true, "pause", container.ID)
 	}
 	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
-	return m.HandleRemove(model)
 }
 
 func (m *ComposeProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {

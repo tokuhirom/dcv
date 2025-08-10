@@ -126,7 +126,7 @@ func (m *DockerContainerListViewModel) HandleKill(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleRemove(model *Model) tea.Cmd {
+func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
 	// Delete the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {
 		container := m.dockerContainers[m.selectedDockerContainer]
@@ -255,10 +255,6 @@ func (m *DockerContainerListViewModel) HandlePause(model *Model) tea.Cmd {
 		return model.commandExecutionViewModel.ExecuteCommand(model, true, "pause", container.ID)
 	}
 	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
-	return m.HandleRemove(model)
 }
 
 func (m *DockerContainerListViewModel) HandleShowActions(model *Model) tea.Cmd {
