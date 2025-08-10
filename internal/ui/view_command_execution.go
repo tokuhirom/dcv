@@ -108,7 +108,7 @@ func (m *CommandExecutionViewModel) HandleUp() tea.Cmd {
 }
 
 func (m *CommandExecutionViewModel) HandleDown(model *Model) tea.Cmd {
-	maxScroll := len(m.output) - (model.Height - 6)
+	maxScroll := len(m.output) - model.PageSize()
 	if m.scrollY < maxScroll && maxScroll > 0 {
 		m.scrollY++
 	}
@@ -116,7 +116,7 @@ func (m *CommandExecutionViewModel) HandleDown(model *Model) tea.Cmd {
 }
 
 func (m *CommandExecutionViewModel) HandleGoToEnd(model *Model) tea.Cmd {
-	maxScroll := len(m.output) - (model.Height - 6)
+	maxScroll := len(m.output) - model.PageSize()
 	if maxScroll > 0 {
 		m.scrollY = maxScroll
 	}
@@ -218,7 +218,7 @@ func (m *CommandExecutionViewModel) ExecStarted(cmd *exec.Cmd, stdout io.ReadClo
 func (m *CommandExecutionViewModel) ExecOutput(model *Model, line string) tea.Cmd {
 	m.output = append(m.output, line)
 	// Auto-scroll to bottom
-	maxScroll := len(m.output) - (model.Height - 6)
+	maxScroll := len(m.output) - model.PageSize()
 	if maxScroll > 0 && m.scrollY == maxScroll-1 {
 		m.scrollY = maxScroll
 	}

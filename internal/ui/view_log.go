@@ -245,7 +245,7 @@ func (m *LogViewModel) HandleUp() tea.Cmd {
 }
 
 func (m *LogViewModel) HandleDown(model *Model) tea.Cmd {
-	maxScroll := len(m.logs) - (model.Height - 4)
+	maxScroll := len(m.logs) - model.PageSize()
 	if m.logScrollY < maxScroll && maxScroll > 0 {
 		m.logScrollY++
 	}
@@ -253,7 +253,7 @@ func (m *LogViewModel) HandleDown(model *Model) tea.Cmd {
 }
 
 func (m *LogViewModel) HandleGoToEnd(model *Model) tea.Cmd {
-	maxScroll := len(m.logs) - (model.Height - 4)
+	maxScroll := len(m.logs) - model.PageSize()
 	if maxScroll > 0 {
 		m.logScrollY = maxScroll
 	}
@@ -346,7 +346,7 @@ func (m *LogViewModel) LogLines(model *Model, lines []string) {
 		m.performFilter()
 	} else {
 		// Auto-scroll to bottom only when not filtering
-		maxScroll := len(m.logs) - (model.Height - 4)
+		maxScroll := len(m.logs) - model.PageSize()
 		if maxScroll > 0 {
 			m.logScrollY = maxScroll
 		}
@@ -400,7 +400,7 @@ func (m *LogViewModel) HandleCancel() tea.Cmd {
 }
 
 func (m *LogViewModel) HandlePageUp(model *Model) tea.Cmd {
-	pageSize := model.Height - 4
+	pageSize := model.PageSize()
 	m.logScrollY -= pageSize
 	if m.logScrollY < 0 {
 		m.logScrollY = 0
@@ -409,7 +409,7 @@ func (m *LogViewModel) HandlePageUp(model *Model) tea.Cmd {
 }
 
 func (m *LogViewModel) HandlePageDown(model *Model) tea.Cmd {
-	pageSize := model.Height - 4
+	pageSize := model.PageSize()
 	logsToDisplay := m.logs
 	if m.filterMode && m.filterText != "" {
 		logsToDisplay = m.filteredLogs

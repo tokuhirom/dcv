@@ -32,6 +32,13 @@ const (
 	CommandExecutionView
 )
 
+// UI Chrome offsets for different views
+const (
+	LogViewChromeOffset              = 4
+	InspectViewChromeOffset          = 5
+	CommandExecutionViewChromeOffset = 6
+)
+
 func (view ViewType) String() string {
 	switch view {
 	case ComposeProcessListView:
@@ -166,6 +173,21 @@ func NewModel(initialView ViewType) *Model {
 }
 
 // Init returns an initial command for the application
+// PageSize returns the available page size for scrolling in the current view
+func (m *Model) PageSize() int {
+	switch m.currentView {
+	case LogView:
+		return m.Height - LogViewChromeOffset
+	case InspectView:
+		return m.Height - InspectViewChromeOffset
+	case CommandExecutionView:
+		return m.Height - CommandExecutionViewChromeOffset
+	default:
+		// Default page size for other views
+		return m.Height - LogViewChromeOffset
+	}
+}
+
 func (m *Model) Init() tea.Cmd {
 	m.initializeKeyHandlers()
 

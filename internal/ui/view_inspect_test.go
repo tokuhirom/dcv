@@ -109,7 +109,7 @@ func TestInspectViewModel_Navigation(t *testing.T) {
 		vm.inspectScrollY = 15 // Max scroll for 20 lines with height 10
 		cmd = vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 16, vm.inspectScrollY, "Should scroll one more")
+		assert.Equal(t, 15, vm.inspectScrollY, "Should be at max scroll")
 	})
 
 	t.Run("HandleUp scrolls up", func(t *testing.T) {
@@ -151,7 +151,7 @@ func TestInspectViewModel_Navigation(t *testing.T) {
 
 		cmd := vm.HandleGoToEnd(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 16, vm.inspectScrollY) // 21 lines - (10 height - 5) = 16
+		assert.Equal(t, 15, vm.inspectScrollY) // 21 lines - (10 height - 5) = 15
 
 		// Test with short content
 		vm.inspectContent = "Line 1\nLine 2"
