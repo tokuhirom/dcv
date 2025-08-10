@@ -53,10 +53,3 @@ func parseLabels(labels string) map[string]string {
 func (v DockerVolume) IsLocal() bool {
 	return v.Driver == "local"
 }
-
-// DockerVolumeSize represents size information from docker system df
-type DockerVolumeSize struct {
-	Name  string `json:"Name"`
-	Size  string `json:"Size"`  // Size as string like "1.051GB"
-	Links string `json:"Links"` // Number of links as string
-}
