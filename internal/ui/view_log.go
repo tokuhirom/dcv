@@ -104,7 +104,7 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 					s.WriteString("  ")
 				}
 
-				s.WriteString(line + "\n")
+				s.WriteString(line + ResetAll + "\n")
 			}
 		}
 	}
