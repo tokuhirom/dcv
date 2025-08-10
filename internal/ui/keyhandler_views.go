@@ -39,6 +39,8 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProcessListViewModel.HandleShell()
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleShell(m)
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleShell(m)
 	default:
 		return m, nil
 	}

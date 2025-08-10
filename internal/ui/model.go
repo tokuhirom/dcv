@@ -401,6 +401,12 @@ type executeCommandMsg struct {
 	command     []string
 }
 
+type executeDindCommandMsg struct {
+	hostContainerID string
+	containerID     string
+	command         []string
+}
+
 type inspectLoadedMsg struct {
 	content    string
 	err        error
