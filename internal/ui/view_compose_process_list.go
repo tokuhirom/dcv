@@ -181,6 +181,53 @@ func (m *ComposeProcessListViewModel) HandleRemove(model *Model) tea.Cmd {
 	return nil
 }
 
+func (m *ComposeProcessListViewModel) HandleStop(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "stop", container.ID)
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleStart(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.commandExecutionViewModel.ExecuteCommand(model, false, "start", container.ID)
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleRestart(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "restart", container.ID)
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleKill(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "kill", container.ID)
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandlePause(model *Model) tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		if container.State == "paused" {
+			return model.commandExecutionViewModel.ExecuteCommand(model, true, "unpause", container.ID)
+		}
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "pause", container.ID)
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
+	return m.HandleRemove(model)
+}
+
 func (m *ComposeProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
 	container := m.GetContainer(model)
 	if container != nil {
@@ -229,6 +276,19 @@ func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 
 func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleShowActions(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for actions")
+		return nil
+	}
+
+	// Initialize the action view with the selected container
+	model.commandActionViewModel.Initialize(container, ComposeProcessListView)
+	model.SwitchView(CommandActionView)
 	return nil
 }
 

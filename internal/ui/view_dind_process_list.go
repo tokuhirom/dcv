@@ -174,6 +174,67 @@ func (m *DindProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
 	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // rm is aggressive
 }
 
+func (m *DindProcessListViewModel) HandleStop(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for stop")
+		return nil
+	}
+
+	args := container.OperationArgs("stop")
+	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...)
+}
+
+func (m *DindProcessListViewModel) HandleStart(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for start")
+		return nil
+	}
+
+	args := container.OperationArgs("start")
+	return model.commandExecutionViewModel.ExecuteCommand(model, false, args...)
+}
+
+func (m *DindProcessListViewModel) HandleRestart(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for restart")
+		return nil
+	}
+
+	args := container.OperationArgs("restart")
+	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...)
+}
+
+func (m *DindProcessListViewModel) HandleKill(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for kill")
+		return nil
+	}
+
+	args := container.OperationArgs("kill")
+	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...)
+}
+
+func (m *DindProcessListViewModel) HandlePause(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for pause")
+		return nil
+	}
+
+	var cmd string
+	if container.GetState() == "paused" {
+		cmd = "unpause"
+	} else {
+		cmd = "pause"
+	}
+	args := container.OperationArgs(cmd)
+	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...)
+}
+
 func (m *DindProcessListViewModel) HandleShell(model *Model) tea.Cmd {
 	if m.selectedDindContainer >= len(m.dindContainers) {
 		return nil
@@ -198,6 +259,19 @@ func (m *DindProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
 	}
 	slog.Error("Failed to get selected container for file browser",
 		slog.Any("error", fmt.Errorf("no container selected")))
+	return nil
+}
+
+func (m *DindProcessListViewModel) HandleShowActions(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for actions")
+		return nil
+	}
+
+	// Initialize the action view with the selected container
+	model.commandActionViewModel.Initialize(container, DindProcessListView)
+	model.SwitchView(CommandActionView)
 	return nil
 }
 

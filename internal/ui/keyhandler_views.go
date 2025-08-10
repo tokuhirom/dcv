@@ -48,8 +48,12 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) CmdShowActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleShowActions(m)
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleShowActions(m)
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleShowActions(m)
 	default:
 		return m, nil
 	}

@@ -269,7 +269,7 @@ func (m *DockerContainerListViewModel) HandleShowActions(model *Model) tea.Cmd {
 	}
 
 	// Initialize the action view with the selected container
-	model.commandActionViewModel.Initialize(container)
+	model.commandActionViewModel.Initialize(container, DockerContainerListView)
 	model.SwitchView(CommandActionView)
 	return nil
 }
