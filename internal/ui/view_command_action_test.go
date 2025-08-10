@@ -70,13 +70,7 @@ func TestCommandActionViewModel_Initialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			vm := &CommandActionViewModel{}
-			container := docker.NewContainer(
-				docker.NewClient(),
-				"test-id",
-				"test-container",
-				"test-service",
-				tt.containerState,
-			)
+			container := docker.NewContainer("test-id", "test-container", "test-service", tt.containerState)
 
 			vm.Initialize(container)
 
@@ -165,14 +159,8 @@ func TestCommandActionViewModel_HandleSelect(t *testing.T) {
 					},
 				},
 			},
-			selectedAction: 0,
-			targetContainer: docker.NewContainer(
-				docker.NewClient(),
-				"test-id",
-				"test-container",
-				"test-service",
-				"running",
-			),
+			selectedAction:  0,
+			targetContainer: docker.NewContainer("test-id", "test-container", "test-service", "running"),
 		}
 		model.commandActionViewModel = *vm
 
@@ -243,14 +231,8 @@ func TestCommandActionViewModel_Render(t *testing.T) {
 		expectNotContains []string
 	}{
 		{
-			name: "renders with container info",
-			container: docker.NewContainer(
-				docker.NewClient(),
-				"test-id",
-				"test-container",
-				"test-service",
-				"running",
-			),
+			name:      "renders with container info",
+			container: docker.NewContainer("test-id", "test-container", "test-service", "running"),
 			actions: []CommandAction{
 				{Key: "S", Name: "Stop", Description: "Stop the container", Aggressive: true},
 				{Key: "R", Name: "Restart", Description: "Restart the container", Aggressive: true},
@@ -315,13 +297,7 @@ func TestCommandActionViewModel_ActionColoring(t *testing.T) {
 		Height: 24,
 	}
 
-	container := docker.NewContainer(
-		docker.NewClient(),
-		"test-id",
-		"test-container",
-		"test-service",
-		"running",
-	)
+	container := docker.NewContainer("test-id", "test-container", "test-service", "running")
 
 	vm := &CommandActionViewModel{
 		targetContainer: container,
@@ -354,13 +330,7 @@ func TestCommandActionViewModel_Integration(t *testing.T) {
 		model.commandActionViewModel = CommandActionViewModel{}
 
 		// Initialize with a running container
-		container := docker.NewContainer(
-			docker.NewClient(),
-			"test-id",
-			"test-container",
-			"test-service",
-			"running",
-		)
+		container := docker.NewContainer("test-id", "test-container", "test-service", "running")
 		model.commandActionViewModel.Initialize(container)
 
 		// Should have actions for running container
@@ -401,13 +371,7 @@ func TestCommandActionViewModel_ActionHandlers(t *testing.T) {
 		}
 		model.initializeKeyHandlers()
 
-		container := docker.NewContainer(
-			docker.NewClient(),
-			"test-id",
-			"test-container",
-			"test-service",
-			"running",
-		)
+		container := docker.NewContainer("test-id", "test-container", "test-service", "running")
 
 		vm := &CommandActionViewModel{}
 		vm.Initialize(container)
@@ -463,13 +427,7 @@ func TestCommandActionViewModel_StateSpecificActions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.state+" container", func(t *testing.T) {
 			vm := &CommandActionViewModel{}
-			container := docker.NewContainer(
-				docker.NewClient(),
-				"test-id",
-				"test-container",
-				"test-service",
-				tt.state,
-			)
+			container := docker.NewContainer("test-id", "test-container", "test-service", tt.state)
 
 			vm.Initialize(container)
 
@@ -515,13 +473,7 @@ func TestCommandActionViewModel_RenderFormattting(t *testing.T) {
 		Height: 24,
 	}
 
-	container := docker.NewContainer(
-		docker.NewClient(),
-		"very-long-container-id-that-should-not-break-rendering",
-		"very-long-container-name-that-might-be-truncated",
-		"service",
-		"running",
-	)
+	container := docker.NewContainer("very-long-container-id-that-should-not-break-rendering", "very-long-container-name-that-might-be-truncated", "service", "running")
 
 	vm := &CommandActionViewModel{
 		targetContainer: container,

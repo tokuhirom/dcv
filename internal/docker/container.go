@@ -17,7 +17,7 @@ type Container struct {
 }
 
 // NewContainer creates a regular container
-func NewContainer(client *Client, containerID string, name string, title string, state string) *Container {
+func NewContainer(containerID string, name string, title string, state string) *Container {
 	return &Container{
 		containerID: containerID,
 		name:        name,
@@ -28,7 +28,7 @@ func NewContainer(client *Client, containerID string, name string, title string,
 }
 
 // NewDindContainer creates a Docker-in-Docker container
-func NewDindContainer(client *Client, hostContainerID, hostContainerName, containerID, name, state string) *Container {
+func NewDindContainer(hostContainerID, hostContainerName, containerID, name, state string) *Container {
 	return &Container{
 		containerID:       containerID,
 		name:              name,

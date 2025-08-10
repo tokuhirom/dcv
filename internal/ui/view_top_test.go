@@ -79,9 +79,7 @@ func TestTopViewModel_Load(t *testing.T) {
 			loading:      false,
 		}
 		vm := &TopViewModel{}
-		container := docker.NewContainer(
-			docker.NewClient(), "test-container", "web-1", "web-1 (test-project)", "running",
-		)
+		container := docker.NewContainer("test-container", "web-1", "web-1 (test-project)", "running")
 
 		cmd := vm.Load(model, container)
 		assert.NotNil(t, cmd)
@@ -98,9 +96,7 @@ func TestTopViewModel_DoLoad(t *testing.T) {
 			loading:      false,
 		}
 		vm := &TopViewModel{
-			container: docker.NewContainer(
-				docker.NewClient(), "test-container", "web-1", "web-1 (test-project)", "running",
-			),
+			container: docker.NewContainer("test-container", "web-1", "web-1 (test-project)", "running"),
 		}
 
 		cmd := vm.DoLoad(model)
@@ -154,26 +150,19 @@ func TestTopViewModel_Title(t *testing.T) {
 		expected  string
 	}{
 		{
-			name: "compose container title",
-			container: docker.NewContainer(
-				docker.NewClient(), "abc123", "web-1", "web-1 (myproject)", "running",
-			),
-			expected: "Process Info: web-1 (myproject)",
+			name:      "compose container title",
+			container: docker.NewContainer("abc123", "web-1", "web-1 (myproject)", "running"),
+			expected:  "Process Info: web-1 (myproject)",
 		},
 		{
-			name: "docker container title",
-			container: docker.NewContainer(
-				docker.NewClient(), "def456", "nginx-server", "nginx-server", "running",
-			),
-			expected: "Process Info: nginx-server",
+			name:      "docker container title",
+			container: docker.NewContainer("def456", "nginx-server", "nginx-server", "running"),
+			expected:  "Process Info: nginx-server",
 		},
 		{
-			name: "dind container title",
-			container: docker.NewDindContainer(
-				docker.NewClient(), "host-1", "host-container",
-				"inner-1", "inner-container", "running",
-			),
-			expected: "Process Info: DinD: host-container (inner-container)",
+			name:      "dind container title",
+			container: docker.NewDindContainer("host-1", "host-container", "inner-1", "inner-container", "running"),
+			expected:  "Process Info: DinD: host-container (inner-container)",
 		},
 	}
 
@@ -198,9 +187,7 @@ func TestTopViewModel_Integration(t *testing.T) {
 			Height:       20,
 		}
 		vm := &TopViewModel{}
-		container := docker.NewContainer(
-			docker.NewClient(), "test-container", "web-1", "web-1 (test-project)", "running",
-		)
+		container := docker.NewContainer("test-container", "web-1", "web-1 (test-project)", "running")
 
 		// Load
 		cmd := vm.Load(model, container)
