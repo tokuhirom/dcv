@@ -176,7 +176,7 @@ func (m *ComposeProcessListViewModel) HandleRemove(model *Model) tea.Cmd {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
 		// Use CommandExecutionView to show real-time output
-		return model.commandExecutionViewModel.ExecuteCommand(model, true, "rm", "-f", container.ID) // rm is aggressive
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "rm", container.ID) // rm is aggressive
 	}
 	return nil
 }
