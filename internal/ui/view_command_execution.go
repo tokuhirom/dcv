@@ -153,7 +153,11 @@ func (m *CommandExecutionViewModel) HandleBack(model *Model) tea.Cmd {
 
 	// Go back to previous view
 	model.SwitchToPreviousView()
-	return nil
+
+	// Trigger a refresh to reload the list with updated state
+	return func() tea.Msg {
+		return RefreshMsg{}
+	}
 }
 
 func (m *CommandExecutionViewModel) ExecuteCommand(model *Model, aggressive bool, args ...string) tea.Cmd {
