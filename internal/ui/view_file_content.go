@@ -36,9 +36,26 @@ func (m *FileContentViewModel) Load(model *Model, containerID, containerName, pa
 	m.containerName = containerName
 
 	return func() tea.Msg {
-		content, err := model.dockerClient.ExecuteCaptured("exec", containerID, "cat", path)
+		content, err := model.dockerClient.ReadContainerFile(containerID, path)
 		return fileContentLoadedMsg{
-			content: string(content),
+			content: content,
+			path:    path,
+			err:     err,
+		}
+	}
+}
+
+func (m *FileContentViewModel) LoadDind(model *Model, hostContainerID, containerID, containerName, path string) tea.Cmd {
+	model.SwitchView(FileContentView)
+	model.loading = true
+	m.scrollY = 0
+	m.containerName = containerName
+
+	return func() tea.Msg {
+		dindClient := model.dockerClient.Dind(hostContainerID)
+		content, err := dindClient.ReadContainerFile(containerID, path)
+		return fileContentLoadedMsg{
+			content: content,
 			path:    path,
 			err:     err,
 		}

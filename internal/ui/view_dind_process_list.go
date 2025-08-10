@@ -190,6 +190,21 @@ func (m *DindProcessListViewModel) HandleShell(model *Model) tea.Cmd {
 	}
 }
 
+func (m *DindProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
+	if m.selectedDindContainer >= len(m.dindContainers) {
+		slog.Error("Failed to get selected container for file browser",
+			slog.Any("error", fmt.Errorf("no container selected")))
+		return nil
+	}
+
+	// Use the nested container's ID and name for file browsing
+	nestedContainer := m.dindContainers[m.selectedDindContainer]
+	return model.fileBrowserViewModel.LoadDind(model,
+		m.hostContainer.GetContainerID(),
+		nestedContainer.ID,
+		nestedContainer.Names)
+}
+
 func (m *DindProcessListViewModel) Title() string {
 	if m.showAll {
 		return fmt.Sprintf("Docker in Docker: %s (all)", m.hostContainer.GetName())

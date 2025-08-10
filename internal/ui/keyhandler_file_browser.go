@@ -10,6 +10,8 @@ func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProcessListViewModel.HandleFileBrowse(m)
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleFileBrowse(m)
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleFileBrowse(m)
 	default:
 		return m, nil
 	}
