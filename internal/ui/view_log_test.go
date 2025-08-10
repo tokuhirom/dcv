@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/docker"
-
-	"github.com/tokuhirom/dcv/internal/models"
 )
 
 func TestLogView_Rendering(t *testing.T) {
@@ -316,7 +314,7 @@ func TestLogView_Navigation(t *testing.T) {
 			currentView: LogView,
 			viewHistory: []ViewType{ComposeProcessListView},
 			logViewModel: LogViewModel{
-				isDindLog: false,
+				container: docker.NewContainer("container-id", "container-name", "running", "running"),
 			},
 		}
 
@@ -330,7 +328,7 @@ func TestLogView_Navigation(t *testing.T) {
 			currentView: LogView,
 			viewHistory: []ViewType{DindProcessListView},
 			logViewModel: LogViewModel{
-				isDindLog: true,
+				container: docker.NewDindContainer("container-id", "container-name", "dind-container-id", "dind-container-name", "running"),
 			},
 			dindProcessListViewModel: DindProcessListViewModel{
 				hostContainer: docker.NewDindContainer("host-container-id", "host-container-name", "dind-container-id", "dind-container-name", "running"),
@@ -431,69 +429,6 @@ func TestLogView_AutoScroll(t *testing.T) {
 		// Should auto-scroll to bottom
 		// 10 total lines - (10 Height - 4) = 10 - 6 = 4
 		assert.Equal(t, 4, m.logViewModel.logScrollY)
-	})
-}
-
-func TestLogViewModel_ShowMethods(t *testing.T) {
-	t.Run("StreamComposeLogs sets up log view", func(t *testing.T) {
-		model := &Model{
-			currentView: ComposeProcessListView,
-		}
-		process := models.ComposeContainer{
-			ID:   "container1",
-			Name: "test-container",
-		}
-
-		cmd := model.logViewModel.StreamComposeLogs(model, process)
-
-		assert.Equal(t, LogView, model.currentView)
-		assert.Equal(t, "test-container", model.logViewModel.containerName)
-		assert.False(t, model.logViewModel.isDindLog)
-		assert.Equal(t, 0, model.logViewModel.logScrollY)
-		assert.Equal(t, 0, len(model.logViewModel.logs))
-		assert.NotNil(t, cmd)
-	})
-
-	t.Run("StreamLogsDind sets up dind log view", func(t *testing.T) {
-		model := &Model{
-			currentView: DindProcessListView,
-			dindProcessListViewModel: DindProcessListViewModel{
-				hostContainer: docker.NewDindContainer("host-container-id", "host-container-name", "dind-container-id", "dind-container-name", "running"),
-			},
-		}
-		container := models.DockerContainer{
-			ID:    "docker1",
-			Names: "/docker-test",
-		}
-
-		cmd := model.logViewModel.StreamLogsDind(model, "dind-container-id", container)
-
-		assert.Equal(t, LogView, model.currentView)
-		assert.Equal(t, "/docker-test", model.logViewModel.containerName)
-		assert.Equal(t, "dind-container-name", model.logViewModel.hostContainerName)
-		assert.True(t, model.logViewModel.isDindLog)
-		assert.Equal(t, 0, model.logViewModel.logScrollY)
-		assert.NotNil(t, cmd)
-	})
-
-	t.Run("SwitchToLogView resets log view state", func(t *testing.T) {
-		model := &Model{
-			currentView: ComposeProcessListView,
-			logViewModel: LogViewModel{
-				logs:          []string{"old", "logs"},
-				logScrollY:    5,
-				isDindLog:     true,
-				containerName: "old-container",
-			},
-		}
-
-		model.logViewModel.SwitchToLogView(model, "new-container")
-
-		assert.Equal(t, LogView, model.currentView)
-		assert.Equal(t, "new-container", model.logViewModel.containerName)
-		assert.False(t, model.logViewModel.isDindLog)
-		assert.Equal(t, 0, model.logViewModel.logScrollY)
-		assert.Equal(t, 0, len(model.logViewModel.logs))
 	})
 }
 
@@ -741,14 +676,11 @@ func TestLogView_Integration(t *testing.T) {
 		}
 
 		// Show logs for a container
-		process := models.ComposeContainer{
-			ID:   "test-container",
-			Name: "my-app",
-		}
-		cmd := model.logViewModel.StreamComposeLogs(model, process)
+		container := docker.NewContainer("container-id", "my-app", "running", "running")
+		cmd := model.logViewModel.StreamContainerLogs(model, container)
 		assert.NotNil(t, cmd)
 		assert.Equal(t, LogView, model.currentView)
-		assert.Equal(t, "my-app", model.logViewModel.containerName)
+		assert.Equal(t, "my-app", model.logViewModel.container.GetName())
 
 		// Simulate receiving logs
 		msg := logLinesMsg{

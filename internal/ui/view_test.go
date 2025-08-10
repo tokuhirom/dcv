@@ -93,7 +93,7 @@ func TestView(t *testing.T) {
 				width:       80,
 				Height:      24,
 				logViewModel: LogViewModel{
-					containerName: "web-1",
+					container: docker.NewContainer("web-1", "web-1", "web-1", "running"),
 					logs: []string{
 						"Starting web server...",
 						"Listening on port 80",
@@ -115,7 +115,7 @@ func TestView(t *testing.T) {
 				width:       80,
 				Height:      24,
 				logViewModel: LogViewModel{
-					containerName: "web-1",
+					container: docker.NewContainer("web-1", "web-1", "web-1", "running"),
 					SearchViewModel: SearchViewModel{
 						searchMode:      true,
 						searchText:      "error",
@@ -212,7 +212,7 @@ func TestRenderLogView(t *testing.T) {
 		width:       80,
 		Height:      10,
 		logViewModel: LogViewModel{
-			containerName: "web-1",
+			container: docker.NewContainer("web-1", "web-1", "web-1", "running"),
 			logs: []string{
 				"Line 1",
 				"Line 2",

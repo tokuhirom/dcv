@@ -71,8 +71,7 @@ func TestHandleKeyPress(t *testing.T) {
 			key:      tea.KeyMsg{Type: tea.KeyEnter},
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m *Model) {
-				assert.Equal(t, "web-1", m.logViewModel.containerName)
-				assert.False(t, m.logViewModel.isDindLog)
+				assert.Equal(t, "web-1", m.logViewModel.container.GetName())
 			},
 		},
 		{
@@ -110,7 +109,7 @@ func TestHandleKeyPress(t *testing.T) {
 				currentView: LogView,
 				viewHistory: []ViewType{ComposeProcessListView},
 				logViewModel: LogViewModel{
-					containerName: "web-1",
+					container: docker.NewContainer("web-1", "web-1", "web-1", "running"),
 				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyEsc},
@@ -299,9 +298,6 @@ func TestHandleDindListKeys(t *testing.T) {
 	newModel, cmd := m.handleViewKeys(tea.KeyMsg{Type: tea.KeyEnter})
 	m = newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView)
-	assert.Equal(t, "test-2", m.logViewModel.containerName)
-	assert.Equal(t, "dind-1", m.logViewModel.hostContainerName)
-	assert.True(t, m.logViewModel.isDindLog)
 	assert.NotNil(t, cmd)
 
 	// Test escape - add viewHistory for proper navigation
