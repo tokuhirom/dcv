@@ -58,6 +58,8 @@ func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProcessListViewModel.HandleRemove(m)
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleRemove(m)
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleDelete(m)
 	case ImageListView:
 		return m, m.imageListViewModel.HandleDelete(m)
 	case NetworkListView:

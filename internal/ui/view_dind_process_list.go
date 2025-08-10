@@ -161,6 +161,26 @@ func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
 	)
 }
 
+func (m *DindProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for deletion",
+			slog.Any("error", fmt.Errorf("no container selected")))
+		return nil
+	}
+
+	// Only allow deleting stopped containers for safety
+	if container.GetState() == "running" {
+		slog.Debug("Cannot delete running container - stop it first",
+			slog.String("container", container.GetName()),
+			slog.String("state", container.GetState()))
+		return nil
+	}
+
+	args := container.OperationArgs("rm")
+	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // rm is aggressive
+}
+
 func (m *DindProcessListViewModel) Title() string {
 	if m.showAll {
 		return fmt.Sprintf("Docker in Docker: %s (all)", m.hostContainer.GetName())
