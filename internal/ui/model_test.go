@@ -140,8 +140,7 @@ func TestViewSwitching(t *testing.T) {
 	m = newModel.(*Model)
 
 	assert.Equal(t, LogView, m.currentView)
-	assert.Equal(t, "web-1", m.logViewModel.containerName)
-	assert.False(t, m.logViewModel.isDindLog)
+	assert.Equal(t, "web-1", m.logViewModel.container.GetName())
 	assert.NotNil(t, cmd)
 
 	// Test going back with ESC

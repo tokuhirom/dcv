@@ -105,16 +105,6 @@ func (m *DindProcessListViewModel) HandleDown() tea.Cmd {
 	return nil
 }
 
-// HandleLog shows logs for the selected dind container
-func (m *DindProcessListViewModel) HandleLog(model *Model) tea.Cmd {
-	if len(m.dindContainers) == 0 || m.selectedDindContainer >= len(m.dindContainers) {
-		return nil
-	}
-
-	container := m.dindContainers[m.selectedDindContainer]
-	return model.logViewModel.StreamLogsDind(model, m.hostContainer.GetContainerID(), container)
-}
-
 // HandleBack returns to the compose process list view
 func (m *DindProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()

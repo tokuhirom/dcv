@@ -25,16 +25,9 @@ func (m *Model) CmdVolumeLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleLog(m)
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleLog(m)
-	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleLog(m)
-	default:
-		return m, nil
-	}
+	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
+		return m.logViewModel.StreamContainerLogs(m, container)
+	})
 }
 
 // CmdShell executes a shell in the selected container

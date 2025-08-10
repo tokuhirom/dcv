@@ -112,15 +112,6 @@ func (m *DockerContainerListViewModel) HandleDown() tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleLog(model *Model) tea.Cmd {
-	// TODO: abstract this into a common interface
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		return model.logViewModel.StreamContainerLogs(model, container)
-	}
-	return nil
-}
-
 func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Container {
 	// Get the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {

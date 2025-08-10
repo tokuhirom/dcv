@@ -209,58 +209,6 @@ func TestDindProcessListViewModel_ToggleAll(t *testing.T) {
 	})
 }
 
-func TestDindProcessListViewModel_HandleLog(t *testing.T) {
-	t.Run("HandleLog returns nil when no containers", func(t *testing.T) {
-		model := &Model{
-			dockerClient: docker.NewClient(),
-		}
-		vm := &DindProcessListViewModel{
-			dindContainers:        []models.DockerContainer{},
-			selectedDindContainer: 0,
-		}
-
-		cmd := vm.HandleLog(model)
-		assert.Nil(t, cmd)
-	})
-
-	t.Run("HandleLog returns nil when selection out of bounds", func(t *testing.T) {
-		model := &Model{
-			dockerClient: docker.NewClient(),
-		}
-		vm := &DindProcessListViewModel{
-			dindContainers: []models.DockerContainer{
-				{ID: "1", Names: "container-1"},
-			},
-			selectedDindContainer: 5, // Out of bounds
-		}
-
-		cmd := vm.HandleLog(model)
-		assert.Nil(t, cmd)
-	})
-
-	t.Run("HandleLog initiates log streaming for selected container", func(t *testing.T) {
-		hostContainer := docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running")
-		model := &Model{
-			dockerClient: docker.NewClient(),
-			logViewModel: LogViewModel{},
-			dindProcessListViewModel: DindProcessListViewModel{
-				hostContainer: hostContainer,
-			},
-		}
-		vm := &DindProcessListViewModel{
-			dindContainers: []models.DockerContainer{
-				{ID: "abc123", Names: "container-1"},
-				{ID: "def456", Names: "container-2"},
-			},
-			selectedDindContainer: 1,
-			hostContainer:         hostContainer,
-		}
-
-		cmd := vm.HandleLog(model)
-		assert.NotNil(t, cmd)
-	})
-}
-
 func TestDindProcessListViewModel_HandleBack(t *testing.T) {
 	t.Run("HandleBack returns to previous view", func(t *testing.T) {
 		model := &Model{

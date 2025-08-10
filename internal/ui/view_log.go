@@ -9,51 +9,32 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/docker"
-	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type LogViewModel struct {
 	SearchViewModel
 	FilterViewModel
 
-	logs              []string
-	logScrollY        int
-	containerName     string
-	isDindLog         bool
-	hostContainerName string
+	logs       []string
+	logScrollY int
+
+	container *docker.Container
 
 	LogReaderManager
 }
 
-func (m *LogViewModel) SwitchToLogView(model *Model, containerName string) {
+func (m *LogViewModel) SwitchToLogView(model *Model, container *docker.Container) {
 	model.SwitchView(LogView)
 
-	m.containerName = containerName
-	m.isDindLog = false
+	m.container = container
 	m.logs = []string{}
 	m.logScrollY = 0
 }
 
-func (m *LogViewModel) StreamContainerLogs(model *Model, container models.DockerContainer) tea.Cmd {
-	m.SwitchToLogView(model, container.Names)
-	cmd := model.dockerClient.Execute("logs", container.ID, "--tail", "1000", "--timestamps", "--follow")
-	return m.streamLogsReal(cmd)
-}
-
-func (m *LogViewModel) StreamComposeLogs(model *Model, composeContainer models.ComposeContainer) tea.Cmd {
-	m.SwitchToLogView(model, composeContainer.Name)
-
-	cmd := model.dockerClient.Execute("logs", composeContainer.ID, "--tail", "1000", "--timestamps", "--follow")
-	return m.streamLogsReal(cmd)
-}
-
-func (m *LogViewModel) StreamLogsDind(model *Model, dindHostContainerID string, container models.DockerContainer) tea.Cmd {
-	m.SwitchToLogView(model, container.Names)
-	m.hostContainerName = model.dindProcessListViewModel.hostContainer.GetName()
-	m.isDindLog = true
-
-	cmd := docker.Execute(append([]string{"exec", dindHostContainerID, "docker"},
-		"logs", container.ID, "--tail", "1000", "--timestamps", "--follow")...)
+func (m *LogViewModel) StreamContainerLogs(model *Model, container *docker.Container) tea.Cmd {
+	m.SwitchToLogView(model, container)
+	args := container.OperationArgs("logs", "--tail", "1000", "--timestamps", "--follow")
+	cmd := docker.Execute(args...)
 	return m.streamLogsReal(cmd)
 }
 
@@ -361,12 +342,7 @@ func (m *LogViewModel) FilterDeleteLastChar() {
 }
 
 func (m *LogViewModel) Title() string {
-	title := ""
-	if m.isDindLog {
-		title = fmt.Sprintf("Logs: %s (in %s)", m.containerName, m.hostContainerName)
-	} else {
-		title = fmt.Sprintf("Logs: %s", m.containerName)
-	}
+	title := fmt.Sprintf("Logs: %s", m.container.Title())
 
 	// Add search or filter status to title
 	if m.filterMode && m.filterText != "" {

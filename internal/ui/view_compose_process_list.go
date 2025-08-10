@@ -140,16 +140,6 @@ func (m *ComposeProcessListViewModel) HandleDown() tea.Cmd {
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) HandleLog(model *Model) tea.Cmd {
-	// TODO: abstract this into a common method for all process list views
-	if m.selectedContainer < len(m.composeContainers) {
-		composeContainer := m.composeContainers[m.selectedContainer]
-		model.logViewModel.SwitchToLogView(model, composeContainer.Name)
-		return model.logViewModel.StreamComposeLogs(model, composeContainer)
-	}
-	return nil
-}
-
 func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	m.showAll = !m.showAll
 	return m.DoLoad(model)
