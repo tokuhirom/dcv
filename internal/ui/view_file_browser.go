@@ -176,7 +176,7 @@ func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 
 func (m *FileBrowserViewModel) Title() string {
 	if m.browsingContainer != nil {
-		return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainer.GetName(), m.currentPath)
+		return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainer.Title(), m.currentPath)
 	}
 	return "File Browser"
 }

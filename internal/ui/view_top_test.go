@@ -173,7 +173,7 @@ func TestTopViewModel_Title(t *testing.T) {
 				docker.NewClient(), "host-1", "host-container",
 				"inner-1", "inner-container", "running",
 			),
-			expected: "Process Info: DinD: host-1 (inner-container)",
+			expected: "Process Info: DinD: host-container (inner-container)",
 		},
 	}
 

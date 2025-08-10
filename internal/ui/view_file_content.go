@@ -87,14 +87,14 @@ func (m *FileContentViewModel) HandleBack(model *Model) tea.Cmd {
 }
 
 func (m *FileContentViewModel) Title() string {
-	containerName := ""
+	containerTitle := ""
 	if m.container != nil {
-		containerName = m.container.GetName()
+		containerTitle = m.container.Title()
 	}
 	return fmt.Sprintf("File: [%d/%d] %s [%s] ",
 		m.scrollY, len(strings.Split(m.content, "\n")),
 		m.contentPath,
-		containerName,
+		containerTitle,
 	)
 }
 

@@ -12,7 +12,10 @@ type Container interface {
 	GetContainerID() string
 	GetState() string
 
-	// Title returns a title for the container, used in UI
+	// Title returns a formatted title string for UI display.
+	// For regular containers: returns the container name or title
+	// For Compose containers: includes project name (e.g., "project-name/service-name")
+	// For DinD containers: includes host container info (e.g., "DinD: host-container (nested-container)")
 	Title() string
 
 	Top() ([]byte, error)
@@ -125,7 +128,7 @@ func (c DindContainerImpl) GetName() string {
 }
 
 func (c DindContainerImpl) Title() string {
-	return fmt.Sprintf("DinD: %s (%s)", c.hostContainerID, c.name)
+	return fmt.Sprintf("DinD: %s (%s)", c.hostContainerName, c.name)
 }
 
 func (c DindContainerImpl) Top() ([]byte, error) {
