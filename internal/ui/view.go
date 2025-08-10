@@ -43,6 +43,19 @@ var (
 	searchStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("226")).
 			Bold(true)
+
+	navActiveStyle = lipgloss.NewStyle().
+			Background(lipgloss.Color("86")).
+			Foreground(lipgloss.Color("234")).
+			Bold(true).
+			Padding(0, 1)
+
+	navInactiveStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("245")).
+				Padding(0, 1)
+
+	navSeparatorStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("238"))
 )
 
 type ContainerAware interface {
@@ -57,6 +70,10 @@ func (m *Model) View() string {
 		return "Loading..."
 	}
 
+	// Get navigation header
+	navHeader := m.viewNavigationHeader()
+	navHeight := lipgloss.Height(navHeader)
+
 	// Get title
 	title := m.viewTitle()
 	titleHeight := lipgloss.Height(titleStyle.Render(title))
@@ -64,8 +81,8 @@ func (m *Model) View() string {
 	footer := m.viewFooter()
 	footerHeight := lipgloss.Height(footer)
 
-	// Available Height = total Height - title Height - footer Height
-	availableBodyHeight := m.Height - titleHeight - footerHeight
+	// Available Height = total Height - nav Height - title Height - footer Height
+	availableBodyHeight := m.Height - navHeight - titleHeight - footerHeight
 	if availableBodyHeight < 1 {
 		availableBodyHeight = 1
 	}
@@ -74,7 +91,7 @@ func (m *Model) View() string {
 	body := m.viewBody(availableBodyHeight)
 	bodyHeight := lipgloss.Height(body)
 
-	totalContentHeight := titleHeight + bodyHeight + footerHeight + 1 // +1 for the bottom padding
+	totalContentHeight := navHeight + titleHeight + bodyHeight + footerHeight + 1 // +1 for the bottom padding
 
 	// Add padding if needed to push footer to the bottom
 	if totalContentHeight < m.Height {
@@ -85,10 +102,91 @@ func (m *Model) View() string {
 	// Join all components
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
+		navHeader,
 		titleStyle.Render(title),
 		body,
 		footer,
 	)
+}
+
+func (m *Model) viewNavigationHeader() string {
+	// Determine which nav item should be highlighted
+	activeView := m.getActiveNavigationView()
+
+	navItems := []string{}
+
+	// Helper function to create nav item
+	createNavItem := func(key, label string, viewType ViewType) string {
+		item := fmt.Sprintf("[%s] %s", key, label)
+		if activeView == viewType {
+			return navActiveStyle.Render(item)
+		}
+		return navInactiveStyle.Render(item)
+	}
+
+	// Add navigation items
+	navItems = append(navItems, createNavItem("1", "Containers", DockerContainerListView))
+	navItems = append(navItems, createNavItem("2", "Projects", ComposeProjectListView))
+	navItems = append(navItems, createNavItem("3", "Images", ImageListView))
+	navItems = append(navItems, createNavItem("4", "Networks", NetworkListView))
+	navItems = append(navItems, createNavItem("5", "Volumes", VolumeListView))
+	navItems = append(navItems, createNavItem("6", "Stats", StatsView))
+
+	// Join items with separator
+	separator := navSeparatorStyle.Render(" | ")
+	navLine := strings.Join(navItems, separator)
+
+	// Add a bottom border
+	navContainer := lipgloss.NewStyle().
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderBottom(true).
+		BorderForeground(lipgloss.Color("238")).
+		MarginBottom(1).
+		Render(navLine)
+
+	return navContainer
+}
+
+// getActiveNavigationView determines which navigation item should be highlighted
+// based on the current view and view history
+func (m *Model) getActiveNavigationView() ViewType {
+	// Check if current view is one of the main navigation views
+	navViews := []ViewType{
+		DockerContainerListView,
+		ComposeProjectListView,
+		ImageListView,
+		NetworkListView,
+		VolumeListView,
+		StatsView,
+	}
+
+	// If current view is a main nav view, return it
+	for _, v := range navViews {
+		if m.currentView == v {
+			return m.currentView
+		}
+	}
+
+	// Special case: ComposeProcessListView should highlight Projects
+	if m.currentView == ComposeProcessListView {
+		return ComposeProjectListView
+	}
+
+	// Otherwise, find the most recent main nav view in history
+	for i := len(m.viewHistory) - 1; i >= 0; i-- {
+		for _, navView := range navViews {
+			if m.viewHistory[i] == navView {
+				return m.viewHistory[i]
+			}
+		}
+		// Also check for ComposeProcessListView in history
+		if m.viewHistory[i] == ComposeProcessListView {
+			return ComposeProjectListView
+		}
+	}
+
+	// Default to DockerContainerListView if nothing found
+	return DockerContainerListView
 }
 
 func (m *Model) viewTitle() string {
