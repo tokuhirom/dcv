@@ -22,6 +22,7 @@ func (m *Model) initializeKeyHandlers() {
 	containerOperations := []KeyConfig{
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
+		{[]string{"E"}, "exec /bin/sh (new window)", m.CmdShellNewWindow},
 		{[]string{"i"}, "inspect", m.CmdInspect},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},

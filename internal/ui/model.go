@@ -399,6 +399,7 @@ type fileContentLoadedMsg struct {
 type executeCommandMsg struct {
 	containerID string
 	command     []string
+	newWindow   bool // If true, open in new terminal window
 }
 
 type inspectLoadedMsg struct {

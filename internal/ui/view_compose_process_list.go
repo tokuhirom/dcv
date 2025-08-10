@@ -206,6 +206,21 @@ func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
 	return nil
 }
 
+func (m *ComposeProcessListViewModel) HandleShellNewWindow() tea.Cmd {
+	if m.selectedContainer < len(m.composeContainers) {
+		container := m.composeContainers[m.selectedContainer]
+		// Default to /bin/sh as it's most commonly available
+		return func() tea.Msg {
+			return executeCommandMsg{
+				containerID: container.ID,
+				command:     []string{"/bin/sh"},
+				newWindow:   true,
+			}
+		}
+	}
+	return nil
+}
+
 func (m *ComposeProcessListViewModel) GetContainer(model *Model) docker.Container {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]

@@ -8,6 +8,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/tokuhirom/dcv/internal/terminal"
 )
 
 // RefreshMsg signals that the current view should be refreshed
@@ -182,12 +184,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case executeCommandMsg:
-		// Execute the interactive command in a subprocess
-		c := exec.Command("docker", append([]string{"exec", "-it", msg.containerID}, msg.command...)...)
-		return m, tea.ExecProcess(c, func(err error) tea.Msg {
-			// After the command exits, we'll get this message
-			return nil
-		})
+		if msg.newWindow {
+			// Open in new terminal window
+			return m, func() tea.Msg {
+				err := terminal.OpenInNewWindow(msg.containerID, msg.command)
+				if err != nil {
+					return errorMsg{err: err}
+				}
+				return nil
+			}
+		} else {
+			// Execute the interactive command in a subprocess
+			c := exec.Command("docker", append([]string{"exec", "-it", msg.containerID}, msg.command...)...)
+			return m, tea.ExecProcess(c, func(err error) tea.Msg {
+				// After the command exits, we'll get this message
+				return nil
+			})
+		}
 
 	case inspectLoadedMsg:
 		m.loading = false

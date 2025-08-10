@@ -43,3 +43,14 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 }
+
+func (m *Model) CmdShellNewWindow(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case ComposeProcessListView:
+		return m, m.composeProcessListViewModel.HandleShellNewWindow()
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleShellNewWindow(m)
+	default:
+		return m, nil
+	}
+}
