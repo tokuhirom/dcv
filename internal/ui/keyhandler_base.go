@@ -23,3 +23,7 @@ type GetContainerAware interface {
 type HandleInspectAware interface {
 	HandleInspect(model *Model) tea.Cmd
 }
+
+type UpdateAware interface {
+	Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd)
+}
