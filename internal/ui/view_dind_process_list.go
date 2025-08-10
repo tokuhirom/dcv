@@ -169,14 +169,6 @@ func (m *DindProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
 		return nil
 	}
 
-	// Only allow deleting stopped containers for safety
-	if container.GetState() == "running" {
-		slog.Debug("Cannot delete running container - stop it first",
-			slog.String("container", container.GetName()),
-			slog.String("state", container.GetState()))
-		return nil
-	}
-
 	args := container.OperationArgs("rm")
 	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // rm is aggressive
 }

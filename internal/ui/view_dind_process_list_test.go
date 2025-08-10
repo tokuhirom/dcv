@@ -405,7 +405,7 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 		assert.Nil(t, cmd)
 	})
 
-	t.Run("HandleDelete returns nil for running container", func(t *testing.T) {
+	t.Run("HandleDelete executes rm command for running container (Docker will handle validation)", func(t *testing.T) {
 		model := &Model{
 			dockerClient:              docker.NewClient(),
 			commandExecutionViewModel: CommandExecutionViewModel{},
@@ -421,7 +421,10 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 		}
 
 		cmd := vm.HandleDelete(model)
-		assert.Nil(t, cmd, "Should not delete running containers")
+		// Delete is aggressive, so it returns nil and shows confirmation
+		assert.Nil(t, cmd, "Should return nil for aggressive command (shows confirmation)")
+		assert.Equal(t, CommandExecutionView, model.currentView, "Should switch to command execution view")
+		assert.True(t, model.commandExecutionViewModel.pendingConfirmation, "Should have pending confirmation")
 	})
 
 	t.Run("HandleDelete executes rm command for stopped container", func(t *testing.T) {
@@ -471,7 +474,7 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 		assert.True(t, model.commandExecutionViewModel.pendingConfirmation, "Should have pending confirmation")
 	})
 
-	t.Run("CmdDelete returns nil for running container in DinD view", func(t *testing.T) {
+	t.Run("CmdDelete works with DinD view for running container (Docker will handle validation)", func(t *testing.T) {
 		model := &Model{
 			currentView:               DindProcessListView,
 			dockerClient:              docker.NewClient(),
@@ -490,7 +493,10 @@ func TestDindProcessListViewModel_HandleDelete(t *testing.T) {
 
 		// Test delete via CmdDelete
 		_, cmd := model.CmdDelete(tea.KeyMsg{})
-		assert.Nil(t, cmd, "Should not delete running containers through CmdDelete")
+		// Delete is aggressive, so it returns nil and shows confirmation
+		assert.Nil(t, cmd, "Should return nil for aggressive command (shows confirmation)")
+		assert.Equal(t, CommandExecutionView, model.currentView, "Should switch to command execution view")
+		assert.True(t, model.commandExecutionViewModel.pendingConfirmation, "Should have pending confirmation")
 	})
 }
 
