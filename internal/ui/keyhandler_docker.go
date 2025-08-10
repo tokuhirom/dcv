@@ -55,9 +55,9 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleRemove(m)
+		return m, m.composeProcessListViewModel.HandleDelete(m)
 	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleRemove(m)
+		return m, m.dockerContainerListViewModel.HandleDelete(m)
 	case DindProcessListView:
 		return m, m.dindProcessListViewModel.HandleDelete(m)
 	case ImageListView:
