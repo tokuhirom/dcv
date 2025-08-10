@@ -299,6 +299,29 @@ func (m *InspectViewModel) HandleGoToStart() tea.Cmd {
 	return nil
 }
 
+func (m *InspectViewModel) HandlePageUp(model *Model) tea.Cmd {
+	pageSize := model.Height - 5
+	m.inspectScrollY -= pageSize
+	if m.inspectScrollY < 0 {
+		m.inspectScrollY = 0
+	}
+	return nil
+}
+
+func (m *InspectViewModel) HandlePageDown(model *Model) tea.Cmd {
+	pageSize := model.Height - 5
+	lines := strings.Split(m.inspectContent, "\n")
+	maxScroll := len(lines) - pageSize
+
+	m.inspectScrollY += pageSize
+	if m.inspectScrollY > maxScroll && maxScroll > 0 {
+		m.inspectScrollY = maxScroll
+	} else if maxScroll <= 0 {
+		m.inspectScrollY = 0
+	}
+	return nil
+}
+
 func (m *InspectViewModel) HandleSearch() tea.Cmd {
 	m.ClearSearch()
 	return nil

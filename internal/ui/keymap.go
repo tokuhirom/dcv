@@ -179,6 +179,8 @@ func (m *Model) initializeKeyHandlers() {
 	m.inspectViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "scroll up", m.CmdUp},
 		{[]string{"down", "j"}, "scroll down", m.CmdDown},
+		{[]string{"pgup"}, "page up", m.CmdPageUp},
+		{[]string{"pgdown", " "}, "page down", m.CmdPageDown},
 		{[]string{"G"}, "go to end", m.CmdGoToEnd},
 		{[]string{"g"}, "go to start", m.CmdGoToStart},
 		{[]string{"/"}, "search", m.CmdSearch},
