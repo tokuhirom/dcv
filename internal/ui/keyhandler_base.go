@@ -19,3 +19,7 @@ type KeyConfig struct {
 type GetContainerAware interface {
 	GetContainer(model *Model) *docker.Container
 }
+
+type HandleInspectAware interface {
+	HandleInspect(model *Model) tea.Cmd
+}

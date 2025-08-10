@@ -98,16 +98,20 @@ func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		})
 	}
 
-	switch m.currentView {
-	case ImageListView:
-		return m, m.imageListViewModel.HandleInspect(m)
-	case NetworkListView:
-		return m, m.networkListViewModel.HandleInspect(m)
-	case VolumeListView:
-		return m, m.volumeListViewModel.HandleInspect(m)
-	default:
+	vm := m.GetCurrentViewModel()
+	if vm == nil {
+		slog.Info("Cannot get current view model for inspect command")
 		return m, nil
 	}
+
+	if inspectAware, ok := vm.(HandleInspectAware); ok {
+		// If the current view model implements HandleInspectAware, use its method
+		return m, inspectAware.HandleInspect(m)
+	}
+
+	slog.Info("Current view model does not implement HandleInspectAware",
+		slog.String("view", m.currentView.String()))
+	return m, nil
 }
 
 func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
