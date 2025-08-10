@@ -125,6 +125,26 @@ func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
 	return networks, nil
 }
 
+func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
+	// Use docker volume ls with JSON format
+	output, err := ExecuteCaptured([]string{"volume", "ls", "--format", "json"}...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute docker volume ls: %w\nOutput: %s", err, string(output))
+	}
+
+	// Handle empty output
+	volumes, err := ParseVolumeJSON(output)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(volumes) == 0 {
+		slog.Info("No volumes found")
+	}
+
+	return volumes, nil
+}
+
 func (c *Client) ExecuteInteractive(containerID string, command []string) error {
 	// Build docker exec command with -it flags for interactive session
 	args := append([]string{"exec", "-it", containerID}, command...)
