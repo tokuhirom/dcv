@@ -40,6 +40,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "view logs", m.CmdLog},
+		{[]string{"x"}, "show actions", m.CmdShowActions},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
 
@@ -210,6 +211,16 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.commandExecKeymap = m.createKeymap(m.commandExecHandlers)
+
+	// Command Action View
+	m.commandActionHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
+		{[]string{"enter"}, "execute action", m.CmdSelectAction},
+		{[]string{"esc"}, "cancel", m.CmdBack},
+		{[]string{"?"}, "help", m.CmdHelp},
+	}
+	m.commandActionKeymap = m.createKeymap(m.commandActionHandlers)
 
 	// Initialize command registry
 	m.initCommandRegistry()

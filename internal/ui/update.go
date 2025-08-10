@@ -273,6 +273,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case CommandExecutionView:
 			// Command execution is already running, no refresh needed
 			return m, nil
+		case CommandActionView:
+			// Action view doesn't need refresh
+			return m, nil
 		default:
 			m.loading = false
 			return m, nil

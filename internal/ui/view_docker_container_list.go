@@ -217,3 +217,59 @@ func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.C
 
 	return model.dindProcessListViewModel.Load(model, container)
 }
+
+func (m *DockerContainerListViewModel) HandleViewLog(model *Model) tea.Cmd {
+	return m.HandleLog(model)
+}
+
+func (m *DockerContainerListViewModel) HandleStop(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "stop", container.ID)
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleStart(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.commandExecutionViewModel.ExecuteCommand(model, false, "start", container.ID)
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleRestart(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "restart", container.ID)
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandlePause(model *Model) tea.Cmd {
+	if m.selectedDockerContainer < len(m.dockerContainers) {
+		container := m.dockerContainers[m.selectedDockerContainer]
+		if container.State == "paused" {
+			return model.commandExecutionViewModel.ExecuteCommand(model, true, "unpause", container.ID)
+		}
+		return model.commandExecutionViewModel.ExecuteCommand(model, true, "pause", container.ID)
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleDelete(model *Model) tea.Cmd {
+	return m.HandleRemove(model)
+}
+
+func (m *DockerContainerListViewModel) HandleShowActions(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container == nil {
+		slog.Error("Failed to get selected container for actions")
+		return nil
+	}
+
+	// Initialize the action view with the selected container
+	model.commandActionViewModel.Initialize(container)
+	model.SwitchView(CommandActionView)
+	return nil
+}
