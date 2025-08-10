@@ -392,6 +392,44 @@ func TestDockerContainerListView(t *testing.T) {
 		assert.Contains(t, view, "Docker Containers (all)")
 	})
 
+	t.Run("compose_list_show_all", func(t *testing.T) {
+		m := &Model{
+			width:       80,
+			Height:      24,
+			currentView: ComposeProcessListView,
+			composeProcessListViewModel: ComposeProcessListViewModel{
+				composeContainers: []models.ComposeContainer{},
+				showAll:           true,
+				projectName:       "test-project",
+			},
+		}
+		m.initializeKeyHandlers()
+
+		view := m.View()
+
+		// Check title includes (all)
+		assert.Contains(t, view, "Docker Compose: test-project (all)")
+	})
+
+	t.Run("compose_list_show_all_no_project", func(t *testing.T) {
+		m := &Model{
+			width:       80,
+			Height:      24,
+			currentView: ComposeProcessListView,
+			composeProcessListViewModel: ComposeProcessListViewModel{
+				composeContainers: []models.ComposeContainer{},
+				showAll:           true,
+				projectName:       "",
+			},
+		}
+		m.initializeKeyHandlers()
+
+		view := m.View()
+
+		// Check title includes (all) when no project name
+		assert.Contains(t, view, "Docker Compose (all)")
+	})
+
 	t.Run("docker_list_empty", func(t *testing.T) {
 		m := &Model{
 			width:       80,
