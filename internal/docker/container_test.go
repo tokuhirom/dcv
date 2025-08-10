@@ -22,7 +22,7 @@ func TestNewDindContainer(t *testing.T) {
 	assert.NotNil(t, container)
 	assert.Equal(t, "dind456", container.GetContainerID())
 	assert.Equal(t, "dind-container", container.GetName())
-	assert.Equal(t, "DinD: host-container (dind-container)", container.Title())
+	assert.Equal(t, "DinD: dind-container (host-container)", container.Title())
 	assert.Equal(t, "running", container.GetState())
 }
 
@@ -54,7 +54,7 @@ func TestContainer_Title(t *testing.T) {
 
 	t.Run("dind container", func(t *testing.T) {
 		container := NewDindContainer("host123", "host-container", "dind456", "dind-container", "running")
-		assert.Equal(t, "DinD: host-container (dind-container)", container.Title())
+		assert.Equal(t, "DinD: dind-container (host-container)", container.Title())
 	})
 }
 

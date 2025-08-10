@@ -46,7 +46,7 @@ var (
 )
 
 type ContainerAware interface {
-	GetContainer(model *Model) (docker.Container, error)
+	GetContainer(model *Model) *docker.Container
 }
 
 const ResetAll = "\x1b[0m"

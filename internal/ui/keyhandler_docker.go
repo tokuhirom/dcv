@@ -87,13 +87,18 @@ func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.isContainerAware() {
+		return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
+			return m.inspectViewModel.Inspect(m,
+				container.Title(),
+				func() ([]byte, error) {
+					args := container.OperationArgs("inspect")
+					return m.dockerClient.ExecuteCaptured(args...)
+				})
+		})
+	}
+
 	switch m.currentView {
-	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleInspect(m)
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleInspect(m)
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleInspect(m)
 	case ImageListView:
 		return m, m.imageListViewModel.HandleInspect(m)
 	case NetworkListView:
@@ -112,6 +117,29 @@ func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) useContainerAware(cb func(container *docker.Container) tea.Cmd) tea.Cmd {
+	container := m.getContainerByContainerAware()
+	if container == nil {
+		slog.Error("Failed to get selected container for top command")
+		return nil
+	}
+	return cb(container)
+}
+
+func (m *Model) isContainerAware() bool {
+	// if GetContainerAware, we can show top for containers
+	// GetContainerAware is the interface that provides container-aware functionality
+	vm := m.GetCurrentViewModel()
+	if vm == nil {
+		return false
+	}
+
+	if _, ok := vm.(GetContainerAware); ok {
+		return true
+	}
+	return false
+}
+
+func (m *Model) getContainerByContainerAware() *docker.Container {
 	// if GetContainerAware, we can show top for containers
 	// GetContainerAware is the interface that provides container-aware functionality
 	vm := m.GetCurrentViewModel()
@@ -122,10 +150,10 @@ func (m *Model) useContainerAware(cb func(container *docker.Container) tea.Cmd) 
 	if containerAware, ok := vm.(GetContainerAware); ok {
 		container := containerAware.GetContainer(m)
 		if container == nil {
-			slog.Error("Failed to get selected container for top command")
+			slog.Error("Failed to get selected container")
 			return nil
 		}
-		return cb(container)
+		return container
 	}
 
 	// this view model does not support container-aware functionality.

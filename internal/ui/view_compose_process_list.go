@@ -14,6 +14,8 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+var _ ContainerAware = (*ComposeProcessListViewModel)(nil)
+
 type ComposeProcessListViewModel struct {
 	// Process list state
 	composeContainers []models.ComposeContainer
@@ -252,21 +254,6 @@ func (m *ComposeProcessListViewModel) GetContainer(model *Model) *docker.Contain
 		return docker.NewContainer(container.ID, container.Name, fmt.Sprintf("%s(project:%s)", container.Service, m.projectName), container.State)
 	}
 	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for inspection")
-		return nil
-	}
-
-	return model.inspectViewModel.Inspect(model,
-		fmt.Sprintf("compose process: %s(%s)", container.GetName(), m.projectName),
-		func() ([]byte, error) {
-			args := container.OperationArgs("inspect")
-			return model.dockerClient.ExecuteCaptured(args...)
-		})
 }
 
 func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {

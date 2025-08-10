@@ -12,6 +12,8 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+var _ ContainerAware = (*DindProcessListViewModel)(nil)
+
 // DindProcessListViewModel manages the state and rendering of the Docker-in-Docker process list view
 type DindProcessListViewModel struct {
 	dindContainers        []models.DockerContainer
@@ -140,23 +142,6 @@ func (m *DindProcessListViewModel) GetContainer(model *Model) *docker.Container 
 		return docker.NewDindContainer(m.hostContainer.GetContainerID(), m.hostContainer.GetName(), container.ID, container.Names, container.State)
 	}
 	return nil
-}
-
-func (m *DindProcessListViewModel) HandleInspect(model *Model) tea.Cmd {
-	container := m.GetContainer(model)
-	if container == nil {
-		slog.Error("Failed to get selected container for inspection",
-			slog.Any("error", fmt.Errorf("no container selected")))
-		return nil
-	}
-
-	return model.inspectViewModel.Inspect(model,
-		fmt.Sprintf("DinD: %s (%s)", m.hostContainer.GetName(), container.GetName()),
-		func() ([]byte, error) {
-			args := container.OperationArgs("inspect")
-			return model.dockerClient.ExecuteCaptured(args...)
-		},
-	)
 }
 
 func (m *DindProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
