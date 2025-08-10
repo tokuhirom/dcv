@@ -3,6 +3,7 @@ package ui
 import (
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -157,6 +158,66 @@ func TestDindProcessListViewModel_Load(t *testing.T) {
 		assert.Equal(t, hostContainer, vm.hostContainer)
 		assert.Equal(t, DindProcessListView, model.currentView)
 		assert.True(t, model.loading)
+	})
+}
+
+func TestDindProcessListViewModel_ToggleAll(t *testing.T) {
+	t.Run("toggles showAll state and triggers reload", func(t *testing.T) {
+		model := &Model{
+			dockerClient: docker.NewClient(),
+			loading:      false,
+		}
+		vm := &DindProcessListViewModel{
+			showAll: false,
+			hostContainer: docker.NewDindContainer(
+				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
+			),
+		}
+
+		// Test direct method call
+		cmd := vm.HandleToggleAll(model)
+		assert.True(t, vm.showAll, "showAll should be toggled to true")
+		assert.NotNil(t, cmd, "Should return a command to trigger reload")
+		assert.True(t, model.loading, "Should set loading to true")
+
+		// Reset loading for next test
+		model.loading = false
+
+		// Toggle again
+		cmd = vm.HandleToggleAll(model)
+		assert.False(t, vm.showAll, "showAll should be toggled back to false")
+		assert.NotNil(t, cmd, "Should return a command to trigger reload")
+		assert.True(t, model.loading, "Should set loading to true")
+	})
+
+	t.Run("CmdToggleAll works with DinD view", func(t *testing.T) {
+		model := &Model{
+			currentView:  DindProcessListView,
+			dockerClient: docker.NewClient(),
+			loading:      false,
+		}
+		model.dindProcessListViewModel = DindProcessListViewModel{
+			showAll: false,
+			hostContainer: docker.NewDindContainer(
+				docker.NewClient(), "host-1", "host-container", "container-1", "test", "running",
+			),
+		}
+		model.initializeKeyHandlers()
+
+		// Test toggle via CmdToggleAll
+		_, cmd := model.CmdToggleAll(tea.KeyMsg{})
+		assert.True(t, model.dindProcessListViewModel.showAll, "showAll should be toggled to true")
+		assert.NotNil(t, cmd, "Should return a command to trigger reload")
+		assert.True(t, model.loading, "Should set loading to true")
+
+		// Reset loading for next test
+		model.loading = false
+
+		// Toggle again
+		_, cmd = model.CmdToggleAll(tea.KeyMsg{})
+		assert.False(t, model.dindProcessListViewModel.showAll, "showAll should be toggled back to false")
+		assert.NotNil(t, cmd, "Should return a command to trigger reload")
+		assert.True(t, model.loading, "Should set loading to true")
 	})
 }
 

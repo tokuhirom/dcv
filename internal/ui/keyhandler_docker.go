@@ -75,6 +75,8 @@ func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProcessListViewModel.HandleToggleAll(m)
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleToggleAll(m)
+	case DindProcessListView:
+		return m, m.dindProcessListViewModel.HandleToggleAll(m)
 	case ImageListView:
 		return m, m.imageListViewModel.HandleToggleAll(m)
 	default:

@@ -16,6 +16,7 @@ import (
 type DindProcessListViewModel struct {
 	dindContainers        []models.DockerContainer
 	selectedDindContainer int
+	showAll               bool
 
 	hostContainer docker.Container
 }
@@ -79,7 +80,7 @@ func (m *DindProcessListViewModel) Load(model *Model, hostContainer docker.Conta
 func (m *DindProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		containers, err := model.dockerClient.Dind(m.hostContainer.GetContainerID()).ListContainers()
+		containers, err := model.dockerClient.Dind(m.hostContainer.GetContainerID()).ListContainers(m.showAll)
 		return dindContainersLoadedMsg{
 			containers: containers,
 			err:        err,
@@ -117,6 +118,12 @@ func (m *DindProcessListViewModel) HandleLog(model *Model) tea.Cmd {
 func (m *DindProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
+}
+
+// HandleToggleAll toggles showing all containers including stopped ones
+func (m *DindProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
+	m.showAll = !m.showAll
+	return m.DoLoad(model)
 }
 
 // Loaded updates the dind container list after loading
