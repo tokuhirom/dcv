@@ -105,6 +105,16 @@ func (c *Client) ListContainerFiles(containerID, path string) ([]models.Containe
 	return files, nil
 }
 
+func (c *Client) ReadContainerFile(containerID, path string) (string, error) {
+	// Read file content using cat
+	output, err := ExecuteCaptured("exec", containerID, "cat", path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file in container: %w\nOutput: %s", err, string(output))
+	}
+
+	return string(output), nil
+}
+
 func (c *Client) ExecuteInteractive(containerID string, command []string) error {
 	// Build docker exec command with -it flags for interactive session
 	args := append([]string{"exec", "-it", containerID}, command...)

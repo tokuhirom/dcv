@@ -19,6 +19,8 @@ type FileBrowserViewModel struct {
 	browsingContainerID   string
 	browsingContainerName string
 	pathHistory           []string
+	isDind                bool   // Whether we're browsing a DinD container
+	hostContainerID       string // Host container ID for DinD operations
 }
 
 // pushHistory adds a new path to the history
@@ -83,6 +85,19 @@ func (m *FileBrowserViewModel) Load(model *Model, containerID, containerName str
 	m.browsingContainerName = containerName
 	m.pathHistory = []string{}
 	m.pushHistory("/")
+	m.isDind = false
+	m.hostContainerID = ""
+	model.SwitchView(FileBrowserView)
+	return m.DoLoad(model)
+}
+
+func (m *FileBrowserViewModel) LoadDind(model *Model, hostContainerID, containerID, containerName string) tea.Cmd {
+	m.browsingContainerID = containerID
+	m.browsingContainerName = containerName
+	m.pathHistory = []string{}
+	m.pushHistory("/")
+	m.isDind = true
+	m.hostContainerID = hostContainerID
 	model.SwitchView(FileBrowserView)
 	return m.DoLoad(model)
 }
@@ -151,7 +166,11 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 			return m.DoLoad(model)
 		} else {
 			// View file content
-			return model.fileContentViewModel.Load(model, m.browsingContainerID, m.browsingContainerName, newPath)
+			if m.isDind {
+				return model.fileContentViewModel.LoadDind(model, m.hostContainerID, m.browsingContainerID, m.browsingContainerName, newPath)
+			} else {
+				return model.fileContentViewModel.Load(model, m.browsingContainerID, m.browsingContainerName, newPath)
+			}
 		}
 	}
 	return nil
@@ -167,7 +186,18 @@ func (m *FileBrowserViewModel) Loaded(files []models.ContainerFile) {
 func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		files, err := model.dockerClient.ListContainerFiles(m.browsingContainerID, m.currentPath)
+		var files []models.ContainerFile
+		var err error
+
+		if m.isDind {
+			// Use DindClient for nested container file listing
+			dindClient := model.dockerClient.Dind(m.hostContainerID)
+			files, err = dindClient.ListContainerFiles(m.browsingContainerID, m.currentPath)
+		} else {
+			// Use regular client for normal containers
+			files, err = model.dockerClient.ListContainerFiles(m.browsingContainerID, m.currentPath)
+		}
+
 		return containerFilesLoadedMsg{
 			files: files,
 			err:   err,

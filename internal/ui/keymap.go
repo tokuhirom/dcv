@@ -87,10 +87,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"?"}, "help", m.CmdHelp},
 
 		{[]string{"i"}, "inspect", m.CmdInspect},
-		// TODO: support file browser
-
-		// TODO: support all containerOperations.
-		// TODO: {[]string{"f"}, "browse files", m.CmdFileBrowse},
+		{[]string{"f"}, "browse files", m.CmdFileBrowse},
 		{[]string{"!"}, "exec /bin/sh", m.CmdShell},
 		{[]string{"a"}, "toggle all", m.CmdToggleAll},
 		{[]string{"K"}, "kill", m.CmdKill},
