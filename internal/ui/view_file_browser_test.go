@@ -296,10 +296,9 @@ func TestFileBrowserViewModel_FileOperations(t *testing.T) {
 			containerFiles: []models.ContainerFile{
 				{Name: "file.txt", IsDir: false},
 			},
-			selectedFile:          0,
-			currentPath:           "/usr",
-			browsingContainerID:   "container123",
-			browsingContainerName: "test-container",
+			selectedFile:      0,
+			currentPath:       "/usr",
+			browsingContainer: docker.NewContainer(model.dockerClient, "container123", "test-container", "test-container", "running"),
 		}
 
 		cmd := vm.HandleOpenFileOrDirectory(model)
@@ -348,19 +347,19 @@ func TestFileBrowserViewModel_FileOperations(t *testing.T) {
 	})
 }
 
-func TestFileBrowserViewModel_Load(t *testing.T) {
-	t.Run("Load initializes file browser", func(t *testing.T) {
+func TestFileBrowserViewModel_LoadContainer(t *testing.T) {
+	t.Run("LoadContainer initializes file browser", func(t *testing.T) {
 		model := &Model{
 			dockerClient: docker.NewClient(),
 			currentView:  ComposeProcessListView,
 			loading:      false,
 		}
 		vm := &FileBrowserViewModel{}
+		container := docker.NewContainer(model.dockerClient, "container123", "test-container", "test-container", "running")
 
-		cmd := vm.Load(model, "container123", "test-container")
+		cmd := vm.LoadContainer(model, container)
 		assert.NotNil(t, cmd)
-		assert.Equal(t, "container123", vm.browsingContainerID)
-		assert.Equal(t, "test-container", vm.browsingContainerName)
+		assert.Equal(t, container, vm.browsingContainer)
 		assert.Equal(t, "/", vm.currentPath)
 		assert.Equal(t, []string{"/"}, vm.pathHistory) // pushHistory adds the initial path
 		assert.Equal(t, FileBrowserView, model.currentView)
@@ -436,9 +435,11 @@ func TestFileBrowserViewModel_Loaded(t *testing.T) {
 }
 
 func TestFileBrowserViewModel_Title(t *testing.T) {
+	dockerClient := docker.NewClient()
+	container := docker.NewContainer(dockerClient, "test123", "test-container", "test-container", "running")
 	vm := &FileBrowserViewModel{
-		browsingContainerName: "test-container",
-		currentPath:           "/usr/local",
+		browsingContainer: container,
+		currentPath:       "/usr/local",
 	}
 
 	title := vm.Title()
@@ -450,9 +451,10 @@ func TestFileBrowserViewModel_DoLoad(t *testing.T) {
 		model := &Model{
 			dockerClient: docker.NewClient(),
 		}
+		container := docker.NewContainer(model.dockerClient, "container123", "test", "test", "running")
 		vm := &FileBrowserViewModel{
-			browsingContainerID: "container123",
-			currentPath:         "/usr/local",
+			browsingContainer: container,
+			currentPath:       "/usr/local",
 		}
 
 		cmd := vm.DoLoad(model)

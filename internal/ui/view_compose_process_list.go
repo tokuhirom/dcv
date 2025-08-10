@@ -182,9 +182,9 @@ func (m *ComposeProcessListViewModel) HandleRemove(model *Model) tea.Cmd {
 }
 
 func (m *ComposeProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		return model.fileBrowserViewModel.Load(model, container.ID, container.Name)
+	container := m.GetContainer(model)
+	if container != nil {
+		return model.fileBrowserViewModel.LoadContainer(model, container)
 	}
 	return nil
 }

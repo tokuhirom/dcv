@@ -1,6 +1,10 @@
 package docker
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/tokuhirom/dcv/internal/models"
+)
 
 type Container interface {
 	Inspect() ([]byte, error)
@@ -8,11 +12,18 @@ type Container interface {
 	GetContainerID() string
 	GetState() string
 
-	// Title returns a title for the container, used in UI
+	// Title returns a formatted title string for UI display.
+	// For regular containers: returns the container name or title
+	// For Compose containers: includes project name (e.g., "project-name/service-name")
+	// For DinD containers: includes host container info (e.g., "DinD: host-container (nested-container)")
 	Title() string
 
 	Top() ([]byte, error)
 	OperationArgs(cmd string) []string
+
+	// File operations
+	ListContainerFiles(path string) ([]models.ContainerFile, error)
+	ReadContainerFile(path string) (string, error)
 }
 
 type ContainerImpl struct {
@@ -68,6 +79,14 @@ func (c ContainerImpl) OperationArgs(cmd string) []string {
 	return []string{cmd, c.containerID}
 }
 
+func (c ContainerImpl) ListContainerFiles(path string) ([]models.ContainerFile, error) {
+	return c.client.ListContainerFiles(c.containerID, path)
+}
+
+func (c ContainerImpl) ReadContainerFile(path string) (string, error) {
+	return c.client.ReadContainerFile(c.containerID, path)
+}
+
 type DindContainerImpl struct {
 	client            *Client
 	hostContainerName string
@@ -109,7 +128,7 @@ func (c DindContainerImpl) GetName() string {
 }
 
 func (c DindContainerImpl) Title() string {
-	return fmt.Sprintf("DinD: %s (%s)", c.hostContainerID, c.name)
+	return fmt.Sprintf("DinD: %s (%s)", c.hostContainerName, c.name)
 }
 
 func (c DindContainerImpl) Top() ([]byte, error) {
@@ -118,4 +137,14 @@ func (c DindContainerImpl) Top() ([]byte, error) {
 
 func (c DindContainerImpl) OperationArgs(op string) []string {
 	return []string{"exec", c.hostContainerID, "docker", op, c.containerID}
+}
+
+func (c DindContainerImpl) ListContainerFiles(path string) ([]models.ContainerFile, error) {
+	dindClient := c.client.Dind(c.hostContainerID)
+	return dindClient.ListContainerFiles(c.containerID, path)
+}
+
+func (c DindContainerImpl) ReadContainerFile(path string) (string, error) {
+	dindClient := c.client.Dind(c.hostContainerID)
+	return dindClient.ReadContainerFile(c.containerID, path)
 }

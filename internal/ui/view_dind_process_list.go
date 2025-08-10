@@ -190,6 +190,16 @@ func (m *DindProcessListViewModel) HandleShell(model *Model) tea.Cmd {
 	}
 }
 
+func (m *DindProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
+	container := m.GetContainer(model)
+	if container != nil {
+		return model.fileBrowserViewModel.LoadContainer(model, container)
+	}
+	slog.Error("Failed to get selected container for file browser",
+		slog.Any("error", fmt.Errorf("no container selected")))
+	return nil
+}
+
 func (m *DindProcessListViewModel) Title() string {
 	if m.showAll {
 		return fmt.Sprintf("Docker in Docker: %s (all)", m.hostContainer.GetName())

@@ -449,14 +449,17 @@ func TestDockerContainerListView(t *testing.T) {
 
 func TestFileBrowserTableView(t *testing.T) {
 	t.Run("file_browser_with_files", func(t *testing.T) {
+		dockerClient := docker.NewClient()
+		container := docker.NewContainer(dockerClient, "web123", "web-1", "web-1", "running")
 		m := &Model{
-			width:       80,
-			Height:      24,
-			currentView: FileBrowserView,
+			width:        80,
+			Height:       24,
+			currentView:  FileBrowserView,
+			dockerClient: dockerClient,
 			fileBrowserViewModel: FileBrowserViewModel{
-				browsingContainerName: "web-1",
-				currentPath:           "/app",
-				selectedFile:          1,
+				browsingContainer: container,
+				currentPath:       "/app",
+				selectedFile:      1,
 				containerFiles: []models.ContainerFile{
 					{Name: "Dockerfile", Permissions: "-rw-r--r--", IsDir: false},
 					{Name: "src", Permissions: "drwxr-xr-x", IsDir: true},
@@ -503,14 +506,17 @@ func TestFileBrowserTableView(t *testing.T) {
 	})
 
 	t.Run("file_browser_empty_directory", func(t *testing.T) {
+		dockerClient := docker.NewClient()
+		container := docker.NewContainer(dockerClient, "web123", "web-1", "web-1", "running")
 		m := &Model{
-			width:       80,
-			Height:      24,
-			currentView: FileBrowserView,
+			width:        80,
+			Height:       24,
+			currentView:  FileBrowserView,
+			dockerClient: dockerClient,
 			fileBrowserViewModel: FileBrowserViewModel{
-				browsingContainerName: "web-1",
-				currentPath:           "/empty",
-				containerFiles:        []models.ContainerFile{},
+				browsingContainer: container,
+				currentPath:       "/empty",
+				containerFiles:    []models.ContainerFile{},
 			},
 		}
 		m.initializeKeyHandlers()

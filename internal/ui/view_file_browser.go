@@ -9,16 +9,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type FileBrowserViewModel struct {
-	containerFiles        []models.ContainerFile
-	selectedFile          int
-	currentPath           string
-	browsingContainerID   string
-	browsingContainerName string
-	pathHistory           []string
+	containerFiles    []models.ContainerFile
+	selectedFile      int
+	currentPath       string
+	browsingContainer docker.Container // The container we're browsing
+	pathHistory       []string
 }
 
 // pushHistory adds a new path to the history
@@ -78,9 +78,8 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 	return RenderTable(columns, rows, availableHeight-3, m.selectedFile)
 }
 
-func (m *FileBrowserViewModel) Load(model *Model, containerID, containerName string) tea.Cmd {
-	m.browsingContainerID = containerID
-	m.browsingContainerName = containerName
+func (m *FileBrowserViewModel) LoadContainer(model *Model, container docker.Container) tea.Cmd {
+	m.browsingContainer = container
 	m.pathHistory = []string{}
 	m.pushHistory("/")
 	model.SwitchView(FileBrowserView)
@@ -151,7 +150,7 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 			return m.DoLoad(model)
 		} else {
 			// View file content
-			return model.fileContentViewModel.Load(model, m.browsingContainerID, m.browsingContainerName, newPath)
+			return model.fileContentViewModel.LoadContainer(model, m.browsingContainer, newPath)
 		}
 	}
 	return nil
@@ -167,7 +166,7 @@ func (m *FileBrowserViewModel) Loaded(files []models.ContainerFile) {
 func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		files, err := model.dockerClient.ListContainerFiles(m.browsingContainerID, m.currentPath)
+		files, err := m.browsingContainer.ListContainerFiles(m.currentPath)
 		return containerFilesLoadedMsg{
 			files: files,
 			err:   err,
@@ -176,5 +175,8 @@ func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 }
 
 func (m *FileBrowserViewModel) Title() string {
-	return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainerName, m.currentPath)
+	if m.browsingContainer != nil {
+		return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainer.Title(), m.currentPath)
+	}
+	return "File Browser"
 }
