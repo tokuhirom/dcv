@@ -53,8 +53,10 @@ func (m *InspectViewModel) render(availableHeight int) string {
 			// Mark current search result line
 			if len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) &&
 				i == m.searchResults[m.currentSearchIdx] {
-				// Add a marker in the margin
-				lineNum = lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Render("▶") + lineNum[1:]
+				// Replace the first character with a styled marker, avoiding string slicing of styled text
+				marker := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Render("▶")
+				lineNumPlain := fmt.Sprintf("%4d ", i+1)
+				lineNum = marker + lineNumStyle.Render(lineNumPlain[1:])
 			}
 
 			// Apply both YAML syntax highlighting and search highlighting

@@ -306,6 +306,31 @@ func TestInspectViewModel_SearchHighlighting_YAMLFormat(t *testing.T) {
 	})
 }
 
+func TestInspectViewModel_LineNumberRendering(t *testing.T) {
+	t.Run("line number with search marker doesn't contain corrupted ANSI sequences", func(t *testing.T) {
+		vm := &InspectViewModel{
+			SearchViewModel: SearchViewModel{
+				searchText:       "test",
+				searchResults:    []int{5},
+				currentSearchIdx: 0,
+			},
+			inspectContent: strings.Repeat("line\n", 10),
+		}
+
+		result := vm.render(15)
+
+		// Should not contain corrupted ANSI sequences like [38;5;241m
+		assert.NotContains(t, result, "[38;5;241m")
+		assert.NotContains(t, result, "[241m")
+
+		// Should contain the search marker
+		assert.Contains(t, result, "▶")
+
+		// Should contain proper line numbers
+		assert.Contains(t, result, "6 ") // Line 6 (0-indexed line 5)
+	})
+}
+
 func TestInspectViewModel_Set(t *testing.T) {
 	vm := &InspectViewModel{
 		inspectScrollY: 10,
