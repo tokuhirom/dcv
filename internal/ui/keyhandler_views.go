@@ -45,3 +45,21 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 }
+
+func (m *Model) CmdShowActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.HandleShowActions(m)
+	default:
+		return m, nil
+	}
+}
+
+func (m *Model) CmdSelectAction(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case CommandActionView:
+		return m, m.commandActionViewModel.HandleSelect(m)
+	default:
+		return m, nil
+	}
+}

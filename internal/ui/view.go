@@ -135,6 +135,8 @@ func (m *Model) viewTitle() string {
 		return fmt.Sprintf("Help for %s", headerStyle.Render(m.helpViewModel.parentView.String()))
 	case CommandExecutionView:
 		return "Command Execution"
+	case CommandActionView:
+		return "Select Action"
 	default:
 		return "Unknown View"
 	}
@@ -182,6 +184,8 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.helpViewModel.render(m, availableHeight)
 	case CommandExecutionView:
 		return m.commandExecutionViewModel.render(m)
+	case CommandActionView:
+		return m.commandActionViewModel.render(m)
 	default:
 		return "Unknown view"
 	}

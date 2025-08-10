@@ -30,6 +30,7 @@ const (
 	InspectView
 	HelpView
 	CommandExecutionView
+	CommandActionView
 )
 
 // UI Chrome offsets for different views
@@ -71,6 +72,8 @@ func (view ViewType) String() string {
 		return "Help"
 	case CommandExecutionView:
 		return "Command Execution"
+	case CommandActionView:
+		return "Command Actions"
 	default:
 		return "Unknown View"
 	}
@@ -88,6 +91,7 @@ type Model struct {
 	dockerContainerListViewModel DockerContainerListViewModel
 	logViewModel                 LogViewModel
 	commandExecutionViewModel    CommandExecutionViewModel
+	commandActionViewModel       CommandActionViewModel
 	fileBrowserViewModel         FileBrowserViewModel
 	inspectViewModel             InspectViewModel
 	composeProjectListViewModel  ComposeProjectListViewModel
@@ -145,6 +149,8 @@ type Model struct {
 	helpViewHandlers                []KeyConfig
 	commandExecKeymap               map[string]KeyHandler
 	commandExecHandlers             []KeyConfig
+	commandActionKeymap             map[string]KeyHandler
+	commandActionHandlers           []KeyConfig
 
 	// Command-line mode state
 	commandViewModel CommandViewModel
@@ -263,6 +269,8 @@ func (m *Model) GetCurrentViewModel() interface{} {
 		return &m.helpViewModel
 	case CommandExecutionView:
 		return &m.commandExecutionViewModel
+	case CommandActionView:
+		return &m.commandActionViewModel
 	default:
 		slog.Error("GetCurrentViewModel called with unknown view",
 			slog.String("view", m.currentView.String()))
@@ -303,6 +311,8 @@ func (m *Model) GetViewKeyHandlers(view ViewType) []KeyConfig {
 		return m.helpViewHandlers
 	case CommandExecutionView:
 		return m.commandExecHandlers
+	case CommandActionView:
+		return m.commandActionHandlers
 	default:
 		return nil
 	}
@@ -341,6 +351,8 @@ func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
 		return m.helpViewKeymap
 	case CommandExecutionView:
 		return m.commandExecKeymap
+	case CommandActionView:
+		return m.commandActionKeymap
 	default:
 		return nil
 	}
