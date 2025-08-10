@@ -291,26 +291,23 @@ All key handler functions can be called as commands. Commands are automatically 
 ### Options
 
 ```bash
-dcv [-p <project>] [-f <compose-file>] [--projects]
+dcv [-debug <logfile>]
 ```
 
-- `-p <project>`: Display the specified Docker Compose project
-- `-f <compose-file>`: Display the project with the specified compose file
-- `--projects`: Show project list on startup
+- `-debug <logfile>`: Enable debug logging to a file
 
 ### Examples
 
 ```bash
-# Display Docker Compose project in current directory
+# Start dcv with the default initial view (docker containers)
 dcv
 
-# Display specific project
-dcv -p myproject
+# Start dcv with debug logging
+dcv -debug dcv.log
 
-# Start with project list
-dcv --projects
-
-# To view all Docker containers, press 'p' after starting
+# Configure initial view via config file (see Configuration section)
+# To start with Docker Compose view: set initial_view = "compose" in config
+# To start with project list: set initial_view = "projects" in config
 ```
 
 ## Configuration
