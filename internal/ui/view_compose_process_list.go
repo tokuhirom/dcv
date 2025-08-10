@@ -33,7 +33,7 @@ func (m *ComposeProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	return func() tea.Msg {
 		slog.Info("Loading composeContainers",
 			slog.Bool("showAll", m.showAll))
-		processes, err := model.dockerClient.Compose(m.projectName).ListContainers(m.showAll)
+		processes, err := model.dockerClient.ListComposeContainers(m.projectName, m.showAll)
 		return processesLoadedMsg{
 			processes: processes,
 			err:       err,
