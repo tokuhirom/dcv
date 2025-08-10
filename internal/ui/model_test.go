@@ -46,7 +46,7 @@ func TestProcessesLoadedMsg(t *testing.T) {
 		},
 	}
 
-	msg := processesLoadedMsg{
+	msg := composeProcessesLoadedMsg{
 		processes: containers,
 		err:       nil,
 	}

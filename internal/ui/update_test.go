@@ -321,7 +321,7 @@ func TestUpdateMessages(t *testing.T) {
 	processes := []models.ComposeContainer{
 		{Name: "test-1"},
 	}
-	newModel, _ = m.Update(processesLoadedMsg{processes: processes})
+	newModel, _ = m.Update(composeProcessesLoadedMsg{processes: processes})
 	m = newModel.(*Model)
 	assert.Equal(t, processes, m.composeProcessListViewModel.composeContainers)
 	assert.False(t, m.loading)

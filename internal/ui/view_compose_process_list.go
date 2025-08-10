@@ -14,7 +14,13 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+type composeProcessesLoadedMsg struct {
+	processes []models.ComposeContainer
+	err       error
+}
+
 var _ ContainerAware = (*ComposeProcessListViewModel)(nil)
+var _ UpdateAware = (*ComposeProcessListViewModel)(nil)
 
 type ComposeProcessListViewModel struct {
 	// Process list state
@@ -22,6 +28,23 @@ type ComposeProcessListViewModel struct {
 	selectedContainer int
 	showAll           bool   // Toggle to show all composeContainers including stopped ones
 	projectName       string // Current Docker Compose project name
+}
+
+func (m *ComposeProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case composeProcessesLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+		} else {
+			model.err = nil
+			m.Loaded(msg.processes)
+		}
+		return model, nil
+
+	default:
+		return model, nil
+	}
 }
 
 func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeProject) tea.Cmd {
@@ -36,7 +59,7 @@ func (m *ComposeProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 		slog.Info("Loading composeContainers",
 			slog.Bool("showAll", m.showAll))
 		processes, err := model.dockerClient.ListComposeContainers(m.projectName, m.showAll)
-		return processesLoadedMsg{
+		return composeProcessesLoadedMsg{
 			processes: processes,
 			err:       err,
 		}

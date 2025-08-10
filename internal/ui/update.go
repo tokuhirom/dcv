@@ -24,18 +24,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Height = msg.Height
 		return m, nil
 
-	case processesLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.composeProcessListViewModel.Loaded(msg.processes)
-		return m, nil
-
 	case dindContainersLoadedMsg:
 		m.loading = false
 		if msg.err != nil {
@@ -275,6 +263,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	default:
+		// if UpdateAware
+		vm := m.GetCurrentViewModel()
+		if aware, ok := vm.(UpdateAware); ok {
+			// Call the Update method on the current view model
+			return aware.Update(m, msg)
+		}
 		return m, nil
 	}
 }

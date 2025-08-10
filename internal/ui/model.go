@@ -358,11 +358,6 @@ func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
 
 // Messages
 
-type processesLoadedMsg struct {
-	processes []models.ComposeContainer
-	err       error
-}
-
 type dindContainersLoadedMsg struct {
 	containers []models.DockerContainer
 	err        error
