@@ -101,7 +101,7 @@ networks:
   development:
     driver: bridge
     name: dcv-development
-    internal: true  # This network has no external access
+    # internal: true  # Removed to allow dind to pull images from Docker Hub
     ipam:
       config:
         - subnet: 172.28.0.0/16

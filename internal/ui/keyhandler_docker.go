@@ -11,14 +11,10 @@ import (
 // Docker container management commands
 
 func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch m.currentView {
-	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleCommandExecution(m, "kill", true) // kill is aggressive
-	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleKill(m)
-	default:
-		return m, nil
-	}
+	return m, m.useContainerAware(func(container docker.Container) tea.Cmd {
+		args := container.OperationArgs("kill")
+		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // kill is aggressive
+	})
 }
 
 func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
