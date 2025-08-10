@@ -156,7 +156,7 @@ func TestFileBrowserViewModel_Rendering(t *testing.T) {
 						Name:        "link",
 						Permissions: "lrwxrwxrwx",
 						IsDir:       false,
-						LinkTarget:  "/target/path",
+						LinkTarget:  "/shell/path",
 					},
 				},
 				selectedFile: 0,
@@ -167,7 +167,7 @@ func TestFileBrowserViewModel_Rendering(t *testing.T) {
 				Height: 20,
 			},
 			height:   20,
-			expected: []string{"link -> /target/path"},
+			expected: []string{"link -> /shell/path"},
 		},
 	}
 

@@ -139,22 +139,6 @@ func (m *DockerContainerListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleShell(model *Model) tea.Cmd {
-	// TODO: abstract this to a common interface for all container types
-	// Execute shell in the selected Docker container
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
-		// Default to /bin/sh as it's most commonly available
-		return func() tea.Msg {
-			return executeCommandMsg{
-				containerID: container.ID,
-				command:     []string{"/bin/sh"},
-			}
-		}
-	}
-	return nil
-}
-
 func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Container {
 	// Get the selected Docker container
 	if m.selectedDockerContainer < len(m.dockerContainers) {

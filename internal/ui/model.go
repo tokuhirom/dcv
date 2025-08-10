@@ -428,15 +428,10 @@ type fileContentLoadedMsg struct {
 	err     error
 }
 
-type executeCommandMsg struct {
-	containerID string
-	command     []string
-}
-
-type executeDindCommandMsg struct {
-	hostContainerID string
-	containerID     string
-	command         []string
+type launchShellMsg struct {
+	container *docker.Container
+	args      []string
+	shell     string
 }
 
 type inspectLoadedMsg struct {

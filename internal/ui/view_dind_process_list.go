@@ -157,24 +157,6 @@ func (m *DindProcessListViewModel) HandleDelete(model *Model) tea.Cmd {
 	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // rm is aggressive
 }
 
-func (m *DindProcessListViewModel) HandleShell(model *Model) tea.Cmd {
-	// TODO: abstract this into a common method for all process list views
-	if m.selectedDindContainer >= len(m.dindContainers) {
-		return nil
-	}
-
-	container := m.dindContainers[m.selectedDindContainer]
-	// For DinD containers, we need to execute through the host container
-	// docker exec <host-container> docker exec -it <nested-container> /bin/sh
-	return func() tea.Msg {
-		return executeDindCommandMsg{
-			hostContainerID: m.hostContainer.GetContainerID(),
-			containerID:     container.ID,
-			command:         []string{"/bin/sh"},
-		}
-	}
-}
-
 func (m *DindProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
 	// TODO: abstract this into a common method for all process list views
 	container := m.GetContainer(model)

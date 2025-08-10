@@ -181,22 +181,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.fileContentViewModel.Loaded(msg.content, msg.path)
 		return m, nil
 
-	case executeCommandMsg:
+	case launchShellMsg:
 		// Execute the interactive command in a subprocess
-		c := exec.Command("docker", append([]string{"exec", "-it", msg.containerID}, msg.command...)...)
+		c := exec.Command("docker", msg.args...)
 		return m, tea.ExecProcess(c, func(err error) tea.Msg {
 			// After the command exits, we'll get this message
-			return nil
-		})
-
-	case executeDindCommandMsg:
-		// Execute the interactive command in a nested container (DinD)
-		// docker exec <host-container> docker exec -it <nested-container> /bin/sh
-		args := []string{"exec", "-it", msg.hostContainerID, "docker", "exec", "-it", msg.containerID}
-		args = append(args, msg.command...)
-		c := exec.Command("docker", args...)
-		return m, tea.ExecProcess(c, func(err error) tea.Msg {
-			// After the command exits, we'll get this message
+			m.err = fmt.Errorf("command execution failed: %w, container %s may not contain the %s",
+				err,
+				msg.container.Title(),
+				msg.shell)
 			return nil
 		})
 

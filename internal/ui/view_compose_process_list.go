@@ -185,21 +185,6 @@ func (m *ComposeProcessListViewModel) HandleFileBrowse(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) HandleShell() tea.Cmd {
-	// TODO: abstract this into a common method for all process list views
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
-		// Default to /bin/sh as it's most commonly available
-		return func() tea.Msg {
-			return executeCommandMsg{
-				containerID: container.ID,
-				command:     []string{"/bin/sh"},
-			}
-		}
-	}
-	return nil
-}
-
 func (m *ComposeProcessListViewModel) GetContainer(model *Model) *docker.Container {
 	if m.selectedContainer < len(m.composeContainers) {
 		container := m.composeContainers[m.selectedContainer]
