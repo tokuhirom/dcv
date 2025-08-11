@@ -18,14 +18,25 @@ type dindContainersLoadedMsg struct {
 
 var _ ContainerAware = (*DindProcessListViewModel)(nil)
 var _ UpdateAware = (*DindProcessListViewModel)(nil)
+var _ ContainerSearchAware = (*DindProcessListViewModel)(nil)
 
 // DindProcessListViewModel manages the state and rendering of the Docker-in-Docker process list view
 type DindProcessListViewModel struct {
+	ContainerSearchViewModel
 	dindContainers        []models.DockerContainer
 	selectedDindContainer int
 	showAll               bool
 
 	hostContainer *docker.Container
+}
+
+func (m *DindProcessListViewModel) Init(_ *Model) {
+	m.InitContainerSearchViewModel(
+		func(idx int) {
+			m.selectedDindContainer = idx
+		}, func() {
+			m.performSearch()
+		})
 }
 
 func (m *DindProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -42,6 +53,32 @@ func (m *DindProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model,
 
 	default:
 		return model, nil
+	}
+}
+
+func (m *DindProcessListViewModel) performSearch() {
+	if m.searchText == "" {
+		m.searchResults = nil
+		m.currentSearchIdx = 0
+		return
+	}
+
+	var results []int
+	for i, container := range m.dindContainers {
+		// Create searchable text from container fields
+		searchableText := container.ID + " " + container.Image + " " +
+			container.Names + " " + container.Status
+
+		if m.MatchContainer(searchableText) {
+			results = append(results, i)
+		}
+	}
+
+	m.SetResults(results)
+
+	// Jump to first result if found
+	if len(results) > 0 {
+		m.selectedDindContainer = results[0]
 	}
 }
 
@@ -64,7 +101,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 	}
 
 	rows := make([]table.Row, 0, len(m.dindContainers))
-	for _, container := range m.dindContainers {
+	for i, container := range m.dindContainers {
 		// Truncate container ID
 		id := container.ID
 		if len(id) > 12 {
@@ -87,7 +124,19 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			status = statusDownStyle.Render(status)
 		}
 
-		rows = append(rows, table.Row{id, image, state, status, container.Names})
+		name := container.Names
+		// Highlight if this container matches search
+		if m.IsSearchActive() && m.GetSearchText() != "" {
+			for _, idx := range m.searchResults {
+				if idx == i {
+					// Apply search highlight style to name
+					name = searchStyle.Render(name)
+					break
+				}
+			}
+		}
+
+		rows = append(rows, table.Row{id, image, state, status, name})
 	}
 
 	return RenderTable(columns, rows, availableHeight, m.selectedDindContainer)
@@ -157,8 +206,16 @@ func (m *DindProcessListViewModel) GetContainer(model *Model) *docker.Container 
 }
 
 func (m *DindProcessListViewModel) Title() string {
+	title := fmt.Sprintf("Docker in Docker: %s", m.hostContainer.GetName())
 	if m.showAll {
-		return fmt.Sprintf("Docker in Docker: %s (all)", m.hostContainer.GetName())
+		title = fmt.Sprintf("Docker in Docker: %s (all)", m.hostContainer.GetName())
 	}
-	return fmt.Sprintf("Docker in Docker: %s", m.hostContainer.GetName())
+	// Add search info if searching
+	if m.IsSearchActive() && m.GetSearchText() != "" {
+		info := m.GetSearchInfo()
+		if info != "" {
+			title += " - " + info
+		}
+	}
+	return title
 }

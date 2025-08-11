@@ -19,7 +19,6 @@ func (m *Model) initializeKeyHandlers() {
 	}
 	m.globalKeymap = m.createKeymap(m.globalHandlers)
 
-	// TODO: support following commands in dind view
 	containerOperations := []KeyConfig{
 		{[]string{"x"}, "show actions", m.CmdShowActions},
 		{[]string{"f"}, "browse files", m.CmdFileBrowse},
@@ -34,6 +33,9 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"P"}, "pause/unpause", m.CmdPause},
 		{[]string{"D"}, "delete", m.CmdDelete},
 		{[]string{"t"}, "top", m.CmdTop},
+		{[]string{"/"}, "search", m.CmdSearch},
+		{[]string{"n"}, "next match", m.CmdNextSearchResult},
+		{[]string{"N"}, "prev match", m.CmdPrevSearchResult},
 	}
 
 	// Docker Container List View

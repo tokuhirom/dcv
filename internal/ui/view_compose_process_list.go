@@ -21,13 +21,24 @@ type composeProcessesLoadedMsg struct {
 
 var _ ContainerAware = (*ComposeProcessListViewModel)(nil)
 var _ UpdateAware = (*ComposeProcessListViewModel)(nil)
+var _ ContainerSearchAware = (*ComposeProcessListViewModel)(nil)
 
 type ComposeProcessListViewModel struct {
+	ContainerSearchViewModel
 	// Process list state
 	composeContainers []models.ComposeContainer
 	selectedContainer int
 	showAll           bool   // Toggle to show all composeContainers including stopped ones
 	projectName       string // Current Docker Compose project name
+}
+
+func (m *ComposeProcessListViewModel) Init(_ *Model) {
+	m.InitContainerSearchViewModel(
+		func(idx int) {
+			m.selectedContainer = idx
+		}, func() {
+			m.performSearch()
+		})
 }
 
 func (m *ComposeProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -66,6 +77,32 @@ func (m *ComposeProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	}
 }
 
+func (m *ComposeProcessListViewModel) performSearch() {
+	if m.searchText == "" {
+		m.searchResults = nil
+		m.currentSearchIdx = 0
+		return
+	}
+
+	var results []int
+	for i, container := range m.composeContainers {
+		// Create searchable text from container fields
+		searchableText := container.Service + " " + container.Image + " " +
+			container.Name + " " + container.GetStatus() + " " + container.GetPortsString()
+
+		if m.MatchContainer(searchableText) {
+			results = append(results, i)
+		}
+	}
+
+	m.SetResults(results)
+
+	// Jump to first result if found
+	if len(results) > 0 {
+		m.selectedContainer = results[0]
+	}
+}
+
 func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
 	slog.Info("Rendering container list",
 		slog.Int("selectedContainer", m.selectedContainer),
@@ -90,11 +127,22 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 
 	rows := make([]table.Row, 0, len(m.composeContainers))
 	// Add rows with width control
-	for _, container := range m.composeContainers {
+	for i, container := range m.composeContainers {
 		// Service name with dind indicator
 		service := container.Service
 		if container.IsDind() {
 			service = dindStyle.Render("⬢ ") + service
+		}
+
+		// Highlight if this container matches search
+		if m.IsSearchActive() && m.GetSearchText() != "" {
+			for _, idx := range m.searchResults {
+				if idx == i {
+					// Apply search highlight style to service name
+					service = searchStyle.Render(service)
+					break
+				}
+			}
 		}
 
 		// Truncate image name if too long

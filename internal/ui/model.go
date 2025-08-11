@@ -198,6 +198,9 @@ func (m *Model) PageSize() int {
 
 func (m *Model) Init() tea.Cmd {
 	m.initializeKeyHandlers()
+	m.composeProcessListViewModel.Init(m)
+	m.dockerContainerListViewModel.Init(m)
+	m.dindProcessListViewModel.Init(m)
 
 	return tea.Batch(
 		func() tea.Msg {
