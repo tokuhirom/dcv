@@ -341,7 +341,7 @@ func (m *Model) viewFooter() string {
 	// Check if current view supports container search
 	vm := m.GetCurrentViewModel()
 	if searchable, ok := vm.(ContainerSearchAware); ok {
-		if searchable.IsInSearchMode() {
+		if searchable.IsSearchActive() {
 			// Use the embedded ContainerSearchViewModel to render search line
 			switch m.currentView {
 			case DockerContainerListView:

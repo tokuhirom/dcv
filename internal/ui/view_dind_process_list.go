@@ -30,6 +30,15 @@ type DindProcessListViewModel struct {
 	hostContainer *docker.Container
 }
 
+func (m *DindProcessListViewModel) Init(_ *Model) {
+	m.ContainerSearchViewModel.InitContainerSearchViewModel(
+		func(idx int) {
+			m.selectedDindContainer = idx
+		}, func() {
+			m.performSearch()
+		})
+}
+
 func (m *DindProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case dindContainersLoadedMsg:
@@ -209,62 +218,4 @@ func (m *DindProcessListViewModel) Title() string {
 		}
 	}
 	return title
-}
-
-// ContainerSearchAware implementation
-
-func (m *DindProcessListViewModel) HandleStartSearch() {
-	m.StartSearch()
-}
-
-func (m *DindProcessListViewModel) HandleSearchInput(model *Model, msg tea.KeyMsg) tea.Cmd {
-	switch msg.String() {
-	case "esc":
-		m.ExitSearch()
-	case "enter":
-		m.ExitSearch()
-		m.performSearch()
-	case "backspace":
-		if m.DeleteChar() {
-			m.performSearch()
-		}
-	case "left":
-		m.MoveCursorLeft()
-	case "right":
-		m.MoveCursorRight()
-	case "ctrl+i":
-		m.ToggleIgnoreCase()
-		m.performSearch()
-	case "ctrl+r":
-		m.ToggleRegex()
-		m.performSearch()
-	default:
-		if len(msg.String()) == 1 {
-			m.AppendChar(msg.String())
-			m.performSearch()
-		}
-	}
-	return nil
-}
-
-func (m *DindProcessListViewModel) HandleNextSearchResult() {
-	if m.HasSearchResults() {
-		idx := m.NextResult()
-		if idx >= 0 {
-			m.selectedDindContainer = idx
-		}
-	}
-}
-
-func (m *DindProcessListViewModel) HandlePrevSearchResult() {
-	if m.HasSearchResults() {
-		idx := m.PrevResult()
-		if idx >= 0 {
-			m.selectedDindContainer = idx
-		}
-	}
-}
-
-func (m *DindProcessListViewModel) IsInSearchMode() bool {
-	return m.IsSearchActive()
 }

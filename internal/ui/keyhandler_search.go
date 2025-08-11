@@ -18,7 +18,7 @@ func (m *Model) CmdSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Check if current view supports container search
 		vm := m.GetCurrentViewModel()
 		if searchable, ok := vm.(ContainerSearchAware); ok {
-			searchable.HandleStartSearch()
+			searchable.StartSearch()
 			return m, nil
 		}
 

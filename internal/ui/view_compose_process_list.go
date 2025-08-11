@@ -32,6 +32,15 @@ type ComposeProcessListViewModel struct {
 	projectName       string // Current Docker Compose project name
 }
 
+func (m *ComposeProcessListViewModel) Init(_ *Model) {
+	m.ContainerSearchViewModel.InitContainerSearchViewModel(
+		func(idx int) {
+			m.selectedContainer = idx
+		}, func() {
+			m.performSearch()
+		})
+}
+
 func (m *ComposeProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case composeProcessesLoadedMsg:
@@ -236,62 +245,4 @@ func (m *ComposeProcessListViewModel) Loaded(processes []models.ComposeContainer
 	if len(m.composeContainers) > 0 && m.selectedContainer >= len(m.composeContainers) {
 		m.selectedContainer = 0
 	}
-}
-
-// ContainerSearchAware implementation
-
-func (m *ComposeProcessListViewModel) HandleStartSearch() {
-	m.StartSearch()
-}
-
-func (m *ComposeProcessListViewModel) HandleSearchInput(model *Model, msg tea.KeyMsg) tea.Cmd {
-	switch msg.String() {
-	case "esc":
-		m.ExitSearch()
-	case "enter":
-		m.ExitSearch()
-		m.performSearch()
-	case "backspace":
-		if m.DeleteChar() {
-			m.performSearch()
-		}
-	case "left":
-		m.MoveCursorLeft()
-	case "right":
-		m.MoveCursorRight()
-	case "ctrl+i":
-		m.ToggleIgnoreCase()
-		m.performSearch()
-	case "ctrl+r":
-		m.ToggleRegex()
-		m.performSearch()
-	default:
-		if len(msg.String()) == 1 {
-			m.AppendChar(msg.String())
-			m.performSearch()
-		}
-	}
-	return nil
-}
-
-func (m *ComposeProcessListViewModel) HandleNextSearchResult() {
-	if m.HasSearchResults() {
-		idx := m.NextResult()
-		if idx >= 0 {
-			m.selectedContainer = idx
-		}
-	}
-}
-
-func (m *ComposeProcessListViewModel) HandlePrevSearchResult() {
-	if m.HasSearchResults() {
-		idx := m.PrevResult()
-		if idx >= 0 {
-			m.selectedContainer = idx
-		}
-	}
-}
-
-func (m *ComposeProcessListViewModel) IsInSearchMode() bool {
-	return m.IsSearchActive()
 }

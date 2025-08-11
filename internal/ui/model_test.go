@@ -23,7 +23,7 @@ func TestModelInit(t *testing.T) {
 	m := NewModel(ComposeProcessListView)
 	cmd := m.Init()
 
-	// Init should return a batch command
+	// InitContainerSearchViewModel should return a batch command
 	assert.NotNil(t, cmd)
 }
 
