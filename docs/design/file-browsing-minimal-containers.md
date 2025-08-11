@@ -79,35 +79,7 @@ func (s *DockerExportStrategy) ListDirectory(ctx context.Context, container, pat
 }
 ```
 
-### Solution 3: Shell Built-ins Fallback
-
-Use shell built-ins when sh/bash exists but ls/cat don't.
-
-**Pros:**
-- No additional tools needed
-- Works with minimal shells
-- Fast and simple
-
-**Cons:**
-- Limited functionality
-- Not all containers have shells
-- Output parsing is fragile
-
-**Implementation:**
-```go
-type ShellGlobStrategy struct {
-    client *DockerClient
-}
-
-func (s *ShellGlobStrategy) ListDirectory(ctx context.Context, container, path string) ([]FileInfo, error) {
-    // Use shell globbing
-    cmd := fmt.Sprintf("cd %s && for f in * .[^.]*; do echo \"$f\"; done", path)
-    output, err := s.client.Exec(container, []string{"sh", "-c", cmd})
-    return parseGlobOutput(output), nil
-}
-```
-
-### Solution 4: Sidecar Container (Not Recommended)
+### Solution 3: Sidecar Container (Not Recommended)
 
 Start a debug container with shared namespaces/volumes.
 
@@ -138,7 +110,6 @@ func NewFileBrowserMultiStrategy(client *DockerClient) *FileBrowserMultiStrategy
     return &FileBrowserMultiStrategy{
         strategies: []FileBrowserStrategy{
             &NativeToolsStrategy{client},     // Try native first (fastest)
-            &ShellGlobStrategy{client},       // Try shell if available
             &BinaryInjectionStrategy{client}, // Inject tools if needed
             &DockerExportStrategy{client},    // Last resort
         },
