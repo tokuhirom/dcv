@@ -1,6 +1,6 @@
-.PHONY: all test fmt dev-deps lint clean screenshots screenshots-deps
+.PHONY: all test fmt dev-deps lint clean screenshots screenshots-deps build-helpers clean-helpers
 
-all:
+all: build-helpers
 	go build -o dcv
 
 # Run tests
@@ -18,7 +18,7 @@ lint:
 	golangci-lint run
 
 # Clean build artifacts
-clean:
+clean: clean-helpers
 	rm -f dcv
 
 # Install development dependencies
@@ -45,3 +45,36 @@ screenshots: screenshots-deps
 	@echo "Generating screenshots..."
 	@go run -tags screenshots cmd/generate-screenshots/main.go
 	@echo "Screenshots generated successfully!"
+
+# Build helper binaries for embedding
+build-helpers:
+	@echo "Building helper binaries..."
+	@mkdir -p internal/docker/static-binaries
+	
+	@echo "  Building for linux/amd64 (x86_64)..."
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+		go build -ldflags="-s -w" -trimpath \
+		-o internal/docker/static-binaries/dcv-helper-amd64 \
+		cmd/dcv-helper/main.go
+	@strip internal/docker/static-binaries/dcv-helper-amd64 2>/dev/null || true
+	
+	@echo "  Building for linux/arm64 (aarch64)..."
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
+		go build -ldflags="-s -w" -trimpath \
+		-o internal/docker/static-binaries/dcv-helper-arm64 \
+		cmd/dcv-helper/main.go
+	@strip internal/docker/static-binaries/dcv-helper-arm64 2>/dev/null || true
+	
+	@echo "  Building for linux/arm (armv7/armhf)..."
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 \
+		go build -ldflags="-s -w" -trimpath \
+		-o internal/docker/static-binaries/dcv-helper-arm \
+		cmd/dcv-helper/main.go
+	@strip internal/docker/static-binaries/dcv-helper-arm 2>/dev/null || true
+	
+	@echo "Helper binaries built successfully"
+
+# Clean helper binaries
+clean-helpers:
+	@echo "Cleaning helper binaries..."
+	@rm -f internal/docker/static-binaries/dcv-helper-*

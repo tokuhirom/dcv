@@ -85,7 +85,8 @@ type Model struct {
 	viewHistory []ViewType
 
 	// Docker client
-	dockerClient *docker.Client
+	dockerClient   *docker.Client
+	fileOperations *docker.FileOperations
 
 	dockerContainerListViewModel DockerContainerListViewModel
 	logViewModel                 LogViewModel
@@ -172,9 +173,10 @@ func NewModel(initialView ViewType) *Model {
 		slog.String("initial_view", initialView.String()))
 
 	m := &Model{
-		currentView:  initialView,
-		dockerClient: client,
-		loading:      true,
+		currentView:    initialView,
+		dockerClient:   client,
+		fileOperations: docker.NewFileOperations(client.APIClient()),
+		loading:        true,
 	}
 
 	return m

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -64,10 +65,12 @@ func (m *FileContentViewModel) LoadContainer(model *Model, container *docker.Con
 	m.container = container
 
 	return func() tea.Msg {
-		args := container.OperationArgs("exec", "cat", path)
-		output, err := model.dockerClient.ExecuteCaptured(args...)
+		// Use FileOperations for multi-strategy file content retrieval
+		ctx := context.Background()
+		content, err := model.fileOperations.GetFileContent(ctx, container.ContainerID(), path)
+
 		return fileContentLoadedMsg{
-			content: string(output),
+			content: content,
 			path:    path,
 			err:     err,
 		}

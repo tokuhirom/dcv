@@ -39,3 +39,7 @@ dcv_test
 
 # Lefthook
 .lefthook-local/
+
+# Generated helper binaries
+internal/docker/static-binaries/dcv-helper-*
+!internal/docker/static-binaries/.gitkeep
