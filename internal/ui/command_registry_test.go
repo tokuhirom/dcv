@@ -18,6 +18,8 @@ func TestToKebabCase(t *testing.T) {
 		{"CmdBack", "cmd-back"},
 		{"simple", "simple"},
 		{"ABC", "a-b-c"},
+		{"PS", "ps"},                // Special case for PS abbreviation
+		{"ComposeLS", "compose-ls"}, // Special case for ComposeLS
 		{"", ""},
 	}
 

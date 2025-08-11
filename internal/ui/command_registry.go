@@ -62,6 +62,22 @@ func (m *Model) registerCommands() {
 			}
 		}
 	}
+
+	// Register global handlers (they work across all views)
+	for _, handler := range m.globalHandlers {
+		funcPtr := reflect.ValueOf(handler.KeyHandler).Pointer()
+		cmdName := GetCommandNameFromFuncPtr(funcPtr)
+		if cmdName != "" {
+			m.allCommands[cmdName] = struct{}{}
+			// Add to all view registries since global commands work everywhere
+			for viewType := range m.viewCommandRegistry {
+				m.viewCommandRegistry[viewType][cmdName] = CommandHandler{
+					Handler:     handler.KeyHandler,
+					Description: handler.Description,
+				}
+			}
+		}
+	}
 }
 
 func GetCommandNameFromFuncPtr(funcPtr uintptr) string {
@@ -97,6 +113,14 @@ func (m *Model) getCommandForHandler(handler KeyHandler) string {
 
 // toKebabCase converts a CamelCase string to kebab-case
 func toKebabCase(s string) string {
+	// Handle special cases for common abbreviations
+	switch s {
+	case "PS":
+		return "ps"
+	case "ComposeLS":
+		return "compose-ls"
+	}
+
 	var result strings.Builder
 	for i, r := range s {
 		if i > 0 && r >= 'A' && r <= 'Z' {
