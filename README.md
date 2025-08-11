@@ -179,11 +179,31 @@ EOF
 
 ## Installation
 
+### Using Homebrew (macOS and Linux)
+
+```bash
+brew tap tokuhirom/tap
+brew install dcv
+```
+
+Or install directly:
+
+```bash
+brew install tokuhirom/tap/dcv
+```
+
 ### Using go install
 
 ```bash
 go install github.com/tokuhirom/dcv@latest
 ```
+
+### Download from GitHub Releases
+
+Pre-built binaries are available on the [releases page](https://github.com/tokuhirom/dcv/releases) for:
+- Linux (amd64, arm64, armv7)
+- macOS (amd64, arm64)
+- Windows (amd64)
 
 ### Building from source
 
@@ -271,6 +291,47 @@ make all
 ```bash
 make fmt
 ```
+
+## Release Process
+
+Releases are automated using [GoReleaser](https://goreleaser.com/) and GitHub Actions.
+
+### Creating a New Release
+
+1. **Ensure all changes are committed and pushed to main branch**
+
+2. **Create and push a new tag**:
+   ```bash
+   git tag v0.1.0  # Replace with your version
+   git push origin v0.1.0
+   ```
+
+3. **GitHub Actions will automatically**:
+   - Run tests
+   - Build binaries for multiple platforms
+   - Create a GitHub release with the binaries
+   - Update the Homebrew tap formula
+
+### Release Configuration
+
+- **GoReleaser**: Configuration is in `.goreleaser.yml`
+- **GitHub Actions**: Release workflow is in `.github/workflows/ci.yml`
+- **Homebrew Tap**: Formula is automatically updated in `tokuhirom/homebrew-tap`
+
+### Required Secrets
+
+The following secrets must be set in the GitHub repository settings:
+
+- `TAP_GITHUB_TOKEN`: Fine-grained Personal Access Token with:
+  - Repository access to `tokuhirom/homebrew-tap`
+  - Permissions: Contents (Read and Write), Metadata (Read)
+
+### Version Naming
+
+Follow semantic versioning (MAJOR.MINOR.PATCH):
+- MAJOR: Breaking changes
+- MINOR: New features (backwards compatible)
+- PATCH: Bug fixes (backwards compatible)
 
 ## See also
 
