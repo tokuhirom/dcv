@@ -100,3 +100,59 @@ func (vm *TopViewModel) SetProcesses(processes []models.Process) {
 func (vm *TopViewModel) SetContainer(container *docker.Container) {
 	vm.container = container
 }
+
+func (m *Model) GetDindProcessListViewModel() *DindProcessListViewModel {
+	return &m.dindProcessListViewModel
+}
+
+func (vm *DindProcessListViewModel) SetDindContainers(containers []models.DockerContainer) {
+	vm.dindContainers = containers
+}
+
+func (vm *DindProcessListViewModel) SetHostContainer(container *docker.Container) {
+	vm.hostContainer = container
+}
+
+func (m *Model) GetFileBrowserViewModel() *FileBrowserViewModel {
+	return &m.fileBrowserViewModel
+}
+
+func (vm *FileBrowserViewModel) SetContainerFiles(files []models.ContainerFile) {
+	vm.containerFiles = files
+}
+
+func (vm *FileBrowserViewModel) SetBrowsingContainer(container *docker.Container) {
+	vm.browsingContainer = container
+}
+
+func (vm *FileBrowserViewModel) SetCurrentPath(path string) {
+	vm.currentPath = path
+}
+
+func (m *Model) GetFileContentViewModel() *FileContentViewModel {
+	return &m.fileContentViewModel
+}
+
+func (vm *FileContentViewModel) SetContent(content string) {
+	vm.content = content
+}
+
+func (vm *FileContentViewModel) SetContainer(container *docker.Container) {
+	vm.container = container
+}
+
+func (vm *FileContentViewModel) SetContentPath(path string) {
+	vm.contentPath = path
+}
+
+func (m *Model) GetInspectViewModel() *InspectViewModel {
+	return &m.inspectViewModel
+}
+
+func (vm *InspectViewModel) SetInspectContent(content string) {
+	vm.inspectContent = content
+}
+
+func (vm *InspectViewModel) SetInspectTargetName(name string) {
+	vm.inspectTargetName = name
+}

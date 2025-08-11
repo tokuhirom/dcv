@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -104,6 +105,30 @@ func main() {
 			filename:   "top-view.png",
 			viewType:   ui.TopView,
 			setupModel: setupTopView,
+		},
+		{
+			name:       "Docker-in-Docker Process List",
+			filename:   "dind-process-list.png",
+			viewType:   ui.DindProcessListView,
+			setupModel: setupDindProcessList,
+		},
+		{
+			name:       "File Browser",
+			filename:   "file-browser.png",
+			viewType:   ui.FileBrowserView,
+			setupModel: setupFileBrowser,
+		},
+		{
+			name:       "File Content",
+			filename:   "file-content.png",
+			viewType:   ui.FileContentView,
+			setupModel: setupFileContent,
+		},
+		{
+			name:       "Inspect View",
+			filename:   "inspect-view.png",
+			viewType:   ui.InspectView,
+			setupModel: setupInspectView,
 		},
 	}
 
@@ -581,4 +606,271 @@ func setupTopView(m *ui.Model) {
 			CMD:   "/usr/local/bin/gunicorn: worker",
 		},
 	})
+}
+
+func setupDindProcessList(m *ui.Model) {
+	vm := m.GetDindProcessListViewModel()
+	// Set the host dind container
+	hostContainer := docker.NewContainer("dind345mno", "docker-in-docker", "docker-in-docker", "running")
+	vm.SetHostContainer(hostContainer)
+	// Set containers running inside the dind
+	vm.SetDindContainers([]models.DockerContainer{
+		{
+			ID:         "nested123abc",
+			Image:      "alpine:latest",
+			Command:    "sh",
+			CreatedAt:  "30 minutes ago",
+			RunningFor: "30 minutes",
+			Status:     "Up 30 minutes",
+			Ports:      "",
+			Names:      "test-container",
+			State:      "running",
+		},
+		{
+			ID:         "nested456def",
+			Image:      "nginx:alpine",
+			Command:    "nginx -g daemon off;",
+			CreatedAt:  "1 hour ago",
+			RunningFor: "1 hour",
+			Status:     "Up 1 hour",
+			Ports:      "80/tcp",
+			Names:      "web-server",
+			State:      "running",
+		},
+		{
+			ID:         "nested789ghi",
+			Image:      "busybox:latest",
+			Command:    "sleep infinity",
+			CreatedAt:  "2 hours ago",
+			RunningFor: "2 hours",
+			Status:     "Up 2 hours",
+			Ports:      "",
+			Names:      "sleeper",
+			State:      "running",
+		},
+	})
+}
+
+func setupFileBrowser(m *ui.Model) {
+	vm := m.GetFileBrowserViewModel()
+	// Set the container we're browsing
+	container := docker.NewContainer("abc123def456", "myapp-web-1", "myapp-web-1", "running")
+	vm.SetBrowsingContainer(container)
+	vm.SetCurrentPath("/app")
+	// Set sample files
+	vm.SetContainerFiles([]models.ContainerFile{
+		{
+			Name:    "..",
+			IsDir:   true,
+			Mode:    "drwxr-xr-x",
+			Size:    4096,
+			ModTime: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:    "config",
+			IsDir:   true,
+			Mode:    "drwxr-xr-x",
+			Size:    4096,
+			ModTime: time.Date(2024, 1, 10, 10, 15, 0, 0, time.UTC),
+		},
+		{
+			Name:    "static",
+			IsDir:   true,
+			Mode:    "drwxr-xr-x",
+			Size:    4096,
+			ModTime: time.Date(2024, 1, 10, 9, 30, 0, 0, time.UTC),
+		},
+		{
+			Name:    "templates",
+			IsDir:   true,
+			Mode:    "drwxr-xr-x",
+			Size:    4096,
+			ModTime: time.Date(2024, 1, 10, 9, 30, 0, 0, time.UTC),
+		},
+		{
+			Name:    "app.py",
+			IsDir:   false,
+			Mode:    "-rw-r--r--",
+			Size:    2048,
+			ModTime: time.Date(2024, 1, 10, 10, 20, 0, 0, time.UTC),
+		},
+		{
+			Name:    "requirements.txt",
+			IsDir:   false,
+			Mode:    "-rw-r--r--",
+			Size:    512,
+			ModTime: time.Date(2024, 1, 9, 14, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:    "Dockerfile",
+			IsDir:   false,
+			Mode:    "-rw-r--r--",
+			Size:    384,
+			ModTime: time.Date(2024, 1, 9, 14, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:    ".env",
+			IsDir:   false,
+			Mode:    "-rw-------",
+			Size:    256,
+			ModTime: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+	})
+}
+
+func setupFileContent(m *ui.Model) {
+	vm := m.GetFileContentViewModel()
+	// Set the container and file path
+	container := docker.NewContainer("abc123def456", "myapp-web-1", "myapp-web-1", "running")
+	vm.SetContainer(container)
+	vm.SetContentPath("/app/app.py")
+	// Set sample Python file content
+	vm.SetContent(`#!/usr/bin/env python3
+"""
+Main application entry point
+"""
+
+import os
+import logging
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from datetime import datetime
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)
+
+# Configuration
+app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
+app.config['DATABASE_URL'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+app.config['REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379')
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'version': '1.2.3'
+    })
+
+@app.route('/api/users', methods=['GET', 'POST'])
+def handle_users():
+    """Handle user operations"""
+    if request.method == 'GET':
+        # Return list of users
+        return jsonify({'users': []})
+    elif request.method == 'POST':
+        # Create new user
+        data = request.get_json()
+        logger.info(f"Creating user: {data.get('username')}")
+        return jsonify({'id': 123, 'username': data.get('username')}), 201
+
+if __name__ == '__main__':
+    logger.info("Starting application server...")
+    app.run(host='0.0.0.0', port=3000)`)
+}
+
+func setupInspectView(m *ui.Model) {
+	vm := m.GetInspectViewModel()
+	vm.SetInspectTargetName("myapp-web-1")
+	// Set sample inspect JSON content
+	vm.SetInspectContent(`{
+  "Id": "abc123def456789",
+  "Created": "2024-01-10T10:23:45.123456789Z",
+  "Path": "python",
+  "Args": ["app.py"],
+  "State": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 12345,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2024-01-10T10:23:46.234567890Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Image": "sha256:1234567890abcdef",
+  "ResolvConfPath": "/var/lib/docker/containers/abc123def456789/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/abc123def456789/hostname",
+  "HostsPath": "/var/lib/docker/containers/abc123def456789/hosts",
+  "LogPath": "/var/lib/docker/containers/abc123def456789/abc123def456789-json.log",
+  "Name": "/myapp-web-1",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Config": {
+    "Hostname": "abc123def456",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "ExposedPorts": {
+      "3000/tcp": {}
+    },
+    "Tty": false,
+    "OpenStdin": false,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
+      "LANG=C.UTF-8",
+      "PYTHON_VERSION=3.11.5",
+      "DEBUG=False",
+      "DATABASE_URL=postgresql://user:pass@db:5432/myapp",
+      "REDIS_URL=redis://redis:6379"
+    ],
+    "Cmd": ["python", "app.py"],
+    "Image": "myapp/web:latest",
+    "Volumes": null,
+    "WorkingDir": "/app",
+    "Entrypoint": null,
+    "OnBuild": null,
+    "Labels": {
+      "com.docker.compose.project": "myapp",
+      "com.docker.compose.service": "web",
+      "maintainer": "dev@example.com"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "1234567890abcdef",
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "Ports": {
+      "3000/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "3000"
+        }
+      ]
+    },
+    "Networks": {
+      "myapp_default": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": ["web"],
+        "NetworkID": "net123abc",
+        "EndpointID": "endpoint456def",
+        "Gateway": "172.20.0.1",
+        "IPAddress": "172.20.0.5",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "MacAddress": "02:42:ac:14:00:05"
+      }
+    }
+  }
+}`)
 }

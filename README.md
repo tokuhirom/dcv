@@ -65,6 +65,8 @@ For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#log-view).
 
 Shows containers running inside a dind container.
 
+![Docker-in-Docker Process List](docs/screenshots/dind-process-list.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#docker-in-docker).
 
 ### Image List View
@@ -95,17 +97,23 @@ For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#volume-list).
 
 Browse the filesystem inside a container. Navigate directories and view file contents.
 
+![File Browser](docs/screenshots/file-browser.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#file-browser).
 
 ### File Content View
 
 View the contents of a file from within a container.
 
+![File Content](docs/screenshots/file-content.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#file-content).
 
 ### Inspect View
 
 Displays the full Docker inspect output for containers, images, or networks in JSON format with syntax highlighting.
+
+![Inspect View](docs/screenshots/inspect-view.png)
 
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#inspect-view).
 
