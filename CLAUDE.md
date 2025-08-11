@@ -176,14 +176,7 @@ DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and
     - `:q` or `:quit`: Quit with confirmation
     - `:q!` or `:quit!`: Force quit without confirmation
     - `:help commands`: List all available commands
-    - `:set all`: Show all containers (including stopped)
-    - `:set noall`: Hide stopped containers
-    - **Key handler commands**: All key handlers can be called as commands (e.g., `:select-up-container`, `:show-compose-log`, `:kill-container`)
-    - **Command aliases**: Common aliases like `:up`, `:down`, `:logs`, `:inspect`, `:exec`
-    - `↑`/`↓`: Navigate command history
-    - `←`/`→`: Move cursor in command line
-    - `Enter`: Execute command
-    - `Esc`: Cancel command mode
+    - **Key handler commands**: All key handlers can be called as commands (e.g., `:ps`)
 
 16. **Command Execution View**: Shows real-time output of Docker commands
     - Displays the exact Docker command being executed
@@ -254,7 +247,6 @@ go build -o dcv
 - **Pull images** (`docker pull`) - Download new images
 - **Image history** - Show layer history
 - **Search Docker Hub** (`docker search`)
-- **Build images** from Dockerfile
 
 ### Docker Compose Operations
 - **Build services** (`docker compose build`)
@@ -264,8 +256,6 @@ go build -o dcv
 
 ### Network & Volume Management
 - **Network connections** - Show container network relationships
-- **Create networks/volumes** - Create new networks and volumes
-- **Network/Volume usage visualization** - Show which containers use which networks/volumes
 
 ### UI/UX Enhancements
 - **Search/filter** - Filter containers/images by name, status, etc.
@@ -274,12 +264,9 @@ go build -o dcv
 - **Export logs** - Save logs to file
 
 ### Monitoring Improvements
-- **Real-time stats update** - Currently stats view doesn't auto-refresh
 - **Resource usage graphs** - Visual representation of CPU/memory usage
-- **Health check status** - Display container health status
 
 ### Configuration
-- **Config file** - Save preferences (default view, filters, etc.)
 - **Custom keybindings** - Allow users to customize shortcuts
 
 ## Configuration
