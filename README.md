@@ -229,7 +229,7 @@ Shows all available keyboard shortcuts and their corresponding commands for the 
 
 The help view displays three columns:
 - **Key**: The keyboard shortcut (e.g., 'j' or 'down')
-- **Command**: The vim-style command that can be used in command mode (e.g., ':cmd-down')
+- **Command**: The vim-style command that can be used in command mode (e.g., ':down')
 - **Description**: What the action does
 
 **Key bindings:**
@@ -248,36 +248,21 @@ Vim-style command line interface for executing commands.
 - `:help commands`: List all available commands in current view
 
 **Key handler commands:**
-All key handler functions can be called as commands. Commands are automatically derived from the handler method names and use either short forms or kebab-case naming:
-- `:up` or `:cmd-up`: Move selection up
-- `:down` or `:cmd-down`: Move selection down
-- `:log` or `:cmd-log`: View container logs
-- `:kill` or `:cmd-kill`: Kill selected container
-- `:stop` or `:cmd-stop`: Stop selected container
-- `:start` or `:cmd-start`: Start selected container
-- `:restart` or `:cmd-restart`: Restart selected container
-- `:filebrowse` or `:cmd-file-browse`: Browse container files
-- `:shell` or `:cmd-shell`: Execute /bin/sh in container
-- `:inspect` or `:cmd-inspect`: Show inspect view
-- `:stats` or `:cmd-stats`: Show container stats
-- `:top` or `:cmd-top`: Show process info
-- And many more...
+All key handler functions can be called as commands. Commands are automatically derived from the handler method names and use kebab-case naming. Examples include:
+- `:up`: Move selection up
+- `:down`: Move selection down
+- `:log`: View container logs
+- `:kill`: Kill selected container
+- `:stop`: Stop selected container
+- `:start`: Start selected container
+- `:restart`: Restart selected container
+- `:file-browse`: Browse container files
+- `:shell`: Execute /bin/sh in container
+- `:inspect`: Show inspect view
+- `:stats`: Show container stats
+- `:top`: Show process info
 
-**Command aliases:**
-- `:up` → Move selection up
-- `:down` → Move selection down
-- `:log` or `:logs` → View container logs
-- `:inspect` → Show inspect view
-- `:shell` or `:exec` → Execute shell in container
-- `:ps` → Show Docker container list
-- `:images` → Show image list
-- `:networks` → Show network list
-- `:volumes` → Show volume list
-- `:remove` or `:rm` → Remove/delete container
-- `:all` or `:a` → Toggle show all containers
-- `:refresh` or `:r` → Refresh current view
-- `:quit` or `:q` → Quit application
-- `:help` or `:h` → Show help
+For a complete list of available commands in each view, see [docs/keymap.md](docs/keymap.md) or use `:help commands` in command mode.
 
 **Key bindings:**
 - `:`: Enter command mode from any view
