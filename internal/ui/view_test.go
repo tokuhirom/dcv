@@ -477,6 +477,7 @@ func TestFileBrowserTableView(t *testing.T) {
 
 		// Check for table headers
 		assert.Contains(t, view, "PERMISSIONS")
+		assert.Contains(t, view, "SIZE")
 		assert.Contains(t, view, "NAME")
 
 		// Check for file data
@@ -489,6 +490,7 @@ func TestFileBrowserTableView(t *testing.T) {
 
 		// Check for table headers
 		assert.Contains(t, view, "PERMISSIONS")
+		assert.Contains(t, view, "SIZE")
 		assert.Contains(t, view, "NAME")
 
 		// Check for header separator (bubbles/table uses simpler format)

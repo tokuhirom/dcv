@@ -117,6 +117,7 @@ func TestFileBrowserViewModel_Rendering(t *testing.T) {
 			height: 20,
 			expected: []string{
 				"PERMISSIONS",
+				"SIZE",
 				"NAME",
 				"drwxr-xr-x",
 				"app/",

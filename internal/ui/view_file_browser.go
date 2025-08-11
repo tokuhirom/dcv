@@ -79,7 +79,8 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 	// Create table
 	columns := []table.Column{
 		{Title: "PERMISSIONS", Width: 15},
-		{Title: "NAME", Width: model.width - 20},
+		{Title: "SIZE", Width: 10},
+		{Title: "NAME", Width: model.width - 30},
 	}
 
 	// Define styles for different file types
@@ -97,7 +98,7 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 			name = linkStyle.Render(name)
 		}
 
-		rows = append(rows, table.Row{file.Permissions, name})
+		rows = append(rows, table.Row{file.Permissions, file.GetSizeString(), name})
 	}
 
 	return RenderTable(columns, rows, availableHeight, m.selectedFile)

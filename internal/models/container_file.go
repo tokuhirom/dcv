@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strconv"
 	"strings"
 	"time"
 )
@@ -18,7 +19,7 @@ type ContainerFile struct {
 
 // ParseLsOutput parses the output of ls -la command
 func ParseLsOutput(output string) []ContainerFile {
-	var files []ContainerFile
+	files := []ContainerFile{}
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 
 	for _, line := range lines {
@@ -40,9 +41,10 @@ func ParseLsOutput(output string) []ContainerFile {
 			IsDir:       strings.HasPrefix(parts[0], "d"),
 		}
 
-		// Parse size
-		// TODO: Convert size string to int64 if needed
-		// For now, the size is kept as string in SizeStr field
+		// Parse size (parts[4] contains the size in bytes)
+		if size, err := strconv.ParseInt(parts[4], 10, 64); err == nil {
+			file.Size = size
+		}
 
 		// Get filename (handle spaces in filename)
 		// Everything from parts[8] onwards is the filename
@@ -72,4 +74,25 @@ func (f ContainerFile) GetDisplayName() string {
 		name += " -> " + f.LinkTarget
 	}
 	return name
+}
+
+// GetSizeString returns a human-readable size string
+func (f ContainerFile) GetSizeString() string {
+	if f.IsDir {
+		return "-"
+	}
+
+	size := f.Size
+	if size < 1024 {
+		return strconv.FormatInt(size, 10)
+	}
+
+	const unit = 1024
+	if size < unit*unit {
+		return strconv.FormatFloat(float64(size)/float64(unit), 'f', 1, 64) + "K"
+	}
+	if size < unit*unit*unit {
+		return strconv.FormatFloat(float64(size)/float64(unit*unit), 'f', 1, 64) + "M"
+	}
+	return strconv.FormatFloat(float64(size)/float64(unit*unit*unit), 'f', 1, 64) + "G"
 }
