@@ -2,7 +2,7 @@
 
 ## Problem Statement
 
-Many modern containers (especially microservices like OpenTelemetry Collector) use minimal or distroless base images that lack basic Unix tools like `ls`, `cat`, `find`, etc. This makes it impossible to browse files using dcv's current file browser implementation, which relies on executing these commands inside the container.
+Many modern containers (especially microservices like OpenTelemetry Collector) use minimal or distroless base images that lack basic Unix tools like `ls` and `cat`. This makes it impossible to browse files using dcv's current file browser implementation, which relies on executing these commands inside the container.
 
 ### Examples of Affected Containers:
 - OpenTelemetry Collector (scratch/distroless)
@@ -25,7 +25,6 @@ Inject a static binary (like BusyBox) into the container temporarily.
 
 **Pros:**
 - Universal solution - works on any Linux container
-- Full Unix toolset available (300+ commands with BusyBox)
 - Fast after initial injection
 - Can be cached per container
 
