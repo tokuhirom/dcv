@@ -8,6 +8,7 @@ func (m *Model) initializeKeyHandlers() {
 	m.globalHandlers = []KeyConfig{
 		{[]string{"q"}, "quit", m.CmdQuit},
 		{[]string{":"}, "command mode", m.CmdCommandMode},
+		{[]string{"H"}, "toggle navbar", m.CmdToggleNavbar},
 
 		{[]string{"1"}, "docker ps", m.CmdPS},
 		{[]string{"2"}, "project list", m.CmdComposeLS},

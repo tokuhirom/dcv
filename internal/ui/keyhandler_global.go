@@ -19,6 +19,12 @@ func (m *Model) CmdCommandMode(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) CmdToggleNavbar(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Toggle navbar visibility
+	m.navbarHidden = !m.navbarHidden
+	return m, nil
+}
+
 // CmdRefresh sends a RefreshMsg to trigger a reload of the current view
 func (m *Model) CmdRefresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, func() tea.Msg {
