@@ -203,16 +203,28 @@ func (m *Model) getActiveNavigationView() ViewType {
 func (m *Model) viewTitle() string {
 	switch m.currentView {
 	case ComposeProcessListView:
+		var title string
 		if m.composeProcessListViewModel.projectName != "" {
 			if m.composeProcessListViewModel.showAll {
-				return fmt.Sprintf("Docker Compose: %s (all)", m.composeProcessListViewModel.projectName)
+				title = fmt.Sprintf("Docker Compose: %s (all)", m.composeProcessListViewModel.projectName)
+			} else {
+				title = fmt.Sprintf("Docker Compose: %s", m.composeProcessListViewModel.projectName)
 			}
-			return fmt.Sprintf("Docker Compose: %s", m.composeProcessListViewModel.projectName)
+		} else {
+			if m.composeProcessListViewModel.showAll {
+				title = "Docker Compose (all)"
+			} else {
+				title = "Docker Compose"
+			}
 		}
-		if m.composeProcessListViewModel.showAll {
-			return "Docker Compose (all)"
+		// Add search info if searching
+		if m.composeProcessListViewModel.IsSearchActive() && m.composeProcessListViewModel.GetSearchText() != "" {
+			info := m.composeProcessListViewModel.GetSearchInfo()
+			if info != "" {
+				title += " - " + info
+			}
 		}
-		return "Docker Compose"
+		return title
 	case LogView:
 		return m.logViewModel.Title()
 	case DindProcessListView:
@@ -224,10 +236,18 @@ func (m *Model) viewTitle() string {
 	case ComposeProjectListView:
 		return "Docker Compose Projects"
 	case DockerContainerListView:
+		title := "Docker Containers"
 		if m.dockerContainerListViewModel.showAll {
-			return "Docker Containers (all)"
+			title = "Docker Containers (all)"
 		}
-		return "Docker Containers"
+		// Add search info if searching
+		if m.dockerContainerListViewModel.IsSearchActive() && m.dockerContainerListViewModel.GetSearchText() != "" {
+			info := m.dockerContainerListViewModel.GetSearchInfo()
+			if info != "" {
+				title += " - " + info
+			}
+		}
+		return title
 	case ImageListView:
 		return m.imageListViewModel.Title()
 	case NetworkListView:
@@ -316,7 +336,27 @@ func (m *Model) viewFooter() string {
 
 	if m.currentView == InspectView && m.inspectViewModel.searchMode {
 		return m.inspectViewModel.RenderSearchCmdLine()
-	} else if m.commandViewModel.commandMode {
+	}
+
+	// Check if current view supports container search
+	vm := m.GetCurrentViewModel()
+	if searchable, ok := vm.(ContainerSearchAware); ok {
+		if searchable.IsInSearchMode() {
+			// Use the embedded ContainerSearchViewModel to render search line
+			switch m.currentView {
+			case DockerContainerListView:
+				return m.dockerContainerListViewModel.RenderSearchLine()
+			case ComposeProcessListView:
+				return m.composeProcessListViewModel.RenderSearchLine()
+			case DindProcessListView:
+				return m.dindProcessListViewModel.RenderSearchLine()
+			default:
+				panic("should not reach here, unsupported view for search")
+			}
+		}
+	}
+
+	if m.commandViewModel.commandMode {
 		return m.commandViewModel.RenderCmdLine()
 	} else if m.currentView == HelpView {
 		return helpStyle.Render("Press ESC or q to go back")

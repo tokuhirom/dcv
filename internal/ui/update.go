@@ -185,6 +185,14 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleSearchMode(msg, &m.inspectViewModel.SearchViewModel)
 	}
 
+	// Handle container search mode
+	vm := m.GetCurrentViewModel()
+	if searchable, ok := vm.(ContainerSearchAware); ok {
+		if searchable.IsInSearchMode() {
+			return m, searchable.HandleSearchInput(m, msg)
+		}
+	}
+
 	// Handle filter mode
 	if m.currentView == LogView && m.logViewModel.filterMode {
 		return m.handleFilterMode(msg)

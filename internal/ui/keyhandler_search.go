@@ -15,6 +15,13 @@ func (m *Model) CmdSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case InspectView:
 		return m, m.inspectViewModel.HandleSearch()
 	default:
+		// Check if current view supports container search
+		vm := m.GetCurrentViewModel()
+		if searchable, ok := vm.(ContainerSearchAware); ok {
+			searchable.HandleStartSearch()
+			return m, nil
+		}
+
 		slog.Info("Search not supported in current view",
 			slog.String("view", m.currentView.String()))
 		return m, nil
@@ -28,6 +35,13 @@ func (m *Model) CmdNextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case InspectView:
 		return m, m.inspectViewModel.HandleNextSearchResult(m)
 	default:
+		// Check if current view supports container search
+		vm := m.GetCurrentViewModel()
+		if searchable, ok := vm.(ContainerSearchAware); ok {
+			searchable.HandleNextSearchResult()
+			return m, nil
+		}
+
 		slog.Info("Next search result not supported in current view",
 			slog.String("view", m.currentView.String()))
 		return m, nil
@@ -41,6 +55,13 @@ func (m *Model) CmdPrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case InspectView:
 		return m, m.inspectViewModel.HandlePrevSearchResult(m)
 	default:
+		// Check if current view supports container search
+		vm := m.GetCurrentViewModel()
+		if searchable, ok := vm.(ContainerSearchAware); ok {
+			searchable.HandlePrevSearchResult()
+			return m, nil
+		}
+
 		slog.Info("Previous search result not supported in current view",
 			slog.String("view", m.currentView.String()))
 		return m, nil

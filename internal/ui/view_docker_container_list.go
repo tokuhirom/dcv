@@ -20,8 +20,10 @@ type dockerContainersLoadedMsg struct {
 
 var _ ContainerAware = (*DockerContainerListViewModel)(nil)
 var _ UpdateAware = (*DockerContainerListViewModel)(nil)
+var _ ContainerSearchAware = (*DockerContainerListViewModel)(nil)
 
 type DockerContainerListViewModel struct {
+	ContainerSearchViewModel
 	dockerContainers        []models.DockerContainer
 	selectedDockerContainer int
 	showAll                 bool
@@ -88,6 +90,32 @@ func (c *ColumnMap) ToArray() []table.Column {
 	}
 }
 
+func (m *DockerContainerListViewModel) performSearch() {
+	if m.searchText == "" {
+		m.searchResults = nil
+		m.currentSearchIdx = 0
+		return
+	}
+
+	var results []int
+	for i, container := range m.dockerContainers {
+		// Create searchable text from container fields
+		searchableText := container.ID + " " + container.Image + " " +
+			container.Names + " " + container.Status + " " + container.Ports
+
+		if m.MatchContainer(searchableText) {
+			results = append(results, i)
+		}
+	}
+
+	m.SetResults(results)
+
+	// Jump to first result if found
+	if len(results) > 0 {
+		m.selectedDockerContainer = results[0]
+	}
+}
+
 func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
 	// Container list
 	if len(m.dockerContainers) == 0 {
@@ -99,7 +127,7 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 	columns := NewColumnMap(model)
 
 	rows := make([]table.Row, 0, len(m.dockerContainers))
-	for _, container := range m.dockerContainers {
+	for i, container := range m.dockerContainers {
 		// Truncate container ID
 		id := container.ID
 		if len(id) > 12 { // shorten ID to 12 characters
@@ -120,6 +148,17 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		name := container.Names
 		if container.IsDind() {
 			name = dindStyle.Render("⬢ ") + name
+		}
+
+		// Highlight if this container matches search
+		if m.IsSearchActive() && m.GetSearchText() != "" {
+			for _, idx := range m.searchResults {
+				if idx == i {
+					// Apply search highlight style to name
+					name = searchStyle.Render(name)
+					break
+				}
+			}
 		}
 
 		rows = append(rows, table.Row{id, image, state, status, ports, name})
@@ -185,4 +224,62 @@ func (m *DockerContainerListViewModel) HandleDindProcessList(model *Model) tea.C
 	}
 
 	return model.dindProcessListViewModel.Load(model, container)
+}
+
+// ContainerSearchAware implementation
+
+func (m *DockerContainerListViewModel) HandleStartSearch() {
+	m.StartSearch()
+}
+
+func (m *DockerContainerListViewModel) HandleSearchInput(model *Model, msg tea.KeyMsg) tea.Cmd {
+	switch msg.String() {
+	case "esc":
+		m.ExitSearch()
+	case "enter":
+		m.ExitSearch()
+		m.performSearch()
+	case "backspace":
+		if m.DeleteChar() {
+			m.performSearch()
+		}
+	case "left":
+		m.MoveCursorLeft()
+	case "right":
+		m.MoveCursorRight()
+	case "ctrl+i":
+		m.ToggleIgnoreCase()
+		m.performSearch()
+	case "ctrl+r":
+		m.ToggleRegex()
+		m.performSearch()
+	default:
+		if len(msg.String()) == 1 {
+			m.AppendChar(msg.String())
+			m.performSearch()
+		}
+	}
+	return nil
+}
+
+func (m *DockerContainerListViewModel) HandleNextSearchResult() {
+	if m.HasSearchResults() {
+		idx := m.NextResult()
+		if idx >= 0 {
+			m.selectedDockerContainer = idx
+		}
+	}
+}
+
+func (m *DockerContainerListViewModel) HandlePrevSearchResult() {
+	if m.HasSearchResults() {
+		idx := m.PrevResult()
+		if idx >= 0 {
+			m.selectedDockerContainer = idx
+		}
+	}
+}
+
+func (m *DockerContainerListViewModel) IsInSearchMode() bool {
+	return m.IsSearchActive()
 }

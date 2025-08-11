@@ -21,8 +21,10 @@ type composeProcessesLoadedMsg struct {
 
 var _ ContainerAware = (*ComposeProcessListViewModel)(nil)
 var _ UpdateAware = (*ComposeProcessListViewModel)(nil)
+var _ ContainerSearchAware = (*ComposeProcessListViewModel)(nil)
 
 type ComposeProcessListViewModel struct {
+	ContainerSearchViewModel
 	// Process list state
 	composeContainers []models.ComposeContainer
 	selectedContainer int
@@ -66,6 +68,32 @@ func (m *ComposeProcessListViewModel) DoLoad(model *Model) tea.Cmd {
 	}
 }
 
+func (m *ComposeProcessListViewModel) performSearch() {
+	if m.searchText == "" {
+		m.searchResults = nil
+		m.currentSearchIdx = 0
+		return
+	}
+
+	var results []int
+	for i, container := range m.composeContainers {
+		// Create searchable text from container fields
+		searchableText := container.Service + " " + container.Image + " " +
+			container.Name + " " + container.GetStatus() + " " + container.GetPortsString()
+
+		if m.MatchContainer(searchableText) {
+			results = append(results, i)
+		}
+	}
+
+	m.SetResults(results)
+
+	// Jump to first result if found
+	if len(results) > 0 {
+		m.selectedContainer = results[0]
+	}
+}
+
 func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
 	slog.Info("Rendering container list",
 		slog.Int("selectedContainer", m.selectedContainer),
@@ -90,11 +118,22 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 
 	rows := make([]table.Row, 0, len(m.composeContainers))
 	// Add rows with width control
-	for _, container := range m.composeContainers {
+	for i, container := range m.composeContainers {
 		// Service name with dind indicator
 		service := container.Service
 		if container.IsDind() {
 			service = dindStyle.Render("⬢ ") + service
+		}
+
+		// Highlight if this container matches search
+		if m.IsSearchActive() && m.GetSearchText() != "" {
+			for _, idx := range m.searchResults {
+				if idx == i {
+					// Apply search highlight style to service name
+					service = searchStyle.Render(service)
+					break
+				}
+			}
 		}
 
 		// Truncate image name if too long
@@ -197,4 +236,62 @@ func (m *ComposeProcessListViewModel) Loaded(processes []models.ComposeContainer
 	if len(m.composeContainers) > 0 && m.selectedContainer >= len(m.composeContainers) {
 		m.selectedContainer = 0
 	}
+}
+
+// ContainerSearchAware implementation
+
+func (m *ComposeProcessListViewModel) HandleStartSearch() {
+	m.StartSearch()
+}
+
+func (m *ComposeProcessListViewModel) HandleSearchInput(model *Model, msg tea.KeyMsg) tea.Cmd {
+	switch msg.String() {
+	case "esc":
+		m.ExitSearch()
+	case "enter":
+		m.ExitSearch()
+		m.performSearch()
+	case "backspace":
+		if m.DeleteChar() {
+			m.performSearch()
+		}
+	case "left":
+		m.MoveCursorLeft()
+	case "right":
+		m.MoveCursorRight()
+	case "ctrl+i":
+		m.ToggleIgnoreCase()
+		m.performSearch()
+	case "ctrl+r":
+		m.ToggleRegex()
+		m.performSearch()
+	default:
+		if len(msg.String()) == 1 {
+			m.AppendChar(msg.String())
+			m.performSearch()
+		}
+	}
+	return nil
+}
+
+func (m *ComposeProcessListViewModel) HandleNextSearchResult() {
+	if m.HasSearchResults() {
+		idx := m.NextResult()
+		if idx >= 0 {
+			m.selectedContainer = idx
+		}
+	}
+}
+
+func (m *ComposeProcessListViewModel) HandlePrevSearchResult() {
+	if m.HasSearchResults() {
+		idx := m.PrevResult()
+		if idx >= 0 {
+			m.selectedContainer = idx
+		}
+	}
+}
+
+func (m *ComposeProcessListViewModel) IsInSearchMode() bool {
+	return m.IsSearchActive()
 }
