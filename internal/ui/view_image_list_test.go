@@ -241,7 +241,7 @@ func TestImageListViewModel_Operations(t *testing.T) {
 		cmd := vm.HandleInspect(model)
 
 		// The view change happens when inspectLoadedMsg is processed, not immediately
-		assert.Equal(t, ImageListView, model.currentView)
+		assert.Equal(t, InspectView, model.currentView)
 		assert.True(t, model.loading)
 		assert.NotNil(t, cmd)
 	})

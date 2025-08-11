@@ -9,6 +9,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var _ UpdateAware = (*InspectViewModel)(nil)
+
 // inspectLoadedMsg contains the loaded inspect data
 type inspectLoadedMsg struct {
 	content    string
@@ -427,6 +429,7 @@ type InspectProvider func() ([]byte, error)
 
 func (m *InspectViewModel) Inspect(model *Model, targetName string, inspectProvider InspectProvider) tea.Cmd {
 	model.loading = true
+	model.SwitchView(InspectView)
 	return func() tea.Msg {
 		content, err := inspectProvider()
 		return inspectLoadedMsg{

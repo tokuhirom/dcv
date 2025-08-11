@@ -144,6 +144,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	default:
 		// if UpdateAware
 		vm := m.GetCurrentViewModel()
+		slog.Debug("Update method needs to call UpdateAware",
+			slog.String("ViewType", m.currentView.String()))
 		if aware, ok := vm.(UpdateAware); ok {
 			// Call the Update method on the current view model
 			return aware.Update(m, msg)

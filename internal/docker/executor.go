@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/mattn/go-runewidth"
 )
 
 func Execute(args ...string) *exec.Cmd {
@@ -34,10 +36,10 @@ func ExecuteCaptured(args ...string) ([]byte, error) {
 		return nil, fmt.Errorf("command execution failed: %w\n%s", err, output)
 	}
 
-	slog.Info("Executed command",
+	slog.Debug("Executed command",
 		slog.String("command", cmdStr),
 		slog.Duration("duration", duration),
-		slog.String("output", string(output)))
+		slog.String("output", runewidth.Truncate(string(output), 144, "...")))
 
 	return output, nil
 }
