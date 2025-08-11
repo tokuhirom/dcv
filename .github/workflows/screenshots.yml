@@ -21,6 +21,9 @@ jobs:
       with:
         go-version: '1.24'
     
+    - name: Build helper binaries
+      run: make build-helpers
+    
     - name: Generate screenshots
       run: |
         go run -tags screenshots cmd/generate-screenshots/main.go
