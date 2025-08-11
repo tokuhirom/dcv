@@ -1,4 +1,4 @@
-.PHONY: all test fmt dev-deps lint clean
+.PHONY: all test fmt dev-deps lint clean screenshots screenshots-deps
 
 all:
 	go build -o dcv
@@ -33,3 +33,15 @@ dev-deps:
 	@which lefthook > /dev/null || go install github.com/evilmartians/lefthook@latest
 	@lefthook install
 	@echo "Development dependencies installed successfully"
+
+# Install screenshot generation dependencies
+screenshots-deps:
+	@echo "Installing screenshot dependencies..."
+	@go get github.com/pavelpatrin/go-ansi-to-image@latest
+	@echo "Screenshot dependencies installed successfully"
+
+# Generate screenshots for documentation
+screenshots: screenshots-deps
+	@echo "Generating screenshots..."
+	@go run -tags screenshots cmd/generate-screenshots/main.go
+	@echo "Screenshots generated successfully!"
