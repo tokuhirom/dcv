@@ -64,7 +64,7 @@ func (m *FileContentViewModel) HandleDown(height int) tea.Cmd {
 	return nil
 }
 
-func (m *FileContentViewModel) HandleGoToStart() tea.Cmd {
+func (m *FileContentViewModel) HandleGoToBeginning() tea.Cmd {
 	m.scrollY = 0
 	return nil
 }

@@ -294,7 +294,7 @@ func (m *InspectViewModel) HandleGoToEnd(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *InspectViewModel) HandleGoToStart() tea.Cmd {
+func (m *InspectViewModel) HandleGoToBeginning() tea.Cmd {
 	m.inspectScrollY = 0
 	return nil
 }

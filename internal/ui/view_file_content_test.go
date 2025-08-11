@@ -106,13 +106,13 @@ func TestFileContentViewModel_Navigation(t *testing.T) {
 		assert.Equal(t, 0, vm.scrollY, "Should not scroll above 0")
 	})
 
-	t.Run("HandleGoToStart jumps to beginning", func(t *testing.T) {
+	t.Run("HandleGoToBeginning jumps to beginning", func(t *testing.T) {
 		vm := &FileContentViewModel{
 			content: "Line 1\nLine 2\nLine 3",
 			scrollY: 2,
 		}
 
-		cmd := vm.HandleGoToStart()
+		cmd := vm.HandleGoToBeginning()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 0, vm.scrollY)
 	})
@@ -304,7 +304,7 @@ func TestFileContentViewModel_ScrollBoundaries(t *testing.T) {
 				assert.Equal(t, tc.expectedMax, vm.scrollY, "Should not scroll beyond max")
 
 				// Jump to start
-				vm.HandleGoToStart()
+				vm.HandleGoToBeginning()
 				assert.Equal(t, 0, vm.scrollY)
 
 				// Try to scroll above start
@@ -333,7 +333,7 @@ func TestFileContentViewModel_EmptyContent(t *testing.T) {
 		vm.HandleGoToEnd(10)
 		assert.Equal(t, 0, vm.scrollY)
 
-		vm.HandleGoToStart()
+		vm.HandleGoToBeginning()
 		assert.Equal(t, 0, vm.scrollY)
 	})
 }

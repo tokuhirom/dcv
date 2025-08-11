@@ -165,14 +165,14 @@ func TestLogView_Navigation(t *testing.T) {
 		assert.Equal(t, 0, model.logViewModel.logScrollY, "Should not scroll above 0")
 	})
 
-	t.Run("HandleGoToStart jumps to beginning", func(t *testing.T) {
+	t.Run("HandleGoToBeginning jumps to beginning", func(t *testing.T) {
 		model := &Model{
 			logViewModel: LogViewModel{
 				logScrollY: 100,
 			},
 		}
 
-		cmd := model.logViewModel.HandleGoToStart()
+		cmd := model.logViewModel.HandleGoToBeginning()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 0, model.logViewModel.logScrollY)
 	})
@@ -554,7 +554,7 @@ func TestLogView_EmptyLogs(t *testing.T) {
 		assert.Nil(t, cmd)
 		assert.Equal(t, 0, model.logViewModel.logScrollY)
 
-		cmd = model.logViewModel.HandleGoToStart()
+		cmd = model.logViewModel.HandleGoToBeginning()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 0, model.logViewModel.logScrollY)
 
