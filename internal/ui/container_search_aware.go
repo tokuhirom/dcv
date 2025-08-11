@@ -8,11 +8,11 @@ type ContainerSearchAware interface {
 	StartSearch()
 	// HandleSearchInput handles search input in search mode
 	HandleSearchInput(model *Model, msg tea.KeyMsg) tea.Cmd
-	// NextSearchResult moves to the next search result
+	// HandleNextSearchResult moves to the next search result
 	HandleNextSearchResult()
-	// PrevSearchResult moves to the previous search result
+	// HandlePrevSearchResult moves to the previous search result
 	HandlePrevSearchResult()
-	// IsSearchActive returns true if search mode is active
+	// IsSearchActive returns true if the search mode is active
 	IsSearchActive() bool
 	// ExitSearch exits search mode
 	ExitSearch()
