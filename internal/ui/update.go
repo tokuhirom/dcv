@@ -24,18 +24,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Height = msg.Height
 		return m, nil
 
-	case dindContainersLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.dindProcessListViewModel.Loaded(msg.containers)
-		return m, nil
-
 	// Following 2 cases seems very similar, so we can combine them?
 	case logLinesMsg:
 		m.logViewModel.LogLines(m, msg.lines)
@@ -59,116 +47,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.loading = false
 		return m, nil
 
-	case topLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.topViewModel.Loaded(msg.processes, msg.stats)
-		return m, nil
-
-	case statsLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.statsViewModel.Loaded(msg.stats)
-		return m, nil
-
-	case projectsLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-		m.composeProjectListViewModel.Loaded(msg.projects)
-		return m, nil
-
-	case dockerContainersLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.dockerContainerListViewModel.dockerContainers = msg.containers
-		if len(m.dockerContainerListViewModel.dockerContainers) > 0 && m.dockerContainerListViewModel.selectedDockerContainer >= len(m.dockerContainerListViewModel.dockerContainers) {
-			m.dockerContainerListViewModel.selectedDockerContainer = 0
-		}
-		return m, nil
-
-	case dockerImagesLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.imageListViewModel.Loaded(msg.images)
-		return m, nil
-
-	case dockerNetworksLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.networkListViewModel.Loaded(msg.networks)
-		return m, nil
-
-	case dockerVolumesLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.volumeListViewModel.Loaded(msg.volumes)
-		return m, nil
-
-	case containerFilesLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.fileBrowserViewModel.Loaded(msg.files)
-		return m, nil
-
-	case fileContentLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		m.fileContentViewModel.Loaded(msg.content, msg.path)
-		return m, nil
-
 	case launchShellMsg:
 		// Execute the interactive command in a subprocess
 		c := exec.Command("docker", msg.args...)
@@ -180,27 +58,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				msg.shell)
 			return nil
 		})
-
-	case inspectLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.err = msg.err
-			return m, nil
-		} else {
-			m.err = nil
-		}
-
-		// Format the JSON content using the new formatter
-		formatter := NewInspectFormatter()
-		formattedContent, err := formatter.FormatJSON(msg.content)
-		if err != nil {
-			// Fall back to original JSON if formatting fails
-			m.inspectViewModel.Set(msg.content, msg.targetName)
-		} else {
-			m.inspectViewModel.Set(formattedContent, msg.targetName)
-		}
-		m.SwitchView(InspectView)
-		return m, nil
 
 	case commandExecStartedMsg:
 		// HandleStart reading output

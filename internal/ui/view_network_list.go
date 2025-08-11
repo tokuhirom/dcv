@@ -10,12 +10,42 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+type dockerNetworksLoadedMsg struct {
+	networks []models.DockerNetwork
+	err      error
+}
+
 var _ HandleInspectAware = (*NetworkListViewModel)(nil)
+var _ UpdateAware = (*NetworkListViewModel)(nil)
 
 // NetworkListViewModel manages the state and rendering of the network list view
 type NetworkListViewModel struct {
 	dockerNetworks        []models.DockerNetwork
 	selectedDockerNetwork int
+}
+
+func (m *NetworkListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case dockerNetworksLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+		} else {
+			model.err = nil
+			m.Loaded(msg.networks)
+		}
+		return model, nil
+
+	default:
+		return model, nil
+	}
+}
+
+func (m *NetworkListViewModel) Loaded(networks []models.DockerNetwork) {
+	m.dockerNetworks = networks
+	if len(m.dockerNetworks) > 0 && m.selectedDockerNetwork >= len(m.dockerNetworks) {
+		m.selectedDockerNetwork = 0
+	}
 }
 
 // render renders the network list view
@@ -115,14 +145,6 @@ func (m *NetworkListViewModel) HandleInspect(model *Model) tea.Cmd {
 func (m *NetworkListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
-}
-
-// Loaded updates the networks list after loading
-func (m *NetworkListViewModel) Loaded(networks []models.DockerNetwork) {
-	m.dockerNetworks = networks
-	if len(m.dockerNetworks) > 0 && m.selectedDockerNetwork >= len(m.dockerNetworks) {
-		m.selectedDockerNetwork = 0
-	}
 }
 
 // Helper functions

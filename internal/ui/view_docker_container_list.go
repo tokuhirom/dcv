@@ -13,12 +13,42 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+type dockerContainersLoadedMsg struct {
+	containers []models.DockerContainer
+	err        error
+}
+
 var _ ContainerAware = (*DockerContainerListViewModel)(nil)
+var _ UpdateAware = (*DockerContainerListViewModel)(nil)
 
 type DockerContainerListViewModel struct {
 	dockerContainers        []models.DockerContainer
 	selectedDockerContainer int
 	showAll                 bool
+}
+
+func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case dockerContainersLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+		} else {
+			model.err = nil
+			m.Loaded(msg.containers)
+		}
+		return model, nil
+
+	default:
+		return model, nil
+	}
+}
+
+func (m *DockerContainerListViewModel) Loaded(containers []models.DockerContainer) {
+	m.dockerContainers = containers
+	if len(m.dockerContainers) > 0 && m.selectedDockerContainer >= len(m.dockerContainers) {
+		m.selectedDockerContainer = 0
+	}
 }
 
 type ColumnMap struct {

@@ -11,11 +11,37 @@ import (
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
+// fileContentLoadedMsg contains the loaded file content
+type fileContentLoadedMsg struct {
+	content string
+	path    string
+	err     error
+}
+
 type FileContentViewModel struct {
 	container   *docker.Container
 	content     string
 	contentPath string
 	scrollY     int
+}
+
+// Update handles messages for the file content view
+func (m *FileContentViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case fileContentLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+			return model, nil
+		} else {
+			model.err = nil
+		}
+
+		m.Loaded(msg.content, msg.path)
+		return model, nil
+	default:
+		return model, nil
+	}
 }
 
 // render renders the file content view

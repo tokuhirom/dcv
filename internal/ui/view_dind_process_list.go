@@ -11,7 +11,13 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+type dindContainersLoadedMsg struct {
+	containers []models.DockerContainer
+	err        error
+}
+
 var _ ContainerAware = (*DindProcessListViewModel)(nil)
+var _ UpdateAware = (*DindProcessListViewModel)(nil)
 
 // DindProcessListViewModel manages the state and rendering of the Docker-in-Docker process list view
 type DindProcessListViewModel struct {
@@ -20,6 +26,23 @@ type DindProcessListViewModel struct {
 	showAll               bool
 
 	hostContainer *docker.Container
+}
+
+func (m *DindProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case dindContainersLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+		} else {
+			model.err = nil
+			m.Loaded(msg.containers)
+		}
+		return model, nil
+
+	default:
+		return model, nil
+	}
 }
 
 // render renders the dind process list view

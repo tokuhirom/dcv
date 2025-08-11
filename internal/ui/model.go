@@ -8,7 +8,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/tokuhirom/dcv/internal/docker"
-	"github.com/tokuhirom/dcv/internal/models"
 )
 
 // ViewType represents the current view
@@ -366,11 +365,6 @@ func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
 
 // Messages
 
-type dindContainersLoadedMsg struct {
-	containers []models.DockerContainer
-	err        error
-}
-
 type logLinesMsg struct {
 	lines []string
 }
@@ -385,63 +379,10 @@ type commandExecutedMsg struct {
 	command string
 }
 
-type topLoadedMsg struct {
-	processes []models.Process
-	stats     *models.ContainerStats
-	err       error
-}
-
-type statsLoadedMsg struct {
-	stats []models.ContainerStats
-	err   error
-}
-
-type projectsLoadedMsg struct {
-	projects []models.ComposeProject
-	err      error
-}
-
-type dockerContainersLoadedMsg struct {
-	containers []models.DockerContainer
-	err        error
-}
-
-type dockerImagesLoadedMsg struct {
-	images []models.DockerImage
-	err    error
-}
-
-type dockerNetworksLoadedMsg struct {
-	networks []models.DockerNetwork
-	err      error
-}
-
-type dockerVolumesLoadedMsg struct {
-	volumes []models.DockerVolume
-	err     error
-}
-
-type containerFilesLoadedMsg struct {
-	files []models.ContainerFile
-	err   error
-}
-
-type fileContentLoadedMsg struct {
-	content string
-	path    string
-	err     error
-}
-
 type launchShellMsg struct {
 	container *docker.Container
 	args      []string
 	shell     string
-}
-
-type inspectLoadedMsg struct {
-	content    string
-	err        error
-	targetName string
 }
 
 // autoRefreshTickMsg is sent periodically to refresh views

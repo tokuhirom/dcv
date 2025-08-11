@@ -12,6 +12,12 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// statsLoadedMsg contains the loaded container stats
+type statsLoadedMsg struct {
+	stats []models.ContainerStats
+	err   error
+}
+
 // TODO: support compose-stats
 // TODO: stream support
 
@@ -45,6 +51,25 @@ type StatsViewModel struct {
 	scrollY         int
 	autoRefresh     bool
 	refreshInterval time.Duration
+}
+
+// Update handles messages for the stats view
+func (m *StatsViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case statsLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+			return model, nil
+		} else {
+			model.err = nil
+		}
+
+		m.Loaded(msg.stats)
+		return model, nil
+	default:
+		return model, nil
+	}
 }
 
 // render renders the stats view

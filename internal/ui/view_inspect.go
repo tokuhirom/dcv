@@ -9,6 +9,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// inspectLoadedMsg contains the loaded inspect data
+type inspectLoadedMsg struct {
+	content    string
+	err        error
+	targetName string
+}
+
 type InspectViewModel struct {
 	SearchViewModel
 
@@ -17,6 +24,34 @@ type InspectViewModel struct {
 	inspectScrollY int
 
 	inspectTargetName string
+}
+
+// Update handles messages for the inspect view
+func (m *InspectViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case inspectLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+			return model, nil
+		} else {
+			model.err = nil
+		}
+
+		// Format the JSON content using the new formatter
+		formatter := NewInspectFormatter()
+		formattedContent, err := formatter.FormatJSON(msg.content)
+		if err != nil {
+			// Fall back to original JSON if formatting fails
+			m.Set(msg.content, msg.targetName)
+		} else {
+			m.Set(formattedContent, msg.targetName)
+		}
+		model.SwitchView(InspectView)
+		return model, nil
+	default:
+		return model, nil
+	}
 }
 
 // render renders the container inspect view
