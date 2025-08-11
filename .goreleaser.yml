@@ -29,6 +29,7 @@ builds:
 archives:
   - id: dcv
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    format: tar.gz
     format_overrides:
       - goos: windows
         format: zip
@@ -58,16 +59,3 @@ brews:
       system "#{bin}/dcv", "--version"
     install: |
       bin.install "dcv"
-
-dockers:
-  - image_templates:
-      - "ghcr.io/tokuhirom/dcv:{{ .Tag }}"
-      - "ghcr.io/tokuhirom/dcv:latest"
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
