@@ -339,3 +339,73 @@ func TestFileContentViewModel_EmptyContent(t *testing.T) {
 }
 
 // Test message types are already defined in model.go
+
+func TestFileContentViewModel_PageNavigation(t *testing.T) {
+	tests := []struct {
+		name           string
+		initialScrollY int
+		content        string
+		height         int
+		action         string
+		expectedScroll int
+	}{
+		{
+			name:           "page up from middle",
+			initialScrollY: 20,
+			content:        strings.Repeat("Line\n", 100),
+			height:         15, // pageSize = 15 - 5 = 10
+			action:         "pageup",
+			expectedScroll: 10,
+		},
+		{
+			name:           "page up from near top",
+			initialScrollY: 5,
+			content:        strings.Repeat("Line\n", 100),
+			height:         15, // pageSize = 10
+			action:         "pageup",
+			expectedScroll: 0,
+		},
+		{
+			name:           "page down from start",
+			initialScrollY: 0,
+			content:        strings.Repeat("Line\n", 100),
+			height:         15, // pageSize = 10
+			action:         "pagedown",
+			expectedScroll: 10,
+		},
+		{
+			name:           "page down near end",
+			initialScrollY: 85,
+			content:        strings.TrimSuffix(strings.Repeat("Line\n", 100), "\n"),
+			height:         15, // pageSize = 10, maxScroll = 100 - 10 = 90
+			action:         "pagedown",
+			expectedScroll: 90,
+		},
+		{
+			name:           "page down at end",
+			initialScrollY: 90,
+			content:        strings.TrimSuffix(strings.Repeat("Line\n", 100), "\n"),
+			height:         15,
+			action:         "pagedown",
+			expectedScroll: 90, // stays at max
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vm := &FileContentViewModel{
+				content: tt.content,
+				scrollY: tt.initialScrollY,
+			}
+
+			switch tt.action {
+			case "pageup":
+				vm.HandlePageUp(tt.height)
+			case "pagedown":
+				vm.HandlePageDown(tt.height)
+			}
+
+			assert.Equal(t, tt.expectedScroll, vm.scrollY)
+		})
+	}
+}
