@@ -322,6 +322,13 @@ func (m *Model) viewFooter() string {
 		return helpStyle.Render("Press ESC or q to go back")
 	} else {
 		helpText := "Press ? for help"
+
+		// Add action menu hint for process list views
+		switch m.currentView {
+		case ComposeProcessListView, DockerContainerListView, DindProcessListView:
+			helpText += " | Press x for actions"
+		}
+
 		if m.navbarHidden {
 			helpText += " | Press H to show navbar"
 		}
