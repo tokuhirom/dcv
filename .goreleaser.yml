@@ -28,11 +28,13 @@ builds:
 
 archives:
   - id: dcv
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    format: tar.gz
-    format_overrides:
-      - goos: windows
-        format: zip
+    name_template: >-
+      {{- .ProjectName }}_
+      {{- .Os }}_
+      {{- .Arch }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    builds:
+      - dcv
 
 checksum:
   name_template: 'checksums.txt'
