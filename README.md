@@ -22,206 +22,85 @@ DCV is a TUI (Terminal User Interface) tool for monitoring Docker containers and
 
 ## Views
 
+For a complete list of keyboard shortcuts and commands, see [docs/keymap.md](docs/keymap.md).
+
 ### Docker Container List View
 
 Displays `docker ps` results in a table format. Shows all Docker containers, not limited to Docker Compose.
 
-**Key bindings:**
-- `↑`/`k`: Move up
-- `↓`/`j`: Move down
-- `Enter`: View container logs
-- `f`: Browse container files
-- `!`: Execute /bin/sh in container
-- `I`: Inspect container (view full config)
-- `a`: Toggle show all containers (including stopped)
-- `r`: Refresh list
-- `K`: Kill container
-- `S`: Stop container
-- `U`: Start container
-- `R`: Restart container
-- `P`: Pause/Unpause container
-- `D`: Delete stopped container
-- `?`: Show help view with all keybindings
-- `:`: Enter command mode (vim-style commands)
-- `q`/`Esc`: Back to Docker Compose process list
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#docker-container-list).
 
 ### Docker Compose Process List View
 
 Displays `docker compose ps` results in a table format.
 
-**Key bindings:**
-- `↑`/`k`: Move up
-- `↓`/`j`: Move down  
-- `Enter`: View container logs
-- `d`: View dind container contents (only for dind containers)
-- `f`: Browse container files
-- `!`: Execute /bin/sh in container
-- `I`: Inspect container (view full config)
-- `p`: Switch to Docker container list view
-- `i`: Switch to Docker image list view
-- `n`: Switch to Docker network list view
-- `P`: Switch to project list view
-- `V`: Switch to volume list view
-- `1`: Quick switch to Docker container list view
-- `2`: Quick switch to project list view
-- `3`: Quick switch to Docker image list view
-- `4`: Quick switch to Docker network list view
-- `5`: Quick switch to Docker volume list view
-- `a`: Toggle show all containers (including stopped)
-- `r`: Refresh list
-- `t`: Show process info (docker compose top)
-- `s`: Show container stats
-- `K`: Kill service
-- `S`: Stop service
-- `U`: Start service
-- `R`: Restart service
-- `P`: Pause/Unpause container
-- `D`: Delete stopped container
-- `u`: Deploy all services (docker compose up -d)
-- `x`: Stop and remove all services (docker compose down)
-- `?`: Show help view with all keybindings
-- `:`: Enter command mode (vim-style commands)
-- `q`: Quit (with confirmation)
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#docker-compose-process-list).
 
 ### Log View
 
 Displays container logs. Initially shows the last 1000 lines, then streams new logs in real-time.
 
-**Key bindings:**
-- `↑`/`k`: Scroll up
-- `↓`/`j`: Scroll down
-- `G`: Jump to end
-- `g`: Jump to start
-- `/`: Search logs (supports regex with Ctrl+R, case insensitive with Ctrl+I)
-- `f`: Filter logs (shows only lines matching the filter)
-- `n`: Next search result
-- `N`: Previous search result
-- `?`: Show help view
-- `Esc`/`q`: Back to previous view
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#log-view).
 
 ### Docker-in-Docker Process List View
 
 Shows containers running inside a dind container.
 
-**Key bindings:**
-- `↑`/`k`: Move up
-- `↓`/`j`: Move down
-- `Enter`: View container logs
-- `r`: Refresh list
-- `?`: Show help view
-- `Esc`/`q`: Back to process list
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#docker-in-docker).
 
 ### Image List View
 
 Displays Docker images with repository, tag, ID, creation time, and size information.
 
-**Key bindings:**
-- `↑`/`k`: Move up
-- `↓`/`j`: Move down
-- `I`: Inspect image (view full config)
-- `a`: Toggle show all images (including intermediate layers)
-- `r`: Refresh list
-- `D`: Remove selected image
-- `F`: Force remove selected image (even if used by containers)
-- `?`: Show help view
-- `Esc`/`q`: Back to Docker Compose process list
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#image-list).
 
 ### Network List View
 
 Displays Docker networks with ID, name, driver, scope, and container count.
 
-**Key bindings:**
-- `↑`/`k`: Move up
-- `↓`/`j`: Move down
-- `Enter`: Inspect network (view full config)
-- `r`: Refresh list
-- `D`: Remove selected network (except default networks)
-- `?`: Show help view
-- `Esc`/`q`: Back to Docker Compose process list
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#network-list).
 
 ### Volume List View
 
 Displays Docker volumes with name, driver, scope, size, creation time, and reference count.
 
-**Key bindings:**
-- `↑`/`k`: Move up
-- `↓`/`j`: Move down
-- `Enter`: Inspect volume (view full config)
-- `r`: Refresh list
-- `D`: Remove selected volume
-- `F`: Force remove selected volume (even if used by containers)
-- `?`: Show help view
-- `Esc`/`q`: Back to Docker Compose process list
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#volume-list).
 
 ### File Browser View
 
 Browse the filesystem inside a container. Navigate directories and view file contents.
 
-**Key bindings:**
-- `↑`/`k`: Move up
-- `↓`/`j`: Move down
-- `Enter`: Open directory or view file
-- `u`: Go to parent directory
-- `r`: Refresh list
-- `?`: Show help view
-- `Esc`/`q`: Back to container list
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#file-browser).
 
 ### File Content View
 
 View the contents of a file from within a container.
 
-**Key bindings:**
-- `↑`/`k`: Scroll up
-- `↓`/`j`: Scroll down
-- `G`: Jump to end
-- `g`: Jump to start
-- `?`: Show help view
-- `Esc`/`q`: Back to file browser
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#file-content).
 
 ### Inspect View
 
 Displays the full Docker inspect output for containers, images, or networks in JSON format with syntax highlighting.
 
-**Key bindings:**
-- `↑`/`k`: Scroll up
-- `↓`/`j`: Scroll down
-- `G`: Jump to end
-- `g`: Jump to start
-- `/`: Search
-- `n`: Next search result
-- `N`: Previous search result
-- `?`: Show help view
-- `Esc`/`q`: Back to previous view
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#inspect-view).
 
 ### Top View
 
 Shows process information (docker compose top) for the selected container.
 
-**Key bindings:**
-- `r`: Refresh
-- `?`: Show help view
-- `Esc`/`q`: Back to process list
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#top-view).
 
 ### Stats View
 
 Shows container resource usage statistics including CPU, memory, network I/O, and block I/O.
 
-**Key bindings:**
-- `r`: Refresh
-- `?`: Show help view
-- `Esc`/`q`: Back to process list
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#stats-view).
 
 ### Compose Project List View
 
 Shows all Docker Compose projects on the system.
 
-**Key bindings:**
-- `↑`/`k`: Move up
-- `↓`/`j`: Move down
-- `Enter`: Select project and view its containers
-- `r`: Refresh list
-- `?`: Show help view
-- `q`: Quit
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#project-list).
 
 ### Help View
 
@@ -229,13 +108,10 @@ Shows all available keyboard shortcuts and their corresponding commands for the 
 
 The help view displays three columns:
 - **Key**: The keyboard shortcut (e.g., 'j' or 'down')
-- **Command**: The vim-style command that can be used in command mode (e.g., ':cmd-down')
+- **Command**: The vim-style command that can be used in command mode (e.g., ':down')
 - **Description**: What the action does
 
-**Key bindings:**
-- `↑`/`k`: Scroll up
-- `↓`/`j`: Scroll down
-- `Esc`/`q`: Back to previous view
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#help-view).
 
 ### Command Mode
 
@@ -247,44 +123,7 @@ Vim-style command line interface for executing commands.
 - `:h` or `:help`: Show help view
 - `:help commands`: List all available commands in current view
 
-**Key handler commands:**
-All key handler functions can be called as commands. Commands are automatically derived from the handler method names and use either short forms or kebab-case naming:
-- `:up` or `:cmd-up`: Move selection up
-- `:down` or `:cmd-down`: Move selection down
-- `:log` or `:cmd-log`: View container logs
-- `:kill` or `:cmd-kill`: Kill selected container
-- `:stop` or `:cmd-stop`: Stop selected container
-- `:start` or `:cmd-start`: Start selected container
-- `:restart` or `:cmd-restart`: Restart selected container
-- `:filebrowse` or `:cmd-file-browse`: Browse container files
-- `:shell` or `:cmd-shell`: Execute /bin/sh in container
-- `:inspect` or `:cmd-inspect`: Show inspect view
-- `:stats` or `:cmd-stats`: Show container stats
-- `:top` or `:cmd-top`: Show process info
-- And many more...
-
-**Command aliases:**
-- `:up` → Move selection up
-- `:down` → Move selection down
-- `:log` or `:logs` → View container logs
-- `:inspect` → Show inspect view
-- `:shell` or `:exec` → Execute shell in container
-- `:ps` → Show Docker container list
-- `:images` → Show image list
-- `:networks` → Show network list
-- `:volumes` → Show volume list
-- `:remove` or `:rm` → Remove/delete container
-- `:all` or `:a` → Toggle show all containers
-- `:refresh` or `:r` → Refresh current view
-- `:quit` or `:q` → Quit application
-- `:help` or `:h` → Show help
-
-**Key bindings:**
-- `:`: Enter command mode from any view
-- `↑`/`↓`: Navigate command history
-- `←`/`→`: Move cursor in command line
-- `Enter`: Execute command
-- `Esc`: Cancel command mode
+All key handler functions can be called as commands. For a complete list of available commands in each view, see [docs/keymap.md](docs/keymap.md#command-mode) or use `:help commands` in command mode.
 
 ## Usage
 
@@ -379,13 +218,7 @@ go build -o dcv
 
 Shows real-time output when executing Docker commands (start, stop, restart, kill, rm, docker compose up/down).
 
-**Key bindings:**
-- `↑`/`k`: Scroll up
-- `↓`/`j`: Scroll down
-- `G`: Jump to end
-- `g`: Jump to start
-- `Ctrl+C`: Cancel running command
-- `Esc`: Back to previous view
+For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#command-execution).
 
 ## Debugging Features
 
