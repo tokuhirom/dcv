@@ -2,6 +2,19 @@
 
 DCV is a TUI (Terminal User Interface) tool for monitoring Docker containers and Docker Compose applications.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/compose-process-list.png" alt="Compose Process List" /></td>
+    <td><img src="docs/screenshots/docker-container-list.png" alt="Docker Container List" /></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/stats-view.png" alt="Stats View" /></td>
+    <td><img src="docs/screenshots/log-view.png" alt="Log View" /></td>
+  </tr>
+</table>
+
 ## Features
 
 - View all Docker containers (both standalone and Docker Compose managed)
@@ -28,17 +41,23 @@ For a complete list of keyboard shortcuts and commands, see [docs/keymap.md](doc
 
 Displays `docker ps` results in a table format. Shows all Docker containers, not limited to Docker Compose.
 
+![Docker Container List](docs/screenshots/docker-container-list.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#docker-container-list).
 
 ### Docker Compose Process List View
 
 Displays `docker compose ps` results in a table format.
 
+![Docker Compose Process List](docs/screenshots/compose-process-list.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#docker-compose-process-list).
 
 ### Log View
 
 Displays container logs. Initially shows the last 1000 lines, then streams new logs in real-time.
+
+![Log View](docs/screenshots/log-view.png)
 
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#log-view).
 
@@ -52,17 +71,23 @@ For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#docker-in-docker).
 
 Displays Docker images with repository, tag, ID, creation time, and size information.
 
+![Image List](docs/screenshots/image-list.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#image-list).
 
 ### Network List View
 
 Displays Docker networks with ID, name, driver, scope, and container count.
 
+![Network List](docs/screenshots/network-list.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#network-list).
 
 ### Volume List View
 
 Displays Docker volumes with name, driver, scope, size, creation time, and reference count.
+
+![Volume List](docs/screenshots/volume-list.png)
 
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#volume-list).
 
@@ -88,11 +113,15 @@ For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#inspect-view).
 
 Shows process information (docker compose top) for the selected container.
 
+![Top View](docs/screenshots/top-view.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#top-view).
 
 ### Stats View
 
 Shows container resource usage statistics including CPU, memory, network I/O, and block I/O.
+
+![Stats View](docs/screenshots/stats-view.png)
 
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#stats-view).
 
@@ -100,11 +129,15 @@ For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#stats-view).
 
 Shows all Docker Compose projects on the system.
 
+![Project List](docs/screenshots/project-list.png)
+
 For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#project-list).
 
 ### Help View
 
 Shows all available keyboard shortcuts and their corresponding commands for the current view.
+
+![Help View](docs/screenshots/help-view.png)
 
 The help view displays three columns:
 - **Key**: The keyboard shortcut (e.g., 'j' or 'down')
