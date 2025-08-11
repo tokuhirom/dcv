@@ -9,10 +9,35 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// dockerVolumesLoadedMsg contains the loaded Docker volumes
+type dockerVolumesLoadedMsg struct {
+	volumes []models.DockerVolume
+	err     error
+}
+
 // VolumeListViewModel manages the state and rendering of the Docker volume list view
 type VolumeListViewModel struct {
 	dockerVolumes        []models.DockerVolume
 	selectedDockerVolume int
+}
+
+// Update handles messages for the volume list view
+func (m *VolumeListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case dockerVolumesLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+			return model, nil
+		} else {
+			model.err = nil
+		}
+
+		m.Loaded(msg.volumes)
+		return model, nil
+	default:
+		return model, nil
+	}
 }
 
 // render renders the volume list view

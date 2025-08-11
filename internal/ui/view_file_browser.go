@@ -13,12 +13,37 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// containerFilesLoadedMsg contains the loaded container files
+type containerFilesLoadedMsg struct {
+	files []models.ContainerFile
+	err   error
+}
+
 type FileBrowserViewModel struct {
 	containerFiles    []models.ContainerFile
 	selectedFile      int
 	currentPath       string
 	browsingContainer *docker.Container // The container we're browsing
 	pathHistory       []string
+}
+
+// Update handles messages for the file browser view
+func (m *FileBrowserViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case containerFilesLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+			return model, nil
+		} else {
+			model.err = nil
+		}
+
+		m.Loaded(msg.files)
+		return model, nil
+	default:
+		return model, nil
+	}
 }
 
 // pushHistory adds a new path to the history

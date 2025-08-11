@@ -349,11 +349,13 @@ func TestUpdateMessages(t *testing.T) {
 	assert.Contains(t, m.logViewModel.logs, "log line 2")
 	assert.NotNil(t, cmd) // Should continue streaming
 
-	// Test dind composeContainers loaded
+	// Test dind composeContainers loaded through dindProcessListViewModel
+	// Since dindContainersLoadedMsg is now internal to the view, we test it via the ViewModel's Update method
 	containers := []models.DockerContainer{
 		{ID: "abc123", Names: "test-container"},
 	}
-	newModel, _ = m.Update(dindContainersLoadedMsg{containers: containers})
+	m.currentView = DindProcessListView
+	newModel, _ = m.dindProcessListViewModel.Update(m, dindContainersLoadedMsg{containers: containers})
 	m = newModel.(*Model)
 	assert.Equal(t, containers, m.dindProcessListViewModel.dindContainers)
 	assert.False(t, m.loading)

@@ -10,10 +10,34 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// projectsLoadedMsg contains the loaded Compose projects
+type projectsLoadedMsg struct {
+	projects []models.ComposeProject
+	err      error
+}
+
 type ComposeProjectListViewModel struct {
 	// Compose list state
 	projects        []models.ComposeProject
 	selectedProject int
+}
+
+// Update handles messages for the compose project list view
+func (m *ComposeProjectListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case projectsLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+			return model, nil
+		} else {
+			model.err = nil
+		}
+		m.Loaded(msg.projects)
+		return model, nil
+	default:
+		return model, nil
+	}
 }
 
 func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) string {

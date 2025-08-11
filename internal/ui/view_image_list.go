@@ -10,13 +10,43 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+type dockerImagesLoadedMsg struct {
+	images []models.DockerImage
+	err    error
+}
+
 var _ HandleInspectAware = (*ImageListViewModel)(nil)
+var _ UpdateAware = (*ImageListViewModel)(nil)
 
 // ImageListViewModel manages the state and rendering of the Docker image list view
 type ImageListViewModel struct {
 	dockerImages        []models.DockerImage
 	selectedDockerImage int
 	showAll             bool
+}
+
+func (m *ImageListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case dockerImagesLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+		} else {
+			model.err = nil
+			m.Loaded(msg.images)
+		}
+		return model, nil
+
+	default:
+		return model, nil
+	}
+}
+
+func (m *ImageListViewModel) Loaded(images []models.DockerImage) {
+	m.dockerImages = images
+	if len(m.dockerImages) > 0 && m.selectedDockerImage >= len(m.dockerImages) {
+		m.selectedDockerImage = 0
+	}
 }
 
 func (m *ImageListViewModel) Title() string {
@@ -144,12 +174,4 @@ func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
 func (m *ImageListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
-}
-
-// Loaded updates the image list after loading
-func (m *ImageListViewModel) Loaded(images []models.DockerImage) {
-	m.dockerImages = images
-	if len(m.dockerImages) > 0 && m.selectedDockerImage >= len(m.dockerImages) {
-		m.selectedDockerImage = 0
-	}
 }

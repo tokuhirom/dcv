@@ -15,6 +15,13 @@ import (
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
+// topLoadedMsg contains the loaded process information
+type topLoadedMsg struct {
+	processes []models.Process
+	stats     *models.ContainerStats
+	err       error
+}
+
 // SortField represents the field to sort processes by
 type SortField int
 
@@ -54,6 +61,25 @@ type TopViewModel struct {
 	refreshInterval time.Duration
 
 	container *docker.Container
+}
+
+// Update handles messages for the top view
+func (m *TopViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case topLoadedMsg:
+		model.loading = false
+		if msg.err != nil {
+			model.err = msg.err
+			return model, nil
+		} else {
+			model.err = nil
+		}
+
+		m.Loaded(msg.processes, msg.stats)
+		return model, nil
+	default:
+		return model, nil
+	}
 }
 
 // render renders the top view
