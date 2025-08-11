@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	ansitoimg "github.com/pavelpatrin/go-ansi-to-image"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -30,6 +32,11 @@ type screenshot struct {
 }
 
 func main() {
+	// Force color output for lipgloss
+	os.Setenv("TERM", "xterm-256color")
+	os.Setenv("COLORTERM", "truecolor")
+	lipgloss.SetColorProfile(termenv.TrueColor)
+
 	// Create output directory
 	outputDir := "docs/screenshots"
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
@@ -113,6 +120,10 @@ func main() {
 }
 
 func generateScreenshot(ss screenshot, outputDir string) error {
+	// Ensure colors are enabled for this function too
+	lipgloss.SetHasDarkBackground(false)
+	lipgloss.SetColorProfile(termenv.TrueColor)
+
 	// Create model with the appropriate view
 	model := ui.NewModel(ss.viewType)
 
