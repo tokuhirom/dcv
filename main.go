@@ -52,8 +52,8 @@ func main() {
 	// Create the initial model with configured view
 	m := ui.NewModel(initialView)
 
-	// Create the program
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	// Create the program with mouse support
+	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	// Run the program
 	if _, err := p.Run(); err != nil {

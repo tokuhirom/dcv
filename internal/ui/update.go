@@ -19,6 +19,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m.handleKeyPress(msg)
 
+	case tea.MouseMsg:
+		// Handle mouse events
+		if isNavbarClick(msg) {
+			return m.handleNavbarMouseClick(msg.X, msg.Y)
+		}
+		// TODO: Add more mouse handlers for other views
+		return m, nil
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.Height = msg.Height
