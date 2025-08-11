@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/tokuhirom/dcv/internal/ui"
@@ -43,11 +44,12 @@ func generateKeymapDocumentation() string {
 	model := ui.NewModel(ui.ComposeProcessListView)
 	model.Init()
 
-	// Get global handlers
-	globalHandlers := getGlobalHandlers()
+	// Get global handlers from the model
+	globalHandlers := model.GetGlobalHandlers()
 	for _, handler := range globalHandlers {
-		keys := strings.Join(handler.Keys, ", ")
-		sb.WriteString(fmt.Sprintf("| `%s` | %s | :%s |\n", keys, handler.Description, handler.Command))
+		keys := formatKeys(handler.Keys)
+		command := getCommandName(handler)
+		sb.WriteString(fmt.Sprintf("| `%s` | %s | :%s |\n", keys, handler.Description, command))
 	}
 
 	sb.WriteString("\n## View-Specific Shortcuts\n\n")
@@ -87,7 +89,7 @@ func generateKeymapDocumentation() string {
 		sb.WriteString("|-----|-------------|----------|\n")
 
 		for _, handler := range handlers {
-			keys := strings.Join(handler.Keys, ", ")
+			keys := formatKeys(handler.Keys)
 			command := getCommandName(handler)
 			sb.WriteString(fmt.Sprintf("| `%s` | %s | :%s |\n", keys, handler.Description, command))
 		}
@@ -119,33 +121,23 @@ func generateKeymapDocumentation() string {
 	return sb.String()
 }
 
-// getGlobalHandlers returns the global key handlers
-func getGlobalHandlers() []KeyHandler {
-	return []KeyHandler{
-		{Keys: []string{"q"}, Description: "Quit", Command: "quit"},
-		{Keys: []string{":"}, Description: "Command mode", Command: "command-mode"},
-		{Keys: []string{"H"}, Description: "Toggle navbar", Command: "toggle-navbar"},
-		{Keys: []string{"1"}, Description: "Docker container list", Command: "ps"},
-		{Keys: []string{"2"}, Description: "Project list", Command: "compose-ls"},
-		{Keys: []string{"3"}, Description: "Docker images", Command: "images"},
-		{Keys: []string{"4"}, Description: "Docker networks", Command: "network-ls"},
-		{Keys: []string{"5"}, Description: "Docker volumes", Command: "volume-ls"},
-		{Keys: []string{"6"}, Description: "Container stats", Command: "stats"},
+// formatKeys formats the keys for display in markdown
+func formatKeys(keys []string) string {
+	if len(keys) == 0 {
+		return ""
 	}
-}
 
-// KeyHandler represents a keyboard shortcut
-type KeyHandler struct {
-	Keys        []string
-	Description string
-	Command     string
+	// Join with comma and space for multiple keys
+	return strings.Join(keys, ", ")
 }
 
 // getCommandName extracts the command name from a handler
 func getCommandName(handler ui.KeyConfig) string {
-	// This is a simplified version - in reality we'd need to extract
-	// the actual command name from the handler function
-	desc := strings.ToLower(handler.Description)
-	desc = strings.ReplaceAll(desc, " ", "-")
-	return desc
+	if handler.KeyHandler == nil {
+		return ""
+	}
+
+	// Use the actual function from the ui package to get the command name
+	funcPtr := reflect.ValueOf(handler.KeyHandler).Pointer()
+	return ui.GetCommandNameFromFuncPtr(funcPtr)
 }

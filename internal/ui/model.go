@@ -319,6 +319,11 @@ func (m *Model) GetViewKeyHandlers(view ViewType) []KeyConfig {
 	}
 }
 
+// GetGlobalHandlers returns the global key handlers that work across all views
+func (m *Model) GetGlobalHandlers() []KeyConfig {
+	return m.globalHandlers
+}
+
 // GetViewKeymap returns the keymap for the specified view
 func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
 	switch view {

@@ -121,6 +121,13 @@ func toKebabCase(s string) string {
 		return "compose-ls"
 	}
 
+	// Replace common acronyms with lowercase versions first
+	s = strings.ReplaceAll(s, "CPU", "Cpu")
+	s = strings.ReplaceAll(s, "PID", "Pid")
+	s = strings.ReplaceAll(s, "TTY", "Tty")
+	s = strings.ReplaceAll(s, "ID", "Id")
+	s = strings.ReplaceAll(s, "IP", "Ip")
+
 	var result strings.Builder
 	for i, r := range s {
 		if i > 0 && r >= 'A' && r <= 'Z' {

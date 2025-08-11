@@ -8,15 +8,15 @@ These shortcuts work across all views:
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `q` | Quit | :quit |
-| `:` | Command mode | :command-mode |
-| `H` | Toggle navbar | :toggle-navbar |
-| `1` | Docker container list | :ps |
-| `2` | Project list | :compose-ls |
-| `3` | Docker images | :images |
-| `4` | Docker networks | :network-ls |
-| `5` | Docker volumes | :volume-ls |
-| `6` | Container stats | :stats |
+| `q` | quit | :quit |
+| `:` | command mode | :command-mode |
+| `H` | toggle navbar | :toggle-navbar |
+| `1` | docker ps | :ps |
+| `2` | project list | :compose-ls |
+| `3` | docker images | :images |
+| `4` | docker networks | :network-ls |
+| `5` | docker volumes | :volume-ls |
+| `6` | stats | :stats |
 
 ## View-Specific Shortcuts
 
@@ -26,15 +26,15 @@ View and manage Docker Compose containers
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | move up | :move-up |
-| `down, j` | move down | :move-down |
-| `enter` | view logs | :view-logs |
+| `up, k` | move up | :up |
+| `down, j` | move down | :down |
+| `enter` | view logs | :log |
 | `esc` | back | :back |
 | `?` | help | :help |
-| `d` | entering DinD | :entering-dind |
+| `d` | entering DinD | :dind |
 | `x` | show actions | :show-actions |
-| `f` | browse files | :browse-files |
-| `!` | exec /bin/sh | :exec-/bin/sh |
+| `f` | browse files | :file-browse |
+| `!` | exec /bin/sh | :shell |
 | `i` | inspect | :inspect |
 | `r` | refresh | :refresh |
 | `a` | toggle all | :toggle-all |
@@ -42,7 +42,7 @@ View and manage Docker Compose containers
 | `S` | stop | :stop |
 | `U` | start | :start |
 | `R` | restart | :restart |
-| `P` | pause/unpause | :pause/unpause |
+| `P` | pause/unpause | :pause |
 | `D` | delete | :delete |
 | `t` | top | :top |
 
@@ -52,15 +52,15 @@ View and manage all Docker containers
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | move up | :move-up |
-| `down, j` | move down | :move-down |
-| `enter` | view logs | :view-logs |
+| `up, k` | move up | :up |
+| `down, j` | move down | :down |
+| `enter` | view logs | :log |
 | `esc` | back | :back |
 | `?` | help | :help |
-| `d` | entering DinD | :entering-dind |
+| `d` | entering DinD | :dind |
 | `x` | show actions | :show-actions |
-| `f` | browse files | :browse-files |
-| `!` | exec /bin/sh | :exec-/bin/sh |
+| `f` | browse files | :file-browse |
+| `!` | exec /bin/sh | :shell |
 | `i` | inspect | :inspect |
 | `r` | refresh | :refresh |
 | `a` | toggle all | :toggle-all |
@@ -68,7 +68,7 @@ View and manage all Docker containers
 | `S` | stop | :stop |
 | `U` | start | :start |
 | `R` | restart | :restart |
-| `P` | pause/unpause | :pause/unpause |
+| `P` | pause/unpause | :pause |
 | `D` | delete | :delete |
 | `t` | top | :top |
 
@@ -78,15 +78,15 @@ View container logs
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | scroll up | :scroll-up |
-| `down, j` | scroll down | :scroll-down |
+| `up, k` | scroll up | :up |
+| `down, j` | scroll down | :down |
 | `pgup` | page up | :page-up |
 | `pgdown,  ` | page down | :page-down |
 | `G` | go to end | :go-to-end |
 | `g` | go to start | :go-to-start |
 | `/` | search | :search |
-| `n` | next match | :next-match |
-| `N` | prev match | :prev-match |
+| `n` | next match | :next-search-result |
+| `N` | prev match | :prev-search-result |
 | `f` | filter | :filter |
 | `esc` | back | :back |
 | `?` | help | :help |
@@ -98,13 +98,13 @@ View container process information
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | scroll up | :scroll-up |
-| `down, j` | scroll down | :scroll-down |
+| `up, k` | scroll up | :up |
+| `down, j` | scroll down | :down |
 | `c` | sort by CPU | :sort-by-cpu |
-| `m` | sort by memory | :sort-by-memory |
+| `m` | sort by memory | :sort-by-mem |
 | `p` | sort by PID | :sort-by-pid |
 | `t` | sort by time | :sort-by-time |
-| `n` | sort by name | :sort-by-name |
+| `n` | sort by name | :sort-by-command |
 | `R` | reverse sort | :reverse-sort |
 | `a` | toggle auto-refresh | :toggle-auto-refresh |
 | `r` | refresh | :refresh |
@@ -117,11 +117,11 @@ View container resource statistics
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | scroll up | :scroll-up |
-| `down, j` | scroll down | :scroll-down |
+| `up, k` | scroll up | :up |
+| `down, j` | scroll down | :down |
 | `c` | sort by CPU | :sort-by-cpu |
-| `m` | sort by memory | :sort-by-memory |
-| `n` | sort by name | :sort-by-name |
+| `m` | sort by memory | :sort-by-mem |
+| `n` | sort by name | :sort-by-command |
 | `R` | reverse sort | :reverse-sort |
 | `a` | toggle auto-refresh | :toggle-auto-refresh |
 | `r` | refresh | :refresh |
@@ -134,8 +134,8 @@ View and select Docker Compose projects
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | move up | :move-up |
-| `down, j` | move down | :move-down |
+| `up, k` | move up | :up |
+| `down, j` | move down | :down |
 | `enter` | select project | :select-project |
 | `r` | refresh | :refresh |
 | `?` | help | :help |
@@ -146,8 +146,8 @@ View and manage Docker images
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | move up | :move-up |
-| `down, j` | move down | :move-down |
+| `up, k` | move up | :up |
+| `down, j` | move down | :down |
 | `i` | inspect | :inspect |
 | `r` | refresh | :refresh |
 | `a` | toggle all | :toggle-all |
@@ -161,8 +161,8 @@ View and manage Docker networks
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | move up | :move-up |
-| `down, j` | move down | :move-down |
+| `up, k` | move up | :up |
+| `down, j` | move down | :down |
 | `i` | inspect | :inspect |
 | `r` | refresh | :refresh |
 | `D` | delete | :delete |
@@ -175,8 +175,8 @@ View and manage Docker volumes
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | move up | :move-up |
-| `down, j` | move down | :move-down |
+| `up, k` | move up | :up |
+| `down, j` | move down | :down |
 | `i` | inspect | :inspect |
 | `r` | refresh | :refresh |
 | `D` | delete | :delete |
@@ -189,10 +189,10 @@ Browse files inside containers
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | move up | :move-up |
-| `down, j` | move down | :move-down |
-| `enter` | open | :open |
-| `u` | parent directory | :parent-directory |
+| `up, k` | move up | :up |
+| `down, j` | move down | :down |
+| `enter` | open | :open-file-or-directory |
+| `u` | parent directory | :go-to-parent-directory |
 | `r` | refresh | :refresh |
 | `esc` | back | :back |
 | `?` | help | :help |
@@ -203,8 +203,8 @@ View file contents from containers
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | scroll up | :scroll-up |
-| `down, j` | scroll down | :scroll-down |
+| `up, k` | scroll up | :up |
+| `down, j` | scroll down | :down |
 | `G` | go to end | :go-to-end |
 | `g` | go to start | :go-to-start |
 | `esc` | back | :back |
@@ -216,15 +216,15 @@ View detailed container/image/network/volume information
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | scroll up | :scroll-up |
-| `down, j` | scroll down | :scroll-down |
+| `up, k` | scroll up | :up |
+| `down, j` | scroll down | :down |
 | `pgup` | page up | :page-up |
 | `pgdown,  ` | page down | :page-down |
 | `G` | go to end | :go-to-end |
 | `g` | go to start | :go-to-start |
 | `/` | search | :search |
-| `n` | next match | :next-match |
-| `N` | prev match | :prev-match |
+| `n` | next match | :next-search-result |
+| `N` | prev match | :prev-search-result |
 | `esc` | back | :back |
 | `?` | help | :help |
 
@@ -234,8 +234,8 @@ View help information
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | scroll up | :scroll-up |
-| `down, j` | scroll down | :scroll-down |
+| `up, k` | scroll up | :up |
+| `down, j` | scroll down | :down |
 | `esc` | back | :back |
 
 ### Docker in Docker
@@ -244,14 +244,14 @@ View containers inside dind containers
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | move up | :move-up |
-| `down, j` | move down | :move-down |
-| `enter` | view logs | :view-logs |
+| `up, k` | move up | :up |
+| `down, j` | move down | :down |
+| `enter` | view logs | :log |
 | `esc` | back | :back |
 | `?` | help | :help |
 | `x` | show actions | :show-actions |
-| `f` | browse files | :browse-files |
-| `!` | exec /bin/sh | :exec-/bin/sh |
+| `f` | browse files | :file-browse |
+| `!` | exec /bin/sh | :shell |
 | `i` | inspect | :inspect |
 | `r` | refresh | :refresh |
 | `a` | toggle all | :toggle-all |
@@ -259,7 +259,7 @@ View containers inside dind containers
 | `S` | stop | :stop |
 | `U` | start | :start |
 | `R` | restart | :restart |
-| `P` | pause/unpause | :pause/unpause |
+| `P` | pause/unpause | :pause |
 | `D` | delete | :delete |
 | `t` | top | :top |
 
@@ -269,8 +269,8 @@ View command execution output
 
 | Key | Description | Command |
 |-----|-------------|----------|
-| `up, k` | scroll up | :scroll-up |
-| `down, j` | scroll down | :scroll-down |
+| `up, k` | scroll up | :up |
+| `down, j` | scroll down | :down |
 | `G` | go to end | :go-to-end |
 | `g` | go to start | :go-to-start |
 | `ctrl+c` | cancel | :cancel |
