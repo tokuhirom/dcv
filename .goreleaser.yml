@@ -49,6 +49,7 @@ brews:
   - repository:
       owner: tokuhirom
       name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     name: dcv
     homepage: "https://github.com/tokuhirom/dcv"
     description: "Docker Compose Viewer - A TUI tool for monitoring Docker Compose applications"
