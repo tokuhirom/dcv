@@ -58,8 +58,11 @@ services:
   # Distroless container for testing file browser with minimal containers
   # This container has no shell, ls, cat, or any other Unix tools
   distroless:
-    image: otel/opentelemetry-collector:latest
+    image: gcr.io/distroless/static-debian12:nonroot
     container_name: distroless-test
+    command: ["/pause"]
+    volumes:
+      - ./pause:/pause:ro
     networks:
       - monitoring  # On monitoring network
     restart: unless-stopped
