@@ -13,6 +13,10 @@ import (
 // Helper methods for screenshot generation
 // These are only available when building with the "screenshots" build tag
 
+func (m *Model) SetLoading(loading bool) {
+	m.loading = loading
+}
+
 func (m *Model) GetComposeProcessListViewModel() *ComposeProcessListViewModel {
 	return &m.composeProcessListViewModel
 }

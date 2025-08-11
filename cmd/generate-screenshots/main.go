@@ -131,6 +131,9 @@ func generateScreenshot(ss screenshot, outputDir string) error {
 		ss.setupModel(model)
 	}
 
+	// Set loading to false after injecting mock data
+	model.SetLoading(false)
+
 	// Render view
 	view := model.View()
 

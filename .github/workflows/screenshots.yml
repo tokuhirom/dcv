@@ -26,16 +26,11 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24'
-    
-    - name: Install freeze
-      run: |
-        go install github.com/charmbracelet/freeze/cmd/freeze@latest
-        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        go-version: '1.23'
     
     - name: Generate screenshots
       run: |
-        go run cmd/generate-screenshots/main.go
+        go run -tags screenshots cmd/generate-screenshots/main.go
     
     - name: Check for changes
       id: check_changes
