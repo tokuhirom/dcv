@@ -55,6 +55,15 @@ services:
     networks:
       - backend  # Needs access to cache
 
+  # Distroless container for testing file browser with minimal containers
+  # This container has no shell, ls, cat, or any other Unix tools
+  distroless:
+    image: otel/opentelemetry-collector:latest
+    container_name: distroless-test
+    networks:
+      - monitoring  # On monitoring network
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   redis-data:
