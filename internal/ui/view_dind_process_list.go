@@ -31,7 +31,7 @@ type DindProcessListViewModel struct {
 }
 
 func (m *DindProcessListViewModel) Init(_ *Model) {
-	m.ContainerSearchViewModel.InitContainerSearchViewModel(
+	m.InitContainerSearchViewModel(
 		func(idx int) {
 			m.selectedDindContainer = idx
 		}, func() {

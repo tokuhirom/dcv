@@ -33,7 +33,7 @@ type ComposeProcessListViewModel struct {
 }
 
 func (m *ComposeProcessListViewModel) Init(_ *Model) {
-	m.ContainerSearchViewModel.InitContainerSearchViewModel(
+	m.InitContainerSearchViewModel(
 		func(idx int) {
 			m.selectedContainer = idx
 		}, func() {

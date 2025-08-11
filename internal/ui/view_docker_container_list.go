@@ -30,7 +30,7 @@ type DockerContainerListViewModel struct {
 }
 
 func (m *DockerContainerListViewModel) Init(_ *Model) {
-	m.ContainerSearchViewModel.InitContainerSearchViewModel(
+	m.InitContainerSearchViewModel(
 		func(idx int) {
 			m.selectedDockerContainer = idx
 		}, func() {
