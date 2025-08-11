@@ -104,6 +104,29 @@ func (m *FileContentViewModel) HandleGoToEnd(height int) tea.Cmd {
 	return nil
 }
 
+func (m *FileContentViewModel) HandlePageUp(height int) tea.Cmd {
+	pageSize := height - 5
+	if m.scrollY > pageSize {
+		m.scrollY -= pageSize
+	} else {
+		m.scrollY = 0
+	}
+	return nil
+}
+
+func (m *FileContentViewModel) HandlePageDown(height int) tea.Cmd {
+	lines := strings.Split(m.content, "\n")
+	maxScroll := len(lines) - (height - 5)
+	pageSize := height - 5
+
+	if m.scrollY+pageSize < maxScroll {
+		m.scrollY += pageSize
+	} else if maxScroll > 0 {
+		m.scrollY = maxScroll
+	}
+	return nil
+}
+
 func (m *FileContentViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	m.content = ""
