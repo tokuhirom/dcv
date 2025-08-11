@@ -115,18 +115,18 @@ func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdGoToStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdGoToBeginning(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
-		return m, m.logViewModel.HandleGoToStart()
+		return m, m.logViewModel.HandleGoToBeginning()
 	case FileContentView:
-		return m, m.fileContentViewModel.HandleGoToStart()
+		return m, m.fileContentViewModel.HandleGoToBeginning()
 	case InspectView:
-		return m, m.inspectViewModel.HandleGoToStart()
+		return m, m.inspectViewModel.HandleGoToBeginning()
 	case CommandExecutionView:
-		return m, m.commandExecutionViewModel.HandleGoToStart()
+		return m, m.commandExecutionViewModel.HandleGoToBeginning()
 	default:
-		slog.Info("GoToStart not supported in current view",
+		slog.Info("GoToBeginning not supported in current view",
 			slog.String("view", m.currentView.String()))
 		return m, nil
 	}

@@ -123,7 +123,7 @@ func (m *CommandExecutionViewModel) HandleGoToEnd(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *CommandExecutionViewModel) HandleGoToStart() tea.Cmd {
+func (m *CommandExecutionViewModel) HandleGoToBeginning() tea.Cmd {
 	m.scrollY = 0
 	return nil
 }

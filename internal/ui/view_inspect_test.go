@@ -129,13 +129,13 @@ func TestInspectViewModel_Navigation(t *testing.T) {
 		assert.Equal(t, 0, vm.inspectScrollY, "Should not scroll above 0")
 	})
 
-	t.Run("HandleGoToStart jumps to beginning", func(t *testing.T) {
+	t.Run("HandleGoToBeginning jumps to beginning", func(t *testing.T) {
 		vm := &InspectViewModel{
 			inspectContent: strings.Repeat("Line\n", 10),
 			inspectScrollY: 5,
 		}
 
-		cmd := vm.HandleGoToStart()
+		cmd := vm.HandleGoToBeginning()
 		assert.Nil(t, cmd)
 		assert.Equal(t, 0, vm.inspectScrollY)
 	})

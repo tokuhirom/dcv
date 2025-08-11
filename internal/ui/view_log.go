@@ -241,7 +241,7 @@ func (m *LogViewModel) HandleGoToEnd(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *LogViewModel) HandleGoToStart() tea.Cmd {
+func (m *LogViewModel) HandleGoToBeginning() tea.Cmd {
 	m.logScrollY = 0
 	return nil
 }
