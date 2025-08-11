@@ -115,7 +115,7 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	// Highlight the current sort field header
-	highlightStyle := selectedStyle
+	highlightStyle := searchStyle
 	switch m.sortField {
 	case StatsSortByName:
 		columns[0].Title = highlightStyle.Render("NAME")
