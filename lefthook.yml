@@ -1,27 +1,35 @@
-# Lefthook configuration for automatic code formatting
-# https://github.com/evilmartians/lefthook
+# lefthook.yml
+# Git hooks configuration for dcv project
 
 pre-commit:
-  parallel: true
+  parallel: false
   commands:
-    go-fmt:
-      glob: "*.go"
-      run: make fmt && git add {staged_files}
+    format:
+      run: make fmt
+      tags: format
+      stage_fixed: true
       
-    go-test:
-      glob: "*.go"
-      run: go test -short ./...
-
+    lint:
+      run: make lint
+      tags: lint
+      
+    test:
+      run: make test
+      tags: test
+      
+    screenshots:
+      run: |
+        # Check if UI files were modified
+        if git diff --cached --name-only | grep -q "internal/ui/"; then
+          echo "UI files modified, generating screenshots..."
+          go run -tags screenshots cmd/generate-screenshots/main.go
+          git add docs/screenshots/
+        fi
+      tags: screenshots
+      
 pre-push:
   parallel: true
   commands:
-    go-lint:
-      run: make lint
-      
-    go-test-full:
+    test-full:
       run: make test
-
-# Skip lefthook execution in CI/CD environments
-skip_output:
-  - meta
-  - summary
+      tags: test

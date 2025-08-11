@@ -106,6 +106,33 @@ For a complete list of keyboard shortcuts and commands in each view, see [docs/k
   - Local imports last (with prefix `github.com/tokuhirom/dcv`)
 - **Error Handling**: Always handle errors appropriately
 - **Comments**: Add comments for exported functions and types
+- **Screenshots**: When modifying UI code, screenshots must be updated
+  - Run `go run -tags screenshots cmd/generate-screenshots/main.go` to generate screenshots
+  - CI will fail if screenshots are not up-to-date
+  - Lefthook will automatically generate screenshots on commit if UI files are changed
+
+## Git Hooks with Lefthook
+
+The project uses [lefthook](https://github.com/evilmartians/lefthook) for git hooks to ensure code quality:
+
+- **Pre-commit hooks**:
+  - Format code with `make fmt`
+  - Run linter with `make lint`
+  - Run tests with `make test`
+  - Generate screenshots if UI files are modified
+- **Pre-push hooks**:
+  - Run full test suite
+
+To set up lefthook:
+```bash
+# Install lefthook
+go install github.com/evilmartians/lefthook@latest
+
+# Install git hooks
+lefthook install
+```
+
+The hooks configuration is in `lefthook.yml`
 
 ## Build and Installation
 
