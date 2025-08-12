@@ -30,6 +30,7 @@ const (
 	HelpView
 	CommandExecutionView
 	CommandActionView
+	ComposeProjectActionView
 )
 
 // UI Chrome offsets for different views
@@ -73,6 +74,8 @@ func (view ViewType) String() string {
 		return "Command Execution"
 	case CommandActionView:
 		return "Command Actions"
+	case ComposeProjectActionView:
+		return "Compose Project Actions"
 	default:
 		return "Unknown View"
 	}
@@ -87,22 +90,23 @@ type Model struct {
 	// Docker client
 	dockerClient *docker.Client
 
-	dockerContainerListViewModel DockerContainerListViewModel
-	logViewModel                 LogViewModel
-	commandExecutionViewModel    CommandExecutionViewModel
-	commandActionViewModel       CommandActionViewModel
-	fileBrowserViewModel         FileBrowserViewModel
-	inspectViewModel             InspectViewModel
-	composeProjectListViewModel  ComposeProjectListViewModel
-	composeProcessListViewModel  ComposeProcessListViewModel
-	topViewModel                 TopViewModel
-	dindProcessListViewModel     DindProcessListViewModel
-	imageListViewModel           ImageListViewModel
-	fileContentViewModel         FileContentViewModel
-	helpViewModel                HelpViewModel
-	networkListViewModel         NetworkListViewModel
-	statsViewModel               StatsViewModel
-	volumeListViewModel          VolumeListViewModel
+	dockerContainerListViewModel  DockerContainerListViewModel
+	logViewModel                  LogViewModel
+	commandExecutionViewModel     CommandExecutionViewModel
+	commandActionViewModel        CommandActionViewModel
+	composeProjectActionViewModel ComposeProjectActionViewModel
+	fileBrowserViewModel          FileBrowserViewModel
+	inspectViewModel              InspectViewModel
+	composeProjectListViewModel   ComposeProjectListViewModel
+	composeProcessListViewModel   ComposeProcessListViewModel
+	topViewModel                  TopViewModel
+	dindProcessListViewModel      DindProcessListViewModel
+	imageListViewModel            ImageListViewModel
+	fileContentViewModel          FileContentViewModel
+	helpViewModel                 HelpViewModel
+	networkListViewModel          NetworkListViewModel
+	statsViewModel                StatsViewModel
+	volumeListViewModel           VolumeListViewModel
 
 	// Error state
 	err error
@@ -153,6 +157,8 @@ type Model struct {
 	commandExecHandlers             []KeyConfig
 	commandActionKeymap             map[string]KeyHandler
 	commandActionHandlers           []KeyConfig
+	composeProjectActionKeymap      map[string]KeyHandler
+	composeProjectActionHandlers    []KeyConfig
 
 	// Command-line mode state
 	commandViewModel CommandViewModel
@@ -276,6 +282,8 @@ func (m *Model) GetCurrentViewModel() interface{} {
 		return &m.commandExecutionViewModel
 	case CommandActionView:
 		return &m.commandActionViewModel
+	case ComposeProjectActionView:
+		return &m.composeProjectActionViewModel
 	default:
 		panic("GetCurrentViewModel called with unknown view: " + m.currentView.String())
 	}
@@ -316,6 +324,8 @@ func (m *Model) GetViewKeyHandlers(view ViewType) []KeyConfig {
 		return m.commandExecHandlers
 	case CommandActionView:
 		return m.commandActionHandlers
+	case ComposeProjectActionView:
+		return m.composeProjectActionHandlers
 	default:
 		return nil
 	}
@@ -361,6 +371,8 @@ func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
 		return m.commandExecKeymap
 	case CommandActionView:
 		return m.commandActionKeymap
+	case ComposeProjectActionView:
+		return m.composeProjectActionKeymap
 	default:
 		return nil
 	}
