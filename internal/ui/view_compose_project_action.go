@@ -65,7 +65,7 @@ func (m *ComposeProjectActionViewModel) Initialize(project *models.ComposeProjec
 			Aggressive:  true,
 			Handler: func(model *Model, p models.ComposeProject) tea.Cmd {
 				args := []string{"compose", "-p", p.Name, "down"}
-				return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // down is aggressive
+				return model.commandExecutionViewModel.ExecuteCommand(model, true, args...)
 			},
 		})
 
@@ -98,7 +98,7 @@ func (m *ComposeProjectActionViewModel) Initialize(project *models.ComposeProjec
 			Aggressive:  false,
 			Handler: func(model *Model, p models.ComposeProject) tea.Cmd {
 				args := []string{"compose", "-p", p.Name, "up", "-d"}
-				return model.commandExecutionViewModel.ExecuteCommand(model, false, args...) // up is not aggressive
+				return model.commandExecutionViewModel.ExecuteCommand(model, false, args...)
 			},
 		})
 

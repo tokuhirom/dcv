@@ -131,6 +131,13 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "select project", m.CmdSelectProject},
 		{[]string{"x"}, "show actions", m.CmdShowComposeProjectActions},
+		{[]string{"U"}, "compose up", m.CmdComposeUp},
+		{[]string{"D"}, "compose down", m.CmdComposeDown},
+		{[]string{"S"}, "compose stop", m.CmdComposeStop},
+		{[]string{"R"}, "compose restart", m.CmdComposeRestart},
+		{[]string{"B"}, "compose build", m.CmdComposeBuild},
+		{[]string{"P"}, "compose pull", m.CmdComposePull},
+		{[]string{"L"}, "compose logs", m.CmdComposeLogs},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
