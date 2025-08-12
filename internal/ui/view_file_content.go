@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/tar"
 )
 
 // fileContentLoadedMsg contains the loaded file content
@@ -23,6 +24,7 @@ type FileContentViewModel struct {
 	content     string
 	contentPath string
 	scrollY     int
+	tarBrowser  *tar.Browser // For reading from tar archives
 }
 
 // Update handles messages for the file content view
@@ -62,12 +64,31 @@ func (m *FileContentViewModel) LoadContainer(model *Model, container *docker.Con
 	model.loading = true
 	m.scrollY = 0
 	m.container = container
+	m.tarBrowser = nil
 
 	return func() tea.Msg {
 		args := container.OperationArgs("exec", "cat", path)
 		output, err := model.dockerClient.ExecuteCaptured(args...)
 		return fileContentLoadedMsg{
 			content: string(output),
+			path:    path,
+			err:     err,
+		}
+	}
+}
+
+func (m *FileContentViewModel) LoadContainerWithTar(model *Model, container *docker.Container, path string, tarBrowser *tar.Browser) tea.Cmd {
+	model.SwitchView(FileContentView)
+	model.loading = true
+	m.scrollY = 0
+	m.container = container
+	m.tarBrowser = tarBrowser
+
+	return func() tea.Msg {
+		// Read from tar archive
+		content, err := tarBrowser.GetFileContent(path)
+		return fileContentLoadedMsg{
+			content: string(content),
 			path:    path,
 			err:     err,
 		}

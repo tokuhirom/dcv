@@ -11,6 +11,7 @@ import (
 
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
+	"github.com/tokuhirom/dcv/internal/tar"
 )
 
 // containerFilesLoadedMsg contains the loaded container files
@@ -25,6 +26,8 @@ type FileBrowserViewModel struct {
 	currentPath       string
 	browsingContainer *docker.Container // The container we're browsing
 	pathHistory       []string
+	tarBrowser        *tar.Browser // For browsing distroless containers
+	usingTarMode      bool         // Whether we're using tar mode for distroless containers
 }
 
 // Update handles messages for the file browser view
@@ -176,6 +179,9 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 			return m.DoLoad(model)
 		} else {
 			// View file content
+			if m.usingTarMode && m.tarBrowser != nil {
+				return model.fileContentViewModel.LoadContainerWithTar(model, m.browsingContainer, newPath, m.tarBrowser)
+			}
 			return model.fileContentViewModel.LoadContainer(model, m.browsingContainer, newPath)
 		}
 	}
@@ -192,24 +198,64 @@ func (m *FileBrowserViewModel) Loaded(files []models.ContainerFile) {
 func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
+		// First try to use exec ls command
 		args := m.browsingContainer.OperationArgs("exec", "ls", "-la", m.currentPath)
 		output, err := model.dockerClient.ExecuteCaptured(args...)
 
 		var files []models.ContainerFile
 		if err == nil {
 			files = models.ParseLsOutput(string(output))
+			m.usingTarMode = false
+			m.tarBrowser = nil
+		} else {
+			// If exec fails (likely distroless), try tar export mode
+			if m.tarBrowser == nil {
+				// Export container filesystem
+				exportArgs := m.browsingContainer.OperationArgs("export")
+				tarData, exportErr := model.dockerClient.ExecuteCaptured(exportArgs...)
+				if exportErr != nil {
+					return containerFilesLoadedMsg{
+						files: nil,
+						err:   fmt.Errorf("failed to browse files: exec failed and export failed: %w", exportErr),
+					}
+				}
+
+				// Create tar browser
+				browser, browserErr := tar.NewBrowser(tarData)
+				if browserErr != nil {
+					return containerFilesLoadedMsg{
+						files: nil,
+						err:   fmt.Errorf("failed to create tar browser: %w", browserErr),
+					}
+				}
+				m.tarBrowser = browser
+				m.usingTarMode = true
+			}
+
+			// List directory from tar
+			files, err = m.tarBrowser.ListDirectory(m.currentPath)
+			if err != nil {
+				return containerFilesLoadedMsg{
+					files: nil,
+					err:   fmt.Errorf("failed to list directory from tar: %w", err),
+				}
+			}
 		}
 
 		return containerFilesLoadedMsg{
 			files: files,
-			err:   err,
+			err:   nil,
 		}
 	}
 }
 
 func (m *FileBrowserViewModel) Title() string {
 	if m.browsingContainer != nil {
-		return fmt.Sprintf("File Browser: %s [%s]", m.browsingContainer.Title(), m.currentPath)
+		mode := ""
+		if m.usingTarMode {
+			mode = " (tar mode)"
+		}
+		return fmt.Sprintf("File Browser: %s [%s]%s", m.browsingContainer.Title(), m.currentPath, mode)
 	}
 	return "File Browser"
 }
