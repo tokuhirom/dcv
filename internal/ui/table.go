@@ -31,8 +31,8 @@ func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, 
 	t.SetStyles(tableStyle)
 	t.Focus()
 
-	// Move to the selected row
-	t.MoveDown(selectedRow)
+	// Set the cursor to the selected row
+	t.SetCursor(selectedRow)
 
 	return t.View()
 }
