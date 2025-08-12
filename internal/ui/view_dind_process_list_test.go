@@ -76,7 +76,26 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 				hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 			},
 			height:   20,
-			expected: []string{"very-long-registry-url.exa"},
+			expected: []string{"very-long-registry-url..."},
+		},
+		{
+			name: "displays port mappings",
+			viewModel: DindProcessListViewModel{
+				dindContainers: []models.DockerContainer{
+					{
+						ID:     "def456ghi789",
+						Image:  "nginx:latest",
+						State:  "running",
+						Status: "Up 10 minutes",
+						Ports:  "0.0.0.0:8080->80/tcp",
+						Names:  "web-server",
+					},
+				},
+				selectedDindContainer: 0,
+				hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
+			},
+			height:   20,
+			expected: []string{"PORTS", "0.0.0.0:8080->80/tcp"},
 		},
 	}
 

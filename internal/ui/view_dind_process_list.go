@@ -67,7 +67,7 @@ func (m *DindProcessListViewModel) performSearch() {
 	for i, container := range m.dindContainers {
 		// Create searchable text from container fields
 		searchableText := container.ID + " " + container.Image + " " +
-			container.Names + " " + container.Status
+			container.Names + " " + container.Status + " " + container.Ports
 
 		if m.MatchContainer(searchableText) {
 			results = append(results, i)
@@ -94,10 +94,11 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 	// Create table
 	columns := []table.Column{
 		{Title: "CONTAINER ID", Width: 15},
-		{Title: "IMAGE", Width: 30},
+		{Title: "IMAGE", Width: 25},
 		{Title: "STATE", Width: 10},
-		{Title: "STATUS", Width: 25},
-		{Title: "NAMES", Width: 30},
+		{Title: "STATUS", Width: 20},
+		{Title: "PORTS", Width: 20},
+		{Title: "NAMES", Width: 25},
 	}
 
 	rows := make([]table.Row, 0, len(m.dindContainers))
@@ -110,8 +111,8 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 
 		// Truncate image name
 		image := container.Image
-		if len(image) > 30 {
-			image = image[:27] + "..."
+		if len(image) > 25 {
+			image = image[:22] + "..."
 		}
 
 		state := container.State
@@ -136,7 +137,13 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			}
 		}
 
-		rows = append(rows, table.Row{id, image, state, status, name})
+		// Truncate ports if too long
+		ports := container.Ports
+		if len(ports) > 20 {
+			ports = ports[:17] + "..."
+		}
+
+		rows = append(rows, table.Row{id, image, state, status, ports, name})
 	}
 
 	return RenderTable(columns, rows, availableHeight, m.selectedDindContainer)
