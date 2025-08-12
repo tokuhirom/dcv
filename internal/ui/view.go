@@ -251,6 +251,8 @@ func (m *Model) viewTitle() string {
 		return "Command Execution"
 	case CommandActionView:
 		return "Select Action"
+	case ComposeProjectActionView:
+		return "Select Project Action"
 	default:
 		return "Unknown View"
 	}
@@ -300,6 +302,8 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.commandExecutionViewModel.render(m)
 	case CommandActionView:
 		return m.commandActionViewModel.render(m)
+	case ComposeProjectActionView:
+		return m.composeProjectActionViewModel.render(m)
 	default:
 		return "Unknown view"
 	}

@@ -130,6 +130,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "select project", m.CmdSelectProject},
+		{[]string{"x"}, "show actions", m.CmdShowComposeProjectActions},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
@@ -242,6 +243,16 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.commandActionKeymap = m.createKeymap(m.commandActionHandlers)
+
+	// Compose Project Action View
+	m.composeProjectActionHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
+		{[]string{"enter"}, "execute action", m.CmdSelectComposeProjectAction},
+		{[]string{"esc"}, "cancel", m.CmdBack},
+		{[]string{"?"}, "help", m.CmdHelp},
+	}
+	m.composeProjectActionKeymap = m.createKeymap(m.composeProjectActionHandlers)
 
 	// Initialize command registry
 	m.initCommandRegistry()
