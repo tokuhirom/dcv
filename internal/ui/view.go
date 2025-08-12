@@ -16,10 +16,6 @@ var (
 			Foreground(lipgloss.Color("86")).
 			MarginBottom(1)
 
-	selectedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("235"))
-
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
 			Bold(true)
