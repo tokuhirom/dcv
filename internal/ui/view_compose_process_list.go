@@ -7,7 +7,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 
@@ -170,31 +169,7 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 		rows = append(rows, table.Row{service, image, state, status, ports})
 	}
 
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithHeight(availableHeight-2),
-		table.WithFocused(true),
-	)
-
-	// Apply styles
-	styles := table.DefaultStyles()
-	styles.Header = styles.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	styles.Selected = selectedStyle
-	styles.Cell = styles.Cell.
-		BorderForeground(lipgloss.Color("240"))
-	t.SetStyles(styles)
-
-	// Set cursor position
-	if m.selectedContainer < len(rows) {
-		t.MoveDown(m.selectedContainer)
-	}
-
-	return t.View()
+	return RenderTable(columns, rows, availableHeight, m.selectedContainer)
 }
 
 func (m *ComposeProcessListViewModel) HandleUp() tea.Cmd {
