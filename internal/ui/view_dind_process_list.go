@@ -67,7 +67,7 @@ func (m *DindProcessListViewModel) performSearch() {
 	for i, container := range m.dindContainers {
 		// Create searchable text from container fields
 		searchableText := container.ID + " " + container.Image + " " +
-			container.Names + " " + container.Status
+			container.Names + " " + container.Status + " " + container.Ports
 
 		if m.MatchContainer(searchableText) {
 			results = append(results, i)
@@ -96,8 +96,9 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 		{Title: "CONTAINER ID", Width: 15},
 		{Title: "IMAGE", Width: 30},
 		{Title: "STATE", Width: 10},
-		{Title: "STATUS", Width: 25},
-		{Title: "NAMES", Width: 30},
+		{Title: "STATUS", Width: 20},
+		{Title: "PORTS", Width: 25},
+		{Title: "NAMES", Width: 25},
 	}
 
 	rows := make([]table.Row, 0, len(m.dindContainers))
@@ -124,6 +125,12 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			status = statusDownStyle.Render(status)
 		}
 
+		// Truncate ports if too long
+		ports := container.Ports
+		if len(ports) > 25 {
+			ports = ports[:22] + "..."
+		}
+
 		name := container.Names
 		// Highlight if this container matches search
 		if m.IsSearchActive() && m.GetSearchText() != "" {
@@ -136,7 +143,7 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			}
 		}
 
-		rows = append(rows, table.Row{id, image, state, status, name})
+		rows = append(rows, table.Row{id, image, state, status, ports, name})
 	}
 
 	return RenderTable(columns, rows, availableHeight, m.selectedDindContainer)
