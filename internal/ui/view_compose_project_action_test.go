@@ -17,10 +17,10 @@ func TestComposeProjectActionViewModel_Initialize(t *testing.T) {
 		unexpectedKeys []string
 	}{
 		{
-			name:           "running project shows down/stop/restart actions",
+			name:           "running project shows deploy/down/stop/restart actions",
 			projectStatus:  "running(2)",
-			expectedKeys:   []string{"D", "S", "R"},
-			unexpectedKeys: []string{"U"},
+			expectedKeys:   []string{"U", "D", "S", "R"},
+			unexpectedKeys: []string{},
 		},
 		{
 			name:           "stopped project shows up/start actions",

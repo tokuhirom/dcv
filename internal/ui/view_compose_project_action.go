@@ -48,6 +48,17 @@ func (m *ComposeProjectActionViewModel) Initialize(project *models.ComposeProjec
 	// Project status dependent actions
 	if strings.Contains(project.Status, "running") {
 		m.actions = append(m.actions, ComposeProjectAction{
+			Key:         "U",
+			Name:        "Deploy",
+			Description: "Update containers (up -d)",
+			Aggressive:  false,
+			Handler: func(model *Model, p models.ComposeProject) tea.Cmd {
+				args := []string{"compose", "-p", p.Name, "up", "-d"}
+				return model.commandExecutionViewModel.ExecuteCommand(model, false, args...)
+			},
+		})
+
+		m.actions = append(m.actions, ComposeProjectAction{
 			Key:         "D",
 			Name:        "Down",
 			Description: "Stop and remove containers, networks",
