@@ -6,10 +6,27 @@ import (
 )
 
 func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, selectedRow int, width int) string {
+	// Apply highlighting to the selected row
+	highlightedRows := make([]table.Row, len(rows))
+	selectedFg := lipgloss.NewStyle().Foreground(lipgloss.Color("229")).Background(lipgloss.Color("57"))
+
+	for i, row := range rows {
+		if i == selectedRow {
+			// Apply background color to all cells in the selected row
+			highlightedRow := make(table.Row, len(row))
+			for j, cell := range row {
+				highlightedRow[j] = selectedFg.Render(cell)
+			}
+			highlightedRows[i] = highlightedRow
+		} else {
+			highlightedRows[i] = row
+		}
+	}
+
 	t := table.New(
 		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
+		table.WithRows(highlightedRows),
+		table.WithFocused(false), // Disable focus to prevent cell highlighting
 		table.WithHeight(availableHeight-3),
 		table.WithWidth(width),
 	)
@@ -21,18 +38,10 @@ func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, 
 		BorderForeground(lipgloss.Color("240")).
 		BorderBottom(true).
 		Bold(false)
-	tableStyle.Selected = tableStyle.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
 	tableStyle.Cell = tableStyle.Cell.
 		Foreground(lipgloss.Color("252"))
 
 	t.SetStyles(tableStyle)
-	t.Focus()
-
-	// Set the cursor to the selected row
-	t.SetCursor(selectedRow)
 
 	return t.View()
 }
