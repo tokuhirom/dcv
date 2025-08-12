@@ -24,6 +24,8 @@ func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, 
 		Foreground(lipgloss.Color("229")).
 		Background(lipgloss.Color("57")).
 		Bold(false)
+	tableStyle.Cell = tableStyle.Cell.
+		Foreground(lipgloss.Color("252"))
 
 	t.SetStyles(tableStyle)
 	t.Focus()
