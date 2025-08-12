@@ -53,7 +53,8 @@ func (m *ComposeProjectActionViewModel) Initialize(project *models.ComposeProjec
 			Description: "Stop and remove containers, networks",
 			Aggressive:  true,
 			Handler: func(model *Model, p models.ComposeProject) tea.Cmd {
-				return model.commandExecutionViewModel.ExecuteComposeCommand(model, p.Name, "down")
+				args := []string{"compose", "-p", p.Name, "down"}
+				return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // down is aggressive
 			},
 		})
 
@@ -85,7 +86,8 @@ func (m *ComposeProjectActionViewModel) Initialize(project *models.ComposeProjec
 			Description: "Create and start containers",
 			Aggressive:  false,
 			Handler: func(model *Model, p models.ComposeProject) tea.Cmd {
-				return model.commandExecutionViewModel.ExecuteComposeCommand(model, p.Name, "up")
+				args := []string{"compose", "-p", p.Name, "up", "-d"}
+				return model.commandExecutionViewModel.ExecuteCommand(model, false, args...) // up is not aggressive
 			},
 		})
 
@@ -108,7 +110,7 @@ func (m *ComposeProjectActionViewModel) Initialize(project *models.ComposeProjec
 		Description: "Build or rebuild services",
 		Aggressive:  false,
 		Handler: func(model *Model, p models.ComposeProject) tea.Cmd {
-			args := []string{"compose", "-p", p.Name, "build"}
+			args := []string{"compose", "-f", p.ConfigFiles, "build"}
 			return model.commandExecutionViewModel.ExecuteCommand(model, false, args...)
 		},
 	})
@@ -120,7 +122,7 @@ func (m *ComposeProjectActionViewModel) Initialize(project *models.ComposeProjec
 		Description: "Pull service images",
 		Aggressive:  false,
 		Handler: func(model *Model, p models.ComposeProject) tea.Cmd {
-			args := []string{"compose", "-p", p.Name, "pull"}
+			args := []string{"compose", "-f", p.ConfigFiles, "pull"}
 			return model.commandExecutionViewModel.ExecuteCommand(model, false, args...)
 		},
 	})
@@ -132,7 +134,7 @@ func (m *ComposeProjectActionViewModel) Initialize(project *models.ComposeProjec
 		Description: "View all service logs",
 		Aggressive:  false,
 		Handler: func(model *Model, p models.ComposeProject) tea.Cmd {
-			args := []string{"compose", "-p", p.Name, "logs", "--follow"}
+			args := []string{"compose", "-p", p.Name, "logs", "--follow", "--tail", "10"}
 			return model.commandExecutionViewModel.ExecuteCommand(model, false, args...)
 		},
 	})
