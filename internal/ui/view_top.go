@@ -83,7 +83,7 @@ func (m *TopViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // render renders the top view
-func (m *TopViewModel) render(availableHeight int) string {
+func (m *TopViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
 	if len(m.processes) == 0 {

@@ -105,7 +105,7 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 		}
 	}
 
-	return RenderTable(columns, rows, availableHeight, m.selectedDockerImage)
+	return RenderTable(columns, rows, availableHeight, m.selectedDockerImage, model.width)
 }
 
 // Show switches to the image list view

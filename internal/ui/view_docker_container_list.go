@@ -173,7 +173,7 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		rows = append(rows, table.Row{id, image, state, status, ports, name})
 	}
 
-	return RenderTable(columns.ToArray(), rows, availableHeight, m.selectedDockerContainer)
+	return RenderTable(columns.ToArray(), rows, availableHeight, m.selectedDockerContainer, model.width)
 }
 
 func (m *DockerContainerListViewModel) HandleUp() tea.Cmd {

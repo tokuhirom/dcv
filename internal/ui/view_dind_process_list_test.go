@@ -76,7 +76,7 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 				hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 			},
 			height:   20,
-			expected: []string{"very-long-registry-url..."},
+			expected: []string{"very-long-registr..."},
 		},
 		{
 			name: "displays port mappings",
@@ -95,13 +95,14 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 				hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 			},
 			height:   20,
-			expected: []string{"PORTS", "0.0.0.0:8080->80/tcp"},
+			expected: []string{"PORTS", "0.0.0.0:8080->8"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.viewModel.render(tt.height - 4)
+			model := &Model{width: 100}
+			result := tt.viewModel.render(model, tt.height-4)
 
 			for _, expected := range tt.expected {
 				assert.Contains(t, result, expected, "Expected to find '%s' in output", expected)

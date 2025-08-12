@@ -83,7 +83,7 @@ func (m *DindProcessListViewModel) performSearch() {
 }
 
 // render renders the dind process list view
-func (m *DindProcessListViewModel) render(availableHeight int) string {
+func (m *DindProcessListViewModel) render(model *Model, availableHeight int) string {
 	if len(m.dindContainers) == 0 {
 		var s strings.Builder
 		s.WriteString("\nNo containers running inside this dind container.\n")
@@ -91,14 +91,37 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 		return s.String()
 	}
 
-	// Create table
+	// Create table with dynamic column widths based on available width
+	// Base widths that work for narrow terminals (80 chars)
 	columns := []table.Column{
-		{Title: "CONTAINER ID", Width: 15},
-		{Title: "IMAGE", Width: 25},
-		{Title: "STATE", Width: 10},
-		{Title: "STATUS", Width: 20},
-		{Title: "PORTS", Width: 20},
-		{Title: "NAMES", Width: 25},
+		{Title: "CONTAINER ID", Width: 12},
+		{Title: "IMAGE", Width: 13},
+		{Title: "STATE", Width: 7},
+		{Title: "STATUS", Width: 10},
+		{Title: "PORTS", Width: 12},
+		{Title: "NAMES", Width: 16},
+	}
+
+	// If we have more width available, expand columns
+	if model.width >= 100 {
+		columns = []table.Column{
+			{Title: "CONTAINER ID", Width: 12},
+			{Title: "IMAGE", Width: 20},
+			{Title: "STATE", Width: 8},
+			{Title: "STATUS", Width: 15},
+			{Title: "PORTS", Width: 18},
+			{Title: "NAMES", Width: 20},
+		}
+	}
+	if model.width >= 120 {
+		columns = []table.Column{
+			{Title: "CONTAINER ID", Width: 15},
+			{Title: "IMAGE", Width: 25},
+			{Title: "STATE", Width: 10},
+			{Title: "STATUS", Width: 20},
+			{Title: "PORTS", Width: 20},
+			{Title: "NAMES", Width: 25},
+		}
 	}
 
 	rows := make([]table.Row, 0, len(m.dindContainers))
@@ -109,10 +132,11 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			id = id[:12]
 		}
 
-		// Truncate image name
+		// Truncate image name based on column width
 		image := container.Image
-		if len(image) > 25 {
-			image = image[:22] + "..."
+		imageWidth := columns[1].Width
+		if len(image) > imageWidth {
+			image = image[:imageWidth-3] + "..."
 		}
 
 		state := container.State
@@ -137,16 +161,17 @@ func (m *DindProcessListViewModel) render(availableHeight int) string {
 			}
 		}
 
-		// Truncate ports if too long
+		// Truncate ports based on column width
 		ports := container.Ports
-		if len(ports) > 20 {
-			ports = ports[:17] + "..."
+		portsWidth := columns[4].Width
+		if len(ports) > portsWidth {
+			ports = ports[:portsWidth-3] + "..."
 		}
 
 		rows = append(rows, table.Row{id, image, state, status, ports, name})
 	}
 
-	return RenderTable(columns, rows, availableHeight, m.selectedDindContainer)
+	return RenderTable(columns, rows, availableHeight, m.selectedDindContainer, model.width)
 }
 
 // Load switches to the dind process list view and loads containers

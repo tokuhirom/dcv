@@ -57,7 +57,7 @@ func (m *InspectViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd
 }
 
 // render renders the container inspect view
-func (m *InspectViewModel) render(availableHeight int) string {
+func (m *InspectViewModel) render(model *Model, availableHeight int) string {
 	var content strings.Builder
 
 	// Split content into lines for scrolling

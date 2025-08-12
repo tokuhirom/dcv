@@ -22,7 +22,7 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		{Title: "Description", Width: 40},
 	}
 
-	return RenderTable(columns, rows, availableHeight-2, m.scrollY)
+	return RenderTable(columns, rows, availableHeight-2, m.scrollY, model.width)
 }
 
 func (m *HelpViewModel) buildRows(model *Model) []table.Row {

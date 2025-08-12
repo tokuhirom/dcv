@@ -82,7 +82,8 @@ Line 5`,
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.viewModel.render(tt.height - 5)
+			model := &Model{width: 100}
+			result := tt.viewModel.render(model, tt.height-5)
 
 			for _, expected := range tt.expected {
 				assert.Contains(t, result, expected, "Expected to find '%s' in output", expected)
@@ -317,7 +318,8 @@ func TestInspectViewModel_LineNumberRendering(t *testing.T) {
 			inspectContent: strings.Repeat("line\n", 10),
 		}
 
-		result := vm.render(15)
+		model := &Model{width: 100}
+		result := vm.render(model, 15)
 
 		// Should not contain corrupted ANSI sequences like [38;5;241m
 		assert.NotContains(t, result, "[38;5;241m")

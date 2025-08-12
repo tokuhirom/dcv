@@ -5,12 +5,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, selectedRow int) string {
+func RenderTable(columns []table.Column, rows []table.Row, availableHeight int, selectedRow int, width int) string {
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
 		table.WithHeight(availableHeight-3),
+		table.WithWidth(width),
 	)
 
 	// Set styles

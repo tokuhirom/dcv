@@ -275,9 +275,9 @@ func (m *Model) viewBody(availableHeight int) string {
 	case LogView:
 		return m.logViewModel.render(m, availableHeight)
 	case DindProcessListView:
-		return m.dindProcessListViewModel.render(availableHeight)
+		return m.dindProcessListViewModel.render(m, availableHeight)
 	case TopView:
-		return m.topViewModel.render(availableHeight)
+		return m.topViewModel.render(m, availableHeight)
 	case StatsView:
 		return m.statsViewModel.render(m, availableHeight)
 	case ComposeProjectListView:
@@ -287,7 +287,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case ImageListView:
 		return m.imageListViewModel.render(m, availableHeight)
 	case NetworkListView:
-		return m.networkListViewModel.render(availableHeight)
+		return m.networkListViewModel.render(m, availableHeight)
 	case VolumeListView:
 		return m.volumeListViewModel.render(m, availableHeight)
 	case FileBrowserView:
@@ -295,7 +295,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case FileContentView:
 		return m.fileContentViewModel.render(m)
 	case InspectView:
-		return m.inspectViewModel.render(availableHeight)
+		return m.inspectViewModel.render(m, availableHeight)
 	case HelpView:
 		return m.helpViewModel.render(m, availableHeight)
 	case CommandExecutionView:

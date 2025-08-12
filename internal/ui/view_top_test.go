@@ -67,7 +67,8 @@ func TestTopViewModel_Rendering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.viewModel.render(tt.height)
+			model := &Model{width: 100}
+			result := tt.viewModel.render(model, tt.height)
 
 			for _, expected := range tt.expected {
 				assert.Contains(t, result, expected, "Expected to find '%s' in output", expected)

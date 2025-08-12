@@ -266,7 +266,7 @@ func TestRenderDindList(t *testing.T) {
 
 	// Calculate available Height
 	availableHeight := m.Height - 2
-	view := m.dindProcessListViewModel.render(availableHeight)
+	view := m.dindProcessListViewModel.render(&m, availableHeight)
 
 	// The title is in viewTitle(), not renderDindList()
 	// Check that dind containers are listed correctly

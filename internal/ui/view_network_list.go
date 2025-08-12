@@ -49,7 +49,7 @@ func (m *NetworkListViewModel) Loaded(networks []models.DockerNetwork) {
 }
 
 // render renders the network list view
-func (m *NetworkListViewModel) render(availableHeight int) string {
+func (m *NetworkListViewModel) render(model *Model, availableHeight int) string {
 	if len(m.dockerNetworks) == 0 {
 		s := strings.Builder{}
 		s.WriteString("No networks found.\n")
@@ -78,7 +78,7 @@ func (m *NetworkListViewModel) render(availableHeight int) string {
 		}
 	}
 
-	return RenderTable(columns, rows, availableHeight, m.selectedDockerNetwork)
+	return RenderTable(columns, rows, availableHeight, m.selectedDockerNetwork, model.width)
 }
 
 // Show switches to the network list view

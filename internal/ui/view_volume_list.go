@@ -66,7 +66,7 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 		}
 	}
 
-	return RenderTable(columns, rows, availableHeight, m.selectedDockerVolume)
+	return RenderTable(columns, rows, availableHeight, m.selectedDockerVolume, model.width)
 }
 
 // Show switches to the volume list view

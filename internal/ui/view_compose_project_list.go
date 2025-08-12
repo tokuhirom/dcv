@@ -79,7 +79,7 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 		rows = append(rows, table.Row{project.Name, status, configFiles})
 	}
 
-	return RenderTable(columns, rows, availableHeight, m.selectedProject)
+	return RenderTable(columns, rows, availableHeight, m.selectedProject, model.width)
 }
 
 func (m *ComposeProjectListViewModel) HandleUp(_ *Model) tea.Cmd {
