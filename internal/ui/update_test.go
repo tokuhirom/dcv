@@ -30,13 +30,13 @@ func TestHandleKeyPress(t *testing.T) {
 						{Name: "web-1"},
 						{Name: "db-1"},
 					},
-					selectedContainer: 0,
+					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyDown},
 			wantView: ComposeProcessListView,
 			checkFunc: func(t *testing.T, m *Model) {
-				assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
+				assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
 			},
 		},
 		{
@@ -48,13 +48,13 @@ func TestHandleKeyPress(t *testing.T) {
 						{Name: "web-1"},
 						{Name: "db-1"},
 					},
-					selectedContainer: 1,
+					TableViewModel: TableViewModel{Cursor: 1},
 				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyUp},
 			wantView: ComposeProcessListView,
 			checkFunc: func(t *testing.T, m *Model) {
-				assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
+				assert.Equal(t, 0, m.composeProcessListViewModel.Cursor)
 			},
 		},
 		{
@@ -65,7 +65,7 @@ func TestHandleKeyPress(t *testing.T) {
 					composeContainers: []models.ComposeContainer{
 						{Name: "web-1"},
 					},
-					selectedContainer: 0,
+					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyEnter},
@@ -85,7 +85,7 @@ func TestHandleKeyPress(t *testing.T) {
 							Command: "dockerd",
 						},
 					},
-					selectedContainer: 0,
+					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
 			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")},
@@ -175,6 +175,14 @@ func TestHandleKeyPress(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
+
+			// Build rows for compose process list if needed
+			if tt.model.currentView == ComposeProcessListView && len(tt.model.composeProcessListViewModel.composeContainers) > 0 {
+				tt.model.composeProcessListViewModel.SetRows(
+					tt.model.composeProcessListViewModel.buildRows(),
+					tt.model.ViewHeight(),
+				)
+			}
 
 			newModel, _ := tt.model.handleKeyPress(tt.key)
 			m := newModel.(*Model)
@@ -369,7 +377,7 @@ func TestBoundaryConditions(t *testing.T) {
 			composeContainers: []models.ComposeContainer{
 				{Name: "test-1"},
 			},
-			selectedContainer: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		},
 	}
 	model.Init() // Initialize key handlers
@@ -377,12 +385,12 @@ func TestBoundaryConditions(t *testing.T) {
 	// Try to go up at the top
 	newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyUp})
 	m := newModel.(*Model)
-	assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer) // Should stay at 0
+	assert.Equal(t, 0, m.composeProcessListViewModel.Cursor) // Should stay at 0
 
 	// Try to go down at the bottom
 	newModel, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
 	m = newModel.(*Model)
-	assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer) // Should stay at 0 (only one item)
+	assert.Equal(t, 0, m.composeProcessListViewModel.Cursor) // Should stay at 0 (only one item)
 
 	// Test with empty list
 	model.composeProcessListViewModel.composeContainers = []models.ComposeContainer{}

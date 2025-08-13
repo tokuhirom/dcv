@@ -23,6 +23,12 @@ func (m *Model) GetComposeProcessListViewModel() *ComposeProcessListViewModel {
 
 func (vm *ComposeProcessListViewModel) SetComposeContainers(containers []models.ComposeContainer) {
 	vm.composeContainers = containers
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (vm *ComposeProcessListViewModel) SetProjectName(name string) {
