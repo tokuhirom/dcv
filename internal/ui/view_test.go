@@ -165,6 +165,14 @@ func TestView(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
 
+			// Build rows for compose process list if needed
+			if tt.model.currentView == ComposeProcessListView && len(tt.model.composeProcessListViewModel.composeContainers) > 0 {
+				tt.model.composeProcessListViewModel.SetRows(
+					tt.model.composeProcessListViewModel.buildRows(),
+					tt.model.ViewHeight(),
+				)
+			}
+
 			view := tt.model.View()
 			for _, expected := range tt.contains {
 				assert.Contains(t, view, expected)
@@ -188,9 +196,12 @@ func TestRenderProcessList(t *testing.T) {
 					State:   "running",
 				},
 			},
-			selectedContainer: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		},
 	}
+
+	// Build rows for table rendering
+	m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
 
 	// Calculate available Height (Height - title - footer)
 	availableHeight := m.Height - 2

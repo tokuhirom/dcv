@@ -33,7 +33,7 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case ComposeProjectListView:
 		return m, m.composeProjectListViewModel.HandleUp(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleUp()
+		return m, m.composeProcessListViewModel.HandleUp(m)
 	case TopView:
 		m.topViewModel.HandleUp()
 		return m, nil
@@ -56,7 +56,7 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	slog.Info("CmdDown called",
 		slog.String("view", m.currentView.String()),
-		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
+		slog.Int("cursor", m.composeProcessListViewModel.Cursor))
 
 	switch m.currentView {
 	case NetworkListView:
@@ -82,7 +82,7 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case ComposeProjectListView:
 		return m, m.composeProjectListViewModel.HandleDown(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleDown()
+		return m, m.composeProcessListViewModel.HandleDown(m)
 	case TopView:
 		m.topViewModel.HandleDown()
 		return m, nil

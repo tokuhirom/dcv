@@ -67,13 +67,14 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 		{Name: "container2"},
 		{Name: "container3"},
 	}
-	model.composeProcessListViewModel.selectedContainer = 1
+	model.composeProcessListViewModel.SetRows(model.composeProcessListViewModel.buildRows(), model.ViewHeight())
+	model.composeProcessListViewModel.Cursor = 1
 
 	// Test executing a navigation command
 	t.Run("down", func(t *testing.T) {
 		newModel, _ := model.commandViewModel.executeKeyHandlerCommand(model, "down")
 		m := newModel.(*Model)
-		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
+		assert.Equal(t, 2, m.composeProcessListViewModel.Cursor)
 	})
 
 	// Test executing an unknown command
@@ -94,18 +95,19 @@ func TestExecuteKeyHandlerCommand(t *testing.T) {
 			{Name: "container2"},
 			{Name: "container3"},
 		}
-		testModel.composeProcessListViewModel.selectedContainer = 0
+		testModel.composeProcessListViewModel.SetRows(testModel.composeProcessListViewModel.buildRows(), testModel.ViewHeight())
+		testModel.composeProcessListViewModel.Cursor = 0
 
-		t.Logf("Before: selectedContainer=%d, numContainers=%d",
-			testModel.composeProcessListViewModel.selectedContainer,
+		t.Logf("Before: Cursor=%d, numContainers=%d",
+			testModel.composeProcessListViewModel.Cursor,
 			len(testModel.composeProcessListViewModel.composeContainers))
 
 		newModel, cmd := testModel.commandViewModel.executeKeyHandlerCommand(testModel, "down")
 		m := newModel.(*Model)
 
-		t.Logf("After: selectedContainer=%d, cmd=%v",
-			m.composeProcessListViewModel.selectedContainer, cmd)
+		t.Logf("After: Cursor=%d, cmd=%v",
+			m.composeProcessListViewModel.Cursor, cmd)
 
-		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
+		assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
 	})
 }
