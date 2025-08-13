@@ -52,7 +52,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 				Names:  "database",
 			},
 		}
-		m.dockerContainerListViewModel.selectedDockerContainer = 0
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 
 		// Test the render function
 		output := m.dockerContainerListViewModel.renderDockerList(m, 20)
@@ -83,6 +83,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 				Names:  "container",
 			},
 		}
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 
 		output := m.dockerContainerListViewModel.renderDockerList(m, 20)
 
@@ -110,6 +111,7 @@ func TestDockerContainerListView_Rendering(t *testing.T) {
 				Names:  "stopped",
 			},
 		}
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 
 		// The render function applies different styles to Up vs Exited containers
 		output := m.dockerContainerListViewModel.renderDockerList(m, 20)
@@ -127,32 +129,33 @@ func TestDockerContainerListView_Navigation(t *testing.T) {
 			{ID: "container2", Image: "image2", Status: "Up", Names: "name2"},
 			{ID: "container3", Image: "image3", Status: "Up", Names: "name3"},
 		}
-		m.dockerContainerListViewModel.selectedDockerContainer = 0
+		m.dockerContainerListViewModel.Cursor = 0
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 		m.initializeKeyHandlers()
 
 		// Test moving down
 		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 1, m.dockerContainerListViewModel.selectedDockerContainer)
+		assert.Equal(t, 1, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving down again
 		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 2, m.dockerContainerListViewModel.selectedDockerContainer)
+		assert.Equal(t, 2, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving down at the end (should stay at 2)
 		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
-		assert.Equal(t, 2, m.dockerContainerListViewModel.selectedDockerContainer)
+		assert.Equal(t, 2, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving up
 		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 1, m.dockerContainerListViewModel.selectedDockerContainer)
+		assert.Equal(t, 1, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving up again
 		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 0, m.dockerContainerListViewModel.selectedDockerContainer)
+		assert.Equal(t, 0, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving up at the beginning (should stay at 0)
 		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
-		assert.Equal(t, 0, m.dockerContainerListViewModel.selectedDockerContainer)
+		assert.Equal(t, 0, m.dockerContainerListViewModel.Cursor)
 	})
 }
 
@@ -215,21 +218,22 @@ func TestDockerContainerListView_Update(t *testing.T) {
 			{ID: "container1", Names: "test1"},
 			{ID: "container2", Names: "test2"},
 		}
-		m.dockerContainerListViewModel.selectedDockerContainer = 0
+		m.dockerContainerListViewModel.Cursor = 0
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 		m.initializeKeyHandlers()
 
 		// Try to move up from first item
 		_, cmd := m.CmdUp(tea.KeyMsg{})
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, m.dockerContainerListViewModel.selectedDockerContainer)
+		assert.Equal(t, 0, m.dockerContainerListViewModel.Cursor)
 
 		// Move to last item
-		m.dockerContainerListViewModel.selectedDockerContainer = 1
+		m.dockerContainerListViewModel.Cursor = 1
 
 		// Try to move down from last item
 		_, cmd = m.CmdDown(tea.KeyMsg{})
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, m.dockerContainerListViewModel.selectedDockerContainer)
+		assert.Equal(t, 1, m.dockerContainerListViewModel.Cursor)
 	})
 
 	t.Run("handles empty container list", func(t *testing.T) {
@@ -256,6 +260,7 @@ func TestDockerContainerListView_FullOutput(t *testing.T) {
 				Names:  "web",
 			},
 		}
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 		m.width = 120
 		m.Height = 30
 		m.loading = false
