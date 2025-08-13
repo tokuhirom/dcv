@@ -370,7 +370,7 @@ func TestHelpViewModel_Integration(t *testing.T) {
 		assert.Equal(t, HelpView, model.currentView)
 		assert.Equal(t, ComposeProcessListView, vm.parentView)
 
-		// Render and verify content
+		// RenderTable and verify content
 		rendered := vm.render(model, model.Height)
 		assert.Contains(t, rendered, "Key")
 		assert.Contains(t, rendered, "Command")

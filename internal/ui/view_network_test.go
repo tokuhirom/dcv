@@ -81,7 +81,7 @@ func TestNetworkListView(t *testing.T) {
 			// Initialize handlers to avoid nil map panic
 			tc.model.initializeKeyHandlers()
 
-			// Render the view
+			// RenderTable the view
 			view := tc.model.View()
 
 			// Check that expected strings are present
