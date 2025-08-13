@@ -27,9 +27,9 @@ func NewFileOperations(dockerClient *client.Client) *FileOperations {
 }
 
 // ListFiles lists files in a container path using multiple strategies
-func (fo *FileOperations) ListFiles(ctx context.Context, containerID, path string) ([]models.ContainerFile, error) {
+func (fo *FileOperations) ListFiles(ctx context.Context, container *Container, path string) ([]models.ContainerFile, error) {
 	// Strategy 1: Try native ls command first
-	files, errNative := fo.listFilesNative(ctx, containerID, path)
+	files, errNative := fo.listFilesNative(container, path)
 	if errNative == nil {
 		return files, nil
 	}
@@ -37,7 +37,7 @@ func (fo *FileOperations) ListFiles(ctx context.Context, containerID, path strin
 	slog.Debug("Native ls failed, trying helper injection", "error", errNative)
 
 	// Strategy 2: Try helper injection
-	files, errHelper := fo.listFilesWithHelper(ctx, containerID, path)
+	files, errHelper := fo.listFilesWithHelper(ctx, container, path)
 	if errHelper == nil {
 		return files, nil
 	}
@@ -46,17 +46,18 @@ func (fo *FileOperations) ListFiles(ctx context.Context, containerID, path strin
 
 	// All strategies failed
 	return nil, fmt.Errorf("unable to list files: native ls and helper injection both failed\nContainer: %s, Path: %s\nnative: %s\nhelper: %s",
-		containerID, path, errNative, errHelper)
+		container.containerID, path, errNative, errHelper)
 }
 
 // listFilesNative tries to list files using the native ls command
-func (fo *FileOperations) listFilesNative(ctx context.Context, containerID, path string) ([]models.ContainerFile, error) {
+func (fo *FileOperations) listFilesNative(container *Container, path string) ([]models.ContainerFile, error) {
 	// Execute ls -la command
-	cmd := []string{"ls", "-la", path}
-	output, err := ExecuteInContainer(ctx, fo.client, containerID, cmd)
+	args := container.OperationArgs("exec", "ls", "-la", path)
+	captured, err := ExecuteCaptured(args...)
 	if err != nil {
 		return nil, fmt.Errorf("native ls failed: %w", err)
 	}
+	output := string(captured)
 
 	// Parse the output
 	files := models.ParseLsOutput(output)
@@ -68,16 +69,16 @@ func (fo *FileOperations) listFilesNative(ctx context.Context, containerID, path
 }
 
 // listFilesWithHelper lists files using the injected helper binary
-func (fo *FileOperations) listFilesWithHelper(ctx context.Context, containerID, path string) ([]models.ContainerFile, error) {
+func (fo *FileOperations) listFilesWithHelper(ctx context.Context, container *Container, path string) ([]models.ContainerFile, error) {
 	// Inject helper if needed
-	helperPath, err := fo.injector.InjectHelper(ctx, containerID)
+	helperPath, err := fo.injector.InjectHelper(ctx, container.containerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to inject helper: %w", err)
 	}
 
 	// Execute helper ls command
 	cmd := []string{helperPath, "ls", path}
-	output, err := ExecuteInContainer(ctx, fo.client, containerID, cmd)
+	output, err := ExecuteInContainer(ctx, fo.client, container.containerID, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("helper ls failed: %w", err)
 	}

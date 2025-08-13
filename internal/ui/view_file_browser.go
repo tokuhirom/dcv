@@ -195,9 +195,8 @@ func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 	return func() tea.Msg {
 		// Use FileOperations for multi-strategy file listing
 		ctx := context.Background()
-		containerID := m.browsingContainer.ContainerID()
 
-		files, err := model.fileOperations.ListFiles(ctx, containerID, m.currentPath)
+		files, err := model.fileOperations.ListFiles(ctx, m.browsingContainer, m.currentPath)
 
 		return containerFilesLoadedMsg{
 			files: files,
