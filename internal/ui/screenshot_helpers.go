@@ -43,6 +43,12 @@ func (m *Model) GetImageListViewModel() *ImageListViewModel {
 
 func (vm *ImageListViewModel) SetImages(images []models.DockerImage) {
 	vm.dockerImages = images
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (m *Model) GetNetworkListViewModel() *NetworkListViewModel {
