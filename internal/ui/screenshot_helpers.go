@@ -35,6 +35,12 @@ func (m *Model) GetDockerContainerListViewModel() *DockerContainerListViewModel 
 
 func (vm *DockerContainerListViewModel) SetDockerContainers(containers []models.DockerContainer) {
 	vm.dockerContainers = containers
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (m *Model) GetImageListViewModel() *ImageListViewModel {
