@@ -79,6 +79,12 @@ func (m *Model) GetComposeProjectListViewModel() *ComposeProjectListViewModel {
 
 func (vm *ComposeProjectListViewModel) SetProjects(projects []models.ComposeProject) {
 	vm.projects = projects
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (m *Model) GetLogViewModel() *LogViewModel {
