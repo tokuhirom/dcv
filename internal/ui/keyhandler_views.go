@@ -69,8 +69,8 @@ func (m *Model) CmdSelectAction(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdShowComposeProjectActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProjectListView:
-		if m.composeProjectListViewModel.selectedProject < len(m.composeProjectListViewModel.projects) {
-			project := m.composeProjectListViewModel.projects[m.composeProjectListViewModel.selectedProject]
+		if m.composeProjectListViewModel.Cursor < len(m.composeProjectListViewModel.projects) {
+			project := m.composeProjectListViewModel.projects[m.composeProjectListViewModel.Cursor]
 			m.composeProjectActionViewModel.Initialize(&project)
 			m.SwitchView(ComposeProjectActionView)
 			return m, nil
