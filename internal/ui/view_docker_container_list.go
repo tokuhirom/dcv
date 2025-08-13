@@ -182,39 +182,6 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 	})
 }
 
-func (m *DockerContainerListViewModel) HandleUp(model *Model) tea.Cmd {
-	height := model.ViewHeight()
-	if height <= 0 {
-		height = 10 // fallback
-	}
-	if m.Cursor > 0 {
-		m.Cursor--
-		if m.Cursor < m.Start {
-			m.Start = m.Cursor
-		}
-		m.End = clamp(m.Start+height, 0, len(m.Rows))
-	}
-	return nil
-}
-
-func (m *DockerContainerListViewModel) HandleDown(model *Model) tea.Cmd {
-	height := model.ViewHeight()
-	if height <= 0 {
-		height = 10 // fallback
-	}
-	if m.Cursor < len(m.Rows)-1 {
-		m.Cursor++
-		if m.Cursor >= m.End {
-			m.Start = m.Cursor - height + 1
-			if m.Start < 0 {
-				m.Start = 0
-			}
-		}
-		m.End = clamp(m.Start+height, 0, len(m.Rows))
-	}
-	return nil
-}
-
 func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Container {
 	// Get the selected Docker container
 	if m.Cursor < len(m.dockerContainers) {

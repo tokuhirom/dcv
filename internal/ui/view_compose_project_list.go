@@ -90,39 +90,6 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 	})
 }
 
-func (m *ComposeProjectListViewModel) HandleUp(model *Model) tea.Cmd {
-	height := model.ViewHeight()
-	if height <= 0 {
-		height = 10 // fallback
-	}
-	if m.Cursor > 0 {
-		m.Cursor--
-		if m.Cursor < m.Start {
-			m.Start = m.Cursor
-		}
-		m.End = clamp(m.Start+height, 0, len(m.Rows))
-	}
-	return nil
-}
-
-func (m *ComposeProjectListViewModel) HandleDown(model *Model) tea.Cmd {
-	height := model.ViewHeight()
-	if height <= 0 {
-		height = 10 // fallback
-	}
-	if m.Cursor < len(m.Rows)-1 {
-		m.Cursor++
-		if m.Cursor >= m.End {
-			m.Start = m.Cursor - height + 1
-			if m.Start < 0 {
-				m.Start = 0
-			}
-		}
-		m.End = clamp(m.Start+height, 0, len(m.Rows))
-	}
-	return nil
-}
-
 func (m *ComposeProjectListViewModel) HandleSelectProject(model *Model) tea.Cmd {
 	if m.Cursor < len(m.projects) {
 		project := m.projects[m.Cursor]
