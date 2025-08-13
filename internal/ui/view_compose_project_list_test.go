@@ -18,10 +18,8 @@ func TestComposeProjectListViewModel_Rendering(t *testing.T) {
 		{
 			name: "displays no projects message when empty",
 			viewModel: ComposeProjectListViewModel{
-				TableViewModel: TableViewModel{
-					Cursor: 0,
-				},
-				projects: []models.ComposeProject{},
+				TableViewModel: TableViewModel{Cursor: 0},
+				projects:       []models.ComposeProject{},
 			},
 			height:   20,
 			expected: []string{"No Docker Compose projects found"},
@@ -41,9 +39,7 @@ func TestComposeProjectListViewModel_Rendering(t *testing.T) {
 						ConfigFiles: "/home/user/database/docker-compose.yml",
 					},
 				},
-				TableViewModel: TableViewModel{
-					Cursor: 0,
-				},
+				TableViewModel: TableViewModel{Cursor: 0},
 			},
 			height: 20,
 			expected: []string{
@@ -69,9 +65,7 @@ func TestComposeProjectListViewModel_Rendering(t *testing.T) {
 						Status: "exited",
 					},
 				},
-				TableViewModel: TableViewModel{
-					Cursor: 0,
-				},
+				TableViewModel: TableViewModel{Cursor: 0},
 			},
 			height:   20,
 			expected: []string{"running-project", "exited-project"},
@@ -86,9 +80,7 @@ func TestComposeProjectListViewModel_Rendering(t *testing.T) {
 						ConfigFiles: "/very/long/path/that/should/be/truncated/in/the/display/docker-compose.yml",
 					},
 				},
-				TableViewModel: TableViewModel{
-					Cursor: 0,
-				},
+				TableViewModel: TableViewModel{Cursor: 0},
 			},
 			height:   20,
 			expected: []string{"/very/long/path/that/should/be/truncated/in/the..."},
@@ -103,8 +95,10 @@ func TestComposeProjectListViewModel_Rendering(t *testing.T) {
 				Height:                      tt.height,
 			}
 
-			// Initialize table rows
-			tt.viewModel.SetRows(tt.viewModel.buildRows(), model.ViewHeight())
+			// Initialize table rows if projects exist
+			if len(tt.viewModel.projects) > 0 {
+				tt.viewModel.SetRows(tt.viewModel.buildRows(), model.ViewHeight())
+			}
 
 			result := tt.viewModel.render(model, tt.height-4)
 
@@ -123,9 +117,6 @@ func TestComposeProjectListViewModel_Navigation(t *testing.T) {
 				{Name: "project1"},
 				{Name: "project2"},
 				{Name: "project3"},
-			},
-			TableViewModel: TableViewModel{
-				Cursor: 0,
 			},
 		}
 		vm.SetRows(vm.buildRows(), model.ViewHeight())
@@ -149,11 +140,9 @@ func TestComposeProjectListViewModel_Navigation(t *testing.T) {
 				{Name: "project2"},
 				{Name: "project3"},
 			},
-			TableViewModel: TableViewModel{
-				Cursor: 2,
-			},
 		}
 		vm.SetRows(vm.buildRows(), model.ViewHeight())
+		vm.Cursor = 2
 
 		cmd := vm.HandleUp(model)
 		assert.Nil(t, cmd)
@@ -177,9 +166,7 @@ func TestComposeProjectListViewModel_Operations(t *testing.T) {
 			projects: []models.ComposeProject{
 				{Name: "my-project"},
 			},
-			TableViewModel: TableViewModel{
-				Cursor: 0,
-			},
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 		model.composeProjectListViewModel = *vm
 
@@ -195,10 +182,8 @@ func TestComposeProjectListViewModel_Operations(t *testing.T) {
 		}
 		model.composeProcessListViewModel.projectName = "old-project"
 		vm := &ComposeProjectListViewModel{
-			projects: []models.ComposeProject{},
-			TableViewModel: TableViewModel{
-				Cursor: 0,
-			},
+			projects:       []models.ComposeProject{},
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 
 		cmd := vm.HandleSelectProject(model)
@@ -214,9 +199,7 @@ func TestComposeProjectListViewModel_Operations(t *testing.T) {
 			projects: []models.ComposeProject{
 				{Name: "project1"},
 			},
-			TableViewModel: TableViewModel{
-				Cursor: 5,
-			}, // Out of bounds
+			TableViewModel: TableViewModel{Cursor: 5}, // Out of bounds
 		}
 
 		cmd := vm.HandleSelectProject(model)
@@ -228,9 +211,7 @@ func TestComposeProjectListViewModel_Operations(t *testing.T) {
 func TestComposeProjectListViewModel_Messages(t *testing.T) {
 	t.Run("Loaded updates project list", func(t *testing.T) {
 		vm := &ComposeProjectListViewModel{
-			TableViewModel: TableViewModel{
-				Cursor: 5, // Out of bounds
-			},
+			TableViewModel: TableViewModel{Cursor: 5}, // Out of bounds
 		}
 
 		projects := []models.ComposeProject{
@@ -247,9 +228,7 @@ func TestComposeProjectListViewModel_Messages(t *testing.T) {
 
 	t.Run("Loaded keeps selection in bounds", func(t *testing.T) {
 		vm := &ComposeProjectListViewModel{
-			TableViewModel: TableViewModel{
-				Cursor: 1,
-			},
+			TableViewModel: TableViewModel{Cursor: 1},
 		}
 
 		projects := []models.ComposeProject{
@@ -269,10 +248,8 @@ func TestComposeProjectListViewModel_EmptySelection(t *testing.T) {
 	t.Run("operations handle empty project list gracefully", func(t *testing.T) {
 		model := &Model{}
 		vm := &ComposeProjectListViewModel{
-			projects: []models.ComposeProject{},
-			TableViewModel: TableViewModel{
-				Cursor: 0,
-			},
+			projects:       []models.ComposeProject{},
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 
 		// Test operations that depend on selection

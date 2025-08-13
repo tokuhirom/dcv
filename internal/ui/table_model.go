@@ -107,37 +107,37 @@ func clamp(v, low, high int) int {
 	return min(max(v, low), high)
 }
 
-// HandleUp moves selection up in the image list
-func (m *ImageListViewModel) HandleUp(model *Model) tea.Cmd {
+// HandleUp moves selection up in the table
+func (t *TableViewModel) HandleUp(model *Model) tea.Cmd {
 	height := model.ViewHeight()
 	if height <= 0 {
 		height = 10 // fallback
 	}
-	if m.Cursor > 0 {
-		m.Cursor--
-		if m.Cursor < m.Start {
-			m.Start = m.Cursor
+	if t.Cursor > 0 {
+		t.Cursor--
+		if t.Cursor < t.Start {
+			t.Start = t.Cursor
 		}
-		m.End = clamp(m.Start+height, 0, len(m.Rows))
+		t.End = clamp(t.Start+height, 0, len(t.Rows))
 	}
 	return nil
 }
 
-// HandleDown moves selection down in the image list
-func (m *ImageListViewModel) HandleDown(model *Model) tea.Cmd {
+// HandleDown moves selection down in the table
+func (t *TableViewModel) HandleDown(model *Model) tea.Cmd {
 	height := model.ViewHeight()
 	if height <= 0 {
 		height = 10 // fallback
 	}
-	if m.Cursor < len(m.Rows)-1 {
-		m.Cursor++
-		if m.Cursor >= m.End {
-			m.Start = m.Cursor - height + 1
-			if m.Start < 0 {
-				m.Start = 0
+	if t.Cursor < len(t.Rows)-1 {
+		t.Cursor++
+		if t.Cursor >= t.End {
+			t.Start = t.Cursor - height + 1
+			if t.Start < 0 {
+				t.Start = 0
 			}
 		}
-		m.End = clamp(m.Start+height, 0, len(m.Rows))
+		t.End = clamp(t.Start+height, 0, len(t.Rows))
 	}
 	return nil
 }
