@@ -29,23 +29,24 @@ func NewFileOperations(dockerClient *client.Client) *FileOperations {
 // ListFiles lists files in a container path using multiple strategies
 func (fo *FileOperations) ListFiles(ctx context.Context, containerID, path string) ([]models.ContainerFile, error) {
 	// Strategy 1: Try native ls command first
-	files, err := fo.listFilesNative(ctx, containerID, path)
-	if err == nil {
+	files, errNative := fo.listFilesNative(ctx, containerID, path)
+	if errNative == nil {
 		return files, nil
 	}
 
-	slog.Debug("Native ls failed, trying helper injection", "error", err)
+	slog.Debug("Native ls failed, trying helper injection", "error", errNative)
 
 	// Strategy 2: Try helper injection
-	files, err = fo.listFilesWithHelper(ctx, containerID, path)
-	if err == nil {
+	files, errHelper := fo.listFilesWithHelper(ctx, containerID, path)
+	if errHelper == nil {
 		return files, nil
 	}
 
-	slog.Debug("Helper injection failed", "error", err)
+	slog.Debug("Helper injection failed", slog.Any("error", errHelper))
 
 	// All strategies failed
-	return nil, fmt.Errorf("unable to list files: native ls and helper injection both failed")
+	return nil, fmt.Errorf("unable to list files: native ls and helper injection both failed\nContainer: %s, Path: %s\nnative: %s\nhelper: %s",
+		containerID, path, errNative, errHelper)
 }
 
 // listFilesNative tries to list files using the native ls command
