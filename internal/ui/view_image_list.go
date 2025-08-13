@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -20,9 +21,9 @@ var _ UpdateAware = (*ImageListViewModel)(nil)
 
 // ImageListViewModel manages the state and rendering of the Docker image list view
 type ImageListViewModel struct {
-	dockerImages        []models.DockerImage
-	selectedDockerImage int
-	showAll             bool
+	TableViewModel
+	dockerImages []models.DockerImage
+	showAll      bool
 }
 
 func (m *ImageListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -33,7 +34,7 @@ func (m *ImageListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.C
 			model.err = msg.err
 		} else {
 			model.err = nil
-			m.Loaded(msg.images)
+			m.Loaded(model, msg.images)
 		}
 		return model, nil
 
@@ -42,11 +43,9 @@ func (m *ImageListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.C
 	}
 }
 
-func (m *ImageListViewModel) Loaded(images []models.DockerImage) {
+func (m *ImageListViewModel) Loaded(model *Model, images []models.DockerImage) {
 	m.dockerImages = images
-	if len(m.dockerImages) > 0 && m.selectedDockerImage >= len(m.dockerImages) {
-		m.selectedDockerImage = 0
-	}
+	m.SetRows(m.buildRows(), model.ViewHeight())
 }
 
 func (m *ImageListViewModel) Title() string {
@@ -71,24 +70,37 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 	if availableWidth < 100 {
 		repoWidth = 20
 	}
+	cellWidth := (availableWidth - repoWidth) / 5
 
 	// Create columns
 	columns := []table.Column{
 		{Title: "REPOSITORY", Width: repoWidth},
-		{Title: "TAG", Width: 15},
-		{Title: "IMAGE ID", Width: 12},
-		{Title: "CREATED", Width: 20},
-		{Title: "SIZE", Width: 10},
+		{Title: "TAG", Width: cellWidth},
+		{Title: "IMAGE ID", Width: cellWidth},
+		{Title: "CREATED", Width: cellWidth},
+		{Title: "SIZE", Width: cellWidth},
 	}
 
+	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+		var base lipgloss.Style
+		if row == m.Cursor {
+			base = tableSelectedCellStyle
+		} else {
+			base = tableNormalCellStyle
+		}
+		if col == 4 {
+			base = base.Align(lipgloss.Right)
+		}
+		return base
+	})
+}
+
+func (m *ImageListViewModel) buildRows() []table.Row {
 	// Create rows
 	rows := make([]table.Row, len(m.dockerImages))
 	for i, image := range m.dockerImages {
 		// Handle <none> repository
 		repo := image.Repository
-		if len(repo) > repoWidth {
-			repo = repo[:repoWidth-3] + "..."
-		}
 
 		// Show first 12 chars of ID
 		id := image.ID
@@ -104,8 +116,7 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 			image.Size,
 		}
 	}
-
-	return RenderTable(columns, rows, availableHeight, m.selectedDockerImage)
+	return rows
 }
 
 // Show switches to the image list view
@@ -125,22 +136,6 @@ func (m *ImageListViewModel) DoLoad(model *Model) tea.Cmd {
 	}
 }
 
-// HandleUp moves selection up in the image list
-func (m *ImageListViewModel) HandleUp() tea.Cmd {
-	if m.selectedDockerImage > 0 {
-		m.selectedDockerImage--
-	}
-	return nil
-}
-
-// HandleDown moves selection down in the image list
-func (m *ImageListViewModel) HandleDown() tea.Cmd {
-	if m.selectedDockerImage < len(m.dockerImages)-1 {
-		m.selectedDockerImage++
-	}
-	return nil
-}
-
 // HandleToggleAll toggles showing all images including intermediate layers
 func (m *ImageListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 	m.showAll = !m.showAll
@@ -149,10 +144,10 @@ func (m *ImageListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 
 // HandleDelete removes the selected image
 func (m *ImageListViewModel) HandleDelete(model *Model) tea.Cmd {
-	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {
+	if len(m.dockerImages) == 0 || m.Cursor >= len(m.dockerImages) {
 		return nil
 	}
-	image := m.dockerImages[m.selectedDockerImage]
+	image := m.dockerImages[m.Cursor]
 	// Use CommandExecutionView to show real-time output
 	args := []string{"rmi", image.GetRepoTag()}
 	return model.commandExecutionViewModel.ExecuteCommand(model, true, args...) // rmi is aggressive
@@ -160,11 +155,11 @@ func (m *ImageListViewModel) HandleDelete(model *Model) tea.Cmd {
 
 // HandleInspect shows the inspect view for the selected image
 func (m *ImageListViewModel) HandleInspect(model *Model) tea.Cmd {
-	if len(m.dockerImages) == 0 || m.selectedDockerImage >= len(m.dockerImages) {
+	if len(m.dockerImages) == 0 || m.Cursor >= len(m.dockerImages) {
 		return nil
 	}
 
-	image := m.dockerImages[m.selectedDockerImage]
+	image := m.dockerImages[m.Cursor]
 	return model.inspectViewModel.Inspect(model, fmt.Sprintf("Image: %s:%s %s", image.Repository, image.Tag, image.ID), func() ([]byte, error) {
 		return model.dockerClient.ExecuteCaptured("image", "inspect", image.ID)
 	})

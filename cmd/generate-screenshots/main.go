@@ -170,7 +170,7 @@ func generateScreenshot(ss screenshot, outputDir string) error {
 	// Set loading to false after injecting mock data
 	model.SetLoading(false)
 
-	// Render view
+	// RenderTable view
 	view := model.View()
 
 	// Create ANSI to image converter with custom config

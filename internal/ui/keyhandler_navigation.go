@@ -19,7 +19,7 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case VolumeListView:
 		return m, m.volumeListViewModel.HandleUp()
 	case ImageListView:
-		return m, m.imageListViewModel.HandleUp()
+		return m, m.imageListViewModel.HandleUp(m)
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleUp()
 	case FileBrowserView:
@@ -68,7 +68,7 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case VolumeListView:
 		return m, m.volumeListViewModel.HandleDown()
 	case ImageListView:
-		return m, m.imageListViewModel.HandleDown()
+		return m, m.imageListViewModel.HandleDown(m)
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleDown(m.Height)
 	case FileBrowserView:
