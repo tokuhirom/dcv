@@ -345,7 +345,9 @@ func TestDockerContainerListView(t *testing.T) {
 			Height:      24,
 			currentView: DockerContainerListView,
 			dockerContainerListViewModel: DockerContainerListViewModel{
-				selectedDockerContainer: 0,
+				TableViewModel: TableViewModel{
+					Cursor: 0,
+				},
 				dockerContainers: []models.DockerContainer{
 					{ID: "abc123def456", Names: "nginx", Image: "nginx:latest", Status: "Up 2 hours", Ports: "80/tcp"},
 					{ID: "789012345678", Names: "redis", Image: "redis:alpine", Status: "Exited (0) 1 hour ago", Ports: ""},
@@ -353,6 +355,8 @@ func TestDockerContainerListView(t *testing.T) {
 			},
 		}
 		m.initializeKeyHandlers()
+		// Initialize the table rows
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 
 		view := m.View()
 

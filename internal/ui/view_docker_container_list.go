@@ -24,15 +24,15 @@ var _ ContainerSearchAware = (*DockerContainerListViewModel)(nil)
 
 type DockerContainerListViewModel struct {
 	ContainerSearchViewModel
-	dockerContainers        []models.DockerContainer
-	selectedDockerContainer int
-	showAll                 bool
+	TableViewModel
+	dockerContainers []models.DockerContainer
+	showAll          bool
 }
 
 func (m *DockerContainerListViewModel) Init(_ *Model) {
 	m.InitContainerSearchViewModel(
 		func(idx int) {
-			m.selectedDockerContainer = idx
+			m.Cursor = idx
 		}, func() {
 			m.performSearch()
 		})
@@ -46,7 +46,7 @@ func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Mo
 			model.err = msg.err
 		} else {
 			model.err = nil
-			m.Loaded(msg.containers)
+			m.Loaded(model, msg.containers)
 		}
 		return model, nil
 
@@ -55,11 +55,9 @@ func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Mo
 	}
 }
 
-func (m *DockerContainerListViewModel) Loaded(containers []models.DockerContainer) {
+func (m *DockerContainerListViewModel) Loaded(model *Model, containers []models.DockerContainer) {
 	m.dockerContainers = containers
-	if len(m.dockerContainers) > 0 && m.selectedDockerContainer >= len(m.dockerContainers) {
-		m.selectedDockerContainer = 0
-	}
+	m.SetRows(m.buildRows(), model.ViewHeight())
 }
 
 type ColumnMap struct {
@@ -121,20 +119,11 @@ func (m *DockerContainerListViewModel) performSearch() {
 
 	// Jump to first result if found
 	if len(results) > 0 {
-		m.selectedDockerContainer = results[0]
+		m.Cursor = results[0]
 	}
 }
 
-func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
-	// Container list
-	if len(m.dockerContainers) == 0 {
-		var s strings.Builder
-		s.WriteString("\nNo containers found.\n")
-		return s.String()
-	}
-
-	columns := NewColumnMap(model)
-
+func (m *DockerContainerListViewModel) buildRows() []table.Row {
 	rows := make([]table.Row, 0, len(m.dockerContainers))
 	for i, container := range m.dockerContainers {
 		// Truncate container ID
@@ -152,7 +141,7 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		status := container.Status
 
 		// Truncate ports
-		ports := lipgloss.NewStyle().MaxWidth(columns.ports.Width).Render(container.Ports)
+		ports := container.Ports
 
 		name := container.Names
 		if container.IsDind() {
@@ -172,28 +161,64 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 
 		rows = append(rows, table.Row{id, image, state, status, ports, name})
 	}
-
-	return RenderTable(columns.ToArray(), rows, availableHeight, m.selectedDockerContainer)
+	return rows
 }
 
-func (m *DockerContainerListViewModel) HandleUp() tea.Cmd {
-	if m.selectedDockerContainer > 0 {
-		m.selectedDockerContainer--
+func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
+	// Container list
+	if len(m.dockerContainers) == 0 {
+		var s strings.Builder
+		s.WriteString("\nNo containers found.\n")
+		return s.String()
+	}
+
+	columns := NewColumnMap(model)
+
+	return m.RenderTable(model, columns.ToArray(), availableHeight, func(row, col int) lipgloss.Style {
+		if row == m.Cursor {
+			return tableSelectedCellStyle
+		}
+		return tableNormalCellStyle
+	})
+}
+
+func (m *DockerContainerListViewModel) HandleUp(model *Model) tea.Cmd {
+	height := model.ViewHeight()
+	if height <= 0 {
+		height = 10 // fallback
+	}
+	if m.Cursor > 0 {
+		m.Cursor--
+		if m.Cursor < m.Start {
+			m.Start = m.Cursor
+		}
+		m.End = clamp(m.Start+height, 0, len(m.Rows))
 	}
 	return nil
 }
 
-func (m *DockerContainerListViewModel) HandleDown() tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers)-1 {
-		m.selectedDockerContainer++
+func (m *DockerContainerListViewModel) HandleDown(model *Model) tea.Cmd {
+	height := model.ViewHeight()
+	if height <= 0 {
+		height = 10 // fallback
+	}
+	if m.Cursor < len(m.Rows)-1 {
+		m.Cursor++
+		if m.Cursor >= m.End {
+			m.Start = m.Cursor - height + 1
+			if m.Start < 0 {
+				m.Start = 0
+			}
+		}
+		m.End = clamp(m.Start+height, 0, len(m.Rows))
 	}
 	return nil
 }
 
 func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Container {
 	// Get the selected Docker container
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
+	if m.Cursor < len(m.dockerContainers) {
+		container := m.dockerContainers[m.Cursor]
 		return docker.NewContainer(container.ID, container.Names, container.Names, container.State)
 	}
 	return nil
