@@ -459,8 +459,8 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 	assert.Equal(t, "/app", m.fileBrowserViewModel.currentPath)
 	assert.Equal(t, 4, len(m.fileBrowserViewModel.pathHistory)) // Should have added parent to history
 	assert.True(t, m.loading)
-	assert.Equal(t, 0, m.fileBrowserViewModel.selectedFile) // Should reset selection
-	assert.NotNil(t, cmd)                                   // Should trigger loading parent directory files
+	assert.Equal(t, 0, m.fileBrowserViewModel.Cursor) // Should reset selection
+	assert.NotNil(t, cmd)                             // Should trigger loading parent directory files
 
 	// Test at root directory - should not change
 	model.fileBrowserViewModel.currentPath = "/"

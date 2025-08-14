@@ -484,7 +484,7 @@ func TestFileBrowserTableView(t *testing.T) {
 			fileBrowserViewModel: FileBrowserViewModel{
 				browsingContainer: container,
 				currentPath:       "/app",
-				selectedFile:      1,
+				TableViewModel:    TableViewModel{Cursor: 1},
 				containerFiles: []models.ContainerFile{
 					{Name: "Dockerfile", Permissions: "-rw-r--r--", IsDir: false},
 					{Name: "src", Permissions: "drwxr-xr-x", IsDir: true},
@@ -494,6 +494,8 @@ func TestFileBrowserTableView(t *testing.T) {
 			},
 		}
 		m.initializeKeyHandlers()
+		// Build rows for table
+		m.fileBrowserViewModel.SetRows(m.fileBrowserViewModel.buildRows(), m.ViewHeight())
 
 		view := m.View()
 

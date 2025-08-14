@@ -5,16 +5,15 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type HelpViewModel struct {
-	scrollY    int
+	TableViewModel
 	parentView ViewType
 }
 
 func (m *HelpViewModel) render(model *Model, availableHeight int) string {
-	rows := m.buildRows(model)
-
 	// Create columns
 	columns := []table.Column{
 		{Title: "Key", Width: 15},
@@ -22,7 +21,12 @@ func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 		{Title: "Description", Width: 40},
 	}
 
-	return RenderTable(columns, rows, availableHeight-2, m.scrollY)
+	return m.RenderTable(model, columns, availableHeight-2, func(row, col int) lipgloss.Style {
+		if row == m.Cursor {
+			return tableSelectedCellStyle
+		}
+		return tableNormalCellStyle
+	})
 }
 
 func (m *HelpViewModel) buildRows(model *Model) []table.Row {
@@ -71,26 +75,21 @@ func keyHandlersToTableRows(model *Model, keyHandlers []KeyConfig) []table.Row {
 func (m *HelpViewModel) Show(model *Model, parentView ViewType) tea.Cmd {
 	m.parentView = parentView
 	model.SwitchView(HelpView)
-	m.scrollY = 0
+	m.Cursor = 0
+	m.SetRows(m.buildRows(model), model.ViewHeight())
 	return nil
 }
 
-func (m *HelpViewModel) HandleUp() tea.Cmd {
-	if m.scrollY > 0 {
-		m.scrollY--
-	}
-	return nil
+func (m *HelpViewModel) HandleUp(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleUp(model)
 }
 
 func (m *HelpViewModel) HandleDown(model *Model) tea.Cmd {
-	if m.scrollY < len(m.buildRows(model))-1 { // Assuming buildRows returns all rows
-		m.scrollY++
-	}
-	return nil
+	return m.TableViewModel.HandleDown(model)
 }
 
 func (m *HelpViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
-	m.scrollY = 0
+	m.Cursor = 0
 	return nil
 }

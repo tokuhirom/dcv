@@ -11,19 +11,19 @@ import (
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case NetworkListView:
-		return m, m.networkListViewModel.HandleUp()
+		return m, m.networkListViewModel.HandleUp(m)
 	case HelpView:
-		return m, m.helpViewModel.HandleUp()
+		return m, m.helpViewModel.HandleUp(m)
 	case DindProcessListView:
 		return m, m.dindProcessListViewModel.HandleUp(m)
 	case VolumeListView:
-		return m, m.volumeListViewModel.HandleUp()
+		return m, m.volumeListViewModel.HandleUp(m)
 	case ImageListView:
 		return m, m.imageListViewModel.HandleUp(m)
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleUp()
 	case FileBrowserView:
-		return m, m.fileBrowserViewModel.HandleUp()
+		return m, m.fileBrowserViewModel.HandleUp(m)
 	case LogView:
 		return m, m.logViewModel.HandleUp()
 	case InspectView:
@@ -60,19 +60,19 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	switch m.currentView {
 	case NetworkListView:
-		return m, m.networkListViewModel.HandleDown()
+		return m, m.networkListViewModel.HandleDown(m)
 	case HelpView:
 		return m, m.helpViewModel.HandleDown(m)
 	case DindProcessListView:
 		return m, m.dindProcessListViewModel.HandleDown(m)
 	case VolumeListView:
-		return m, m.volumeListViewModel.HandleDown()
+		return m, m.volumeListViewModel.HandleDown(m)
 	case ImageListView:
 		return m, m.imageListViewModel.HandleDown(m)
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleDown(m.Height)
 	case FileBrowserView:
-		return m, m.fileBrowserViewModel.HandleDown()
+		return m, m.fileBrowserViewModel.HandleDown(m)
 	case LogView:
 		return m, m.logViewModel.HandleDown(m)
 	case InspectView:
