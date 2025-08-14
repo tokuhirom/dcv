@@ -71,8 +71,8 @@ func TestFileBrowserViewModel_Rendering(t *testing.T) {
 		{
 			name: "displays no files message when empty",
 			viewModel: FileBrowserViewModel{
+				TableViewModel: TableViewModel{Cursor: 0},
 				containerFiles: []models.ContainerFile{},
-				selectedFile:   0,
 				currentPath:    "/",
 			},
 			model: &Model{
@@ -107,8 +107,8 @@ func TestFileBrowserViewModel_Rendering(t *testing.T) {
 						IsDir:       false,
 					},
 				},
-				selectedFile: 0,
-				currentPath:  "/usr/local",
+				TableViewModel: TableViewModel{Cursor: 0},
+				currentPath:    "/usr/local",
 			},
 			model: &Model{
 				width:  100,
@@ -139,8 +139,8 @@ func TestFileBrowserViewModel_Rendering(t *testing.T) {
 						IsDir:       false,
 					},
 				},
-				selectedFile: 0,
-				currentPath:  "/",
+				TableViewModel: TableViewModel{Cursor: 0},
+				currentPath:    "/",
 			},
 			model: &Model{
 				width:  100,
@@ -160,8 +160,8 @@ func TestFileBrowserViewModel_Rendering(t *testing.T) {
 						LinkTarget:  "/shell/path",
 					},
 				},
-				selectedFile: 0,
-				currentPath:  "/",
+				TableViewModel: TableViewModel{Cursor: 0},
+				currentPath:    "/",
 			},
 			model: &Model{
 				width:  100,
@@ -175,6 +175,8 @@ func TestFileBrowserViewModel_Rendering(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.model.fileBrowserViewModel = tt.viewModel
+			// Build rows for table
+			tt.viewModel.SetRows(tt.viewModel.buildRows(), tt.model.ViewHeight())
 			result := tt.viewModel.render(tt.model, tt.height-4)
 
 			for _, expected := range tt.expected {
@@ -192,18 +194,20 @@ func TestFileBrowserViewModel_Navigation(t *testing.T) {
 				{Name: "file2.txt"},
 				{Name: "file3.txt"},
 			},
-			selectedFile: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 
-		cmd := vm.HandleDown()
+		model := &Model{Height: 20}
+		vm.SetRows(vm.buildRows(), model.ViewHeight())
+		cmd := vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.selectedFile)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.selectedFile = 2
-		cmd = vm.HandleDown()
+		vm.Cursor = 2
+		cmd = vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 2, vm.selectedFile, "Should not go beyond last file")
+		assert.Equal(t, 2, vm.Cursor, "Should not go beyond last file")
 	})
 
 	t.Run("HandleUp moves selection up", func(t *testing.T) {
@@ -213,18 +217,20 @@ func TestFileBrowserViewModel_Navigation(t *testing.T) {
 				{Name: "file2.txt"},
 				{Name: "file3.txt"},
 			},
-			selectedFile: 2,
+			TableViewModel: TableViewModel{Cursor: 2},
 		}
 
-		cmd := vm.HandleUp()
+		model := &Model{Height: 20}
+		vm.SetRows(vm.buildRows(), model.ViewHeight())
+		cmd := vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.selectedFile)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.selectedFile = 0
-		cmd = vm.HandleUp()
+		vm.Cursor = 0
+		cmd = vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, vm.selectedFile, "Should not go below 0")
+		assert.Equal(t, 0, vm.Cursor, "Should not go below 0")
 	})
 }
 
@@ -244,7 +250,7 @@ func TestFileBrowserViewModel_DirectoryNavigation(t *testing.T) {
 		assert.Equal(t, "/usr/local", vm.currentPath)
 		// pushHistory appends the parent path
 		assert.Equal(t, []string{"/", "/usr", "/usr/local", "/usr/local/bin", "/usr/local"}, vm.pathHistory)
-		assert.Equal(t, 0, vm.selectedFile)
+		assert.Equal(t, 0, vm.Cursor)
 	})
 
 	t.Run("HandleGoToParentDirectory does nothing at root", func(t *testing.T) {
@@ -275,16 +281,16 @@ func TestFileBrowserViewModel_FileOperations(t *testing.T) {
 			containerFiles: []models.ContainerFile{
 				{Name: "subdir", IsDir: true},
 			},
-			selectedFile: 0,
-			currentPath:  "/usr",
-			pathHistory:  []string{"/", "/usr"},
+			TableViewModel: TableViewModel{Cursor: 0},
+			currentPath:    "/usr",
+			pathHistory:    []string{"/", "/usr"},
 		}
 
 		cmd := vm.HandleOpenFileOrDirectory(model)
 		assert.NotNil(t, cmd)
 		assert.Equal(t, "/usr/subdir", vm.currentPath)
 		assert.Equal(t, []string{"/", "/usr", "/usr/subdir"}, vm.pathHistory)
-		assert.Equal(t, 0, vm.selectedFile)
+		assert.Equal(t, 0, vm.Cursor)
 	})
 
 	t.Run("HandleOpenFileOrDirectory opens file content", func(t *testing.T) {
@@ -297,7 +303,7 @@ func TestFileBrowserViewModel_FileOperations(t *testing.T) {
 			containerFiles: []models.ContainerFile{
 				{Name: "file.txt", IsDir: false},
 			},
-			selectedFile:      0,
+			TableViewModel:    TableViewModel{Cursor: 0},
 			currentPath:       "/usr",
 			browsingContainer: docker.NewContainer("container123", "test-container", "test-container", "running"),
 		}
@@ -317,16 +323,16 @@ func TestFileBrowserViewModel_FileOperations(t *testing.T) {
 			containerFiles: []models.ContainerFile{
 				{Name: "..", IsDir: true},
 			},
-			selectedFile: 0,
-			currentPath:  "/usr/local",
-			pathHistory:  []string{"/", "/usr", "/usr/local"},
+			TableViewModel: TableViewModel{Cursor: 0},
+			currentPath:    "/usr/local",
+			pathHistory:    []string{"/", "/usr", "/usr/local"},
 		}
 
 		cmd := vm.HandleOpenFileOrDirectory(model)
 		assert.NotNil(t, cmd)
 		assert.Equal(t, "/usr", vm.currentPath)
 		assert.Equal(t, []string{"/", "/usr", "/usr/local", "/usr"}, vm.pathHistory)
-		assert.Equal(t, 0, vm.selectedFile)
+		assert.Equal(t, 0, vm.Cursor)
 	})
 
 	t.Run("HandleOpenFileOrDirectory ignores . directory", func(t *testing.T) {
@@ -338,8 +344,8 @@ func TestFileBrowserViewModel_FileOperations(t *testing.T) {
 			containerFiles: []models.ContainerFile{
 				{Name: ".", IsDir: true},
 			},
-			selectedFile: 0,
-			currentPath:  "/usr",
+			TableViewModel: TableViewModel{Cursor: 0},
+			currentPath:    "/usr",
 		}
 
 		cmd := vm.HandleOpenFileOrDirectory(model)
@@ -405,7 +411,7 @@ func TestFileBrowserViewModel_HandleBack(t *testing.T) {
 func TestFileBrowserViewModel_Loaded(t *testing.T) {
 	t.Run("Loaded updates container files", func(t *testing.T) {
 		vm := &FileBrowserViewModel{
-			selectedFile: 10, // Out of bounds
+			TableViewModel: TableViewModel{Cursor: 10}, // Out of bounds
 		}
 
 		files := []models.ContainerFile{
@@ -413,14 +419,15 @@ func TestFileBrowserViewModel_Loaded(t *testing.T) {
 			{Name: "file2.txt"},
 		}
 
-		vm.Loaded(files)
+		model := &Model{Height: 20}
+		vm.Loaded(model, files)
 		assert.Equal(t, files, vm.containerFiles)
-		assert.Equal(t, 0, vm.selectedFile, "Should reset selection when out of bounds")
+		assert.Equal(t, 0, vm.Cursor, "Should reset selection when out of bounds")
 	})
 
 	t.Run("Loaded preserves valid selection", func(t *testing.T) {
 		vm := &FileBrowserViewModel{
-			selectedFile: 1,
+			TableViewModel: TableViewModel{Cursor: 1},
 		}
 
 		files := []models.ContainerFile{
@@ -429,9 +436,10 @@ func TestFileBrowserViewModel_Loaded(t *testing.T) {
 			{Name: "file3.txt"},
 		}
 
-		vm.Loaded(files)
+		model := &Model{Height: 20}
+		vm.Loaded(model, files)
 		assert.Equal(t, files, vm.containerFiles)
-		assert.Equal(t, 1, vm.selectedFile, "Should preserve valid selection")
+		assert.Equal(t, 1, vm.Cursor, "Should preserve valid selection")
 	})
 }
 

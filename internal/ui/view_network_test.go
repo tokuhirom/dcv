@@ -42,7 +42,7 @@ func TestNetworkListView(t *testing.T) {
 							Internal: true,
 						},
 					},
-					selectedDockerNetwork: 1,
+					TableViewModel: TableViewModel{Cursor: 1},
 				},
 				width:  120,
 				Height: 30,
@@ -81,6 +81,12 @@ func TestNetworkListView(t *testing.T) {
 			// Initialize handlers to avoid nil map panic
 			tc.model.initializeKeyHandlers()
 
+			// Build rows for table
+			tc.model.networkListViewModel.SetRows(
+				tc.model.networkListViewModel.buildRows(),
+				tc.model.ViewHeight(),
+			)
+
 			// RenderTable the view
 			view := tc.model.View()
 
@@ -103,11 +109,14 @@ func TestRenderNetworkList(t *testing.T) {
 				Internal: false,
 			},
 		},
-		selectedDockerNetwork: 0,
+		TableViewModel: TableViewModel{Cursor: 0},
 	}
 
 	// Test rendering with sufficient Height
-	output := vm.render(10)
+	model := &Model{Height: 20}
+	// Build rows for table
+	vm.SetRows(vm.buildRows(), model.ViewHeight())
+	output := vm.render(model, 10)
 
 	assert.Contains(t, output, "NETWORK ID")
 	assert.Contains(t, output, "NAME")

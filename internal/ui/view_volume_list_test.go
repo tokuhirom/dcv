@@ -20,8 +20,8 @@ func TestVolumeListViewModel_Rendering(t *testing.T) {
 		{
 			name: "displays no volumes message when empty",
 			viewModel: VolumeListViewModel{
-				dockerVolumes:        []models.DockerVolume{},
-				selectedDockerVolume: 0,
+				dockerVolumes:  []models.DockerVolume{},
+				TableViewModel: TableViewModel{Cursor: 0},
 			},
 			model: &Model{
 				width:  100,
@@ -50,7 +50,7 @@ func TestVolumeListViewModel_Rendering(t *testing.T) {
 						Scope:  "global",
 					},
 				},
-				selectedDockerVolume: 0,
+				TableViewModel: TableViewModel{Cursor: 0},
 			},
 			model: &Model{
 				width:  100,
@@ -72,6 +72,8 @@ func TestVolumeListViewModel_Rendering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Build rows for table
+			tt.viewModel.SetRows(tt.viewModel.buildRows(), tt.model.ViewHeight())
 			result := tt.viewModel.render(tt.model, tt.height-4)
 
 			for _, expected := range tt.expected {
@@ -89,18 +91,20 @@ func TestVolumeListViewModel_Navigation(t *testing.T) {
 				{Name: "volume-2"},
 				{Name: "volume-3"},
 			},
-			selectedDockerVolume: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 
-		cmd := vm.HandleDown()
+		model := &Model{Height: 20}
+		vm.SetRows(vm.buildRows(), model.ViewHeight())
+		cmd := vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.selectedDockerVolume)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.selectedDockerVolume = 2
-		cmd = vm.HandleDown()
+		vm.Cursor = 2
+		cmd = vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 2, vm.selectedDockerVolume, "Should not go beyond last volume")
+		assert.Equal(t, 2, vm.Cursor, "Should not go beyond last volume")
 	})
 
 	t.Run("HandleUp moves selection up", func(t *testing.T) {
@@ -110,18 +114,20 @@ func TestVolumeListViewModel_Navigation(t *testing.T) {
 				{Name: "volume-2"},
 				{Name: "volume-3"},
 			},
-			selectedDockerVolume: 2,
+			TableViewModel: TableViewModel{Cursor: 2},
 		}
 
-		cmd := vm.HandleUp()
+		model := &Model{Height: 20}
+		vm.SetRows(vm.buildRows(), model.ViewHeight())
+		cmd := vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.selectedDockerVolume)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.selectedDockerVolume = 0
-		cmd = vm.HandleUp()
+		vm.Cursor = 0
+		cmd = vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, vm.selectedDockerVolume, "Should not go below 0")
+		assert.Equal(t, 0, vm.Cursor, "Should not go below 0")
 	})
 }
 
@@ -136,13 +142,13 @@ func TestVolumeListViewModel_Show(t *testing.T) {
 			dockerVolumes: []models.DockerVolume{
 				{Name: "existing-volume"},
 			},
-			selectedDockerVolume: 5,
+			TableViewModel: TableViewModel{Cursor: 5},
 		}
 
 		cmd := vm.Show(model)
 		assert.NotNil(t, cmd)
 		assert.Equal(t, VolumeListView, model.currentView)
-		assert.Equal(t, 0, vm.selectedDockerVolume, "Should reset selection")
+		assert.Equal(t, 0, vm.Cursor, "Should reset selection")
 		assert.Empty(t, vm.dockerVolumes, "Should reset volume list")
 		assert.Nil(t, model.err, "Should clear error")
 		assert.True(t, model.loading)
@@ -155,8 +161,8 @@ func TestVolumeListViewModel_HandleInspect(t *testing.T) {
 			dockerClient: docker.NewClient(),
 		}
 		vm := &VolumeListViewModel{
-			dockerVolumes:        []models.DockerVolume{},
-			selectedDockerVolume: 0,
+			dockerVolumes:  []models.DockerVolume{},
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 
 		cmd := vm.HandleInspect(model)
@@ -171,7 +177,7 @@ func TestVolumeListViewModel_HandleInspect(t *testing.T) {
 			dockerVolumes: []models.DockerVolume{
 				{Name: "volume-1"},
 			},
-			selectedDockerVolume: 5, // Out of bounds
+			TableViewModel: TableViewModel{Cursor: 5}, // Out of bounds
 		}
 
 		cmd := vm.HandleInspect(model)
@@ -189,7 +195,7 @@ func TestVolumeListViewModel_HandleInspect(t *testing.T) {
 				{Name: "volume-1"},
 				{Name: "volume-2"},
 			},
-			selectedDockerVolume: 1,
+			TableViewModel: TableViewModel{Cursor: 1},
 		}
 
 		cmd := vm.HandleInspect(model)
@@ -205,8 +211,8 @@ func TestVolumeListViewModel_HandleDelete(t *testing.T) {
 			dockerClient: docker.NewClient(),
 		}
 		vm := &VolumeListViewModel{
-			dockerVolumes:        []models.DockerVolume{},
-			selectedDockerVolume: 0,
+			dockerVolumes:  []models.DockerVolume{},
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 
 		cmd := vm.HandleDelete(model, false)
@@ -221,7 +227,7 @@ func TestVolumeListViewModel_HandleDelete(t *testing.T) {
 			dockerVolumes: []models.DockerVolume{
 				{Name: "volume-1"},
 			},
-			selectedDockerVolume: 5, // Out of bounds
+			TableViewModel: TableViewModel{Cursor: 5}, // Out of bounds
 		}
 
 		cmd := vm.HandleDelete(model, false)
@@ -238,7 +244,7 @@ func TestVolumeListViewModel_HandleDelete(t *testing.T) {
 				{Name: "volume-1"},
 				{Name: "volume-2"},
 			},
-			selectedDockerVolume: 1,
+			TableViewModel: TableViewModel{Cursor: 1},
 		}
 
 		cmd := vm.HandleDelete(model, false)
@@ -256,7 +262,7 @@ func TestVolumeListViewModel_HandleDelete(t *testing.T) {
 			dockerVolumes: []models.DockerVolume{
 				{Name: "volume-1"},
 			},
-			selectedDockerVolume: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 
 		cmd := vm.HandleDelete(model, true) // Force delete
@@ -297,7 +303,7 @@ func TestVolumeListViewModel_DoLoad(t *testing.T) {
 func TestVolumeListViewModel_Loaded(t *testing.T) {
 	t.Run("Loaded updates volume list", func(t *testing.T) {
 		vm := &VolumeListViewModel{
-			selectedDockerVolume: 10, // Out of bounds
+			TableViewModel: TableViewModel{Cursor: 10}, // Out of bounds
 		}
 
 		volumes := []models.DockerVolume{
@@ -305,14 +311,15 @@ func TestVolumeListViewModel_Loaded(t *testing.T) {
 			{Name: "volume-2"},
 		}
 
-		vm.Loaded(volumes)
+		model := &Model{Height: 20}
+		vm.Loaded(model, volumes)
 		assert.Equal(t, volumes, vm.dockerVolumes)
-		assert.Equal(t, 0, vm.selectedDockerVolume, "Should reset selection when out of bounds")
+		assert.Equal(t, 0, vm.Cursor, "Should reset selection when out of bounds")
 	})
 
 	t.Run("Loaded preserves valid selection", func(t *testing.T) {
 		vm := &VolumeListViewModel{
-			selectedDockerVolume: 1,
+			TableViewModel: TableViewModel{Cursor: 1},
 		}
 
 		volumes := []models.DockerVolume{
@@ -321,20 +328,22 @@ func TestVolumeListViewModel_Loaded(t *testing.T) {
 			{Name: "volume-3"},
 		}
 
-		vm.Loaded(volumes)
+		model := &Model{Height: 20}
+		vm.Loaded(model, volumes)
 		assert.Equal(t, volumes, vm.dockerVolumes)
-		assert.Equal(t, 1, vm.selectedDockerVolume, "Should preserve valid selection")
+		assert.Equal(t, 1, vm.Cursor, "Should preserve valid selection")
 	})
 
 	t.Run("Loaded handles empty volume list", func(t *testing.T) {
 		vm := &VolumeListViewModel{
-			selectedDockerVolume: 5,
+			TableViewModel: TableViewModel{Cursor: 5},
 		}
 
 		volumes := []models.DockerVolume{}
 
-		vm.Loaded(volumes)
+		model := &Model{Height: 20}
+		vm.Loaded(model, volumes)
 		assert.Equal(t, volumes, vm.dockerVolumes)
-		assert.Equal(t, 5, vm.selectedDockerVolume, "Selection unchanged when list is empty")
+		assert.Equal(t, 0, vm.Cursor, "Selection reset when list is empty")
 	})
 }

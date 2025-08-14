@@ -69,6 +69,8 @@ func (m *Model) GetNetworkListViewModel() *NetworkListViewModel {
 
 func (vm *NetworkListViewModel) SetNetworks(networks []models.DockerNetwork) {
 	vm.dockerNetworks = networks
+	// Build rows for table display
+	vm.SetRows(vm.buildRows(), 20) // Use default height for screenshots
 }
 
 func (m *Model) GetVolumeListViewModel() *VolumeListViewModel {
@@ -77,6 +79,8 @@ func (m *Model) GetVolumeListViewModel() *VolumeListViewModel {
 
 func (vm *VolumeListViewModel) SetVolumes(volumes []models.DockerVolume) {
 	vm.dockerVolumes = volumes
+	// Build rows for table display
+	vm.SetRows(vm.buildRows(), 20) // Use default height for screenshots
 }
 
 func (m *Model) GetComposeProjectListViewModel() *ComposeProjectListViewModel {
@@ -149,6 +153,8 @@ func (m *Model) GetFileBrowserViewModel() *FileBrowserViewModel {
 
 func (vm *FileBrowserViewModel) SetContainerFiles(files []models.ContainerFile) {
 	vm.containerFiles = files
+	// Build rows for table display
+	vm.SetRows(vm.buildRows(), 20) // Use default height for screenshots
 }
 
 func (vm *FileBrowserViewModel) SetBrowsingContainer(container *docker.Container) {
@@ -157,6 +163,10 @@ func (vm *FileBrowserViewModel) SetBrowsingContainer(container *docker.Container
 
 func (vm *FileBrowserViewModel) SetCurrentPath(path string) {
 	vm.currentPath = path
+}
+
+func (m *Model) GetHelpViewModel() *HelpViewModel {
+	return &m.helpViewModel
 }
 
 func (m *Model) GetFileContentViewModel() *FileContentViewModel {
