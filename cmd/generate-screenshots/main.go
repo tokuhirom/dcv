@@ -92,7 +92,7 @@ func main() {
 			name:       "Help View",
 			filename:   "help-view.png",
 			viewType:   ui.HelpView,
-			setupModel: nil, // Help view generates its content automatically
+			setupModel: setupHelpView,
 		},
 		{
 			name:       "Stats View",
@@ -502,6 +502,12 @@ func setupProjectList(m *ui.Model) {
 			ConfigFiles: "/home/user/test/docker-compose.test.yml",
 		},
 	})
+}
+
+func setupHelpView(m *ui.Model) {
+	vm := m.GetHelpViewModel()
+	// Show help for compose process list view
+	vm.Show(m, ui.ComposeProcessListView)
 }
 
 func setupLogView(m *ui.Model) {
