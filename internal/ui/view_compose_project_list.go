@@ -77,9 +77,9 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 
 	// Project list
 	columns := []table.Column{
-		{Title: "NAME", Width: 20},
-		{Title: "STATUS", Width: 15},
-		{Title: "CONFIG FILES", Width: model.width - 40},
+		{Title: "NAME", Width: -1},
+		{Title: "STATUS", Width: -1},
+		{Title: "CONFIG FILES", Width: -1},
 	}
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {

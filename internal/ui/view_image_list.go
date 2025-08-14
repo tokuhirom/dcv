@@ -70,15 +70,14 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 	if availableWidth < 100 {
 		repoWidth = 20
 	}
-	cellWidth := (availableWidth - repoWidth) / 5
 
 	// Create columns
 	columns := []table.Column{
 		{Title: "REPOSITORY", Width: repoWidth},
-		{Title: "TAG", Width: cellWidth},
-		{Title: "IMAGE ID", Width: cellWidth},
-		{Title: "CREATED", Width: cellWidth},
-		{Title: "SIZE", Width: cellWidth},
+		{Title: "TAG", Width: -1},
+		{Title: "IMAGE ID", Width: 12},
+		{Title: "CREATED", Width: -1},
+		{Title: "SIZE", Width: -1},
 	}
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {

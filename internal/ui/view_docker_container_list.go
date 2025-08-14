@@ -65,20 +65,14 @@ type ColumnMap struct {
 	names       table.Column
 }
 
-func NewColumnMap(model *Model) ColumnMap {
-	sideMargin := 2 * 2    // 2 for left and right padding
-	cellMargin := 2        // 2 for cell margin
-	containerIDWidth := 12 // Fixed width for container ID
-	stateWidth := 10
-	widthPerColumn := (model.width - containerIDWidth - stateWidth - cellMargin*4 - sideMargin) / 4
-
+func NewColumnMap() ColumnMap {
 	return ColumnMap{
-		containerID: table.Column{Title: "CONTAINER ID", Width: containerIDWidth},
-		image:       table.Column{Title: "IMAGE", Width: widthPerColumn},
-		state:       table.Column{Title: "STATE", Width: stateWidth}, // Fixed width for state
-		status:      table.Column{Title: "STATUS", Width: widthPerColumn},
-		ports:       table.Column{Title: "PORTS", Width: widthPerColumn},
-		names:       table.Column{Title: "NAMES", Width: widthPerColumn},
+		containerID: table.Column{Title: "CONTAINER ID", Width: -1},
+		image:       table.Column{Title: "IMAGE", Width: -1},
+		state:       table.Column{Title: "STATE", Width: -1},
+		status:      table.Column{Title: "STATUS", Width: -1},
+		ports:       table.Column{Title: "PORTS", Width: -1},
+		names:       table.Column{Title: "NAMES", Width: -1},
 	}
 }
 
@@ -168,7 +162,7 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		return s.String()
 	}
 
-	columns := NewColumnMap(model)
+	columns := NewColumnMap()
 
 	// Reduce available height if search info will be displayed
 	tableHeight := availableHeight
