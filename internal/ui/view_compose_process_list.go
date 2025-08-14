@@ -122,9 +122,6 @@ func (m *ComposeProcessListViewModel) buildRows() []table.Row {
 
 		// Truncate image name if too long
 		image := container.Image
-		if len(image) > 30 {
-			image = image[:27] + "..."
-		}
 
 		state := container.State
 
@@ -138,9 +135,6 @@ func (m *ComposeProcessListViewModel) buildRows() []table.Row {
 
 		// Truncate ports if too long
 		ports := container.GetPortsString()
-		if len(ports) > 40 {
-			ports = ports[:37] + "..."
-		}
 
 		rows = append(rows, table.Row{service, image, state, status, ports})
 	}
@@ -162,11 +156,11 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 
 	// Create table with fixed widths
 	columns := []table.Column{
-		{Title: "SERVICE", Width: 20},
-		{Title: "IMAGE", Width: 30},
-		{Title: "STATE", Width: 10},
-		{Title: "STATUS", Width: 20},
-		{Title: "PORTS", Width: model.width - 75},
+		{Title: "SERVICE", Width: -1},
+		{Title: "IMAGE", Width: -1},
+		{Title: "STATE", Width: -1},
+		{Title: "STATUS", Width: -1},
+		{Title: "PORTS", Width: -1},
 	}
 
 	// Reduce available height if search info will be displayed

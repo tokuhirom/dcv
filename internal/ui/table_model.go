@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -81,6 +82,8 @@ func (t *TableViewModel) SetRows(rows []table.Row, height int) {
 }
 
 func (t *TableViewModel) RenderTable(model *Model, columns []table.Column, _ int, styleCallback func(int, int) lipgloss.Style) string {
+	t.adjustColumnsWidth(&columns, model.width)
+
 	// RenderTable the table header
 	var s strings.Builder
 	var headerLine strings.Builder
@@ -210,4 +213,47 @@ func (t *TableViewModel) HandleDown(model *Model) tea.Cmd {
 		t.End = clamp(t.Start+height, 0, len(t.Rows))
 	}
 	return nil
+}
+
+func (t *TableViewModel) adjustColumnsWidth(columns *[]table.Column, width int) {
+
+	sideMargin := 2 * 2 // 2 for left and right padding
+	cellMargin := 2     // 2 for cell margin
+	autoAdjustColumnCount := 0
+	remainingWidth := width - sideMargin - cellMargin*(len(*columns)-1)
+	for _, column := range *columns {
+		if column.Width == -1 {
+			autoAdjustColumnCount++
+		} else {
+			remainingWidth -= column.Width
+		}
+	}
+	autoAdjustedWidth := 0
+	if autoAdjustColumnCount > 0 {
+		autoAdjustedWidth = remainingWidth / autoAdjustColumnCount
+	}
+	for i, column := range *columns {
+		if column.Width == -1 {
+			colWidth := runewidth.StringWidth(column.Title)
+			for _, row := range t.Rows {
+				colWidth = max(runewidth.StringWidth(row[i]), colWidth)
+			}
+			if colWidth < autoAdjustedWidth {
+				(*columns)[i].Width = colWidth
+				remainingWidth -= colWidth
+				autoAdjustColumnCount--
+			}
+		}
+	}
+	if autoAdjustColumnCount > 0 {
+		autoAdjustedWidth = remainingWidth / autoAdjustColumnCount
+	}
+	// Set auto-adjusted widths for remaining columns
+	for i := range *columns {
+		if (*columns)[i].Width == -1 {
+			(*columns)[i].Width = autoAdjustedWidth
+		}
+	}
+	slog.Info("Table columns",
+		slog.Any("columns", columns))
 }

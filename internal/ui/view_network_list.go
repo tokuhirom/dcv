@@ -52,10 +52,10 @@ func (m *NetworkListViewModel) buildRows() []table.Row {
 	rows := make([]table.Row, 0, len(m.dockerNetworks))
 	for _, network := range m.dockerNetworks {
 		rows = append(rows, table.Row{
-			truncate(network.ID, 12),
-			truncate(network.Name, 30),
-			truncate(network.Driver, 15),
-			truncate(network.Scope, 10),
+			network.ID,
+			network.Name,
+			network.Driver,
+			network.Scope,
 			fmt.Sprintf("%d", network.GetContainerCount()),
 		})
 	}
@@ -72,19 +72,33 @@ func (m *NetworkListViewModel) render(model *Model, availableHeight int) string 
 	}
 
 	// Create table columns
+	sideMargin := 2 * 2  // 2 for left and right padding
+	cellMargin := 2      // 2 for cell margin
+	networkIDWidth := 12 // Fixed width for network ID
+	driverWidth := 7
+	scopeWidth := 10
+	containersWidth := 10
+	widthPerColumn := (model.width - networkIDWidth - driverWidth - scopeWidth - containersWidth - cellMargin*4 - sideMargin) / 1
 	columns := []table.Column{
 		{Title: "NETWORK ID", Width: 12},
-		{Title: "NAME", Width: 30},
-		{Title: "DRIVER", Width: 15},
-		{Title: "SCOPE", Width: 10},
-		{Title: "CONTAINERS", Width: 10},
+		{Title: "NAME", Width: widthPerColumn},
+		{Title: "DRIVER", Width: driverWidth},
+		{Title: "SCOPE", Width: scopeWidth},
+		{Title: "CONTAINERS", Width: containersWidth},
 	}
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+		var base lipgloss.Style
 		if row == m.Cursor {
-			return tableSelectedCellStyle
+			base = tableSelectedCellStyle
+		} else {
+			base = tableNormalCellStyle
 		}
-		return tableNormalCellStyle
+		if col == 4 {
+			return base.Align(lipgloss.Right)
+		} else {
+			return base
+		}
 	})
 }
 
@@ -146,15 +160,4 @@ func (m *NetworkListViewModel) HandleInspect(model *Model) tea.Cmd {
 func (m *NetworkListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
-}
-
-// Helper functions
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }

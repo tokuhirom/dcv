@@ -113,7 +113,7 @@ func TestRenderNetworkList(t *testing.T) {
 	}
 
 	// Test rendering with sufficient Height
-	model := &Model{Height: 20}
+	model := &Model{Height: 20, width: 100}
 	// Build rows for table
 	vm.SetRows(vm.buildRows(), model.ViewHeight())
 	output := vm.render(model, 10)
