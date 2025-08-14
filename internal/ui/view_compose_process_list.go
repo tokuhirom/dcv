@@ -173,12 +173,22 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 		{Title: "PORTS", Width: model.width - 75},
 	}
 
-	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+	tableOutput := m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
 			return tableSelectedCellStyle
 		}
 		return tableNormalCellStyle
 	})
+
+	// Add search info if searching
+	if m.IsSearchActive() && m.GetSearchText() != "" {
+		searchInfo := m.GetSearchInfo()
+		if searchInfo != "" {
+			return tableOutput + "\n" + searchInfo
+		}
+	}
+
+	return tableOutput
 }
 
 func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {

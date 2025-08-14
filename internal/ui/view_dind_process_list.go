@@ -151,12 +151,22 @@ func (m *DindProcessListViewModel) render(model *Model, availableHeight int) str
 		{Title: "NAMES", Width: 25},
 	}
 
-	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+	tableOutput := m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
 			return tableSelectedCellStyle
 		}
 		return tableNormalCellStyle
 	})
+
+	// Add search info if searching
+	if m.IsSearchActive() && m.GetSearchText() != "" {
+		searchInfo := m.GetSearchInfo()
+		if searchInfo != "" {
+			return tableOutput + "\n" + searchInfo
+		}
+	}
+
+	return tableOutput
 }
 
 // Load switches to the dind process list view and loads containers
