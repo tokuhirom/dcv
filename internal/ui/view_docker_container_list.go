@@ -23,19 +23,15 @@ var _ UpdateAware = (*DockerContainerListViewModel)(nil)
 var _ ContainerSearchAware = (*DockerContainerListViewModel)(nil)
 
 type DockerContainerListViewModel struct {
-	ContainerSearchViewModel
 	TableViewModel
 	dockerContainers []models.DockerContainer
 	showAll          bool
 }
 
 func (m *DockerContainerListViewModel) Init(_ *Model) {
-	m.InitContainerSearchViewModel(
-		func(idx int) {
-			m.Cursor = idx
-		}, func() {
-			m.performSearch()
-		})
+	m.InitTableViewModel(func() {
+		m.performSearch()
+	})
 }
 
 func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -174,7 +170,13 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 
 	columns := NewColumnMap(model)
 
-	return m.RenderTable(model, columns.ToArray(), availableHeight, func(row, col int) lipgloss.Style {
+	// Reduce available height if search info will be displayed
+	tableHeight := availableHeight
+	if m.IsSearchActive() && m.GetSearchText() != "" && m.GetSearchInfo() != "" {
+		tableHeight -= 2 // Reserve lines for search info
+	}
+
+	return m.RenderTable(model, columns.ToArray(), tableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
 			return tableSelectedCellStyle
 		}

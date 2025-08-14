@@ -24,7 +24,6 @@ var _ UpdateAware = (*ComposeProcessListViewModel)(nil)
 var _ ContainerSearchAware = (*ComposeProcessListViewModel)(nil)
 
 type ComposeProcessListViewModel struct {
-	ContainerSearchViewModel
 	TableViewModel
 	// Process list state
 	composeContainers []models.ComposeContainer
@@ -33,12 +32,9 @@ type ComposeProcessListViewModel struct {
 }
 
 func (m *ComposeProcessListViewModel) Init(_ *Model) {
-	m.InitContainerSearchViewModel(
-		func(idx int) {
-			m.Cursor = idx
-		}, func() {
-			m.performSearch()
-		})
+	m.InitTableViewModel(func() {
+		m.performSearch()
+	})
 }
 
 func (m *ComposeProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -173,7 +169,13 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 		{Title: "PORTS", Width: model.width - 75},
 	}
 
-	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+	// Reduce available height if search info will be displayed
+	tableHeight := availableHeight
+	if m.IsSearchActive() && m.GetSearchText() != "" && m.GetSearchInfo() != "" {
+		tableHeight -= 2 // Reserve lines for search info
+	}
+
+	return m.RenderTable(model, columns, tableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
 			return tableSelectedCellStyle
 		}

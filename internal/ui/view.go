@@ -323,6 +323,12 @@ func (m *Model) viewFooter() string {
 	} else if m.currentView == HelpView {
 		return helpStyle.Render("Press ESC or q to go back")
 	} else {
+		// Check if current view supports container search and is in search mode
+		vm := m.GetCurrentViewModel()
+		if searchable, ok := vm.(ContainerSearchAware); ok && searchable.IsSearchActive() {
+			return searchable.RenderSearchLine()
+		}
+
 		helpText := "Press ? for help"
 
 		// Add action menu hint for process list views

@@ -23,7 +23,6 @@ var _ ContainerSearchAware = (*DindProcessListViewModel)(nil)
 
 // DindProcessListViewModel manages the state and rendering of the Docker-in-Docker process list view
 type DindProcessListViewModel struct {
-	ContainerSearchViewModel
 	TableViewModel
 	dindContainers []models.DockerContainer
 	showAll        bool
@@ -32,12 +31,9 @@ type DindProcessListViewModel struct {
 }
 
 func (m *DindProcessListViewModel) Init(_ *Model) {
-	m.InitContainerSearchViewModel(
-		func(idx int) {
-			m.Cursor = idx
-		}, func() {
-			m.performSearch()
-		})
+	m.InitTableViewModel(func() {
+		m.performSearch()
+	})
 }
 
 func (m *DindProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -151,7 +147,13 @@ func (m *DindProcessListViewModel) render(model *Model, availableHeight int) str
 		{Title: "NAMES", Width: 25},
 	}
 
-	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+	// Reduce available height if search info will be displayed
+	tableHeight := availableHeight
+	if m.IsSearchActive() && m.GetSearchText() != "" && m.GetSearchInfo() != "" {
+		tableHeight -= 2 // Reserve lines for search info
+	}
+
+	return m.RenderTable(model, columns, tableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
 			return tableSelectedCellStyle
 		}

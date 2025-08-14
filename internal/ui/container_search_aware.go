@@ -16,4 +16,6 @@ type ContainerSearchAware interface {
 	IsSearchActive() bool
 	// ExitSearch exits search mode
 	ExitSearch()
+	// RenderSearchLine renders the search input line
+	RenderSearchLine() string
 }
