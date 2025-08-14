@@ -110,7 +110,7 @@ func (m *ComposeProcessListViewModel) buildRows() []table.Row {
 		// Service name with dind indicator
 		service := container.Service
 		if container.IsDind() {
-			service = dindStyle.Render("⬢ ") + service
+			service = "🔄 " + service
 		}
 
 		// Highlight if this container matches search

@@ -145,7 +145,7 @@ func (m *DockerContainerListViewModel) buildRows() []table.Row {
 
 		name := container.Names
 		if container.IsDind() {
-			name = dindStyle.Render("⬢ ") + name
+			name = "🔄 " + name
 		}
 
 		// Highlight if this container matches search

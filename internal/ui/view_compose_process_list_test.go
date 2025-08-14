@@ -99,8 +99,8 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 
 		output := m.composeProcessListViewModel.render(m, 20)
 
-		// Check for dind indicator (⬢ symbol)
-		assert.Contains(t, output, "⬢")
+		// Check for dind indicator (🔄 emoji)
+		assert.Contains(t, output, "🔄")
 		assert.Contains(t, output, "dind")
 	})
 
