@@ -15,7 +15,7 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case HelpView:
 		return m, m.helpViewModel.HandleUp()
 	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleUp()
+		return m, m.dindProcessListViewModel.HandleUp(m)
 	case VolumeListView:
 		return m, m.volumeListViewModel.HandleUp()
 	case ImageListView:
@@ -64,7 +64,7 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case HelpView:
 		return m, m.helpViewModel.HandleDown(m)
 	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleDown()
+		return m, m.dindProcessListViewModel.HandleDown(m)
 	case VolumeListView:
 		return m, m.volumeListViewModel.HandleDown()
 	case ImageListView:

@@ -173,6 +173,14 @@ func TestView(t *testing.T) {
 				)
 			}
 
+			// Build rows for dind process list if needed
+			if tt.model.currentView == DindProcessListView && len(tt.model.dindProcessListViewModel.dindContainers) > 0 {
+				tt.model.dindProcessListViewModel.SetRows(
+					tt.model.dindProcessListViewModel.buildRows(),
+					tt.model.ViewHeight(),
+				)
+			}
+
 			view := tt.model.View()
 			for _, expected := range tt.contains {
 				assert.Contains(t, view, expected)
@@ -271,13 +279,15 @@ func TestRenderDindList(t *testing.T) {
 					Status: "Up 3 minutes",
 				},
 			},
-			selectedDindContainer: 1,
+			TableViewModel: TableViewModel{Cursor: 1},
 		},
 	}
 
+	// Build rows for table rendering
+	m.dindProcessListViewModel.SetRows(m.dindProcessListViewModel.buildRows(), m.ViewHeight())
 	// Calculate available Height
 	availableHeight := m.Height - 2
-	view := m.dindProcessListViewModel.render(availableHeight)
+	view := m.dindProcessListViewModel.render(&m, availableHeight)
 
 	// The title is in viewTitle(), not renderDindList()
 	// Check that dind containers are listed correctly

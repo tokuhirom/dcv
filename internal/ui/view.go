@@ -271,7 +271,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case LogView:
 		return m.logViewModel.render(m, availableHeight)
 	case DindProcessListView:
-		return m.dindProcessListViewModel.render(availableHeight)
+		return m.dindProcessListViewModel.render(m, availableHeight)
 	case TopView:
 		return m.topViewModel.render(availableHeight)
 	case StatsView:

@@ -131,6 +131,12 @@ func (m *Model) GetDindProcessListViewModel() *DindProcessListViewModel {
 
 func (vm *DindProcessListViewModel) SetDindContainers(containers []models.DockerContainer) {
 	vm.dindContainers = containers
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (vm *DindProcessListViewModel) SetHostContainer(container *docker.Container) {
