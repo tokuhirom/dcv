@@ -122,6 +122,15 @@ func (t *TableViewModel) RenderTable(model *Model, columns []table.Column, _ int
 		Width(model.width).
 		Render(fmt.Sprintf("... [%d/%d-%d/%d]\n", t.Cursor, t.Start, t.End, len(t.Rows))))
 
+	// Add search info if searching
+	if t.IsSearchActive() && t.GetSearchText() != "" {
+		searchInfo := t.GetSearchInfo()
+		if searchInfo != "" {
+			s.WriteString(searchInfo)
+			s.WriteString("\n")
+		}
+	}
+
 	return s.String()
 }
 

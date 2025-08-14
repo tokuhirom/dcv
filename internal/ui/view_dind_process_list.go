@@ -150,25 +150,15 @@ func (m *DindProcessListViewModel) render(model *Model, availableHeight int) str
 	// Reduce available height if search info will be displayed
 	tableHeight := availableHeight
 	if m.IsSearchActive() && m.GetSearchText() != "" && m.GetSearchInfo() != "" {
-		tableHeight-- // Reserve one line for search info
+		tableHeight -= 2 // Reserve lines for search info
 	}
 
-	tableOutput := m.RenderTable(model, columns, tableHeight, func(row, col int) lipgloss.Style {
+	return m.RenderTable(model, columns, tableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
 			return tableSelectedCellStyle
 		}
 		return tableNormalCellStyle
 	})
-
-	// Add search info if searching
-	if m.IsSearchActive() && m.GetSearchText() != "" {
-		searchInfo := m.GetSearchInfo()
-		if searchInfo != "" {
-			return tableOutput + "\n" + searchInfo
-		}
-	}
-
-	return tableOutput
 }
 
 // Load switches to the dind process list view and loads containers
