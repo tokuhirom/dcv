@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -86,27 +87,34 @@ func (m *Model) View() string {
 
 	// Get body content with available Height
 	body := m.viewBody(availableBodyHeight)
-	bodyHeight := lipgloss.Height(body)
 
-	totalContentHeight := navHeight + titleHeight + bodyHeight + footerHeight
-
-	// Add padding if needed to push footer to the bottom
-	if totalContentHeight < m.Height {
-		padding := m.Height - totalContentHeight
-		body = body + strings.Repeat("\n", padding)
-	}
+	// Note: if body is too long, you can truncate by following code.
+	body = lipgloss.NewStyle().MaxHeight(availableBodyHeight).Height(availableBodyHeight).Render(body)
 
 	// Join all components
 	components := []string{}
 	if !m.navbarHidden {
 		components = append(components, navHeader)
 	}
-	components = append(components, titleStyle.Render(title), body, footer)
+	components = append(components,
+		titleStyle.Render(title),
+		body,
+		footer)
 
-	return lipgloss.JoinVertical(
+	retval := lipgloss.JoinVertical(
 		lipgloss.Left,
 		components...,
 	)
+
+	slog.Info("View rendered",
+		slog.Int("expectedHeight", m.Height),
+		slog.Int("realHeight", lipgloss.Height(retval)),
+		slog.Int("navHeight", lipgloss.Height(navHeader)),
+		slog.Int("titleHeight", lipgloss.Height(title)),
+		slog.Int("bodyHeight", lipgloss.Height(body)),
+		slog.Int("availableBodyHeight", availableBodyHeight),
+		slog.Int("footerHeight", lipgloss.Height(footer)))
+	return retval
 }
 
 func (m *Model) viewNavigationHeader() string {

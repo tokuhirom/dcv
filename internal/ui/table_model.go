@@ -120,7 +120,7 @@ func (t *TableViewModel) RenderTable(model *Model, columns []table.Column, _ int
 	// If we exceed the available height, break to avoid overflow
 	s.WriteString(tableFooterStyle.
 		Width(model.width).
-		Render(fmt.Sprintf("... [%d/%d-%d/%d]\n", t.Cursor, t.Start, t.End, len(t.Rows))))
+		Render(fmt.Sprintf("... [%d/%d-%d/%d]", t.Cursor, t.Start, t.End, len(t.Rows))))
 
 	// Add search info if searching
 	if t.IsSearchActive() && t.GetSearchText() != "" {
