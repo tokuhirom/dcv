@@ -27,9 +27,6 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("226"))
 
-	dindStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
-
 	statusUpStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("42"))
 
