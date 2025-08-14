@@ -83,7 +83,7 @@ func TestComposeProjectListViewModel_Rendering(t *testing.T) {
 				TableViewModel: TableViewModel{Cursor: 0},
 			},
 			height:   20,
-			expected: []string{"/very/long/path/that/should/be/truncated/in/the..."},
+			expected: []string{"/very/long/path/that/should/be/truncated/in/the"},
 		},
 	}
 

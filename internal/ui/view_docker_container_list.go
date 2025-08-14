@@ -122,7 +122,6 @@ func (m *DockerContainerListViewModel) buildRows() []table.Row {
 			id = id[:12]
 		}
 
-		// Truncate image name
 		image := container.Image
 
 		state := container.State
@@ -130,7 +129,6 @@ func (m *DockerContainerListViewModel) buildRows() []table.Row {
 		// Status with color
 		status := container.Status
 
-		// Truncate ports
 		ports := container.Ports
 
 		name := container.Names

@@ -65,17 +65,11 @@ func (m *ImageListViewModel) render(model *Model, availableHeight int) string {
 		return s.String()
 	}
 
-	availableWidth := model.width - 10 // margin
-	repoWidth := 30
-	if availableWidth < 100 {
-		repoWidth = 20
-	}
-
 	// Create columns
 	columns := []table.Column{
-		{Title: "REPOSITORY", Width: repoWidth},
+		{Title: "REPOSITORY", Width: -1},
 		{Title: "TAG", Width: -1},
-		{Title: "IMAGE ID", Width: 12},
+		{Title: "IMAGE ID", Width: 12}, // Fixed width for consistent ID display
 		{Title: "CREATED", Width: -1},
 		{Title: "SIZE", Width: -1},
 	}

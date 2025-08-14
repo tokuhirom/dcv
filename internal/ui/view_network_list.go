@@ -72,19 +72,12 @@ func (m *NetworkListViewModel) render(model *Model, availableHeight int) string 
 	}
 
 	// Create table columns
-	sideMargin := 2 * 2  // 2 for left and right padding
-	cellMargin := 2      // 2 for cell margin
-	networkIDWidth := 12 // Fixed width for network ID
-	driverWidth := 7
-	scopeWidth := 10
-	containersWidth := 10
-	widthPerColumn := (model.width - networkIDWidth - driverWidth - scopeWidth - containersWidth - cellMargin*4 - sideMargin) / 1
 	columns := []table.Column{
-		{Title: "NETWORK ID", Width: 12},
-		{Title: "NAME", Width: widthPerColumn},
-		{Title: "DRIVER", Width: driverWidth},
-		{Title: "SCOPE", Width: scopeWidth},
-		{Title: "CONTAINERS", Width: containersWidth},
+		{Title: "NETWORK ID", Width: 12}, // Fixed width for network ID
+		{Title: "NAME", Width: -1},
+		{Title: "DRIVER", Width: -1},
+		{Title: "SCOPE", Width: -1},
+		{Title: "CONTAINERS", Width: 10}, // Fixed width for count
 	}
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {

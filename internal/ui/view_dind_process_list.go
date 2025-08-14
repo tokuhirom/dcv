@@ -83,17 +83,13 @@ func (m *DindProcessListViewModel) performSearch() {
 func (m *DindProcessListViewModel) buildRows() []table.Row {
 	rows := make([]table.Row, 0, len(m.dindContainers))
 	for i, container := range m.dindContainers {
-		// Truncate container ID
+		// Truncate container ID to standard 12 chars
 		id := container.ID
 		if len(id) > 12 {
 			id = id[:12]
 		}
 
-		// Truncate image name
 		image := container.Image
-		if len(image) > 30 {
-			image = image[:27] + "..."
-		}
 
 		state := container.State
 
@@ -105,11 +101,7 @@ func (m *DindProcessListViewModel) buildRows() []table.Row {
 			status = statusDownStyle.Render(status)
 		}
 
-		// Truncate ports if too long
 		ports := container.Ports
-		if len(ports) > 25 {
-			ports = ports[:22] + "..."
-		}
 
 		name := container.Names
 		// Highlight if this container matches search
@@ -139,12 +131,12 @@ func (m *DindProcessListViewModel) render(model *Model, availableHeight int) str
 
 	// Create table
 	columns := []table.Column{
-		{Title: "CONTAINER ID", Width: 15},
-		{Title: "IMAGE", Width: 30},
-		{Title: "STATE", Width: 10},
-		{Title: "STATUS", Width: 20},
-		{Title: "PORTS", Width: 25},
-		{Title: "NAMES", Width: 25},
+		{Title: "CONTAINER ID", Width: 12}, // Fixed width for container ID
+		{Title: "IMAGE", Width: -1},
+		{Title: "STATE", Width: -1},
+		{Title: "STATUS", Width: -1},
+		{Title: "PORTS", Width: -1},
+		{Title: "NAMES", Width: -1},
 	}
 
 	// Reduce available height if search info will be displayed

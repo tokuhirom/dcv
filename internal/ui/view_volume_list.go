@@ -52,9 +52,9 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 
 	// Create table columns
 	columns := []table.Column{
-		{Title: "Name", Width: 40},
-		{Title: "Driver", Width: 10},
-		{Title: "Scope", Width: 10},
+		{Title: "Name", Width: -1},
+		{Title: "Driver", Width: -1},
+		{Title: "Scope", Width: -1},
 	}
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
