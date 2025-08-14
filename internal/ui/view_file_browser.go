@@ -78,9 +78,9 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 
 	// Create table
 	columns := []table.Column{
-		{Title: "PERMISSIONS", Width: 15},
-		{Title: "SIZE", Width: 10},
-		{Title: "NAME", Width: model.width - 30},
+		{Title: "PERMISSIONS", Width: 15}, // Fixed width for permissions display
+		{Title: "SIZE", Width: 10},        // Fixed width for size display
+		{Title: "NAME", Width: -1},
 	}
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {

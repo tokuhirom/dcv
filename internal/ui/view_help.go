@@ -16,9 +16,9 @@ type HelpViewModel struct {
 func (m *HelpViewModel) render(model *Model, availableHeight int) string {
 	// Create columns
 	columns := []table.Column{
-		{Title: "Key", Width: 15},
-		{Title: "Command", Width: 30},
-		{Title: "Description", Width: 40},
+		{Title: "Key", Width: 15}, // Fixed width for keys
+		{Title: "Command", Width: -1},
+		{Title: "Description", Width: -1},
 	}
 
 	return m.RenderTable(model, columns, availableHeight-2, func(row, col int) lipgloss.Style {

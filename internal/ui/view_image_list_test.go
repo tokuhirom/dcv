@@ -79,7 +79,7 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 				},
 			},
 			height:   20,
-			expected: []string{"very-long-repositor…"},
+			expected: []string{"very-long-repository-name"},
 		},
 		{
 			name: "shows <none> for empty repository",

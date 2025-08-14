@@ -56,11 +56,7 @@ func (m *ComposeProjectListViewModel) buildRows() []table.Row {
 		}
 		status += ResetAll
 
-		// Truncate config files if too long
 		configFiles := project.ConfigFiles
-		if len(configFiles) > 50 {
-			configFiles = configFiles[:47] + "..."
-		}
 
 		rows = append(rows, table.Row{project.Name, status, configFiles})
 	}
