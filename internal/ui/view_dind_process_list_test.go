@@ -45,8 +45,8 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 						Names:  "database",
 					},
 				},
-				selectedDindContainer: 0,
-				hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
+				TableViewModel: TableViewModel{Cursor: 0},
+				hostContainer:  docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 			},
 			height: 20,
 			expected: []string{
@@ -72,8 +72,8 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 						Names:  "test-container",
 					},
 				},
-				selectedDindContainer: 0,
-				hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
+				TableViewModel: TableViewModel{Cursor: 0},
+				hostContainer:  docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 			},
 			height:   20,
 			expected: []string{"very-long-registry-url.exa"},
@@ -82,7 +82,13 @@ func TestDindProcessListViewModel_Rendering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.viewModel.render(tt.height - 4)
+			// Build rows for table rendering if there are containers
+			if len(tt.viewModel.dindContainers) > 0 {
+				tt.viewModel.SetRows(tt.viewModel.buildRows(), tt.height)
+			}
+			// Create a mock model for testing
+			model := &Model{width: 120, Height: tt.height}
+			result := tt.viewModel.render(model, tt.height-4)
 
 			for _, expected := range tt.expected {
 				assert.Contains(t, result, expected, "Expected to find '%s' in output", expected)
@@ -99,18 +105,20 @@ func TestDindProcessListViewModel_Navigation(t *testing.T) {
 				{ID: "2", Names: "container-2"},
 				{ID: "3", Names: "container-3"},
 			},
-			selectedDindContainer: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
+		model := &Model{Height: 20}
+		vm.SetRows(vm.buildRows(), model.ViewHeight())
 
-		cmd := vm.HandleDown()
+		cmd := vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.selectedDindContainer)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.selectedDindContainer = 2
-		cmd = vm.HandleDown()
+		vm.Cursor = 2
+		cmd = vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 2, vm.selectedDindContainer, "Should not go beyond last container")
+		assert.Equal(t, 2, vm.Cursor, "Should not go beyond last container")
 	})
 
 	t.Run("HandleUp moves selection up", func(t *testing.T) {
@@ -120,18 +128,20 @@ func TestDindProcessListViewModel_Navigation(t *testing.T) {
 				{ID: "2", Names: "container-2"},
 				{ID: "3", Names: "container-3"},
 			},
-			selectedDindContainer: 2,
+			TableViewModel: TableViewModel{Cursor: 2},
 		}
+		model := &Model{Height: 20}
+		vm.SetRows(vm.buildRows(), model.ViewHeight())
 
-		cmd := vm.HandleUp()
+		cmd := vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.selectedDindContainer)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.selectedDindContainer = 0
-		cmd = vm.HandleUp()
+		vm.Cursor = 0
+		cmd = vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, vm.selectedDindContainer, "Should not go below 0")
+		assert.Equal(t, 0, vm.Cursor, "Should not go below 0")
 	})
 }
 
@@ -226,7 +236,7 @@ func TestDindProcessListViewModel_HandleBack(t *testing.T) {
 func TestDindProcessListViewModel_Loaded(t *testing.T) {
 	t.Run("Loaded updates container list", func(t *testing.T) {
 		vm := &DindProcessListViewModel{
-			selectedDindContainer: 10, // Out of bounds
+			TableViewModel: TableViewModel{Cursor: 10}, // Out of bounds
 		}
 
 		containers := []models.DockerContainer{
@@ -234,14 +244,15 @@ func TestDindProcessListViewModel_Loaded(t *testing.T) {
 			{ID: "2", Names: "container-2"},
 		}
 
-		vm.Loaded(containers)
+		model := &Model{Height: 20}
+		vm.Loaded(model, containers)
 		assert.Equal(t, containers, vm.dindContainers)
-		assert.Equal(t, 0, vm.selectedDindContainer, "Should reset selection when out of bounds")
+		assert.Equal(t, 0, vm.Cursor, "Should reset selection when out of bounds")
 	})
 
 	t.Run("Loaded preserves valid selection", func(t *testing.T) {
 		vm := &DindProcessListViewModel{
-			selectedDindContainer: 1,
+			TableViewModel: TableViewModel{Cursor: 1},
 		}
 
 		containers := []models.DockerContainer{
@@ -250,9 +261,10 @@ func TestDindProcessListViewModel_Loaded(t *testing.T) {
 			{ID: "3", Names: "container-3"},
 		}
 
-		vm.Loaded(containers)
+		model := &Model{Height: 20}
+		vm.Loaded(model, containers)
 		assert.Equal(t, containers, vm.dindContainers)
-		assert.Equal(t, 1, vm.selectedDindContainer, "Should preserve valid selection")
+		assert.Equal(t, 1, vm.Cursor, "Should preserve valid selection")
 	})
 }
 
@@ -266,8 +278,8 @@ func TestDindProcessListViewModel_GetContainer(t *testing.T) {
 				{ID: "abc123", Names: "container-1"},
 				{ID: "def456", Names: "container-2"},
 			},
-			selectedDindContainer: 1,
-			hostContainer:         docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
+			TableViewModel: TableViewModel{Cursor: 1},
+			hostContainer:  docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
 		}
 
 		container := vm.GetContainer(model)
@@ -280,8 +292,8 @@ func TestDindProcessListViewModel_GetContainer(t *testing.T) {
 			dockerClient: docker.NewClient(),
 		}
 		vm := &DindProcessListViewModel{
-			dindContainers:        []models.DockerContainer{},
-			selectedDindContainer: 0,
+			dindContainers: []models.DockerContainer{},
+			TableViewModel: TableViewModel{Cursor: 0},
 		}
 
 		container := vm.GetContainer(model)

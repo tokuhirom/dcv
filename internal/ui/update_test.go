@@ -291,16 +291,22 @@ func TestHandleDindListKeys(t *testing.T) {
 				{ID: "abc123", Names: "test-1"},
 				{ID: "def456", Names: "test-2"},
 			},
-			selectedDindContainer: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		},
 	}
 	// Initialize key handlers
 	model.initializeKeyHandlers()
 
+	// Build rows for table navigation
+	model.dindProcessListViewModel.SetRows(
+		model.dindProcessListViewModel.buildRows(),
+		model.ViewHeight(),
+	)
+
 	// Test navigation
 	newModel, _ := model.handleViewKeys(tea.KeyMsg{Type: tea.KeyDown})
 	m := newModel.(*Model)
-	assert.Equal(t, 1, m.dindProcessListViewModel.selectedDindContainer)
+	assert.Equal(t, 1, m.dindProcessListViewModel.Cursor)
 
 	// Test entering log view
 	newModel, cmd := m.handleViewKeys(tea.KeyMsg{Type: tea.KeyEnter})
