@@ -151,7 +151,13 @@ func (m *DindProcessListViewModel) render(model *Model, availableHeight int) str
 		{Title: "NAMES", Width: 25},
 	}
 
-	tableOutput := m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+	// Reduce available height if search info will be displayed
+	tableHeight := availableHeight
+	if m.IsSearchActive() && m.GetSearchText() != "" && m.GetSearchInfo() != "" {
+		tableHeight-- // Reserve one line for search info
+	}
+
+	tableOutput := m.RenderTable(model, columns, tableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
 			return tableSelectedCellStyle
 		}

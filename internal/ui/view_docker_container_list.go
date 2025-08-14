@@ -174,7 +174,13 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 
 	columns := NewColumnMap(model)
 
-	tableOutput := m.RenderTable(model, columns.ToArray(), availableHeight, func(row, col int) lipgloss.Style {
+	// Reduce available height if search info will be displayed
+	tableHeight := availableHeight
+	if m.IsSearchActive() && m.GetSearchText() != "" && m.GetSearchInfo() != "" {
+		tableHeight-- // Reserve one line for search info
+	}
+
+	tableOutput := m.RenderTable(model, columns.ToArray(), tableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
 			return tableSelectedCellStyle
 		}
