@@ -24,7 +24,6 @@ var _ UpdateAware = (*ComposeProcessListViewModel)(nil)
 var _ ContainerSearchAware = (*ComposeProcessListViewModel)(nil)
 
 type ComposeProcessListViewModel struct {
-	ContainerSearchViewModel
 	TableViewModel
 	// Process list state
 	composeContainers []models.ComposeContainer
@@ -33,12 +32,9 @@ type ComposeProcessListViewModel struct {
 }
 
 func (m *ComposeProcessListViewModel) Init(_ *Model) {
-	m.InitContainerSearchViewModel(
-		func(idx int) {
-			m.Cursor = idx
-		}, func() {
-			m.performSearch()
-		})
+	m.InitTableViewModel(func() {
+		m.performSearch()
+	})
 }
 
 func (m *ComposeProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {

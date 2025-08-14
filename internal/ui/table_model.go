@@ -31,10 +31,23 @@ var (
 )
 
 type TableViewModel struct {
+	ContainerSearchViewModel
 	Rows   []table.Row
 	Start  int
 	End    int
 	Cursor int
+}
+
+// InitTableViewModel initializes the table view model with search capabilities
+func (t *TableViewModel) InitTableViewModel(onPerformSearch func()) {
+	t.InitContainerSearchViewModel(
+		func(idx int) {
+			if idx >= 0 && idx < len(t.Rows) {
+				t.Cursor = idx
+			}
+		},
+		onPerformSearch,
+	)
 }
 
 func (t *TableViewModel) SetRows(rows []table.Row, height int) {
@@ -84,8 +97,17 @@ func (t *TableViewModel) RenderTable(model *Model, columns []table.Column, _ int
 		for j, cell := range row {
 			// Apply the selected style if this is the selected row
 			base := styleCallback(i, j)
+
+			// Highlight search text if searching
+			displayText := cell
+			if t.IsSearchActive() && t.GetSearchText() != "" {
+				displayText = t.highlightSearchText(cell)
+			}
+
+			// Truncate and render
+			truncated := runewidth.Truncate(displayText, columns[j].Width, "…")
 			s.WriteString(base.Width(columns[j].Width).Height(1).
-				Render(runewidth.Truncate(cell, columns[j].Width, "…")))
+				Render(truncated))
 			// Add space between cells
 			if j < len(row)-1 {
 				s.WriteString(base.Render("  "))
@@ -105,6 +127,45 @@ func (t *TableViewModel) RenderTable(model *Model, columns []table.Column, _ int
 
 func clamp(v, low, high int) int {
 	return min(max(v, low), high)
+}
+
+// highlightSearchText highlights the search text in the given string
+func (t *TableViewModel) highlightSearchText(text string) string {
+	searchText := t.GetSearchText()
+	if searchText == "" {
+		return text
+	}
+
+	// Case-insensitive search by default
+	lowerText := strings.ToLower(text)
+	lowerSearch := strings.ToLower(searchText)
+
+	// Find all occurrences
+	var result strings.Builder
+	lastIndex := 0
+
+	for {
+		index := strings.Index(lowerText[lastIndex:], lowerSearch)
+		if index == -1 {
+			// No more matches, append the rest
+			result.WriteString(text[lastIndex:])
+			break
+		}
+
+		// Adjust index to be relative to the original string
+		index += lastIndex
+
+		// Append text before the match
+		result.WriteString(text[lastIndex:index])
+
+		// Append highlighted match
+		match := text[index : index+len(searchText)]
+		result.WriteString(searchStyle.Render(match))
+
+		lastIndex = index + len(searchText)
+	}
+
+	return result.String()
 }
 
 // HandleUp moves selection up in the table

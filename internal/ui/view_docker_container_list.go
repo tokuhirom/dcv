@@ -23,19 +23,15 @@ var _ UpdateAware = (*DockerContainerListViewModel)(nil)
 var _ ContainerSearchAware = (*DockerContainerListViewModel)(nil)
 
 type DockerContainerListViewModel struct {
-	ContainerSearchViewModel
 	TableViewModel
 	dockerContainers []models.DockerContainer
 	showAll          bool
 }
 
 func (m *DockerContainerListViewModel) Init(_ *Model) {
-	m.InitContainerSearchViewModel(
-		func(idx int) {
-			m.Cursor = idx
-		}, func() {
-			m.performSearch()
-		})
+	m.InitTableViewModel(func() {
+		m.performSearch()
+	})
 }
 
 func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {

@@ -23,7 +23,6 @@ var _ ContainerSearchAware = (*DindProcessListViewModel)(nil)
 
 // DindProcessListViewModel manages the state and rendering of the Docker-in-Docker process list view
 type DindProcessListViewModel struct {
-	ContainerSearchViewModel
 	TableViewModel
 	dindContainers []models.DockerContainer
 	showAll        bool
@@ -32,12 +31,9 @@ type DindProcessListViewModel struct {
 }
 
 func (m *DindProcessListViewModel) Init(_ *Model) {
-	m.InitContainerSearchViewModel(
-		func(idx int) {
-			m.Cursor = idx
-		}, func() {
-			m.performSearch()
-		})
+	m.InitTableViewModel(func() {
+		m.performSearch()
+	})
 }
 
 func (m *DindProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
