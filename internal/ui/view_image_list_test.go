@@ -18,8 +18,10 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 		{
 			name: "displays no images message when empty",
 			viewModel: ImageListViewModel{
-				dockerImages:        []models.DockerImage{},
-				selectedDockerImage: 0,
+				dockerImages: []models.DockerImage{},
+				TableViewModel: TableViewModel{
+					Cursor: 0,
+				},
 			},
 			height:   20,
 			expected: []string{"No images found"},
@@ -43,7 +45,9 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 						Size:         "256MB",
 					},
 				},
-				selectedDockerImage: 0,
+				TableViewModel: TableViewModel{
+					Cursor: 0,
+				},
 			},
 			height: 20,
 			expected: []string{
@@ -70,10 +74,12 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 						Size:         "1KB",
 					},
 				},
-				selectedDockerImage: 0,
+				TableViewModel: TableViewModel{
+					Cursor: 0,
+				},
 			},
 			height:   20,
-			expected: []string{"very-long-reposit..."},
+			expected: []string{"very-long-repository-name"},
 		},
 		{
 			name: "shows <none> for empty repository",
@@ -87,7 +93,9 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 						Size:         "1KB",
 					},
 				},
-				selectedDockerImage: 0,
+				TableViewModel: TableViewModel{
+					Cursor: 0,
+				},
 			},
 			height:   20,
 			expected: []string{"<none>"},
@@ -101,6 +109,10 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 				width:              100,
 				Height:             tt.height,
 			}
+
+			// Build rows for table rendering
+			tt.viewModel.Rows = tt.viewModel.buildRows()
+			tt.viewModel.End = len(tt.viewModel.Rows)
 
 			result := tt.viewModel.render(model, tt.height-4)
 
@@ -119,18 +131,23 @@ func TestImageListViewModel_Navigation(t *testing.T) {
 				{Repository: "image2", Tag: "latest"},
 				{Repository: "image3", Tag: "latest"},
 			},
-			selectedDockerImage: 0,
+			TableViewModel: TableViewModel{
+				Cursor: 0,
+				End:    3,
+			},
 		}
+		vm.Rows = vm.buildRows()
 
-		cmd := vm.HandleDown()
+		model := &Model{Height: 20, width: 100}
+		cmd := vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.selectedDockerImage)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.selectedDockerImage = 2
-		cmd = vm.HandleDown()
+		vm.Cursor = 2
+		cmd = vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 2, vm.selectedDockerImage, "Should not go beyond last image")
+		assert.Equal(t, 2, vm.Cursor, "Should not go beyond last image")
 	})
 
 	t.Run("HandleUp moves selection up", func(t *testing.T) {
@@ -140,18 +157,23 @@ func TestImageListViewModel_Navigation(t *testing.T) {
 				{Repository: "image2", Tag: "latest"},
 				{Repository: "image3", Tag: "latest"},
 			},
-			selectedDockerImage: 2,
+			TableViewModel: TableViewModel{
+				Cursor: 2,
+				End:    3,
+			},
 		}
+		vm.Rows = vm.buildRows()
 
-		cmd := vm.HandleUp()
+		model := &Model{Height: 20, width: 100}
+		cmd := vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.selectedDockerImage)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.selectedDockerImage = 0
-		cmd = vm.HandleUp()
+		vm.Cursor = 0
+		cmd = vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, vm.selectedDockerImage, "Should not go below 0")
+		assert.Equal(t, 0, vm.Cursor, "Should not go below 0")
 	})
 }
 
@@ -198,7 +220,9 @@ func TestImageListViewModel_Operations(t *testing.T) {
 				{ID: "image1", Repository: "test", Tag: "latest"},
 				{ID: "image2", Repository: "test2", Tag: "v1"},
 			},
-			selectedDockerImage: 1,
+			TableViewModel: TableViewModel{
+				Cursor: 1,
+			},
 		}
 
 		cmd := vm.HandleDelete(model)
@@ -216,8 +240,10 @@ func TestImageListViewModel_Operations(t *testing.T) {
 	t.Run("HandleDelete does nothing when no images", func(t *testing.T) {
 		model := &Model{loading: false}
 		vm := &ImageListViewModel{
-			dockerImages:        []models.DockerImage{},
-			selectedDockerImage: 0,
+			dockerImages: []models.DockerImage{},
+			TableViewModel: TableViewModel{
+				Cursor: 0,
+			},
 		}
 
 		cmd := vm.HandleDelete(model)
@@ -235,7 +261,9 @@ func TestImageListViewModel_Operations(t *testing.T) {
 			dockerImages: []models.DockerImage{
 				{ID: "image1"},
 			},
-			selectedDockerImage: 0,
+			TableViewModel: TableViewModel{
+				Cursor: 0,
+			},
 		}
 
 		cmd := vm.HandleInspect(model)
@@ -263,7 +291,9 @@ func TestImageListViewModel_Operations(t *testing.T) {
 func TestImageListViewModel_Messages(t *testing.T) {
 	t.Run("Loaded updates image list", func(t *testing.T) {
 		vm := &ImageListViewModel{
-			selectedDockerImage: 5, // Out of bounds
+			TableViewModel: TableViewModel{
+				Cursor: 5, // Out of bounds
+			},
 		}
 
 		images := []models.DockerImage{
@@ -271,15 +301,18 @@ func TestImageListViewModel_Messages(t *testing.T) {
 			{Repository: "postgres", Tag: "15"},
 		}
 
-		vm.Loaded(images)
+		model := &Model{}
+		vm.Loaded(model, images)
 
 		assert.Equal(t, images, vm.dockerImages)
-		assert.Equal(t, 0, vm.selectedDockerImage, "Should reset selection when out of bounds")
+		assert.Equal(t, 0, vm.Cursor, "Should reset selection when out of bounds")
 	})
 
 	t.Run("Loaded keeps selection in bounds", func(t *testing.T) {
 		vm := &ImageListViewModel{
-			selectedDockerImage: 1,
+			TableViewModel: TableViewModel{
+				Cursor: 1,
+			},
 		}
 
 		images := []models.DockerImage{
@@ -288,9 +321,10 @@ func TestImageListViewModel_Messages(t *testing.T) {
 			{Repository: "redis", Tag: "alpine"},
 		}
 
-		vm.Loaded(images)
+		model := &Model{}
+		vm.Loaded(model, images)
 
-		assert.Equal(t, 1, vm.selectedDockerImage, "Should keep selection when in bounds")
+		assert.Equal(t, 1, vm.Cursor, "Should keep selection when in bounds")
 	})
 }
 
@@ -317,8 +351,10 @@ func TestImageListViewModel_EmptySelection(t *testing.T) {
 	t.Run("operations handle empty image list gracefully", func(t *testing.T) {
 		model := &Model{}
 		vm := &ImageListViewModel{
-			dockerImages:        []models.DockerImage{},
-			selectedDockerImage: 0,
+			dockerImages: []models.DockerImage{},
+			TableViewModel: TableViewModel{
+				Cursor: 0,
+			},
 		}
 
 		// Test all operations that depend on selection
@@ -326,8 +362,8 @@ func TestImageListViewModel_EmptySelection(t *testing.T) {
 		assert.Nil(t, vm.HandleInspect(model))
 
 		// Navigation should not crash
-		assert.Nil(t, vm.HandleUp())
-		assert.Nil(t, vm.HandleDown())
+		assert.Nil(t, vm.HandleUp(model))
+		assert.Nil(t, vm.HandleDown(model))
 	})
 }
 

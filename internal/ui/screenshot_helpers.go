@@ -23,6 +23,12 @@ func (m *Model) GetComposeProcessListViewModel() *ComposeProcessListViewModel {
 
 func (vm *ComposeProcessListViewModel) SetComposeContainers(containers []models.ComposeContainer) {
 	vm.composeContainers = containers
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (vm *ComposeProcessListViewModel) SetProjectName(name string) {
@@ -35,6 +41,12 @@ func (m *Model) GetDockerContainerListViewModel() *DockerContainerListViewModel 
 
 func (vm *DockerContainerListViewModel) SetDockerContainers(containers []models.DockerContainer) {
 	vm.dockerContainers = containers
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (m *Model) GetImageListViewModel() *ImageListViewModel {
@@ -43,6 +55,12 @@ func (m *Model) GetImageListViewModel() *ImageListViewModel {
 
 func (vm *ImageListViewModel) SetImages(images []models.DockerImage) {
 	vm.dockerImages = images
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (m *Model) GetNetworkListViewModel() *NetworkListViewModel {
@@ -51,6 +69,8 @@ func (m *Model) GetNetworkListViewModel() *NetworkListViewModel {
 
 func (vm *NetworkListViewModel) SetNetworks(networks []models.DockerNetwork) {
 	vm.dockerNetworks = networks
+	// Build rows for table display
+	vm.SetRows(vm.buildRows(), 20) // Use default height for screenshots
 }
 
 func (m *Model) GetVolumeListViewModel() *VolumeListViewModel {
@@ -59,6 +79,8 @@ func (m *Model) GetVolumeListViewModel() *VolumeListViewModel {
 
 func (vm *VolumeListViewModel) SetVolumes(volumes []models.DockerVolume) {
 	vm.dockerVolumes = volumes
+	// Build rows for table display
+	vm.SetRows(vm.buildRows(), 20) // Use default height for screenshots
 }
 
 func (m *Model) GetComposeProjectListViewModel() *ComposeProjectListViewModel {
@@ -67,6 +89,12 @@ func (m *Model) GetComposeProjectListViewModel() *ComposeProjectListViewModel {
 
 func (vm *ComposeProjectListViewModel) SetProjects(projects []models.ComposeProject) {
 	vm.projects = projects
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (m *Model) GetLogViewModel() *LogViewModel {
@@ -107,6 +135,12 @@ func (m *Model) GetDindProcessListViewModel() *DindProcessListViewModel {
 
 func (vm *DindProcessListViewModel) SetDindContainers(containers []models.DockerContainer) {
 	vm.dindContainers = containers
+	// Build rows for table rendering
+	vm.Rows = vm.buildRows()
+	// Set End to show all rows initially
+	if len(vm.Rows) > 0 {
+		vm.End = len(vm.Rows)
+	}
 }
 
 func (vm *DindProcessListViewModel) SetHostContainer(container *docker.Container) {
@@ -119,6 +153,8 @@ func (m *Model) GetFileBrowserViewModel() *FileBrowserViewModel {
 
 func (vm *FileBrowserViewModel) SetContainerFiles(files []models.ContainerFile) {
 	vm.containerFiles = files
+	// Build rows for table display
+	vm.SetRows(vm.buildRows(), 20) // Use default height for screenshots
 }
 
 func (vm *FileBrowserViewModel) SetBrowsingContainer(container *docker.Container) {
@@ -127,6 +163,10 @@ func (vm *FileBrowserViewModel) SetBrowsingContainer(container *docker.Container
 
 func (vm *FileBrowserViewModel) SetCurrentPath(path string) {
 	vm.currentPath = path
+}
+
+func (m *Model) GetHelpViewModel() *HelpViewModel {
+	return &m.helpViewModel
 }
 
 func (m *Model) GetFileContentViewModel() *FileContentViewModel {

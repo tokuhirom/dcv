@@ -30,13 +30,13 @@ func TestHandleKeyPress(t *testing.T) {
 						{Name: "web-1"},
 						{Name: "db-1"},
 					},
-					selectedContainer: 0,
+					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyDown},
 			wantView: ComposeProcessListView,
 			checkFunc: func(t *testing.T, m *Model) {
-				assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
+				assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
 			},
 		},
 		{
@@ -48,13 +48,13 @@ func TestHandleKeyPress(t *testing.T) {
 						{Name: "web-1"},
 						{Name: "db-1"},
 					},
-					selectedContainer: 1,
+					TableViewModel: TableViewModel{Cursor: 1},
 				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyUp},
 			wantView: ComposeProcessListView,
 			checkFunc: func(t *testing.T, m *Model) {
-				assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
+				assert.Equal(t, 0, m.composeProcessListViewModel.Cursor)
 			},
 		},
 		{
@@ -65,7 +65,7 @@ func TestHandleKeyPress(t *testing.T) {
 					composeContainers: []models.ComposeContainer{
 						{Name: "web-1"},
 					},
-					selectedContainer: 0,
+					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
 			key:      tea.KeyMsg{Type: tea.KeyEnter},
@@ -85,7 +85,7 @@ func TestHandleKeyPress(t *testing.T) {
 							Command: "dockerd",
 						},
 					},
-					selectedContainer: 0,
+					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
 			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")},
@@ -175,6 +175,14 @@ func TestHandleKeyPress(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
+
+			// Build rows for compose process list if needed
+			if tt.model.currentView == ComposeProcessListView && len(tt.model.composeProcessListViewModel.composeContainers) > 0 {
+				tt.model.composeProcessListViewModel.SetRows(
+					tt.model.composeProcessListViewModel.buildRows(),
+					tt.model.ViewHeight(),
+				)
+			}
 
 			newModel, _ := tt.model.handleKeyPress(tt.key)
 			m := newModel.(*Model)
@@ -283,16 +291,22 @@ func TestHandleDindListKeys(t *testing.T) {
 				{ID: "abc123", Names: "test-1"},
 				{ID: "def456", Names: "test-2"},
 			},
-			selectedDindContainer: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		},
 	}
 	// Initialize key handlers
 	model.initializeKeyHandlers()
 
+	// Build rows for table navigation
+	model.dindProcessListViewModel.SetRows(
+		model.dindProcessListViewModel.buildRows(),
+		model.ViewHeight(),
+	)
+
 	// Test navigation
 	newModel, _ := model.handleViewKeys(tea.KeyMsg{Type: tea.KeyDown})
 	m := newModel.(*Model)
-	assert.Equal(t, 1, m.dindProcessListViewModel.selectedDindContainer)
+	assert.Equal(t, 1, m.dindProcessListViewModel.Cursor)
 
 	// Test entering log view
 	newModel, cmd := m.handleViewKeys(tea.KeyMsg{Type: tea.KeyEnter})
@@ -369,7 +383,7 @@ func TestBoundaryConditions(t *testing.T) {
 			composeContainers: []models.ComposeContainer{
 				{Name: "test-1"},
 			},
-			selectedContainer: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		},
 	}
 	model.Init() // Initialize key handlers
@@ -377,12 +391,12 @@ func TestBoundaryConditions(t *testing.T) {
 	// Try to go up at the top
 	newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyUp})
 	m := newModel.(*Model)
-	assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer) // Should stay at 0
+	assert.Equal(t, 0, m.composeProcessListViewModel.Cursor) // Should stay at 0
 
 	// Try to go down at the bottom
 	newModel, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
 	m = newModel.(*Model)
-	assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer) // Should stay at 0 (only one item)
+	assert.Equal(t, 0, m.composeProcessListViewModel.Cursor) // Should stay at 0 (only one item)
 
 	// Test with empty list
 	model.composeProcessListViewModel.composeContainers = []models.ComposeContainer{}
@@ -445,8 +459,8 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 	assert.Equal(t, "/app", m.fileBrowserViewModel.currentPath)
 	assert.Equal(t, 4, len(m.fileBrowserViewModel.pathHistory)) // Should have added parent to history
 	assert.True(t, m.loading)
-	assert.Equal(t, 0, m.fileBrowserViewModel.selectedFile) // Should reset selection
-	assert.NotNil(t, cmd)                                   // Should trigger loading parent directory files
+	assert.Equal(t, 0, m.fileBrowserViewModel.Cursor) // Should reset selection
+	assert.NotNil(t, cmd)                             // Should trigger loading parent directory files
 
 	// Test at root directory - should not change
 	model.fileBrowserViewModel.currentPath = "/"

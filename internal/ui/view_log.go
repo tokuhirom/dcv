@@ -61,11 +61,30 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 	// Calculate visible logs based on scroll position
 	visibleHeight := availableHeight - 2
 
+	// Calculate which logs to display accounting for wrapped lines
 	startIdx := m.logScrollY
-	endIdx := startIdx + visibleHeight
 
-	if endIdx > len(logsToDisplay) {
-		endIdx = len(logsToDisplay)
+	// Calculate how many visual lines we've used
+	visualLinesUsed := 0
+	endIdx := startIdx
+
+	for i := startIdx; i < len(logsToDisplay) && visualLinesUsed < visibleHeight; i++ {
+		lineLength := len(logsToDisplay[i])
+		// Calculate how many visual lines this log line will take
+		visualLines := 1
+		if model.width > 0 {
+			visualLines = (lineLength + model.width - 1) / model.width
+			if visualLines < 1 {
+				visualLines = 1
+			}
+		}
+
+		if visualLinesUsed+visualLines <= visibleHeight {
+			endIdx = i + 1
+			visualLinesUsed += visualLines
+		} else {
+			break
+		}
 	}
 
 	// Define highlight style
@@ -218,6 +237,46 @@ func (m *LogViewModel) highlightFilterMatch(line string, style lipgloss.Style) s
 	return result.String()
 }
 
+// calculateMaxScroll calculates the maximum scroll position accounting for wrapped lines
+func (m *LogViewModel) calculateMaxScroll(model *Model) int {
+	logsToDisplay := m.logs
+	if m.filterMode && m.filterText != "" {
+		logsToDisplay = m.filteredLogs
+	}
+
+	if len(logsToDisplay) == 0 {
+		return 0
+	}
+
+	visibleHeight := model.PageSize()
+
+	// Work backwards to find the max scroll position
+	// We want to find the highest index where we can still fill the screen
+	for startIdx := len(logsToDisplay) - 1; startIdx >= 0; startIdx-- {
+		visualLinesUsed := 0
+
+		for i := startIdx; i < len(logsToDisplay); i++ {
+			lineLength := len(logsToDisplay[i])
+			visualLines := 1
+			if model.width > 0 {
+				visualLines = (lineLength + model.width - 1) / model.width
+				if visualLines < 1 {
+					visualLines = 1
+				}
+			}
+
+			visualLinesUsed += visualLines
+
+			if visualLinesUsed >= visibleHeight {
+				// We've filled the screen, this is a valid max scroll position
+				return startIdx
+			}
+		}
+	}
+
+	return 0
+}
+
 func (m *LogViewModel) HandleUp() tea.Cmd {
 	if m.logScrollY > 0 {
 		m.logScrollY--
@@ -226,7 +285,8 @@ func (m *LogViewModel) HandleUp() tea.Cmd {
 }
 
 func (m *LogViewModel) HandleDown(model *Model) tea.Cmd {
-	maxScroll := len(m.logs) - model.PageSize()
+	// Calculate max scroll accounting for wrapped lines
+	maxScroll := m.calculateMaxScroll(model)
 	if m.logScrollY < maxScroll && maxScroll > 0 {
 		m.logScrollY++
 	}
@@ -234,9 +294,11 @@ func (m *LogViewModel) HandleDown(model *Model) tea.Cmd {
 }
 
 func (m *LogViewModel) HandleGoToEnd(model *Model) tea.Cmd {
-	maxScroll := len(m.logs) - model.PageSize()
+	maxScroll := m.calculateMaxScroll(model)
 	if maxScroll > 0 {
 		m.logScrollY = maxScroll
+	} else {
+		m.logScrollY = 0
 	}
 	return nil
 }
@@ -386,12 +448,7 @@ func (m *LogViewModel) HandlePageUp(model *Model) tea.Cmd {
 
 func (m *LogViewModel) HandlePageDown(model *Model) tea.Cmd {
 	pageSize := model.PageSize()
-	logsToDisplay := m.logs
-	if m.filterMode && m.filterText != "" {
-		logsToDisplay = m.filteredLogs
-	}
-
-	maxScroll := len(logsToDisplay) - pageSize
+	maxScroll := m.calculateMaxScroll(model)
 	m.logScrollY += pageSize
 	if m.logScrollY > maxScroll && maxScroll > 0 {
 		m.logScrollY = maxScroll

@@ -24,21 +24,17 @@ var _ UpdateAware = (*ComposeProcessListViewModel)(nil)
 var _ ContainerSearchAware = (*ComposeProcessListViewModel)(nil)
 
 type ComposeProcessListViewModel struct {
-	ContainerSearchViewModel
+	TableViewModel
 	// Process list state
 	composeContainers []models.ComposeContainer
-	selectedContainer int
 	showAll           bool   // Toggle to show all composeContainers including stopped ones
 	projectName       string // Current Docker Compose project name
 }
 
 func (m *ComposeProcessListViewModel) Init(_ *Model) {
-	m.InitContainerSearchViewModel(
-		func(idx int) {
-			m.selectedContainer = idx
-		}, func() {
-			m.performSearch()
-		})
+	m.InitTableViewModel(func() {
+		m.performSearch()
+	})
 }
 
 func (m *ComposeProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -49,7 +45,7 @@ func (m *ComposeProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Mod
 			model.err = msg.err
 		} else {
 			model.err = nil
-			m.Loaded(msg.processes)
+			m.Loaded(model, msg.processes)
 		}
 		return model, nil
 
@@ -99,39 +95,18 @@ func (m *ComposeProcessListViewModel) performSearch() {
 
 	// Jump to first result if found
 	if len(results) > 0 {
-		m.selectedContainer = results[0]
+		m.Cursor = results[0]
 	}
 }
 
-func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
-	slog.Info("Rendering container list",
-		slog.Int("selectedContainer", m.selectedContainer),
-		slog.Int("numContainers", len(m.composeContainers)))
-
-	// Empty state
-	if len(m.composeContainers) == 0 {
-		var s strings.Builder
-		s.WriteString("\nNo containers found.\n")
-		s.WriteString("\nPress u to start services or p to switch to project list\n")
-		return s.String()
-	}
-
-	// Create table with fixed widths
-	columns := []table.Column{
-		{Title: "SERVICE", Width: 20},
-		{Title: "IMAGE", Width: 30},
-		{Title: "STATE", Width: 10},
-		{Title: "STATUS", Width: 20},
-		{Title: "PORTS", Width: model.width - 75},
-	}
-
+func (m *ComposeProcessListViewModel) buildRows() []table.Row {
 	rows := make([]table.Row, 0, len(m.composeContainers))
 	// Add rows with width control
 	for i, container := range m.composeContainers {
 		// Service name with dind indicator
 		service := container.Service
 		if container.IsDind() {
-			service = dindStyle.Render("⬢ ") + service
+			service = "🔄 " + service
 		}
 
 		// Highlight if this container matches search
@@ -147,9 +122,6 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 
 		// Truncate image name if too long
 		image := container.Image
-		if len(image) > 30 {
-			image = image[:27] + "..."
-		}
 
 		state := container.State
 
@@ -163,52 +135,46 @@ func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) 
 
 		// Truncate ports if too long
 		ports := container.GetPortsString()
-		if len(ports) > 40 {
-			ports = ports[:37] + "..."
-		}
 
 		rows = append(rows, table.Row{service, image, state, status, ports})
 	}
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithHeight(availableHeight-2),
-		table.WithFocused(true),
-	)
-
-	// Apply styles
-	styles := table.DefaultStyles()
-	styles.Header = styles.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	styles.Selected = selectedStyle
-	styles.Cell = styles.Cell.
-		BorderForeground(lipgloss.Color("240"))
-	t.SetStyles(styles)
-
-	// Set cursor position
-	if m.selectedContainer < len(rows) {
-		t.MoveDown(m.selectedContainer)
-	}
-
-	return t.View()
+	return rows
 }
 
-func (m *ComposeProcessListViewModel) HandleUp() tea.Cmd {
-	if m.selectedContainer > 0 {
-		m.selectedContainer--
-	}
-	return nil
-}
+func (m *ComposeProcessListViewModel) render(model *Model, availableHeight int) string {
+	slog.Info("Rendering container list",
+		slog.Int("cursor", m.Cursor),
+		slog.Int("numContainers", len(m.composeContainers)))
 
-func (m *ComposeProcessListViewModel) HandleDown() tea.Cmd {
-	if m.selectedContainer < len(m.composeContainers)-1 {
-		m.selectedContainer++
+	// Empty state
+	if len(m.composeContainers) == 0 {
+		var s strings.Builder
+		s.WriteString("\nNo containers found.\n")
+		s.WriteString("\nPress u to start services or p to switch to project list\n")
+		return s.String()
 	}
-	return nil
+
+	// Create table with fixed widths
+	columns := []table.Column{
+		{Title: "SERVICE", Width: -1},
+		{Title: "IMAGE", Width: -1},
+		{Title: "STATE", Width: -1},
+		{Title: "STATUS", Width: -1},
+		{Title: "PORTS", Width: -1},
+	}
+
+	// Reduce available height if search info will be displayed
+	tableHeight := availableHeight
+	if m.IsSearchActive() && m.GetSearchText() != "" && m.GetSearchInfo() != "" {
+		tableHeight -= 2 // Reserve lines for search info
+	}
+
+	return m.RenderTable(model, columns, tableHeight, func(row, col int) lipgloss.Style {
+		if row == m.Cursor {
+			return tableSelectedCellStyle
+		}
+		return tableNormalCellStyle
+	})
 }
 
 func (m *ComposeProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
@@ -228,8 +194,8 @@ func (m *ComposeProcessListViewModel) HandleDindProcessList(model *Model) tea.Cm
 }
 
 func (m *ComposeProcessListViewModel) GetContainer(model *Model) *docker.Container {
-	if m.selectedContainer < len(m.composeContainers) {
-		container := m.composeContainers[m.selectedContainer]
+	if m.Cursor < len(m.composeContainers) {
+		container := m.composeContainers[m.Cursor]
 		return docker.NewContainer(container.ID, container.Name, fmt.Sprintf("%s(project:%s)", container.Service, m.projectName), container.State)
 	}
 	return nil
@@ -240,9 +206,7 @@ func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *ComposeProcessListViewModel) Loaded(processes []models.ComposeContainer) {
+func (m *ComposeProcessListViewModel) Loaded(model *Model, processes []models.ComposeContainer) {
 	m.composeContainers = processes
-	if len(m.composeContainers) > 0 && m.selectedContainer >= len(m.composeContainers) {
-		m.selectedContainer = 0
-	}
+	m.SetRows(m.buildRows(), model.ViewHeight())
 }

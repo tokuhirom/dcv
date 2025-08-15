@@ -11,29 +11,29 @@ import (
 func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case NetworkListView:
-		return m, m.networkListViewModel.HandleUp()
+		return m, m.networkListViewModel.HandleUp(m)
 	case HelpView:
-		return m, m.helpViewModel.HandleUp()
+		return m, m.helpViewModel.HandleUp(m)
 	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleUp()
+		return m, m.dindProcessListViewModel.HandleUp(m)
 	case VolumeListView:
-		return m, m.volumeListViewModel.HandleUp()
+		return m, m.volumeListViewModel.HandleUp(m)
 	case ImageListView:
-		return m, m.imageListViewModel.HandleUp()
+		return m, m.imageListViewModel.HandleUp(m)
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleUp()
 	case FileBrowserView:
-		return m, m.fileBrowserViewModel.HandleUp()
+		return m, m.fileBrowserViewModel.HandleUp(m)
 	case LogView:
 		return m, m.logViewModel.HandleUp()
 	case InspectView:
 		return m, m.inspectViewModel.HandleUp()
 	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleUp()
+		return m, m.dockerContainerListViewModel.HandleUp(m)
 	case ComposeProjectListView:
 		return m, m.composeProjectListViewModel.HandleUp(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleUp()
+		return m, m.composeProcessListViewModel.HandleUp(m)
 	case TopView:
 		m.topViewModel.HandleUp()
 		return m, nil
@@ -56,33 +56,33 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	slog.Info("CmdDown called",
 		slog.String("view", m.currentView.String()),
-		slog.Int("selectedContainer", m.composeProcessListViewModel.selectedContainer))
+		slog.Int("cursor", m.composeProcessListViewModel.Cursor))
 
 	switch m.currentView {
 	case NetworkListView:
-		return m, m.networkListViewModel.HandleDown()
+		return m, m.networkListViewModel.HandleDown(m)
 	case HelpView:
 		return m, m.helpViewModel.HandleDown(m)
 	case DindProcessListView:
-		return m, m.dindProcessListViewModel.HandleDown()
+		return m, m.dindProcessListViewModel.HandleDown(m)
 	case VolumeListView:
-		return m, m.volumeListViewModel.HandleDown()
+		return m, m.volumeListViewModel.HandleDown(m)
 	case ImageListView:
-		return m, m.imageListViewModel.HandleDown()
+		return m, m.imageListViewModel.HandleDown(m)
 	case FileContentView:
 		return m, m.fileContentViewModel.HandleDown(m.Height)
 	case FileBrowserView:
-		return m, m.fileBrowserViewModel.HandleDown()
+		return m, m.fileBrowserViewModel.HandleDown(m)
 	case LogView:
 		return m, m.logViewModel.HandleDown(m)
 	case InspectView:
 		return m, m.inspectViewModel.HandleDown(m)
 	case DockerContainerListView:
-		return m, m.dockerContainerListViewModel.HandleDown()
+		return m, m.dockerContainerListViewModel.HandleDown(m)
 	case ComposeProjectListView:
 		return m, m.composeProjectListViewModel.HandleDown(m)
 	case ComposeProcessListView:
-		return m, m.composeProcessListViewModel.HandleDown()
+		return m, m.composeProcessListViewModel.HandleDown(m)
 	case TopView:
 		m.topViewModel.HandleDown()
 		return m, nil

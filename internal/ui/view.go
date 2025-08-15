@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -16,10 +17,6 @@ var (
 			Foreground(lipgloss.Color("86")).
 			MarginBottom(1)
 
-	selectedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Background(lipgloss.Color("235"))
-
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
 			Bold(true)
@@ -30,9 +27,6 @@ var (
 	headerStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("226"))
-
-	dindStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42"))
 
 	statusUpStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("42"))
@@ -93,27 +87,34 @@ func (m *Model) View() string {
 
 	// Get body content with available Height
 	body := m.viewBody(availableBodyHeight)
-	bodyHeight := lipgloss.Height(body)
 
-	totalContentHeight := navHeight + titleHeight + bodyHeight + footerHeight
-
-	// Add padding if needed to push footer to the bottom
-	if totalContentHeight < m.Height {
-		padding := m.Height - totalContentHeight
-		body = body + strings.Repeat("\n", padding)
-	}
+	// Note: if body is too long, you can truncate by following code.
+	body = lipgloss.NewStyle().MaxHeight(availableBodyHeight).Height(availableBodyHeight).Render(body)
 
 	// Join all components
 	components := []string{}
 	if !m.navbarHidden {
 		components = append(components, navHeader)
 	}
-	components = append(components, titleStyle.Render(title), body, footer)
+	components = append(components,
+		titleStyle.Render(title),
+		body,
+		footer)
 
-	return lipgloss.JoinVertical(
+	retval := lipgloss.JoinVertical(
 		lipgloss.Left,
 		components...,
 	)
+
+	slog.Info("View rendered",
+		slog.Int("expectedHeight", m.Height),
+		slog.Int("realHeight", lipgloss.Height(retval)),
+		slog.Int("navHeight", lipgloss.Height(navHeader)),
+		slog.Int("titleHeight", lipgloss.Height(title)),
+		slog.Int("bodyHeight", lipgloss.Height(body)),
+		slog.Int("availableBodyHeight", availableBodyHeight),
+		slog.Int("footerHeight", lipgloss.Height(footer)))
+	return retval
 }
 
 func (m *Model) viewNavigationHeader() string {
@@ -275,7 +276,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case LogView:
 		return m.logViewModel.render(m, availableHeight)
 	case DindProcessListView:
-		return m.dindProcessListViewModel.render(availableHeight)
+		return m.dindProcessListViewModel.render(m, availableHeight)
 	case TopView:
 		return m.topViewModel.render(availableHeight)
 	case StatsView:
@@ -287,7 +288,7 @@ func (m *Model) viewBody(availableHeight int) string {
 	case ImageListView:
 		return m.imageListViewModel.render(m, availableHeight)
 	case NetworkListView:
-		return m.networkListViewModel.render(availableHeight)
+		return m.networkListViewModel.render(m, availableHeight)
 	case VolumeListView:
 		return m.volumeListViewModel.render(m, availableHeight)
 	case FileBrowserView:
@@ -330,6 +331,12 @@ func (m *Model) viewFooter() string {
 	} else if m.currentView == HelpView {
 		return helpStyle.Render("Press ESC or q to go back")
 	} else {
+		// Check if current view supports container search and is in search mode
+		vm := m.GetCurrentViewModel()
+		if searchable, ok := vm.(ContainerSearchAware); ok && searchable.IsSearchActive() {
+			return searchable.RenderSearchLine()
+		}
+
 		helpText := "Press ? for help"
 
 		// Add action menu hint for process list views

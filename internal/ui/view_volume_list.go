@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -17,8 +18,8 @@ type dockerVolumesLoadedMsg struct {
 
 // VolumeListViewModel manages the state and rendering of the Docker volume list view
 type VolumeListViewModel struct {
-	dockerVolumes        []models.DockerVolume
-	selectedDockerVolume int
+	TableViewModel
+	dockerVolumes []models.DockerVolume
 }
 
 // Update handles messages for the volume list view
@@ -33,7 +34,7 @@ func (m *VolumeListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.
 			model.err = nil
 		}
 
-		m.Loaded(msg.volumes)
+		m.Loaded(model, msg.volumes)
 		return model, nil
 	default:
 		return model, nil
@@ -51,56 +52,58 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 
 	// Create table columns
 	columns := []table.Column{
-		{Title: "Name", Width: 40},
-		{Title: "Driver", Width: 10},
-		{Title: "Scope", Width: 10},
+		{Title: "Name", Width: -1},
+		{Title: "Driver", Width: -1},
+		{Title: "Scope", Width: -1},
 	}
 
-	// Create table rows
-	rows := make([]table.Row, len(m.dockerVolumes))
-	for i, volume := range m.dockerVolumes {
-		rows[i] = table.Row{
+	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+		if row == m.Cursor {
+			return tableSelectedCellStyle
+		}
+		return tableNormalCellStyle
+	})
+}
+
+// buildRows builds the table rows from docker volumes
+func (m *VolumeListViewModel) buildRows() []table.Row {
+	rows := make([]table.Row, 0, len(m.dockerVolumes))
+	for _, volume := range m.dockerVolumes {
+		rows = append(rows, table.Row{
 			volume.Name,
 			volume.Driver,
 			volume.Scope,
-		}
+		})
 	}
-
-	return RenderTable(columns, rows, availableHeight, m.selectedDockerVolume)
+	return rows
 }
 
 // Show switches to the volume list view
 func (m *VolumeListViewModel) Show(model *Model) tea.Cmd {
 	model.SwitchView(VolumeListView)
-	m.selectedDockerVolume = 0
+	m.Cursor = 0
 	m.dockerVolumes = []models.DockerVolume{}
 	model.err = nil
 	return m.DoLoad(model)
 }
 
 // HandleUp moves selection up in the volume list
-func (m *VolumeListViewModel) HandleUp() tea.Cmd {
-	if m.selectedDockerVolume > 0 {
-		m.selectedDockerVolume--
-	}
-	return nil
+func (m *VolumeListViewModel) HandleUp(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleUp(model)
 }
 
 // HandleDown moves selection down in the volume list
-func (m *VolumeListViewModel) HandleDown() tea.Cmd {
-	if m.selectedDockerVolume < len(m.dockerVolumes)-1 {
-		m.selectedDockerVolume++
-	}
-	return nil
+func (m *VolumeListViewModel) HandleDown(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleDown(model)
 }
 
 // HandleInspect shows the inspect view for the selected volume
 func (m *VolumeListViewModel) HandleInspect(model *Model) tea.Cmd {
-	if len(m.dockerVolumes) == 0 || m.selectedDockerVolume >= len(m.dockerVolumes) {
+	if len(m.dockerVolumes) == 0 || m.Cursor >= len(m.dockerVolumes) {
 		return nil
 	}
 
-	volume := m.dockerVolumes[m.selectedDockerVolume]
+	volume := m.dockerVolumes[m.Cursor]
 	model.loading = true
 	model.err = nil
 	return model.inspectViewModel.Inspect(model, "volume "+volume.Name, func() ([]byte, error) {
@@ -110,11 +113,11 @@ func (m *VolumeListViewModel) HandleInspect(model *Model) tea.Cmd {
 
 // HandleDelete removes the selected volume
 func (m *VolumeListViewModel) HandleDelete(model *Model, force bool) tea.Cmd {
-	if len(m.dockerVolumes) == 0 || m.selectedDockerVolume >= len(m.dockerVolumes) {
+	if len(m.dockerVolumes) == 0 || m.Cursor >= len(m.dockerVolumes) {
 		return nil
 	}
 
-	volume := m.dockerVolumes[m.selectedDockerVolume]
+	volume := m.dockerVolumes[m.Cursor]
 	// Use CommandExecutionView to show real-time output
 	args := []string{"volume", "rm"}
 	if force {
@@ -140,9 +143,7 @@ func (m *VolumeListViewModel) DoLoad(model *Model) tea.Cmd {
 }
 
 // Loaded updates the volume list after loading
-func (m *VolumeListViewModel) Loaded(volumes []models.DockerVolume) {
+func (m *VolumeListViewModel) Loaded(model *Model, volumes []models.DockerVolume) {
 	m.dockerVolumes = volumes
-	if len(m.dockerVolumes) > 0 && m.selectedDockerVolume >= len(m.dockerVolumes) {
-		m.selectedDockerVolume = 0
-	}
+	m.SetRows(m.buildRows(), model.ViewHeight())
 }

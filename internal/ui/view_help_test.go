@@ -19,8 +19,8 @@ func TestHelpViewModel_Rendering(t *testing.T) {
 		{
 			name: "displays help table with headers",
 			viewModel: HelpViewModel{
-				parentView: ComposeProcessListView,
-				scrollY:    0,
+				TableViewModel: TableViewModel{Cursor: 0},
+				parentView:     ComposeProcessListView,
 			},
 			model: &Model{
 				width:  100,
@@ -61,8 +61,8 @@ func TestHelpViewModel_Rendering(t *testing.T) {
 		{
 			name: "handles scrolling",
 			viewModel: HelpViewModel{
-				parentView: LogView,
-				scrollY:    2,
+				TableViewModel: TableViewModel{Cursor: 2},
+				parentView:     LogView,
 			},
 			model: &Model{
 				width:  100,
@@ -82,6 +82,8 @@ func TestHelpViewModel_Rendering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Build rows for table
+			tt.viewModel.SetRows(tt.viewModel.buildRows(tt.model), tt.model.ViewHeight())
 			result := tt.viewModel.render(tt.model, tt.height)
 
 			for _, expected := range tt.expected {
@@ -205,35 +207,47 @@ func TestHelpViewModel_Navigation(t *testing.T) {
 		}
 
 		vm := &HelpViewModel{
-			parentView: ComposeProcessListView,
-			scrollY:    0,
+			TableViewModel: TableViewModel{Cursor: 0},
+			parentView:     ComposeProcessListView,
 		}
 
+		vm.SetRows(vm.buildRows(model), model.ViewHeight())
 		cmd := vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.scrollY)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary - should not scroll beyond last row
-		vm.scrollY = 2 // Last item (3 items total)
+		vm.Cursor = 2 // Last item (3 items total)
 		cmd = vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 2, vm.scrollY, "Should not scroll beyond last item")
+		assert.Equal(t, 2, vm.Cursor, "Should not scroll beyond last item")
 	})
 
 	t.Run("HandleUp scrolls up", func(t *testing.T) {
 		vm := &HelpViewModel{
-			scrollY: 2,
+			TableViewModel: TableViewModel{Cursor: 2},
+			parentView:     ComposeProcessListView,
 		}
 
-		cmd := vm.HandleUp()
+		model := &Model{
+			Height: 20,
+			composeProcessListViewHandlers: []KeyConfig{
+				{Keys: []string{"1"}, Description: "Item 1"},
+				{Keys: []string{"2"}, Description: "Item 2"},
+				{Keys: []string{"3"}, Description: "Item 3"},
+			},
+			globalHandlers: []KeyConfig{},
+		}
+		vm.SetRows(vm.buildRows(model), model.ViewHeight())
+		cmd := vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.scrollY)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Test boundary
-		vm.scrollY = 0
-		cmd = vm.HandleUp()
+		vm.Cursor = 0
+		cmd = vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, vm.scrollY, "Should not scroll above 0")
+		assert.Equal(t, 0, vm.Cursor, "Should not scroll above 0")
 	})
 }
 
@@ -243,14 +257,14 @@ func TestHelpViewModel_Show(t *testing.T) {
 			currentView: ComposeProcessListView,
 		}
 		vm := &HelpViewModel{
-			scrollY: 10,
+			TableViewModel: TableViewModel{Cursor: 10},
 		}
 
 		cmd := vm.Show(model, ComposeProcessListView)
 		assert.Nil(t, cmd)
 		assert.Equal(t, HelpView, model.currentView)
 		assert.Equal(t, ComposeProcessListView, vm.parentView)
-		assert.Equal(t, 0, vm.scrollY, "Should reset scroll position")
+		assert.Equal(t, 0, vm.Cursor, "Should reset scroll position")
 	})
 }
 
@@ -261,14 +275,14 @@ func TestHelpViewModel_HandleBack(t *testing.T) {
 			viewHistory: []ViewType{ComposeProcessListView, HelpView},
 		}
 		vm := &HelpViewModel{
-			parentView: ComposeProcessListView,
-			scrollY:    5,
+			parentView:     ComposeProcessListView,
+			TableViewModel: TableViewModel{Cursor: 5},
 		}
 
 		cmd := vm.HandleBack(model)
 		assert.Nil(t, cmd)
 		assert.Equal(t, ComposeProcessListView, model.currentView)
-		assert.Equal(t, 0, vm.scrollY, "Should reset scroll position")
+		assert.Equal(t, 0, vm.Cursor, "Should reset scroll position")
 	})
 }
 
@@ -370,7 +384,7 @@ func TestHelpViewModel_Integration(t *testing.T) {
 		assert.Equal(t, HelpView, model.currentView)
 		assert.Equal(t, ComposeProcessListView, vm.parentView)
 
-		// Render and verify content
+		// RenderTable and verify content
 		rendered := vm.render(model, model.Height)
 		assert.Contains(t, rendered, "Key")
 		assert.Contains(t, rendered, "Command")
@@ -383,18 +397,18 @@ func TestHelpViewModel_Integration(t *testing.T) {
 		// Navigate down
 		cmd = vm.HandleDown(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, vm.scrollY)
+		assert.Equal(t, 1, vm.Cursor)
 
 		// Navigate up
-		cmd = vm.HandleUp()
+		cmd = vm.HandleUp(model)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, vm.scrollY)
+		assert.Equal(t, 0, vm.Cursor)
 
 		// Go back to previous view
 		model.viewHistory = []ViewType{ComposeProcessListView, HelpView}
 		cmd = vm.HandleBack(model)
 		assert.Nil(t, cmd)
 		assert.Equal(t, ComposeProcessListView, model.currentView)
-		assert.Equal(t, 0, vm.scrollY)
+		assert.Equal(t, 0, vm.Cursor)
 	})
 }

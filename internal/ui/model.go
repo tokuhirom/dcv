@@ -380,6 +380,17 @@ func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
 	}
 }
 
+func (m *Model) ViewHeight() int {
+	height := m.Height
+	if !m.navbarHidden {
+		height -= 2 // navbar
+	}
+	height -= 2 // header
+	height -= 2 // footer
+	height -= 3 // padding
+	return height
+}
+
 // Messages
 
 type logLinesMsg struct {

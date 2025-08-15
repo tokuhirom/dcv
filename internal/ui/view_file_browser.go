@@ -21,8 +21,8 @@ type containerFilesLoadedMsg struct {
 }
 
 type FileBrowserViewModel struct {
+	TableViewModel
 	containerFiles    []models.ContainerFile
-	selectedFile      int
 	currentPath       string
 	browsingContainer *docker.Container // The container we're browsing
 	pathHistory       []string
@@ -40,7 +40,7 @@ func (m *FileBrowserViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea
 			model.err = nil
 		}
 
-		m.Loaded(msg.files)
+		m.Loaded(model, msg.files)
 		return model, nil
 	default:
 		return model, nil
@@ -79,11 +79,21 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 
 	// Create table
 	columns := []table.Column{
-		{Title: "PERMISSIONS", Width: 15},
-		{Title: "SIZE", Width: 10},
-		{Title: "NAME", Width: model.width - 30},
+		{Title: "PERMISSIONS", Width: 15}, // Fixed width for permissions display
+		{Title: "SIZE", Width: 10},        // Fixed width for size display
+		{Title: "NAME", Width: -1},
 	}
 
+	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+		if row == m.Cursor {
+			return tableSelectedCellStyle
+		}
+		return tableNormalCellStyle
+	})
+}
+
+// buildRows builds the table rows from container files
+func (m *FileBrowserViewModel) buildRows() []table.Row {
 	// Define styles for different file types
 	dirStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
 	linkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
@@ -101,8 +111,7 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 
 		rows = append(rows, table.Row{file.Permissions, file.GetSizeString(), name})
 	}
-
-	return RenderTable(columns, rows, availableHeight, m.selectedFile)
+	return rows
 }
 
 func (m *FileBrowserViewModel) LoadContainer(model *Model, container *docker.Container) tea.Cmd {
@@ -116,7 +125,7 @@ func (m *FileBrowserViewModel) LoadContainer(model *Model, container *docker.Con
 func (m *FileBrowserViewModel) HandleBack(model *Model) tea.Cmd {
 	// Try to go back in path history
 	if m.popHistory() {
-		m.selectedFile = 0
+		m.Cursor = 0
 		return m.DoLoad(model)
 	}
 	// If no more history, go back to the previous view
@@ -124,18 +133,12 @@ func (m *FileBrowserViewModel) HandleBack(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *FileBrowserViewModel) HandleUp() tea.Cmd {
-	if m.selectedFile > 0 {
-		m.selectedFile--
-	}
-	return nil
+func (m *FileBrowserViewModel) HandleUp(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleUp(model)
 }
 
-func (m *FileBrowserViewModel) HandleDown() tea.Cmd {
-	if m.selectedFile < len(m.containerFiles)-1 {
-		m.selectedFile++
-	}
-	return nil
+func (m *FileBrowserViewModel) HandleDown(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleDown(model)
 }
 
 func (m *FileBrowserViewModel) HandleGoToParentDirectory(model *Model) tea.Cmd {
@@ -143,15 +146,15 @@ func (m *FileBrowserViewModel) HandleGoToParentDirectory(model *Model) tea.Cmd {
 	if m.currentPath != "/" {
 		parentPath := filepath.Dir(m.currentPath)
 		m.pushHistory(parentPath)
-		m.selectedFile = 0
+		m.Cursor = 0
 		return m.DoLoad(model)
 	}
 	return nil
 }
 
 func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
-	if m.selectedFile < len(m.containerFiles) {
-		file := m.containerFiles[m.selectedFile]
+	if m.Cursor < len(m.containerFiles) {
+		file := m.containerFiles[m.Cursor]
 
 		if file.Name == "." {
 			return nil
@@ -162,7 +165,7 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 			if m.currentPath != "/" {
 				parentPath := filepath.Dir(m.currentPath)
 				m.pushHistory(parentPath)
-				m.selectedFile = 0
+				m.Cursor = 0
 				return m.DoLoad(model)
 			}
 			return nil
@@ -173,7 +176,7 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 		if file.IsDir {
 			// Navigate into directory
 			m.pushHistory(newPath)
-			m.selectedFile = 0
+			m.Cursor = 0
 			return m.DoLoad(model)
 		} else {
 			// View file content
@@ -183,11 +186,9 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *FileBrowserViewModel) Loaded(files []models.ContainerFile) {
+func (m *FileBrowserViewModel) Loaded(model *Model, files []models.ContainerFile) {
 	m.containerFiles = files
-	if len(m.containerFiles) > 0 && m.selectedFile >= len(m.containerFiles) {
-		m.selectedFile = 0
-	}
+	m.SetRows(m.buildRows(), model.ViewHeight())
 }
 
 func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {

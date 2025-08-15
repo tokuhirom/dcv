@@ -23,19 +23,15 @@ var _ UpdateAware = (*DockerContainerListViewModel)(nil)
 var _ ContainerSearchAware = (*DockerContainerListViewModel)(nil)
 
 type DockerContainerListViewModel struct {
-	ContainerSearchViewModel
-	dockerContainers        []models.DockerContainer
-	selectedDockerContainer int
-	showAll                 bool
+	TableViewModel
+	dockerContainers []models.DockerContainer
+	showAll          bool
 }
 
 func (m *DockerContainerListViewModel) Init(_ *Model) {
-	m.InitContainerSearchViewModel(
-		func(idx int) {
-			m.selectedDockerContainer = idx
-		}, func() {
-			m.performSearch()
-		})
+	m.InitTableViewModel(func() {
+		m.performSearch()
+	})
 }
 
 func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -46,7 +42,7 @@ func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Mo
 			model.err = msg.err
 		} else {
 			model.err = nil
-			m.Loaded(msg.containers)
+			m.Loaded(model, msg.containers)
 		}
 		return model, nil
 
@@ -55,11 +51,9 @@ func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Mo
 	}
 }
 
-func (m *DockerContainerListViewModel) Loaded(containers []models.DockerContainer) {
+func (m *DockerContainerListViewModel) Loaded(model *Model, containers []models.DockerContainer) {
 	m.dockerContainers = containers
-	if len(m.dockerContainers) > 0 && m.selectedDockerContainer >= len(m.dockerContainers) {
-		m.selectedDockerContainer = 0
-	}
+	m.SetRows(m.buildRows(), model.ViewHeight())
 }
 
 type ColumnMap struct {
@@ -71,20 +65,14 @@ type ColumnMap struct {
 	names       table.Column
 }
 
-func NewColumnMap(model *Model) ColumnMap {
-	sideMargin := 2 * 2    // 2 for left and right padding
-	cellMargin := 2        // 2 for cell margin
-	containerIDWidth := 12 // Fixed width for container ID
-	stateWidth := 10
-	widthPerColumn := (model.width - containerIDWidth - stateWidth - cellMargin*4 - sideMargin) / 4
-
+func NewColumnMap() ColumnMap {
 	return ColumnMap{
-		containerID: table.Column{Title: "CONTAINER ID", Width: containerIDWidth},
-		image:       table.Column{Title: "IMAGE", Width: widthPerColumn},
-		state:       table.Column{Title: "STATE", Width: stateWidth}, // Fixed width for state
-		status:      table.Column{Title: "STATUS", Width: widthPerColumn},
-		ports:       table.Column{Title: "PORTS", Width: widthPerColumn},
-		names:       table.Column{Title: "NAMES", Width: widthPerColumn},
+		containerID: table.Column{Title: "CONTAINER ID", Width: -1},
+		image:       table.Column{Title: "IMAGE", Width: -1},
+		state:       table.Column{Title: "STATE", Width: -1},
+		status:      table.Column{Title: "STATUS", Width: -1},
+		ports:       table.Column{Title: "PORTS", Width: -1},
+		names:       table.Column{Title: "NAMES", Width: -1},
 	}
 }
 
@@ -121,20 +109,11 @@ func (m *DockerContainerListViewModel) performSearch() {
 
 	// Jump to first result if found
 	if len(results) > 0 {
-		m.selectedDockerContainer = results[0]
+		m.Cursor = results[0]
 	}
 }
 
-func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
-	// Container list
-	if len(m.dockerContainers) == 0 {
-		var s strings.Builder
-		s.WriteString("\nNo containers found.\n")
-		return s.String()
-	}
-
-	columns := NewColumnMap(model)
-
+func (m *DockerContainerListViewModel) buildRows() []table.Row {
 	rows := make([]table.Row, 0, len(m.dockerContainers))
 	for i, container := range m.dockerContainers {
 		// Truncate container ID
@@ -143,7 +122,6 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 			id = id[:12]
 		}
 
-		// Truncate image name
 		image := container.Image
 
 		state := container.State
@@ -151,12 +129,11 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 		// Status with color
 		status := container.Status
 
-		// Truncate ports
-		ports := lipgloss.NewStyle().MaxWidth(columns.ports.Width).Render(container.Ports)
+		ports := container.Ports
 
 		name := container.Names
 		if container.IsDind() {
-			name = dindStyle.Render("⬢ ") + name
+			name = "🔄 " + name
 		}
 
 		// Highlight if this container matches search
@@ -172,28 +149,37 @@ func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableH
 
 		rows = append(rows, table.Row{id, image, state, status, ports, name})
 	}
-
-	return RenderTable(columns.ToArray(), rows, availableHeight, m.selectedDockerContainer)
+	return rows
 }
 
-func (m *DockerContainerListViewModel) HandleUp() tea.Cmd {
-	if m.selectedDockerContainer > 0 {
-		m.selectedDockerContainer--
+func (m *DockerContainerListViewModel) renderDockerList(model *Model, availableHeight int) string {
+	// Container list
+	if len(m.dockerContainers) == 0 {
+		var s strings.Builder
+		s.WriteString("\nNo containers found.\n")
+		return s.String()
 	}
-	return nil
-}
 
-func (m *DockerContainerListViewModel) HandleDown() tea.Cmd {
-	if m.selectedDockerContainer < len(m.dockerContainers)-1 {
-		m.selectedDockerContainer++
+	columns := NewColumnMap()
+
+	// Reduce available height if search info will be displayed
+	tableHeight := availableHeight
+	if m.IsSearchActive() && m.GetSearchText() != "" && m.GetSearchInfo() != "" {
+		tableHeight -= 2 // Reserve lines for search info
 	}
-	return nil
+
+	return m.RenderTable(model, columns.ToArray(), tableHeight, func(row, col int) lipgloss.Style {
+		if row == m.Cursor {
+			return tableSelectedCellStyle
+		}
+		return tableNormalCellStyle
+	})
 }
 
 func (m *DockerContainerListViewModel) GetContainer(model *Model) *docker.Container {
 	// Get the selected Docker container
-	if m.selectedDockerContainer < len(m.dockerContainers) {
-		container := m.dockerContainers[m.selectedDockerContainer]
+	if m.Cursor < len(m.dockerContainers) {
+		container := m.dockerContainers[m.Cursor]
 		return docker.NewContainer(container.ID, container.Names, container.Names, container.State)
 	}
 	return nil

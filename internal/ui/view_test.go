@@ -165,6 +165,22 @@ func TestView(t *testing.T) {
 			// Initialize key handlers for the test model
 			tt.model.initializeKeyHandlers()
 
+			// Build rows for compose process list if needed
+			if tt.model.currentView == ComposeProcessListView && len(tt.model.composeProcessListViewModel.composeContainers) > 0 {
+				tt.model.composeProcessListViewModel.SetRows(
+					tt.model.composeProcessListViewModel.buildRows(),
+					tt.model.ViewHeight(),
+				)
+			}
+
+			// Build rows for dind process list if needed
+			if tt.model.currentView == DindProcessListView && len(tt.model.dindProcessListViewModel.dindContainers) > 0 {
+				tt.model.dindProcessListViewModel.SetRows(
+					tt.model.dindProcessListViewModel.buildRows(),
+					tt.model.ViewHeight(),
+				)
+			}
+
 			view := tt.model.View()
 			for _, expected := range tt.contains {
 				assert.Contains(t, view, expected)
@@ -188,9 +204,12 @@ func TestRenderProcessList(t *testing.T) {
 					State:   "running",
 				},
 			},
-			selectedContainer: 0,
+			TableViewModel: TableViewModel{Cursor: 0},
 		},
 	}
+
+	// Build rows for table rendering
+	m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
 
 	// Calculate available Height (Height - title - footer)
 	availableHeight := m.Height - 2
@@ -260,13 +279,15 @@ func TestRenderDindList(t *testing.T) {
 					Status: "Up 3 minutes",
 				},
 			},
-			selectedDindContainer: 1,
+			TableViewModel: TableViewModel{Cursor: 1},
 		},
 	}
 
+	// Build rows for table rendering
+	m.dindProcessListViewModel.SetRows(m.dindProcessListViewModel.buildRows(), m.ViewHeight())
 	// Calculate available Height
 	availableHeight := m.Height - 2
-	view := m.dindProcessListViewModel.render(availableHeight)
+	view := m.dindProcessListViewModel.render(&m, availableHeight)
 
 	// The title is in viewTitle(), not renderDindList()
 	// Check that dind containers are listed correctly
@@ -345,7 +366,9 @@ func TestDockerContainerListView(t *testing.T) {
 			Height:      24,
 			currentView: DockerContainerListView,
 			dockerContainerListViewModel: DockerContainerListViewModel{
-				selectedDockerContainer: 0,
+				TableViewModel: TableViewModel{
+					Cursor: 0,
+				},
 				dockerContainers: []models.DockerContainer{
 					{ID: "abc123def456", Names: "nginx", Image: "nginx:latest", Status: "Up 2 hours", Ports: "80/tcp"},
 					{ID: "789012345678", Names: "redis", Image: "redis:alpine", Status: "Exited (0) 1 hour ago", Ports: ""},
@@ -353,6 +376,8 @@ func TestDockerContainerListView(t *testing.T) {
 			},
 		}
 		m.initializeKeyHandlers()
+		// Initialize the table rows
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 
 		view := m.View()
 
@@ -459,7 +484,7 @@ func TestFileBrowserTableView(t *testing.T) {
 			fileBrowserViewModel: FileBrowserViewModel{
 				browsingContainer: container,
 				currentPath:       "/app",
-				selectedFile:      1,
+				TableViewModel:    TableViewModel{Cursor: 1},
 				containerFiles: []models.ContainerFile{
 					{Name: "Dockerfile", Permissions: "-rw-r--r--", IsDir: false},
 					{Name: "src", Permissions: "drwxr-xr-x", IsDir: true},
@@ -469,6 +494,8 @@ func TestFileBrowserTableView(t *testing.T) {
 			},
 		}
 		m.initializeKeyHandlers()
+		// Build rows for table
+		m.fileBrowserViewModel.SetRows(m.fileBrowserViewModel.buildRows(), m.ViewHeight())
 
 		view := m.View()
 

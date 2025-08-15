@@ -545,7 +545,7 @@ func TestStatsViewModel_Integration(t *testing.T) {
 		}
 		vm.Loaded(stats)
 
-		// Render
+		// RenderTable
 		rendered := vm.render(model, model.Height-4)
 		assert.Contains(t, rendered, "NAME")
 		assert.Contains(t, rendered, "CPU %")

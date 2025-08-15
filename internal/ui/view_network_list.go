@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -20,8 +21,8 @@ var _ UpdateAware = (*NetworkListViewModel)(nil)
 
 // NetworkListViewModel manages the state and rendering of the network list view
 type NetworkListViewModel struct {
-	dockerNetworks        []models.DockerNetwork
-	selectedDockerNetwork int
+	TableViewModel
+	dockerNetworks []models.DockerNetwork
 }
 
 func (m *NetworkListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -32,7 +33,7 @@ func (m *NetworkListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea
 			model.err = msg.err
 		} else {
 			model.err = nil
-			m.Loaded(msg.networks)
+			m.Loaded(model, msg.networks)
 		}
 		return model, nil
 
@@ -41,15 +42,28 @@ func (m *NetworkListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea
 	}
 }
 
-func (m *NetworkListViewModel) Loaded(networks []models.DockerNetwork) {
+func (m *NetworkListViewModel) Loaded(model *Model, networks []models.DockerNetwork) {
 	m.dockerNetworks = networks
-	if len(m.dockerNetworks) > 0 && m.selectedDockerNetwork >= len(m.dockerNetworks) {
-		m.selectedDockerNetwork = 0
+	m.SetRows(m.buildRows(), model.ViewHeight())
+}
+
+// buildRows builds the table rows from docker networks
+func (m *NetworkListViewModel) buildRows() []table.Row {
+	rows := make([]table.Row, 0, len(m.dockerNetworks))
+	for _, network := range m.dockerNetworks {
+		rows = append(rows, table.Row{
+			network.ID,
+			network.Name,
+			network.Driver,
+			network.Scope,
+			fmt.Sprintf("%d", network.GetContainerCount()),
+		})
 	}
+	return rows
 }
 
 // render renders the network list view
-func (m *NetworkListViewModel) render(availableHeight int) string {
+func (m *NetworkListViewModel) render(model *Model, availableHeight int) string {
 	if len(m.dockerNetworks) == 0 {
 		s := strings.Builder{}
 		s.WriteString("No networks found.\n")
@@ -59,26 +73,26 @@ func (m *NetworkListViewModel) render(availableHeight int) string {
 
 	// Create table columns
 	columns := []table.Column{
-		{Title: "NETWORK ID", Width: 12},
-		{Title: "NAME", Width: 30},
-		{Title: "DRIVER", Width: 15},
-		{Title: "SCOPE", Width: 10},
-		{Title: "CONTAINERS", Width: 10},
+		{Title: "NETWORK ID", Width: 12}, // Fixed width for network ID
+		{Title: "NAME", Width: -1},
+		{Title: "DRIVER", Width: -1},
+		{Title: "SCOPE", Width: -1},
+		{Title: "CONTAINERS", Width: 10}, // Fixed width for count
 	}
 
-	// Create table rows
-	rows := make([]table.Row, len(m.dockerNetworks))
-	for i, network := range m.dockerNetworks {
-		rows[i] = table.Row{
-			truncate(network.ID, 12),
-			truncate(network.Name, 30),
-			truncate(network.Driver, 15),
-			truncate(network.Scope, 10),
-			fmt.Sprintf("%d", network.GetContainerCount()),
+	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+		var base lipgloss.Style
+		if row == m.Cursor {
+			base = tableSelectedCellStyle
+		} else {
+			base = tableNormalCellStyle
 		}
-	}
-
-	return RenderTable(columns, rows, availableHeight, m.selectedDockerNetwork)
+		if col == 4 {
+			return base.Align(lipgloss.Right)
+		} else {
+			return base
+		}
+	})
 }
 
 // Show switches to the network list view
@@ -99,25 +113,19 @@ func (m *NetworkListViewModel) DoLoad(model *Model) tea.Cmd {
 }
 
 // HandleUp moves the selection up
-func (m *NetworkListViewModel) HandleUp() tea.Cmd {
-	if m.selectedDockerNetwork > 0 {
-		m.selectedDockerNetwork--
-	}
-	return nil
+func (m *NetworkListViewModel) HandleUp(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleUp(model)
 }
 
 // HandleDown moves the selection down
-func (m *NetworkListViewModel) HandleDown() tea.Cmd {
-	if m.selectedDockerNetwork < len(m.dockerNetworks)-1 {
-		m.selectedDockerNetwork++
-	}
-	return nil
+func (m *NetworkListViewModel) HandleDown(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleDown(model)
 }
 
 // HandleDelete removes the selected network
 func (m *NetworkListViewModel) HandleDelete(model *Model) tea.Cmd {
-	if m.selectedDockerNetwork < len(m.dockerNetworks) {
-		network := m.dockerNetworks[m.selectedDockerNetwork]
+	if m.Cursor < len(m.dockerNetworks) {
+		network := m.dockerNetworks[m.Cursor]
 		// Don't allow removing default networks
 		if network.Name == "bridge" || network.Name == "host" || network.Name == "none" {
 			model.err = fmt.Errorf("cannot remove default network: %s", network.Name)
@@ -132,8 +140,8 @@ func (m *NetworkListViewModel) HandleDelete(model *Model) tea.Cmd {
 
 // HandleInspect shows the inspect view for the selected network
 func (m *NetworkListViewModel) HandleInspect(model *Model) tea.Cmd {
-	if m.selectedDockerNetwork < len(m.dockerNetworks) {
-		network := m.dockerNetworks[m.selectedDockerNetwork]
+	if m.Cursor < len(m.dockerNetworks) {
+		network := m.dockerNetworks[m.Cursor]
 		return model.inspectViewModel.Inspect(model, "network "+network.Name, func() ([]byte, error) {
 			return model.dockerClient.ExecuteCaptured("network", "inspect", network.ID)
 		})
@@ -145,15 +153,4 @@ func (m *NetworkListViewModel) HandleInspect(model *Model) tea.Cmd {
 func (m *NetworkListViewModel) HandleBack(model *Model) tea.Cmd {
 	model.SwitchToPreviousView()
 	return nil
-}
-
-// Helper functions
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }

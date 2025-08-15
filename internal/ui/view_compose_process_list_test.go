@@ -61,9 +61,11 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 				},
 			},
 		}
-		m.composeProcessListViewModel.selectedContainer = 0
+		m.composeProcessListViewModel.Cursor = 0
 		m.width = 120
 		m.Height = 30
+		// Build rows for table rendering
+		m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
 
 		// Test the render function
 		output := m.composeProcessListViewModel.render(m, 20)
@@ -92,11 +94,13 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 			},
 		}
 		m.width = 120
+		// Build rows for table rendering
+		m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
 
 		output := m.composeProcessListViewModel.render(m, 20)
 
-		// Check for dind indicator (⬢ symbol)
-		assert.Contains(t, output, "⬢")
+		// Check for dind indicator (🔄 emoji)
+		assert.Contains(t, output, "🔄")
 		assert.Contains(t, output, "dind")
 	})
 
@@ -137,6 +141,8 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 			},
 		}
 		m.width = 120
+		// Build rows for table rendering
+		m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
 
 		output := m.composeProcessListViewModel.render(m, 20)
 
@@ -161,6 +167,8 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 			},
 		}
 		m.width = 120
+		// Build rows for table rendering
+		m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
 
 		// The render function applies different styles to Up vs Exited containers
 		output := m.composeProcessListViewModel.render(m, 20)
@@ -178,32 +186,33 @@ func TestComposeProcessListView_Navigation(t *testing.T) {
 			{Service: "service2", Image: "image2", State: "running"},
 			{Service: "service3", Image: "image3", State: "running"},
 		}
-		m.composeProcessListViewModel.selectedContainer = 0
+		m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
+		m.composeProcessListViewModel.Cursor = 0
 		m.initializeKeyHandlers()
 
 		// Test moving down
-		m.composeProcessListViewModel.HandleDown()
-		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
+		m.composeProcessListViewModel.HandleDown(m)
+		assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
 
 		// Test moving down again
-		m.composeProcessListViewModel.HandleDown()
-		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
+		m.composeProcessListViewModel.HandleDown(m)
+		assert.Equal(t, 2, m.composeProcessListViewModel.Cursor)
 
 		// Test moving down at the end (should stay at 2)
-		m.composeProcessListViewModel.HandleDown()
-		assert.Equal(t, 2, m.composeProcessListViewModel.selectedContainer)
+		m.composeProcessListViewModel.HandleDown(m)
+		assert.Equal(t, 2, m.composeProcessListViewModel.Cursor)
 
 		// Test moving up
-		m.composeProcessListViewModel.HandleUp()
-		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
+		m.composeProcessListViewModel.HandleUp(m)
+		assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
 
 		// Test moving up again
-		m.composeProcessListViewModel.HandleUp()
-		assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
+		m.composeProcessListViewModel.HandleUp(m)
+		assert.Equal(t, 0, m.composeProcessListViewModel.Cursor)
 
 		// Test moving up at the beginning (should stay at 0)
-		m.composeProcessListViewModel.HandleUp()
-		assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
+		m.composeProcessListViewModel.HandleUp(m)
+		assert.Equal(t, 0, m.composeProcessListViewModel.Cursor)
 	})
 }
 
@@ -271,21 +280,22 @@ func TestComposeProcessListView_Update(t *testing.T) {
 			{Service: "service1"},
 			{Service: "service2"},
 		}
-		m.composeProcessListViewModel.selectedContainer = 0
+		m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
+		m.composeProcessListViewModel.Cursor = 0
 		m.initializeKeyHandlers()
 
 		// Try to move up from first item
-		cmd := m.composeProcessListViewModel.HandleUp()
+		cmd := m.composeProcessListViewModel.HandleUp(m)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
+		assert.Equal(t, 0, m.composeProcessListViewModel.Cursor)
 
 		// Move to last item
-		m.composeProcessListViewModel.selectedContainer = 1
+		m.composeProcessListViewModel.Cursor = 1
 
 		// Try to move down from last item
-		cmd = m.composeProcessListViewModel.HandleDown()
+		cmd = m.composeProcessListViewModel.HandleDown(m)
 		assert.Nil(t, cmd)
-		assert.Equal(t, 1, m.composeProcessListViewModel.selectedContainer)
+		assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
 	})
 
 	t.Run("handles empty container list", func(t *testing.T) {
@@ -313,6 +323,8 @@ func TestComposeProcessListView_FullOutput(t *testing.T) {
 		m.Height = 30
 		m.composeProcessListViewModel.projectName = "test-project"
 		m.loading = false
+		// Build rows for table rendering
+		m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
 		m.initializeKeyHandlers()
 
 		// Test the View() method directly instead of using teatest

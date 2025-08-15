@@ -480,7 +480,7 @@ func TestCommandActionViewModel_RenderFormattting(t *testing.T) {
 		actions: []CommandAction{
 			{
 				Key:         "X",
-				Name:        "Very Long Action Name That Should Still Render",
+				Name:        "Very Long Action Name That Should Still RenderTable",
 				Description: "This is a very long description that explains what this action does",
 				Aggressive:  false,
 			},

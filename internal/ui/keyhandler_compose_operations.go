@@ -11,8 +11,8 @@ import (
 // Helper function to get the selected compose project
 func (m *Model) getSelectedComposeProject() *models.ComposeProject {
 	if m.currentView == ComposeProjectListView {
-		if m.composeProjectListViewModel.selectedProject < len(m.composeProjectListViewModel.projects) {
-			return &m.composeProjectListViewModel.projects[m.composeProjectListViewModel.selectedProject]
+		if m.composeProjectListViewModel.Cursor < len(m.composeProjectListViewModel.projects) {
+			return &m.composeProjectListViewModel.projects[m.composeProjectListViewModel.Cursor]
 		}
 	}
 	return nil

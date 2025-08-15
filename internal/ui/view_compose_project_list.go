@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -17,9 +18,9 @@ type projectsLoadedMsg struct {
 }
 
 type ComposeProjectListViewModel struct {
+	TableViewModel
 	// Compose list state
-	projects        []models.ComposeProject
-	selectedProject int
+	projects []models.ComposeProject
 }
 
 // Update handles messages for the compose project list view
@@ -33,29 +34,14 @@ func (m *ComposeProjectListViewModel) Update(model *Model, msg tea.Msg) (tea.Mod
 		} else {
 			model.err = nil
 		}
-		m.Loaded(msg.projects)
+		m.Loaded(model, msg.projects)
 		return model, nil
 	default:
 		return model, nil
 	}
 }
 
-func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) string {
-	if len(m.projects) == 0 {
-		var s strings.Builder
-		s.WriteString("\nNo Docker Compose projects found.\n")
-		s.WriteString("\nPress q to quit\n")
-		return s.String()
-	}
-
-	// Project list
-
-	columns := []table.Column{
-		{Title: "NAME", Width: 20},
-		{Title: "STATUS", Width: 15},
-		{Title: "CONFIG FILES", Width: model.width - 40},
-	}
-
+func (m *ComposeProjectListViewModel) buildRows() []table.Row {
 	rows := make([]table.Row, 0, len(m.projects))
 	for _, project := range m.projects {
 		// Status with color
@@ -70,45 +56,47 @@ func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) 
 		}
 		status += ResetAll
 
-		// Truncate config files if too long
 		configFiles := project.ConfigFiles
-		if len(configFiles) > 50 {
-			configFiles = configFiles[:47] + "..."
-		}
 
 		rows = append(rows, table.Row{project.Name, status, configFiles})
 	}
-
-	return RenderTable(columns, rows, availableHeight, m.selectedProject)
+	return rows
 }
 
-func (m *ComposeProjectListViewModel) HandleUp(_ *Model) tea.Cmd {
-	if m.selectedProject > 0 {
-		m.selectedProject--
+func (m *ComposeProjectListViewModel) render(model *Model, availableHeight int) string {
+	if len(m.projects) == 0 {
+		var s strings.Builder
+		s.WriteString("\nNo Docker Compose projects found.\n")
+		s.WriteString("\nPress q to quit\n")
+		return s.String()
 	}
-	return nil
-}
 
-func (m *ComposeProjectListViewModel) HandleDown(_ *Model) tea.Cmd {
-	if m.selectedProject < len(m.projects)-1 {
-		m.selectedProject++
+	// Project list
+	columns := []table.Column{
+		{Title: "NAME", Width: -1},
+		{Title: "STATUS", Width: -1},
+		{Title: "CONFIG FILES", Width: -1},
 	}
-	return nil
+
+	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
+		if row == m.Cursor {
+			return tableSelectedCellStyle
+		}
+		return tableNormalCellStyle
+	})
 }
 
 func (m *ComposeProjectListViewModel) HandleSelectProject(model *Model) tea.Cmd {
-	if m.selectedProject < len(m.projects) {
-		project := m.projects[m.selectedProject]
+	if m.Cursor < len(m.projects) {
+		project := m.projects[m.Cursor]
 		return model.composeProcessListViewModel.Load(model, project)
 	}
 	return nil
 }
 
-func (m *ComposeProjectListViewModel) Loaded(projects []models.ComposeProject) {
+func (m *ComposeProjectListViewModel) Loaded(model *Model, projects []models.ComposeProject) {
 	m.projects = projects
-	if len(m.projects) > 0 && m.selectedProject >= len(m.projects) {
-		m.selectedProject = 0
-	}
+	m.SetRows(m.buildRows(), model.ViewHeight())
 }
 
 func (m *ComposeProjectListViewModel) DoLoad(model *Model) tea.Cmd {

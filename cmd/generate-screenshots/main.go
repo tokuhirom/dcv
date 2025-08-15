@@ -92,7 +92,7 @@ func main() {
 			name:       "Help View",
 			filename:   "help-view.png",
 			viewType:   ui.HelpView,
-			setupModel: nil, // Help view generates its content automatically
+			setupModel: setupHelpView,
 		},
 		{
 			name:       "Stats View",
@@ -170,7 +170,7 @@ func generateScreenshot(ss screenshot, outputDir string) error {
 	// Set loading to false after injecting mock data
 	model.SetLoading(false)
 
-	// Render view
+	// RenderTable view
 	view := model.View()
 
 	// Create ANSI to image converter with custom config
@@ -502,6 +502,12 @@ func setupProjectList(m *ui.Model) {
 			ConfigFiles: "/home/user/test/docker-compose.test.yml",
 		},
 	})
+}
+
+func setupHelpView(m *ui.Model) {
+	vm := m.GetHelpViewModel()
+	// Show help for compose process list view
+	vm.Show(m, ui.ComposeProcessListView)
 }
 
 func setupLogView(m *ui.Model) {

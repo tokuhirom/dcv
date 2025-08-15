@@ -16,7 +16,7 @@ func TestNewModel(t *testing.T) {
 	assert.NotNil(t, m.dockerClient)
 	assert.True(t, m.loading)
 	assert.Empty(t, m.composeProcessListViewModel.composeContainers)
-	assert.Equal(t, 0, m.composeProcessListViewModel.selectedContainer)
+	assert.Equal(t, 0, m.composeProcessListViewModel.Cursor)
 }
 
 func TestModelInit(t *testing.T) {
@@ -88,6 +88,8 @@ func TestKeyNavigation(t *testing.T) {
 		{Name: "db-1"},
 		{Name: "redis-1"},
 	}
+	// Build rows for table rendering
+	m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
 
 	tests := []struct {
 		name     string
@@ -102,7 +104,7 @@ func TestKeyNavigation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m.composeProcessListViewModel.selectedContainer = 0
+			m.composeProcessListViewModel.Cursor = 0
 
 			// Move down
 			if tt.expected > 0 {
@@ -114,7 +116,7 @@ func TestKeyNavigation(t *testing.T) {
 				m = newModel.(*Model)
 			}
 
-			assert.Equal(t, tt.expected, m.composeProcessListViewModel.selectedContainer)
+			assert.Equal(t, tt.expected, m.composeProcessListViewModel.Cursor)
 		})
 	}
 }
@@ -134,7 +136,7 @@ func TestViewSwitching(t *testing.T) {
 	}
 
 	// Test entering log view
-	m.composeProcessListViewModel.selectedContainer = 0
+	m.composeProcessListViewModel.Cursor = 0
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
 	newModel, cmd := m.Update(msg)
 	m = newModel.(*Model)
@@ -152,7 +154,7 @@ func TestViewSwitching(t *testing.T) {
 	assert.Nil(t, cmd) // HandleBack now returns nil
 
 	// Test entering dind view
-	m.composeProcessListViewModel.selectedContainer = 1
+	m.composeProcessListViewModel.Cursor = 1
 	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")}
 	newModel, cmd = m.Update(msg)
 	m = newModel.(*Model)
