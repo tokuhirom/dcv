@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -211,4 +212,47 @@ func (m *DindProcessListViewModel) Title() string {
 		}
 	}
 	return title
+}
+
+// HandleInjectHelper injects the helper binary into the selected container within the dind container
+func (m *DindProcessListViewModel) HandleInjectHelper(model *Model) tea.Cmd {
+	if m.Cursor >= len(m.dindContainers) || m.hostContainer == nil {
+		return nil
+	}
+
+	container := m.dindContainers[m.Cursor]
+	model.loading = true
+	return func() tea.Msg {
+		// First, inject helper into the dind container itself at a different path
+		ctx := context.Background()
+		dindHelperPath, err := model.fileOperations.InjectHelper(ctx, m.hostContainer.ContainerID())
+		if err != nil {
+			return dindContainersLoadedMsg{
+				err: fmt.Errorf("failed to inject helper into dind container: %w", err),
+			}
+		}
+
+		// Now use the helper in the dind container to copy itself into the target container
+		// This is done by executing docker cp inside the dind container
+		targetContainerID := container.ID[:12] // Use short ID as dind typically uses short IDs
+		targetPath := "/tmp/.dcv-helper"
+
+		// Copy the helper to the target container inside dind
+		output, err := docker.ExecuteCaptured("docker", "exec", m.hostContainer.ContainerID(), "docker", "cp", dindHelperPath, fmt.Sprintf("%s:%s", targetContainerID, targetPath))
+		if err != nil {
+			return dindContainersLoadedMsg{
+				err: fmt.Errorf("failed to copy helper to container in dind: %w, output: %s", err, string(output)),
+			}
+		}
+
+		// Make it executable in the target container
+		output, err = docker.ExecuteCaptured("docker", "exec", m.hostContainer.ContainerID(), "docker", "exec", targetContainerID, "chmod", "+x", targetPath)
+		if err != nil {
+			// This might fail if chmod doesn't exist, but the binary might still be executable
+			_ = output
+		}
+
+		// Reload the container list
+		return m.DoLoad(model)()
+	}
 }

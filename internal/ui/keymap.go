@@ -90,6 +90,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"enter"}, "view logs", m.CmdLog},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
+		{[]string{}, "inject helper binary", m.CmdInjectHelperDind}, // Available via :inject-helper command
 	}, containerOperations...)
 	m.dindListViewKeymap = m.createKeymap(m.dindListViewHandlers)
 

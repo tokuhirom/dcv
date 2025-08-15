@@ -1,19 +1,16 @@
 package docker
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/stdcopy"
 )
 
 // HelperInjector manages injecting helper binaries into containers
@@ -84,32 +81,14 @@ func (hi *HelperInjector) InjectHelper(ctx context.Context, containerID string) 
 
 // helperExists checks if the helper binary exists in the container
 func (hi *HelperInjector) helperExists(ctx context.Context, containerID, path string) bool {
-	// Try to run the helper's version command
-	cmd := []string{path, "version"}
-	resp, err := hi.client.ContainerExecCreate(ctx, containerID, container.ExecOptions{
-		Cmd:          cmd,
-		AttachStdout: true,
-		AttachStderr: true,
-	})
-	if err != nil {
-		return false
-	}
-
-	attach, err := hi.client.ContainerExecAttach(ctx, resp.ID, container.ExecStartOptions{})
-	if err != nil {
-		return false
-	}
-	defer attach.Close()
-
-	// Read output to see if it works
-	var output bytes.Buffer
-	_, err = stdcopy.StdCopy(&output, io.Discard, attach.Reader)
+	// Try to run the helper's version command using docker exec
+	output, err := ExecuteCaptured("docker", "exec", containerID, path, "version")
 	if err != nil {
 		return false
 	}
 
 	// Check if we got version output
-	return strings.Contains(output.String(), "dcv-helper")
+	return strings.Contains(string(output), "dcv-helper")
 }
 
 // detectArch tries to detect the container's architecture
@@ -141,50 +120,41 @@ func (hi *HelperInjector) detectArch(ctx context.Context, containerID string) st
 	return ""
 }
 
-// copyToContainer copies binary data to a container as a tar archive
+// copyToContainer copies binary data to a container using docker cp command
 func (hi *HelperInjector) copyToContainer(ctx context.Context, containerID string, binaryData []byte, targetPath string) error {
-	// Create tar archive in memory
-	var tarBuffer bytes.Buffer
-	tarWriter := tar.NewWriter(&tarBuffer)
+	// Create a temporary file to store the binary
+	tempDir, err := os.MkdirTemp("", "dcv-helper-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
 
-	// Remove leading slash for tar entry
-	tarPath := strings.TrimPrefix(targetPath, "/")
-
-	// Add binary to tar
-	header := &tar.Header{
-		Name: tarPath,
-		Mode: 0755,
-		Size: int64(len(binaryData)),
+	tempFile := filepath.Join(tempDir, "dcv-helper")
+	if err := os.WriteFile(tempFile, binaryData, 0755); err != nil {
+		return fmt.Errorf("failed to write helper binary to temp file: %w", err)
 	}
 
-	if err := tarWriter.WriteHeader(header); err != nil {
-		return fmt.Errorf("failed to write tar header: %w", err)
+	// Use docker cp to copy the file to the container
+	output, err := ExecuteCaptured("docker", "cp", tempFile, fmt.Sprintf("%s:%s", containerID, targetPath))
+	if err != nil {
+		return fmt.Errorf("docker cp failed: %w, output: %s", err, string(output))
 	}
 
-	if _, err := tarWriter.Write(binaryData); err != nil {
-		return fmt.Errorf("failed to write binary to tar: %w", err)
-	}
-
-	if err := tarWriter.Close(); err != nil {
-		return fmt.Errorf("failed to close tar writer: %w", err)
-	}
-
-	// Copy tar to container
-	return hi.client.CopyToContainer(ctx, containerID, "/", &tarBuffer, container.CopyToContainerOptions{})
+	slog.Debug("Successfully copied helper to container using docker cp", "container", containerID, "path", targetPath)
+	return nil
 }
 
 // makeExecutable tries to make the file executable in the container
 func (hi *HelperInjector) makeExecutable(ctx context.Context, containerID, path string) error {
-	// Try chmod first
-	cmd := []string{"chmod", "+x", path}
-	resp, err := hi.client.ContainerExecCreate(ctx, containerID, container.ExecOptions{
-		Cmd: cmd,
-	})
+	// Use docker exec to run chmod
+	output, err := ExecuteCaptured("docker", "exec", containerID, "chmod", "+x", path)
 	if err != nil {
-		return err
+		slog.Debug("Failed to make helper executable", "error", err, "output", string(output))
+		return fmt.Errorf("chmod failed: %w", err)
 	}
-
-	return hi.client.ContainerExecStart(ctx, resp.ID, container.ExecStartOptions{})
+	return nil
 }
 
 // Cleanup removes the injected helper from a container
@@ -197,14 +167,8 @@ func (hi *HelperInjector) Cleanup(ctx context.Context, containerID string) error
 		return nil
 	}
 
-	// Try to remove the binary
-	cmd := []string{"rm", "-f", binPath}
-	resp, err := hi.client.ContainerExecCreate(ctx, containerID, container.ExecOptions{
-		Cmd: cmd,
-	})
-	if err == nil {
-		_ = hi.client.ContainerExecStart(ctx, resp.ID, container.ExecStartOptions{})
-	}
+	// Try to remove the binary using docker exec
+	_, _ = ExecuteCaptured("docker", "exec", containerID, "rm", "-f", binPath)
 
 	delete(hi.injectedBins, containerID)
 	slog.Debug("Cleaned up helper binary", "container", containerID, "path", binPath)
