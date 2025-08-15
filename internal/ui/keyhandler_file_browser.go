@@ -23,3 +23,7 @@ func (m *Model) CmdOpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdGoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.fileBrowserViewModel.HandleGoToParentDirectory(m)
 }
+
+func (m *Model) CmdInjectHelper(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	return m, m.fileBrowserViewModel.HandleInjectHelper(m)
+}

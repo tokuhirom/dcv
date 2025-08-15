@@ -186,6 +186,33 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 	return nil
 }
 
+func (m *FileBrowserViewModel) HandleInjectHelper(model *Model) tea.Cmd {
+	if m.browsingContainer == nil {
+		return nil
+	}
+
+	model.loading = true
+	return func() tea.Msg {
+		// Manually inject the helper binary
+		ctx := context.Background()
+		_, err := model.fileOperations.InjectHelper(ctx, m.browsingContainer.ContainerID())
+
+		if err != nil {
+			return containerFilesLoadedMsg{
+				err: fmt.Errorf("failed to inject helper: %w", err),
+			}
+		}
+
+		// After successful injection, reload the current directory
+		files, err := model.fileOperations.ListFiles(ctx, m.browsingContainer, m.currentPath)
+
+		return containerFilesLoadedMsg{
+			files: files,
+			err:   err,
+		}
+	}
+}
+
 func (m *FileBrowserViewModel) Loaded(model *Model, files []models.ContainerFile) {
 	m.containerFiles = files
 	m.SetRows(m.buildRows(), model.ViewHeight())

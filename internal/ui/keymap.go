@@ -189,6 +189,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
 		{[]string{"?"}, "help", m.CmdHelp},
+		{[]string{}, "inject helper binary", m.CmdInjectHelper}, // Available via :inject-helper command
 	}
 	m.fileBrowserKeymap = m.createKeymap(m.fileBrowserHandlers)
 

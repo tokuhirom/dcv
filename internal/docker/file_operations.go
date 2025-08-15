@@ -198,3 +198,8 @@ func (fo *FileOperations) Cleanup(ctx context.Context, containerID string) error
 func (fo *FileOperations) CleanupAll(ctx context.Context) {
 	fo.injector.CleanupAll(ctx)
 }
+
+// InjectHelper manually injects the helper binary into a container
+func (fo *FileOperations) InjectHelper(ctx context.Context, containerID string) (string, error) {
+	return fo.injector.InjectHelper(ctx, containerID)
+}
