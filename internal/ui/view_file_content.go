@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -65,14 +64,40 @@ func (m *FileContentViewModel) LoadContainer(model *Model, container *docker.Con
 	m.container = container
 
 	return func() tea.Msg {
-		// Use FileOperations for multi-strategy file content retrieval
-		ctx := context.Background()
-		content, err := model.fileOperations.GetFileContent(ctx, container.ContainerID(), path)
+		// Try docker cp first (works for files without needing exec permissions)
+		var args []string
+		if container.IsDind() {
+			// For DinD: docker exec <host> docker cp <container>:<path> -
+			args = []string{"exec", container.HostContainerID(), "docker", "cp", fmt.Sprintf("%s:%s", container.ContainerID(), path), "-"}
+		} else {
+			// For normal containers: docker cp <container>:<path> -
+			args = []string{"cp", fmt.Sprintf("%s:%s", container.ContainerID(), path), "-"}
+		}
+
+		output, err := docker.ExecuteCaptured(args...)
+		if err == nil {
+			return fileContentLoadedMsg{
+				content: string(output),
+				path:    path,
+				err:     nil,
+			}
+		}
+
+		// Fallback to cat if docker cp fails (e.g., for special files like /proc/*)
+		args = container.OperationArgs("exec", "cat", path)
+		output, err = docker.ExecuteCaptured(args...)
+		if err != nil {
+			return fileContentLoadedMsg{
+				content: "",
+				path:    path,
+				err:     fmt.Errorf("failed to read file: %w", err),
+			}
+		}
 
 		return fileContentLoadedMsg{
-			content: content,
+			content: string(output),
 			path:    path,
-			err:     err,
+			err:     nil,
 		}
 	}
 }

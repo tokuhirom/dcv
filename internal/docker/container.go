@@ -73,6 +73,14 @@ func (c *Container) OperationArgs(cmd string, extraArgs ...string) []string {
 	return append(args, extraArgs...)
 }
 
+func (c *Container) IsDind() bool {
+	return c.isDind
+}
+
+func (c *Container) HostContainerID() string {
+	return c.hostContainerID
+}
+
 func (c *Container) InteractiveExecArgs(extraArgs ...string) []string {
 	if c.isDind {
 		// For DinD containers, we need to exec into the host container first,

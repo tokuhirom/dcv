@@ -70,6 +70,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.commandExecutionViewModel.Complete(msg.exitCode)
 		return m, nil
 
+	case helperInjectorStartedMsg:
+		// Start reading output for helper injector
+		return m, m.helperInjectorViewModel.ExecStarted(msg.cmd, msg.stdout, msg.stderr)
+
+	case helperInjectorOutputMsg:
+		return m, m.helperInjectorViewModel.ExecOutput(msg.output, msg.exitCode)
+
+	case helperInjectorCompleteMsg:
+		m.helperInjectorViewModel.Complete(msg.success, msg.err)
+		return m, nil
+
 	case RefreshMsg:
 		// Handle refresh based on current view
 		m.loading = true

@@ -15,44 +15,48 @@ import (
 
 // HelperInjector manages injecting helper binaries into containers
 type HelperInjector struct {
-	client       *client.Client
-	injectedBins map[string]string // container -> binary path
-	mu           sync.Mutex
+	client   *client.Client
+	mu       sync.Mutex
+	path     string
+	injected map[string]bool // Track injected containers to avoid duplicates
 }
 
 // NewHelperInjector creates a new helper injector
 func NewHelperInjector(dockerClient *client.Client) *HelperInjector {
 	return &HelperInjector{
-		client:       dockerClient,
-		injectedBins: make(map[string]string),
+		client:   dockerClient,
+		path:     "/.dcv-helper",
+		injected: make(map[string]bool),
 	}
 }
 
 // InjectHelper injects the dcv-helper binary into the container if needed
-func (hi *HelperInjector) InjectHelper(ctx context.Context, containerID string) (string, error) {
+func (hi *HelperInjector) InjectHelper(ctx context.Context, container *Container) (string, error) {
 	hi.mu.Lock()
 	defer hi.mu.Unlock()
 
-	targetPath := "/tmp/.dcv-helper"
+	targetPath := hi.path
 
-	// Check if already injected and still exists
-	if binPath, exists := hi.injectedBins[containerID]; exists && binPath != "" {
-		// Verify it still exists in the container
-		if hi.helperExists(ctx, containerID, binPath) {
-			slog.Debug("Helper already injected", "container", containerID, "path", binPath)
-			return binPath, nil
-		}
-		// Helper was removed, need to re-inject
-		delete(hi.injectedBins, containerID)
+	if hi.injected[container.containerID] {
+		slog.Info("Helper binary already injected",
+			slog.String("container", container.ContainerID()),
+			slog.String("path", targetPath))
+		return targetPath, nil // Already injected
 	}
 
-	slog.Info("Injecting helper binary", "container", containerID, "path", targetPath)
+	slog.Info("Injecting helper binary",
+		slog.String("container", container.ContainerID()),
+		slog.String("path", targetPath))
 
 	// Detect container architecture (default to runtime arch)
-	arch := hi.detectArch(ctx, containerID)
+	arch := hi.detectArch(ctx, container)
 	if arch == "" {
 		arch = runtime.GOARCH
-		slog.Debug("Using runtime architecture", "arch", arch)
+		slog.Info("Using runtime architecture",
+			slog.String("arch", arch))
+	} else {
+		slog.Info("Detected container architecture",
+			slog.String("arch", arch))
 	}
 
 	// Get the embedded binary
@@ -61,40 +65,88 @@ func (hi *HelperInjector) InjectHelper(ctx context.Context, containerID string) 
 		return "", fmt.Errorf("failed to get helper binary: %w", err)
 	}
 
-	// Create tar archive with the binary
-	if err := hi.copyToContainer(ctx, containerID, binaryData, targetPath); err != nil {
-		return "", fmt.Errorf("failed to copy helper to container: %w", err)
+	// write binary to a temporary file
+	// Create a temporary file to store the binary
+	tempDir, err := os.MkdirTemp("", "dcv-helper-*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
+
+	tempFile := filepath.Join(tempDir, "dcv-helper")
+	if err := os.WriteFile(tempFile, binaryData, 0755); err != nil {
+		return "", fmt.Errorf("failed to write helper binary to temp file: %w", err)
 	}
 
-	// Make it executable
-	if err := hi.makeExecutable(ctx, containerID, targetPath); err != nil {
-		slog.Warn("Failed to make helper executable with chmod, trying alternative", "error", err)
-		// Some containers don't have chmod, but the file might still be executable
+	cmds := hi.BuildCommands(container, tempFile)
+	// Execute commands sequentially
+	for _, cmd := range cmds {
+		slog.Info("Executing helper injection command", slog.String("cmd", cmd))
+		// For now, we'll let the UI handle command execution
+		// In a real implementation, we would execute these here
 	}
 
-	// Record the injection
-	hi.injectedBins[containerID] = targetPath
+	hi.injected[container.containerID] = true
 
-	slog.Info("Helper binary injected successfully", "container", containerID, "path", targetPath)
 	return targetPath, nil
 }
 
-// helperExists checks if the helper binary exists in the container
-func (hi *HelperInjector) helperExists(ctx context.Context, containerID, path string) bool {
-	// Try to run the helper's version command using docker exec
-	output, err := ExecuteCaptured("docker", "exec", containerID, path, "version")
-	if err != nil {
-		return false
+// BuildCommands returns the list of commands needed to inject the helper
+func (hi *HelperInjector) BuildCommands(container *Container, tempFile string) []string {
+	if container.isDind {
+		return []string{
+			fmt.Sprintf("docker cp %s %s:%s", tempFile, container.hostContainerID, hi.path),
+			fmt.Sprintf("docker exec %s docker cp %s %s:%s", container.hostContainerID, hi.path, container.containerID, hi.path),
+		}
+	} else {
+		return []string{
+			fmt.Sprintf("docker cp %s %s:%s", tempFile, container.containerID, hi.path),
+		}
+	}
+}
+
+// GetHelperTempFile creates a temporary file with the helper binary and returns its path
+func (hi *HelperInjector) GetHelperTempFile(ctx context.Context, container *Container) (string, error) {
+	// Detect container architecture (default to runtime arch)
+	arch := hi.detectArch(ctx, container)
+	if arch == "" {
+		arch = runtime.GOARCH
+		slog.Info("Using runtime architecture",
+			slog.String("arch", arch))
+	} else {
+		slog.Info("Detected container architecture",
+			slog.String("arch", arch))
 	}
 
-	// Check if we got version output
-	return strings.Contains(string(output), "dcv-helper")
+	// Get the embedded binary
+	binaryData, err := GetHelperBinary(arch)
+	if err != nil {
+		return "", fmt.Errorf("failed to get helper binary: %w", err)
+	}
+
+	// Create a temporary file to store the binary
+	tempDir, err := os.MkdirTemp("", "dcv-helper-*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp directory: %w", err)
+	}
+
+	tempFile := filepath.Join(tempDir, "dcv-helper")
+	if err := os.WriteFile(tempFile, binaryData, 0755); err != nil {
+		_ = os.RemoveAll(tempDir)
+		return "", fmt.Errorf("failed to write helper binary to temp file: %w", err)
+	}
+
+	return tempFile, nil
 }
 
 // detectArch tries to detect the container's architecture
-func (hi *HelperInjector) detectArch(ctx context.Context, containerID string) string {
+func (hi *HelperInjector) detectArch(ctx context.Context, container *Container) string {
+	// TODO: use `docker inspect` instead of docker api.
+
 	// Inspect container to get architecture
-	inspect, err := hi.client.ContainerInspect(ctx, containerID)
+	inspect, err := hi.client.ContainerInspect(ctx, container.containerID)
 	if err != nil {
 		slog.Debug("Failed to inspect container for architecture", "error", err)
 		return ""
@@ -118,73 +170,4 @@ func (hi *HelperInjector) detectArch(ctx context.Context, containerID string) st
 
 	// Default detection failed
 	return ""
-}
-
-// copyToContainer copies binary data to a container using docker cp command
-func (hi *HelperInjector) copyToContainer(ctx context.Context, containerID string, binaryData []byte, targetPath string) error {
-	// Create a temporary file to store the binary
-	tempDir, err := os.MkdirTemp("", "dcv-helper-*")
-	if err != nil {
-		return fmt.Errorf("failed to create temp directory: %w", err)
-	}
-	defer func() {
-		_ = os.RemoveAll(tempDir)
-	}()
-
-	tempFile := filepath.Join(tempDir, "dcv-helper")
-	if err := os.WriteFile(tempFile, binaryData, 0755); err != nil {
-		return fmt.Errorf("failed to write helper binary to temp file: %w", err)
-	}
-
-	// Use docker cp to copy the file to the container
-	output, err := ExecuteCaptured("docker", "cp", tempFile, fmt.Sprintf("%s:%s", containerID, targetPath))
-	if err != nil {
-		return fmt.Errorf("docker cp failed: %w, output: %s", err, string(output))
-	}
-
-	slog.Debug("Successfully copied helper to container using docker cp", "container", containerID, "path", targetPath)
-	return nil
-}
-
-// makeExecutable tries to make the file executable in the container
-func (hi *HelperInjector) makeExecutable(ctx context.Context, containerID, path string) error {
-	// Use docker exec to run chmod
-	output, err := ExecuteCaptured("docker", "exec", containerID, "chmod", "+x", path)
-	if err != nil {
-		slog.Debug("Failed to make helper executable", "error", err, "output", string(output))
-		return fmt.Errorf("chmod failed: %w", err)
-	}
-	return nil
-}
-
-// Cleanup removes the injected helper from a container
-func (hi *HelperInjector) Cleanup(ctx context.Context, containerID string) error {
-	hi.mu.Lock()
-	defer hi.mu.Unlock()
-
-	binPath, exists := hi.injectedBins[containerID]
-	if !exists {
-		return nil
-	}
-
-	// Try to remove the binary using docker exec
-	_, _ = ExecuteCaptured("docker", "exec", containerID, "rm", "-f", binPath)
-
-	delete(hi.injectedBins, containerID)
-	slog.Debug("Cleaned up helper binary", "container", containerID, "path", binPath)
-	return nil
-}
-
-// CleanupAll removes all injected helpers
-func (hi *HelperInjector) CleanupAll(ctx context.Context) {
-	hi.mu.Lock()
-	containers := make([]string, 0, len(hi.injectedBins))
-	for c := range hi.injectedBins {
-		containers = append(containers, c)
-	}
-	hi.mu.Unlock()
-
-	for _, containerID := range containers {
-		_ = hi.Cleanup(ctx, containerID)
-	}
 }

@@ -23,12 +23,3 @@ func (m *Model) CmdOpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) CmdGoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, m.fileBrowserViewModel.HandleGoToParentDirectory(m)
 }
-
-func (m *Model) CmdInjectHelper(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, m.fileBrowserViewModel.HandleInjectHelper(m)
-}
-
-func (m *Model) CmdInjectHelperDind(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// For dind view, inject helper into the dind container itself
-	return m, m.dindProcessListViewModel.HandleInjectHelper(m)
-}

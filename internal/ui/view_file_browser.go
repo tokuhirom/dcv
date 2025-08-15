@@ -186,33 +186,6 @@ func (m *FileBrowserViewModel) HandleOpenFileOrDirectory(model *Model) tea.Cmd {
 	return nil
 }
 
-func (m *FileBrowserViewModel) HandleInjectHelper(model *Model) tea.Cmd {
-	if m.browsingContainer == nil {
-		return nil
-	}
-
-	model.loading = true
-	return func() tea.Msg {
-		// Manually inject the helper binary
-		ctx := context.Background()
-		_, err := model.fileOperations.InjectHelper(ctx, m.browsingContainer.ContainerID())
-
-		if err != nil {
-			return containerFilesLoadedMsg{
-				err: fmt.Errorf("failed to inject helper: %w", err),
-			}
-		}
-
-		// After successful injection, reload the current directory
-		files, err := model.fileOperations.ListFiles(ctx, m.browsingContainer, m.currentPath)
-
-		return containerFilesLoadedMsg{
-			files: files,
-			err:   err,
-		}
-	}
-}
-
 func (m *FileBrowserViewModel) Loaded(model *Model, files []models.ContainerFile) {
 	m.containerFiles = files
 	m.SetRows(m.buildRows(), model.ViewHeight())
@@ -221,14 +194,31 @@ func (m *FileBrowserViewModel) Loaded(model *Model, files []models.ContainerFile
 func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		// Use FileOperations for multi-strategy file listing
-		ctx := context.Background()
+		// Use FileOperations for multi-strategy file listing if available
+		if model.fileOperations != nil {
+			ctx := context.Background()
+			files, err := model.fileOperations.ListFiles(ctx, m.browsingContainer, m.currentPath)
+			return containerFilesLoadedMsg{
+				files: files,
+				err:   err,
+			}
+		}
 
-		files, err := model.fileOperations.ListFiles(ctx, m.browsingContainer, m.currentPath)
+		// Fallback to direct docker exec if FileOperations not available
+		args := m.browsingContainer.OperationArgs("exec", "ls", "-la", m.currentPath)
+
+		output, err := docker.ExecuteCaptured(args...)
+		if err != nil {
+			return containerFilesLoadedMsg{
+				err: fmt.Errorf("failed to list files: %w", err),
+			}
+		}
+
+		files := models.ParseLsOutput(string(output))
 
 		return containerFilesLoadedMsg{
 			files: files,
-			err:   err,
+			err:   nil,
 		}
 	}
 }

@@ -7,31 +7,14 @@ import (
 	"os/exec"
 	"strings"
 
-	dockerclient "github.com/docker/docker/client"
-
 	"github.com/tokuhirom/dcv/internal/models"
 )
 
 type Client struct {
-	apiClient *dockerclient.Client
 }
 
 func NewClient() *Client {
-	// Create Docker API client
-	apiClient, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
-	if err != nil {
-		slog.Warn("Failed to create Docker API client, file operations may be limited", "error", err)
-		// Continue without API client - command-line operations will still work
-	}
-
-	return &Client{
-		apiClient: apiClient,
-	}
-}
-
-// APIClient returns the underlying Docker API client
-func (c *Client) APIClient() *dockerclient.Client {
-	return c.apiClient
+	return &Client{}
 }
 
 // ListComposeContainers lists containers for a Docker Compose project

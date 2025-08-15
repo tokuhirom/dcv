@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/docker/docker/client"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
@@ -31,6 +32,7 @@ const (
 	CommandExecutionView
 	CommandActionView
 	ComposeProjectActionView
+	HelperInjectorView
 )
 
 // UI Chrome offsets for different views
@@ -76,6 +78,8 @@ func (view ViewType) String() string {
 		return "Command Actions"
 	case ComposeProjectActionView:
 		return "Compose Project Actions"
+	case HelperInjectorView:
+		return "Helper Injection"
 	default:
 		return "Unknown View"
 	}
@@ -88,8 +92,9 @@ type Model struct {
 	viewHistory []ViewType
 
 	// Docker client
-	dockerClient   *docker.Client
-	fileOperations *docker.FileOperations
+	dockerClient    *docker.Client
+	dockerSDKClient *client.Client
+	fileOperations  *docker.FileOperations
 
 	dockerContainerListViewModel  DockerContainerListViewModel
 	logViewModel                  LogViewModel
@@ -99,6 +104,7 @@ type Model struct {
 	fileBrowserViewModel          FileBrowserViewModel
 	inspectViewModel              InspectViewModel
 	composeProjectListViewModel   ComposeProjectListViewModel
+	helperInjectorViewModel       HelperInjectorViewModel
 	composeProcessListViewModel   ComposeProcessListViewModel
 	topViewModel                  TopViewModel
 	dindProcessListViewModel      DindProcessListViewModel
@@ -160,6 +166,8 @@ type Model struct {
 	commandActionHandlers           []KeyConfig
 	composeProjectActionKeymap      map[string]KeyHandler
 	composeProjectActionHandlers    []KeyConfig
+	helperInjectorKeymap            map[string]KeyHandler
+	helperInjectorHandlers          []KeyConfig
 
 	// Command-line mode state
 	commandViewModel CommandViewModel
@@ -173,16 +181,28 @@ type Model struct {
 
 // NewModel creates a new model with initial state
 func NewModel(initialView ViewType) *Model {
-	client := docker.NewClient()
+	dockerClient := docker.NewClient()
+
+	// Create Docker SDK client for FileOperations
+	dockerSDKClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		slog.Error("Failed to create Docker SDK client, file operations may be limited", "error", err)
+		// Continue without SDK client - some features won't work
+	}
 
 	slog.Info("Creating new model",
 		slog.String("initial_view", initialView.String()))
 
 	m := &Model{
-		currentView:    initialView,
-		dockerClient:   client,
-		fileOperations: docker.NewFileOperations(client.APIClient()),
-		loading:        true,
+		currentView:     initialView,
+		dockerClient:    dockerClient,
+		dockerSDKClient: dockerSDKClient,
+		loading:         true,
+	}
+
+	// Initialize FileOperations if SDK client is available
+	if dockerSDKClient != nil {
+		m.fileOperations = docker.NewFileOperations(dockerSDKClient)
 	}
 
 	return m
@@ -286,6 +306,8 @@ func (m *Model) GetCurrentViewModel() interface{} {
 		return &m.commandActionViewModel
 	case ComposeProjectActionView:
 		return &m.composeProjectActionViewModel
+	case HelperInjectorView:
+		return &m.helperInjectorViewModel
 	default:
 		panic("GetCurrentViewModel called with unknown view: " + m.currentView.String())
 	}
@@ -328,6 +350,8 @@ func (m *Model) GetViewKeyHandlers(view ViewType) []KeyConfig {
 		return m.commandActionHandlers
 	case ComposeProjectActionView:
 		return m.composeProjectActionHandlers
+	case HelperInjectorView:
+		return m.helperInjectorHandlers
 	default:
 		return nil
 	}
@@ -375,6 +399,8 @@ func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
 		return m.commandActionKeymap
 	case ComposeProjectActionView:
 		return m.composeProjectActionKeymap
+	case HelperInjectorView:
+		return m.helperInjectorKeymap
 	default:
 		return nil
 	}
@@ -428,4 +454,21 @@ type commandExecStartedMsg struct {
 	cmd    *exec.Cmd
 	stdout io.ReadCloser
 	stderr io.ReadCloser
+}
+
+// Helper injector messages
+type helperInjectorStartedMsg struct {
+	cmd    *exec.Cmd
+	stdout io.ReadCloser
+	stderr io.ReadCloser
+}
+
+type helperInjectorOutputMsg struct {
+	output   string
+	exitCode int
+}
+
+type helperInjectorCompleteMsg struct {
+	success bool
+	err     error
 }

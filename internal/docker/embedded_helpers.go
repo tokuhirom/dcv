@@ -45,30 +45,3 @@ func GetHelperBinary(arch string) ([]byte, error) {
 		return nil, fmt.Errorf("unsupported architecture: %s", arch)
 	}
 }
-
-// GetHelperBinarySize returns the size of the embedded binary for the given architecture
-func GetHelperBinarySize(arch string) int {
-	binary, err := GetHelperBinary(arch)
-	if err != nil {
-		return 0
-	}
-	return len(binary)
-}
-
-// IsHelperAvailable checks if the helper binary is available for the given architecture
-func IsHelperAvailable(arch string) bool {
-	if arch == "" {
-		arch = runtime.GOARCH
-	}
-
-	switch arch {
-	case "amd64", "x86_64":
-		return len(helperBinaryAMD64) > 0
-	case "arm64", "aarch64":
-		return len(helperBinaryARM64) > 0
-	case "arm", "armv7", "armv7l", "armhf":
-		return len(helperBinaryARM) > 0
-	default:
-		return false
-	}
-}

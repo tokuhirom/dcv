@@ -71,7 +71,7 @@ func (fo *FileOperations) listFilesNative(container *Container, path string) ([]
 // listFilesWithHelper lists files using the injected helper binary
 func (fo *FileOperations) listFilesWithHelper(ctx context.Context, container *Container, path string) ([]models.ContainerFile, error) {
 	// Inject helper if needed
-	helperPath, err := fo.injector.InjectHelper(ctx, container.containerID)
+	helperPath, err := fo.injector.InjectHelper(ctx, container)
 	if err != nil {
 		return nil, fmt.Errorf("failed to inject helper: %w", err)
 	}
@@ -80,7 +80,7 @@ func (fo *FileOperations) listFilesWithHelper(ctx context.Context, container *Co
 	cmd := []string{helperPath, "ls", path}
 	output, err := ExecuteInContainer(ctx, fo.client, container.containerID, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("helper ls failed: %w", err)
+		return nil, fmt.Errorf("helper ls failed: %w(%v)", err, cmd)
 	}
 
 	// Parse helper output (similar format to ls -la)
@@ -122,8 +122,10 @@ func (fo *FileOperations) getFileContentNative(ctx context.Context, containerID,
 
 // getFileContentWithHelper gets file content using the injected helper binary
 func (fo *FileOperations) getFileContentWithHelper(ctx context.Context, containerID, filePath string) (string, error) {
+	// Create a temporary container object for the injector
+	container := &Container{containerID: containerID}
 	// Inject helper if needed
-	helperPath, err := fo.injector.InjectHelper(ctx, containerID)
+	helperPath, err := fo.injector.InjectHelper(ctx, container)
 	if err != nil {
 		return "", fmt.Errorf("failed to inject helper: %w", err)
 	}
@@ -142,6 +144,8 @@ func (fo *FileOperations) getFileContentWithHelper(ctx context.Context, containe
 // The format is similar to ls -la but simplified:
 // dRWXRWXRWX      4096 dirname
 // -rwxr-xr-x       123 filename
+
+// TODO: helper に`ls -la` と同等の出力をさせる｡
 func parseHelperLsOutput(output string) []models.ContainerFile {
 	var files []models.ContainerFile
 	lines := strings.Split(strings.TrimSpace(output), "\n")
@@ -187,19 +191,4 @@ func parseHelperLsOutput(output string) []models.ContainerFile {
 	}
 
 	return files
-}
-
-// Cleanup removes any injected helpers from the specified container
-func (fo *FileOperations) Cleanup(ctx context.Context, containerID string) error {
-	return fo.injector.Cleanup(ctx, containerID)
-}
-
-// CleanupAll removes all injected helpers from all containers
-func (fo *FileOperations) CleanupAll(ctx context.Context) {
-	fo.injector.CleanupAll(ctx)
-}
-
-// InjectHelper manually injects the helper binary into a container
-func (fo *FileOperations) InjectHelper(ctx context.Context, containerID string) (string, error) {
-	return fo.injector.InjectHelper(ctx, containerID)
 }
