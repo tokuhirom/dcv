@@ -1,9 +1,13 @@
 package docker
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -85,24 +89,24 @@ func (fo *FileOperations) listFilesWithHelper(ctx context.Context, container *Co
 
 // GetFileContent retrieves file content from a container using multiple strategies
 func (fo *FileOperations) GetFileContent(ctx context.Context, containerID, filePath string) (string, error) {
-	// Strategy 1: Try native cat command first
-	content, err := fo.getFileContentNative(ctx, containerID, filePath)
+	// Strategy 1: Try docker cp first (most reliable)
+	content, err := fo.getFileContentWithDockerCp(ctx, containerID, filePath)
 	if err == nil {
 		return content, nil
 	}
 
-	slog.Debug("Native cat failed, trying helper injection", "error", err)
+	slog.Debug("Docker cp failed, trying native cat", "error", err)
 
-	// Strategy 2: Try helper injection
-	content, err = fo.getFileContentWithHelper(ctx, containerID, filePath)
+	// Strategy 2: Try native cat command as fallback
+	content, err = fo.getFileContentNative(ctx, containerID, filePath)
 	if err == nil {
 		return content, nil
 	}
 
-	slog.Debug("Helper injection failed", "error", err)
+	slog.Debug("Native cat also failed", "error", err)
 
 	// All strategies failed
-	return "", fmt.Errorf("unable to read file: native cat and helper injection both failed")
+	return "", fmt.Errorf("unable to read file: docker cp and native cat both failed")
 }
 
 // getFileContentNative tries to get file content using the native cat command
@@ -115,20 +119,23 @@ func (fo *FileOperations) getFileContentNative(ctx context.Context, containerID,
 	return output, nil
 }
 
-// getFileContentWithHelper gets file content using docker cp command
-func (fo *FileOperations) getFileContentWithHelper(ctx context.Context, containerID, filePath string) (string, error) {
+// getFileContentWithDockerCp gets file content using docker cp command
+func (fo *FileOperations) getFileContentWithDockerCp(ctx context.Context, containerID, filePath string) (string, error) {
 	// Use docker cp to extract the file content
-	// docker cp CONTAINER:PATH - outputs to stdout
+	// docker cp CONTAINER:PATH - outputs tar to stdout
 	args := []string{"docker", "cp", fmt.Sprintf("%s:%s", containerID, filePath), "-"}
 	captured, err := ExecuteCaptured(args...)
 	if err != nil {
 		return "", fmt.Errorf("docker cp failed: %w", err)
 	}
 
-	// The output is in tar format, so we need to extract the actual file content
-	// For simplicity, we'll just return the raw output for now
-	// TODO: Properly extract content from tar format
-	return string(captured), nil
+	// Extract content from tar format
+	content, err := extractFileFromTar(captured, filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to extract from tar: %w", err)
+	}
+
+	return content, nil
 }
 
 // parseHelperLsOutput parses the output from our helper's ls command
@@ -182,4 +189,37 @@ func parseHelperLsOutput(output string) []models.ContainerFile {
 	}
 
 	return files
+}
+
+// extractFileFromTar extracts file content from tar archive
+func extractFileFromTar(tarData []byte, filePath string) (string, error) {
+	// Create a tar reader
+	tarReader := tar.NewReader(bytes.NewReader(tarData))
+
+	// Get just the filename from the path for matching
+	fileName := filepath.Base(filePath)
+
+	// Read through the tar archive
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", fmt.Errorf("error reading tar: %w", err)
+		}
+
+		// Check if this is the file we're looking for
+		// The tar might have just the filename without the full path
+		if header.Name == fileName || header.Name == filePath || filepath.Base(header.Name) == fileName {
+			// Read the file content
+			content, err := io.ReadAll(tarReader)
+			if err != nil {
+				return "", fmt.Errorf("error reading file from tar: %w", err)
+			}
+			return string(content), nil
+		}
+	}
+
+	return "", fmt.Errorf("file not found in tar archive: %s", filePath)
 }
