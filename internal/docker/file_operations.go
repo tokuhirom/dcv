@@ -71,10 +71,12 @@ func (fo *FileOperations) listFilesWithHelper(ctx context.Context, container *Co
 
 	// Execute helper ls command
 	cmd := []string{helperPath, "ls", path}
-	output, err := ExecuteInContainer(ctx, fo.client, container.containerID, cmd)
+	args := container.OperationArgs("exec", cmd...)
+	outputBytes, err := ExecuteCaptured(args...)
 	if err != nil {
 		return nil, fmt.Errorf("helper ls failed: %w(%v)", err, cmd)
 	}
+	output := string(outputBytes)
 
 	// Parse helper output (similar format to ls -la)
 	files := parseHelperLsOutput(output)
@@ -105,12 +107,14 @@ func (fo *FileOperations) GetFileContent(ctx context.Context, containerID, fileP
 
 // getFileContentNative tries to get file content using the native cat command
 func (fo *FileOperations) getFileContentNative(ctx context.Context, containerID, filePath string) (string, error) {
-	cmd := []string{"cat", filePath}
-	output, err := ExecuteInContainer(ctx, fo.client, containerID, cmd)
+	// Create a temporary container for executing the cat command
+	container := NewContainer(containerID, "", "", "")
+	args := container.OperationArgs("exec", "cat", filePath)
+	outputBytes, err := ExecuteCaptured(args...)
 	if err != nil {
 		return "", fmt.Errorf("native cat failed: %w", err)
 	}
-	return output, nil
+	return string(outputBytes), nil
 }
 
 // getFileContentWithHelper gets file content using docker cp command
