@@ -46,6 +46,8 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.commandActionViewModel.HandleUp()
 	case ComposeProjectActionView:
 		return m, m.composeProjectActionViewModel.HandleUp()
+	case HelperInjectorView:
+		return m, m.helperInjectorViewModel.HandleUp()
 	default:
 		slog.Info("Unhandled key up in current view",
 			slog.String("view", m.currentView.String()))
@@ -95,6 +97,8 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.commandActionViewModel.HandleDown()
 	case ComposeProjectActionView:
 		return m, m.composeProjectActionViewModel.HandleDown()
+	case HelperInjectorView:
+		return m, m.helperInjectorViewModel.HandleDown(m)
 	default:
 		slog.Info("Unhandled key down in current view",
 			slog.String("view", m.currentView.String()))
@@ -112,6 +116,8 @@ func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.inspectViewModel.HandleGoToEnd(m)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleGoToEnd(m)
+	case HelperInjectorView:
+		return m, m.helperInjectorViewModel.HandleGoToEnd(m)
 	default:
 		slog.Info("GoToEnd not supported in current view",
 			slog.String("view", m.currentView.String()))
@@ -129,6 +135,8 @@ func (m *Model) CmdGoToBeginning(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.inspectViewModel.HandleGoToBeginning()
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleGoToBeginning()
+	case HelperInjectorView:
+		return m, m.helperInjectorViewModel.HandleGoToBeginning()
 	default:
 		slog.Info("GoToBeginning not supported in current view",
 			slog.String("view", m.currentView.String()))
@@ -198,6 +206,8 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.commandActionViewModel.HandleBack(m)
 	case ComposeProjectActionView:
 		return m, m.composeProjectActionViewModel.HandleBack(m)
+	case HelperInjectorView:
+		return m, m.helperInjectorViewModel.HandleBack(m)
 	case ComposeProcessListView:
 		// Should not happen in ComposeProcessListView, but handle it gracefully
 		// This is the main view, nowhere to go back to

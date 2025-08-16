@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -193,17 +194,31 @@ func (m *FileBrowserViewModel) Loaded(model *Model, files []models.ContainerFile
 func (m *FileBrowserViewModel) DoLoad(model *Model) tea.Cmd {
 	model.loading = true
 	return func() tea.Msg {
-		args := m.browsingContainer.OperationArgs("exec", "ls", "-la", m.currentPath)
-		output, err := model.dockerClient.ExecuteCaptured(args...)
-
-		var files []models.ContainerFile
-		if err == nil {
-			files = models.ParseLsOutput(string(output))
+		// Use FileOperations for multi-strategy file listing if available
+		if model.fileOperations != nil {
+			ctx := context.Background()
+			files, err := model.fileOperations.ListFiles(ctx, m.browsingContainer, m.currentPath)
+			return containerFilesLoadedMsg{
+				files: files,
+				err:   err,
+			}
 		}
+
+		// Fallback to direct docker exec if FileOperations not available
+		args := m.browsingContainer.OperationArgs("exec", "ls", "-la", m.currentPath)
+
+		output, err := docker.ExecuteCaptured(args...)
+		if err != nil {
+			return containerFilesLoadedMsg{
+				err: fmt.Errorf("failed to list files: %w", err),
+			}
+		}
+
+		files := models.ParseLsOutput(string(output))
 
 		return containerFilesLoadedMsg{
 			files: files,
-			err:   err,
+			err:   nil,
 		}
 	}
 }

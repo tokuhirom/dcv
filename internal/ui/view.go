@@ -254,6 +254,8 @@ func (m *Model) viewTitle() string {
 		return "Select Action"
 	case ComposeProjectActionView:
 		return "Select Project Action"
+	case HelperInjectorView:
+		return "Helper Injection"
 	default:
 		return "Unknown View"
 	}
@@ -305,6 +307,8 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.commandActionViewModel.render(m)
 	case ComposeProjectActionView:
 		return m.composeProjectActionViewModel.render(m)
+	case HelperInjectorView:
+		return m.helperInjectorViewModel.render(m)
 	default:
 		return "Unknown view"
 	}

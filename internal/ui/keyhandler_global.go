@@ -39,6 +39,8 @@ func (m *Model) CmdCancel(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.commandExecutionViewModel.HandleCancel()
 	case LogView:
 		return m, m.logViewModel.HandleCancel()
+	case HelperInjectorView:
+		return m, m.helperInjectorViewModel.HandleCancel()
 	default:
 		slog.Info("Cancel command not implemented for current view",
 			slog.String("current_view", m.currentView.String()))

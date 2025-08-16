@@ -36,6 +36,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"/"}, "search", m.CmdSearch},
 		{[]string{"n"}, "next match", m.CmdNextSearchResult},
 		{[]string{"N"}, "prev match", m.CmdPrevSearchResult},
+		{[]string{"H"}, "inject helper binary", m.CmdInjectHelper},
 	}
 
 	// Docker Container List View
@@ -260,6 +261,18 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.composeProjectActionKeymap = m.createKeymap(m.composeProjectActionHandlers)
+
+	// Helper Injector View
+	m.helperInjectorHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "scroll up", m.CmdUp},
+		{[]string{"down", "j"}, "scroll down", m.CmdDown},
+		{[]string{"G"}, "go to end", m.CmdGoToEnd},
+		{[]string{"g"}, "go to beginning", m.CmdGoToBeginning},
+		{[]string{"ctrl+c"}, "cancel", m.CmdCancel},
+		{[]string{"esc"}, "back", m.CmdBack},
+		{[]string{"?"}, "help", m.CmdHelp},
+	}
+	m.helperInjectorKeymap = m.createKeymap(m.helperInjectorHandlers)
 
 	// Initialize command registry
 	m.initCommandRegistry()

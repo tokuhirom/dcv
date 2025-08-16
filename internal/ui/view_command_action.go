@@ -69,6 +69,17 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 	})
 
 	m.actions = append(m.actions, CommandAction{
+		Key:         "H",
+		Name:        "Inject Helper",
+		Description: "Inject helper binary for file operations",
+		Aggressive:  false,
+		Handler: func(model *Model, c *docker.Container) tea.Cmd {
+			_, cmd := model.CmdInjectHelper(tea.KeyMsg{})
+			return cmd
+		},
+	})
+
+	m.actions = append(m.actions, CommandAction{
 		Key:         "!",
 		Name:        "Execute Shell",
 		Description: "Execute /bin/sh in container",
