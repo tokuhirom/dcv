@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"syscall"
 )
 
 const version = "1.0.0"
@@ -73,7 +74,7 @@ func cmdLs() {
 	}
 }
 
-// printFileInfo prints file information in a simple format
+// printFileInfo prints file information in ls -la compatible format
 func printFileInfo(info os.FileInfo) {
 	mode := info.Mode()
 	typeChar := '-'
@@ -92,12 +93,30 @@ func printFileInfo(info os.FileInfo) {
 		typeChar = 's'
 	}
 
-	// Format: type permissions size name
-	// Simple format: drwxr-xr-x 4096 dirname
-	fmt.Printf("%c%s %10d %s\n",
+	// Get uid/gid if available
+	uid := "0"
+	gid := "0"
+	nlinks := "1"
+
+	if sys, ok := info.Sys().(*syscall.Stat_t); ok {
+		uid = fmt.Sprintf("%d", sys.Uid)
+		gid = fmt.Sprintf("%d", sys.Gid)
+		nlinks = fmt.Sprintf("%d", sys.Nlink)
+	}
+
+	// Format similar to ls -la:
+	// drwxr-xr-x  2 uid gid 4096 Dec 15 10:30 dirname
+	// Using numeric uid/gid since we can't resolve to names without /etc/passwd
+	fmt.Printf("%c%s %3s %5s %5s %10d %s %s %s %s\n",
 		typeChar,
 		formatMode(mode),
+		nlinks,
+		uid,
+		gid,
 		info.Size(),
+		"Jan",   // Placeholder month
+		"1",     // Placeholder day
+		"00:00", // Placeholder time
 		info.Name(),
 	)
 }

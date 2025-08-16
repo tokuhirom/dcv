@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
-	"time"
 
 	"github.com/docker/docker/client"
 
@@ -132,54 +130,9 @@ func (fo *FileOperations) getFileContentWithHelper(ctx context.Context, containe
 }
 
 // parseHelperLsOutput parses the output from our helper's ls command
-// The format is similar to ls -la but simplified:
-// dRWXRWXRWX      4096 dirname
-// -rwxr-xr-x       123 filename
-
-// TODO: helper に`ls -la` と同等の出力をさせる｡
+// The format is now similar to ls -la:
+// drwxr-xr-x  2 uid gid 4096 Jan 1 00:00 dirname
 func parseHelperLsOutput(output string) []models.ContainerFile {
-	var files []models.ContainerFile
-	lines := strings.Split(strings.TrimSpace(output), "\n")
-
-	for _, line := range lines {
-		if line == "" {
-			continue
-		}
-
-		// Parse helper output format
-		parts := strings.Fields(line)
-		if len(parts) < 3 {
-			continue
-		}
-
-		file := models.ContainerFile{
-			Permissions: parts[0][1:], // Skip the type character
-			Mode:        parts[0],
-			IsDir:       parts[0][0] == 'd',
-		}
-
-		// Parse size
-		var size int64
-		_, _ = fmt.Sscanf(parts[1], "%d", &size)
-		file.Size = size
-
-		// Get filename (everything from parts[2] onwards)
-		file.Name = strings.Join(parts[2:], " ")
-
-		// Handle symlinks (file -> target)
-		if strings.Contains(file.Name, " -> ") {
-			linkParts := strings.Split(file.Name, " -> ")
-			file.Name = linkParts[0]
-			if len(linkParts) > 1 {
-				file.LinkTarget = linkParts[1]
-			}
-		}
-
-		// Set modification time to current time (helper doesn't provide timestamps)
-		file.ModTime = time.Now()
-
-		files = append(files, file)
-	}
-
-	return files
+	// The helper now outputs in ls -la format, so we can reuse the standard parser
+	return models.ParseLsOutput(output)
 }

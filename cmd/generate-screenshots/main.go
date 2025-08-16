@@ -672,6 +672,9 @@ func setupFileBrowser(m *ui.Model) {
 			Mode:        "drwxr-xr-x",
 			Size:        4096,
 			ModTime:     time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+			Owner:       "root",
+			Group:       "root",
+			Links:       "3",
 		},
 		{
 			Name:        "config",
@@ -680,6 +683,9 @@ func setupFileBrowser(m *ui.Model) {
 			Mode:        "drwxr-xr-x",
 			Size:        4096,
 			ModTime:     time.Date(2024, 1, 10, 10, 15, 0, 0, time.UTC),
+			Owner:       "app",
+			Group:       "app",
+			Links:       "2",
 		},
 		{
 			Name:        "static",
@@ -688,6 +694,9 @@ func setupFileBrowser(m *ui.Model) {
 			Mode:        "drwxr-xr-x",
 			Size:        4096,
 			ModTime:     time.Date(2024, 1, 10, 9, 30, 0, 0, time.UTC),
+			Owner:       "www-data",
+			Group:       "www-data",
+			Links:       "2",
 		},
 		{
 			Name:        "templates",
@@ -696,6 +705,9 @@ func setupFileBrowser(m *ui.Model) {
 			Mode:        "drwxr-xr-x",
 			Size:        4096,
 			ModTime:     time.Date(2024, 1, 10, 9, 30, 0, 0, time.UTC),
+			Owner:       "app",
+			Group:       "app",
+			Links:       "2",
 		},
 		{
 			Name:        "app.py",
@@ -704,6 +716,9 @@ func setupFileBrowser(m *ui.Model) {
 			Mode:        "-rw-r--r--",
 			Size:        2048,
 			ModTime:     time.Date(2024, 1, 10, 10, 20, 0, 0, time.UTC),
+			Owner:       "app",
+			Group:       "app",
+			Links:       "1",
 		},
 		{
 			Name:        "requirements.txt",
@@ -712,6 +727,9 @@ func setupFileBrowser(m *ui.Model) {
 			Mode:        "-rw-r--r--",
 			Size:        512,
 			ModTime:     time.Date(2024, 1, 9, 14, 0, 0, 0, time.UTC),
+			Owner:       "root",
+			Group:       "root",
+			Links:       "1",
 		},
 		{
 			Name:        "Dockerfile",
@@ -720,6 +738,9 @@ func setupFileBrowser(m *ui.Model) {
 			Mode:        "-rw-r--r--",
 			Size:        384,
 			ModTime:     time.Date(2024, 1, 9, 14, 0, 0, 0, time.UTC),
+			Owner:       "root",
+			Group:       "root",
+			Links:       "1",
 		},
 		{
 			Name:        ".env",
@@ -728,6 +749,9 @@ func setupFileBrowser(m *ui.Model) {
 			Mode:        "-rw-------",
 			Size:        256,
 			ModTime:     time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+			Owner:       "app",
+			Group:       "app",
+			Links:       "1",
 		},
 	})
 }
