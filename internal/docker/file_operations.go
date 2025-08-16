@@ -71,7 +71,7 @@ func (fo *FileOperations) listFilesNative(container *Container, path string) ([]
 // listFilesWithHelper lists files using the injected helper binary
 func (fo *FileOperations) listFilesWithHelper(ctx context.Context, container *Container, path string) ([]models.ContainerFile, error) {
 	// Inject helper if needed
-	helperPath, err := fo.injector.InjectHelper(ctx, container)
+	helperPath, err := fo.injector.GetHelperPath(ctx, container)
 	if err != nil {
 		return nil, fmt.Errorf("failed to inject helper: %w", err)
 	}
@@ -125,7 +125,7 @@ func (fo *FileOperations) getFileContentWithHelper(ctx context.Context, containe
 	// Create a temporary container object for the injector
 	container := &Container{containerID: containerID}
 	// Inject helper if needed
-	helperPath, err := fo.injector.InjectHelper(ctx, container)
+	helperPath, err := fo.injector.GetHelperPath(ctx, container)
 	if err != nil {
 		return "", fmt.Errorf("failed to inject helper: %w", err)
 	}

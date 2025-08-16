@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/docker/docker/client"
 )
@@ -16,7 +15,6 @@ import (
 // HelperInjector manages injecting helper binaries into containers
 type HelperInjector struct {
 	client   *client.Client
-	mu       sync.Mutex
 	path     string
 	injected map[string]bool // Track injected containers to avoid duplicates
 }
@@ -30,67 +28,8 @@ func NewHelperInjector(dockerClient *client.Client) *HelperInjector {
 	}
 }
 
-// InjectHelper injects the dcv-helper binary into the container if needed
-func (hi *HelperInjector) InjectHelper(ctx context.Context, container *Container) (string, error) {
-	hi.mu.Lock()
-	defer hi.mu.Unlock()
-
-	targetPath := hi.path
-
-	if hi.injected[container.containerID] {
-		slog.Info("Helper binary already injected",
-			slog.String("container", container.ContainerID()),
-			slog.String("path", targetPath))
-		return targetPath, nil // Already injected
-	}
-
-	slog.Info("Injecting helper binary",
-		slog.String("container", container.ContainerID()),
-		slog.String("path", targetPath))
-
-	// Detect container architecture (default to runtime arch)
-	arch := hi.detectArch(ctx, container)
-	if arch == "" {
-		arch = runtime.GOARCH
-		slog.Info("Using runtime architecture",
-			slog.String("arch", arch))
-	} else {
-		slog.Info("Detected container architecture",
-			slog.String("arch", arch))
-	}
-
-	// Get the embedded binary
-	binaryData, err := GetHelperBinary(arch)
-	if err != nil {
-		return "", fmt.Errorf("failed to get helper binary: %w", err)
-	}
-
-	// write binary to a temporary file
-	// Create a temporary file to store the binary
-	tempDir, err := os.MkdirTemp("", "dcv-helper-*")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temp directory: %w", err)
-	}
-	defer func() {
-		_ = os.RemoveAll(tempDir)
-	}()
-
-	tempFile := filepath.Join(tempDir, "dcv-helper")
-	if err := os.WriteFile(tempFile, binaryData, 0755); err != nil {
-		return "", fmt.Errorf("failed to write helper binary to temp file: %w", err)
-	}
-
-	cmds := hi.BuildCommands(container, tempFile)
-	// Execute commands sequentially
-	for _, cmd := range cmds {
-		slog.Info("Executing helper injection command", slog.String("cmd", cmd))
-		// For now, we'll let the UI handle command execution
-		// In a real implementation, we would execute these here
-	}
-
-	hi.injected[container.containerID] = true
-
-	return targetPath, nil
+func (hi *HelperInjector) GetHelperPath(ctx context.Context, container *Container) (string, error) {
+	return hi.path, nil
 }
 
 // BuildCommands returns the list of commands needed to inject the helper

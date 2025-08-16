@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os/exec"
 	"strings"
 
@@ -187,6 +188,8 @@ func (m *HelperInjectorViewModel) HandleInjectHelper(model *Model, container *do
 		m.done = true
 		return nil
 	}
+	slog.Info("Wrote temporary file",
+		slog.String("tempFile", tempFile))
 
 	m.commands = injector.BuildCommands(container, tempFile)
 	m.totalSteps = len(m.commands)
