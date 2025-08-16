@@ -33,7 +33,7 @@ type HelperInjectorViewModel struct {
 	currentCmd      *exec.Cmd
 	currentCmdStr   string // Store the current command string for display
 	pendingCommands [][]string
-	tempDir         string // Store temp directory to clean up later
+	tempFile        string // Store temp file to clean up later
 	helperPath      string // Path where helper will be injected
 }
 
@@ -229,19 +229,31 @@ func (m *HelperInjectorViewModel) getHelperTempFile(ctx context.Context, dockerC
 		return "", "", fmt.Errorf("failed to get helper binary: %w", err)
 	}
 
-	// Create a temporary file to store the binary
-	tempDir, err := os.MkdirTemp("", "dcv-helper-*")
+	// Create a temporary file directly (not a directory)
+	tempFile, err := os.CreateTemp("", "dcv-helper-*")
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create temp directory: %w", err)
+		return "", "", fmt.Errorf("failed to create temp file: %w", err)
 	}
+	defer func() {
+		_ = tempFile.Close()
+	}()
 
-	tempFile := filepath.Join(tempDir, "dcv-helper")
-	if err := os.WriteFile(tempFile, binaryData, 0755); err != nil {
-		_ = os.RemoveAll(tempDir)
+	// Write the binary data
+	if _, err := tempFile.Write(binaryData); err != nil {
+		_ = os.Remove(tempFile.Name())
 		return "", "", fmt.Errorf("failed to write helper binary to temp file: %w", err)
 	}
 
-	return tempDir, tempFile, nil
+	// Make it executable
+	if err := tempFile.Chmod(0755); err != nil {
+		_ = os.Remove(tempFile.Name())
+		return "", "", fmt.Errorf("failed to make temp file executable: %w", err)
+	}
+
+	// Get the directory for cleanup purposes
+	tempDir := filepath.Dir(tempFile.Name())
+
+	return tempDir, tempFile.Name(), nil
 }
 
 // HandleInjectHelper starts the helper injection process
@@ -267,15 +279,14 @@ func (m *HelperInjectorViewModel) HandleInjectHelper(model *Model, container *do
 
 	// Get temporary file path for helper binary
 	ctx := context.Background()
-	tempDir, tempFile, err := m.getHelperTempFile(ctx, model.dockerSDKClient, container)
+	_, tempFile, err := m.getHelperTempFile(ctx, model.dockerSDKClient, container)
 	if err != nil {
 		m.err = err
 		m.done = true
 		return nil
 	}
-	m.tempDir = tempDir // Store for cleanup later
+	m.tempFile = tempFile // Store for cleanup later
 	slog.Info("Wrote temporary file",
-		slog.String("tempDir", tempDir),
 		slog.String("tempFile", tempFile))
 
 	m.commands = m.buildCommands(container, tempFile)
@@ -382,12 +393,12 @@ func (m *HelperInjectorViewModel) HandleBack(model *Model) tea.Cmd {
 		}
 	}
 
-	// Clean up temp directory if it exists
-	if m.tempDir != "" {
-		if err := os.RemoveAll(m.tempDir); err != nil {
-			slog.Debug("Failed to clean up temp directory", "error", err, "path", m.tempDir)
+	// Clean up temp file if it exists
+	if m.tempFile != "" {
+		if err := os.Remove(m.tempFile); err != nil {
+			slog.Debug("Failed to clean up temp file", "error", err, "path", m.tempFile)
 		}
-		m.tempDir = ""
+		m.tempFile = ""
 	}
 
 	// Go back to previous view
@@ -467,11 +478,11 @@ func (m *HelperInjectorViewModel) Complete(success bool, err error) {
 	m.success = success
 	m.err = err
 
-	// Clean up temp directory on completion
-	if m.tempDir != "" {
-		if cleanupErr := os.RemoveAll(m.tempDir); cleanupErr != nil {
-			slog.Debug("Failed to clean up temp directory", "error", cleanupErr, "path", m.tempDir)
+	// Clean up temp file on completion
+	if m.tempFile != "" {
+		if cleanupErr := os.Remove(m.tempFile); cleanupErr != nil {
+			slog.Debug("Failed to clean up temp file", "error", cleanupErr, "path", m.tempFile)
 		}
-		m.tempDir = ""
+		m.tempFile = ""
 	}
 }
