@@ -15,6 +15,9 @@ type ContainerFile struct {
 	IsDir       bool
 	LinkTarget  string
 	Permissions string
+	Owner       string
+	Group       string
+	Links       string // Number of hard links
 }
 
 // ParseLsOutput parses the output of ls -la command
@@ -39,12 +42,21 @@ func ParseLsOutput(output string) []ContainerFile {
 			Permissions: parts[0],
 			Mode:        parts[0],
 			IsDir:       strings.HasPrefix(parts[0], "d"),
+			Links:       parts[1], // Number of hard links
+			Owner:       parts[2], // Owner name
+			Group:       parts[3], // Group name
 		}
 
 		// Parse size (parts[4] contains the size in bytes)
 		if size, err := strconv.ParseInt(parts[4], 10, 64); err == nil {
 			file.Size = size
 		}
+
+		// Parse date and time (parts[5], [6], [7])
+		// Format can be: "Dec 15 10:30" or "Dec 15 2023" depending on age
+		// For now, we'll keep it simple and use current time
+		// TODO: Parse actual date/time from ls output
+		file.ModTime = time.Now()
 
 		// Get filename (handle spaces in filename)
 		// Everything from parts[8] onwards is the filename

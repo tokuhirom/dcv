@@ -79,9 +79,12 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 
 	// Create table
 	columns := []table.Column{
-		{Title: "PERMISSIONS", Width: 15}, // Fixed width for permissions display
-		{Title: "SIZE", Width: 10},        // Fixed width for size display
-		{Title: "NAME", Width: -1},
+		{Title: "PERMISSIONS", Width: 11}, // drwxrwxrwx format
+		{Title: "LINKS", Width: 5},        // Number of hard links
+		{Title: "OWNER", Width: 10},       // Owner name
+		{Title: "GROUP", Width: 10},       // Group name
+		{Title: "SIZE", Width: 10},        // File size
+		{Title: "NAME", Width: -1},        // File/directory name (takes remaining space)
 	}
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
@@ -109,7 +112,14 @@ func (m *FileBrowserViewModel) buildRows() []table.Row {
 			name = linkStyle.Render(name)
 		}
 
-		rows = append(rows, table.Row{file.Permissions, file.GetSizeString(), name})
+		rows = append(rows, table.Row{
+			file.Permissions,
+			file.Links,
+			file.Owner,
+			file.Group,
+			file.GetSizeString(),
+			name,
+		})
 	}
 	return rows
 }

@@ -27,6 +27,9 @@ drwxr-xr-x  2 root root 4096 Dec 15 10:20 src
 					Mode:        "drwxr-xr-x",
 					Size:        4096,
 					IsDir:       true,
+					Links:       "3",
+					Owner:       "root",
+					Group:       "root",
 				},
 				{
 					Name:        "..",
@@ -34,6 +37,9 @@ drwxr-xr-x  2 root root 4096 Dec 15 10:20 src
 					Mode:        "drwxr-xr-x",
 					Size:        4096,
 					IsDir:       true,
+					Links:       "1",
+					Owner:       "root",
+					Group:       "root",
 				},
 				{
 					Name:        "config.json",
@@ -41,6 +47,9 @@ drwxr-xr-x  2 root root 4096 Dec 15 10:20 src
 					Mode:        "-rw-r--r--",
 					Size:        1024,
 					IsDir:       false,
+					Links:       "1",
+					Owner:       "root",
+					Group:       "root",
 				},
 				{
 					Name:        "src",
@@ -48,6 +57,9 @@ drwxr-xr-x  2 root root 4096 Dec 15 10:20 src
 					Mode:        "drwxr-xr-x",
 					Size:        4096,
 					IsDir:       true,
+					Links:       "2",
+					Owner:       "root",
+					Group:       "root",
 				},
 				{
 					Name:        "app.sh",
@@ -55,6 +67,9 @@ drwxr-xr-x  2 root root 4096 Dec 15 10:20 src
 					Mode:        "-rwxr-xr-x",
 					Size:        2048,
 					IsDir:       false,
+					Links:       "1",
+					Owner:       "root",
+					Group:       "root",
 				},
 			},
 		},
@@ -71,6 +86,9 @@ lrwxrwxrwx  1 root root   10 Dec 15 10:30 link -> /etc/hosts
 					Size:        10,
 					IsDir:       false,
 					LinkTarget:  "/etc/hosts",
+					Links:       "1",
+					Owner:       "root",
+					Group:       "root",
 				},
 				{
 					Name:        "file.txt",
@@ -78,6 +96,9 @@ lrwxrwxrwx  1 root root   10 Dec 15 10:30 link -> /etc/hosts
 					Mode:        "-rw-r--r--",
 					Size:        1024,
 					IsDir:       false,
+					Links:       "1",
+					Owner:       "root",
+					Group:       "root",
 				},
 			},
 		},
@@ -93,6 +114,9 @@ drwxr-xr-x  2 root root 4096 Dec 15 10:20 my folder`,
 					Mode:        "-rw-r--r--",
 					Size:        1024,
 					IsDir:       false,
+					Links:       "1",
+					Owner:       "root",
+					Group:       "root",
 				},
 				{
 					Name:        "my folder",
@@ -100,6 +124,9 @@ drwxr-xr-x  2 root root 4096 Dec 15 10:20 my folder`,
 					Mode:        "drwxr-xr-x",
 					Size:        4096,
 					IsDir:       true,
+					Links:       "2",
+					Owner:       "root",
+					Group:       "root",
 				},
 			},
 		},
@@ -118,7 +145,25 @@ drwxr-xr-x  2 root root 4096 Dec 15 10:20 my folder`,
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ParseLsOutput(tt.input)
-			assert.Equal(t, tt.expected, result)
+
+			// Check length first
+			assert.Equal(t, len(tt.expected), len(result))
+
+			// Compare each file, ignoring ModTime
+			for i := range tt.expected {
+				if i < len(result) {
+					assert.Equal(t, tt.expected[i].Name, result[i].Name)
+					assert.Equal(t, tt.expected[i].Permissions, result[i].Permissions)
+					assert.Equal(t, tt.expected[i].Mode, result[i].Mode)
+					assert.Equal(t, tt.expected[i].Size, result[i].Size)
+					assert.Equal(t, tt.expected[i].IsDir, result[i].IsDir)
+					assert.Equal(t, tt.expected[i].LinkTarget, result[i].LinkTarget)
+					assert.Equal(t, tt.expected[i].Owner, result[i].Owner)
+					assert.Equal(t, tt.expected[i].Group, result[i].Group)
+					assert.Equal(t, tt.expected[i].Links, result[i].Links)
+					// ModTime is set to current time, so we don't compare it
+				}
+			}
 		})
 	}
 }
