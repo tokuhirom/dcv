@@ -28,6 +28,12 @@ type FileBrowserActionViewModel struct {
 	targetFile      *models.ContainerFile
 	targetContainer *docker.Container
 	containerPath   string
+
+	// Input mode for destination path
+	inputMode      bool
+	inputBuffer    string
+	inputCursorPos int
+	inputPrompt    string
 }
 
 // Initialize sets up the action view with available commands for a file
@@ -46,7 +52,9 @@ func (m *FileBrowserActionViewModel) Initialize(file *models.ContainerFile, cont
 		Name:        "Copy to Local",
 		Description: "Copy file/directory to local machine",
 		Handler: func(model *Model, f *models.ContainerFile, c *docker.Container) tea.Cmd {
-			return m.handleCopyToLocal(model, f, c)
+			// Start input mode to get destination path
+			m.startInputMode(f)
+			return nil
 		},
 	})
 
@@ -88,27 +96,45 @@ func (m *FileBrowserActionViewModel) Initialize(file *models.ContainerFile, cont
 	})
 }
 
+// startInputMode starts the input mode for destination path
+func (m *FileBrowserActionViewModel) startInputMode(file *models.ContainerFile) {
+	m.inputMode = true
+	m.inputPrompt = fmt.Sprintf("Enter destination path for '%s': ", file.Name)
+
+	// Set default path
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		m.inputBuffer = filepath.Join(homeDir, "Downloads", file.Name)
+	} else {
+		m.inputBuffer = filepath.Join("/tmp", file.Name)
+	}
+	m.inputCursorPos = len(m.inputBuffer)
+}
+
 // handleCopyToLocal handles copying a file from container to local machine
-func (m *FileBrowserActionViewModel) handleCopyToLocal(model *Model, file *models.ContainerFile, container *docker.Container) tea.Cmd {
+func (m *FileBrowserActionViewModel) handleCopyToLocal(model *Model, destPath string) tea.Cmd {
+	file := m.targetFile
+	container := m.targetContainer
+
 	// Build the source path
 	sourcePath := filepath.Join(m.containerPath, file.Name)
 
-	// Get the home directory for destination
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		model.err = fmt.Errorf("failed to get home directory: %w", err)
-		return nil
+	// Expand tilde if present
+	if strings.HasPrefix(destPath, "~/") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			model.err = fmt.Errorf("failed to get home directory: %w", err)
+			return nil
+		}
+		destPath = filepath.Join(homeDir, destPath[2:])
 	}
 
-	// Create a Downloads directory if it doesn't exist
-	downloadDir := filepath.Join(homeDir, "Downloads", "dcv")
-	if err := os.MkdirAll(downloadDir, 0755); err != nil {
-		model.err = fmt.Errorf("failed to create download directory: %w", err)
+	// Create parent directory if it doesn't exist
+	destDir := filepath.Dir(destPath)
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		model.err = fmt.Errorf("failed to create destination directory: %w", err)
 		return nil
 	}
-
-	// Generate destination path
-	destPath := filepath.Join(downloadDir, file.Name)
 
 	// Build the docker cp command
 	var args []string
@@ -173,6 +199,11 @@ func (m *FileBrowserActionViewModel) handleExecuteInDirectory(model *Model, dirP
 func (m *FileBrowserActionViewModel) render(model *Model) string {
 	var s strings.Builder
 
+	// If in input mode, render input prompt
+	if m.inputMode {
+		return m.renderInputMode()
+	}
+
 	// Title
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
@@ -221,6 +252,49 @@ func (m *FileBrowserActionViewModel) render(model *Model) string {
 	return s.String()
 }
 
+// renderInputMode renders the input prompt for destination path
+func (m *FileBrowserActionViewModel) renderInputMode() string {
+	var s strings.Builder
+
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("86"))
+
+	s.WriteString(titleStyle.Render("Copy File to Local"))
+	s.WriteString("\n\n")
+
+	// File info
+	infoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	s.WriteString(infoStyle.Render(fmt.Sprintf("Source: %s/%s", m.containerPath, m.targetFile.Name)))
+	s.WriteString("\n\n")
+
+	// Input prompt
+	promptStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("220"))
+	s.WriteString(promptStyle.Render(m.inputPrompt))
+	s.WriteString("\n")
+
+	// Input field with cursor
+	inputStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("86")).
+		Padding(0, 1)
+
+	// Add cursor to the input
+	inputWithCursor := m.inputBuffer
+	if m.inputCursorPos >= 0 && m.inputCursorPos <= len(m.inputBuffer) {
+		inputWithCursor = m.inputBuffer[:m.inputCursorPos] + "█" + m.inputBuffer[m.inputCursorPos:]
+	}
+
+	s.WriteString(inputStyle.Render(inputWithCursor))
+	s.WriteString("\n\n")
+
+	// Help text
+	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	s.WriteString(helpStyle.Render("Press Enter to confirm, Esc to cancel"))
+
+	return s.String()
+}
+
 func (m *FileBrowserActionViewModel) getFileType() string {
 	if m.targetFile.IsDir {
 		return "Directory"
@@ -233,30 +307,106 @@ func (m *FileBrowserActionViewModel) getFileType() string {
 
 // HandleUp moves selection up
 func (m *FileBrowserActionViewModel) HandleUp() {
-	if m.selectedAction > 0 {
+	if !m.inputMode && m.selectedAction > 0 {
 		m.selectedAction--
 	}
 }
 
 // HandleDown moves selection down
 func (m *FileBrowserActionViewModel) HandleDown() {
-	if m.selectedAction < len(m.actions)-1 {
+	if !m.inputMode && m.selectedAction < len(m.actions)-1 {
 		m.selectedAction++
 	}
 }
 
 // HandleSelect executes the selected action
 func (m *FileBrowserActionViewModel) HandleSelect(model *Model) tea.Cmd {
+	// If in input mode, confirm the input
+	if m.inputMode {
+		destPath := strings.TrimSpace(m.inputBuffer)
+		if destPath != "" {
+			m.inputMode = false
+			model.SwitchToPreviousView() // Go back to file browser
+			return m.handleCopyToLocal(model, destPath)
+		}
+		return nil
+	}
+
+	// Otherwise, execute the selected action
 	if m.selectedAction < len(m.actions) {
 		action := m.actions[m.selectedAction]
-		model.SwitchToPreviousView() // Go back to file browser
+		// Don't switch view yet if the action starts input mode
 		return action.Handler(model, m.targetFile, m.targetContainer)
 	}
 	return nil
 }
 
-// HandleBack returns to the file browser
+// HandleBack returns to the file browser or cancels input
 func (m *FileBrowserActionViewModel) HandleBack(model *Model) tea.Cmd {
+	if m.inputMode {
+		// Cancel input mode and return to action menu
+		m.inputMode = false
+		m.inputBuffer = ""
+		m.inputCursorPos = 0
+		return nil
+	}
+	// Return to file browser
 	model.SwitchToPreviousView()
 	return nil
+}
+
+// HandleInput handles keyboard input in input mode
+func (m *FileBrowserActionViewModel) HandleInput(model *Model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if !m.inputMode {
+		return model, nil
+	}
+
+	switch msg.Type {
+	case tea.KeyEnter:
+		// Confirm input
+		return model, m.HandleSelect(model)
+
+	case tea.KeyEsc:
+		// Cancel input
+		return model, m.HandleBack(model)
+
+	case tea.KeyBackspace, tea.KeyCtrlH:
+		if len(m.inputBuffer) > 0 && m.inputCursorPos > 0 {
+			m.inputBuffer = m.inputBuffer[:m.inputCursorPos-1] + m.inputBuffer[m.inputCursorPos:]
+			m.inputCursorPos--
+		}
+
+	case tea.KeyLeft, tea.KeyCtrlB:
+		if m.inputCursorPos > 0 {
+			m.inputCursorPos--
+		}
+
+	case tea.KeyRight, tea.KeyCtrlF:
+		if m.inputCursorPos < len(m.inputBuffer) {
+			m.inputCursorPos++
+		}
+
+	case tea.KeyHome, tea.KeyCtrlA:
+		m.inputCursorPos = 0
+
+	case tea.KeyEnd, tea.KeyCtrlE:
+		m.inputCursorPos = len(m.inputBuffer)
+
+	case tea.KeyDelete:
+		if m.inputCursorPos < len(m.inputBuffer) {
+			m.inputBuffer = m.inputBuffer[:m.inputCursorPos] + m.inputBuffer[m.inputCursorPos+1:]
+		}
+
+	default:
+		switch msg.Type {
+		case tea.KeyRunes:
+			m.inputBuffer = m.inputBuffer[:m.inputCursorPos] + msg.String() + m.inputBuffer[m.inputCursorPos:]
+			m.inputCursorPos += len(msg.String())
+		case tea.KeySpace:
+			m.inputBuffer = m.inputBuffer[:m.inputCursorPos] + " " + m.inputBuffer[m.inputCursorPos:]
+			m.inputCursorPos++
+		}
+	}
+
+	return model, nil
 }
