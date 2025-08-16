@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -18,6 +19,8 @@ func main() {
 	switch os.Args[1] {
 	case "ls":
 		cmdLs()
+	case "cat":
+		cmdCat()
 	case "version":
 		fmt.Println("dcv-helper", version)
 	default:
@@ -31,6 +34,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "Usage: dcv-helper <command> [args...]")
 	fmt.Fprintln(os.Stderr, "Commands:")
 	fmt.Fprintln(os.Stderr, "  ls [path]    - List directory contents")
+	fmt.Fprintln(os.Stderr, "  cat <file>   - Display file contents")
 	fmt.Fprintln(os.Stderr, "  version      - Show version")
 }
 
@@ -112,4 +116,35 @@ func formatMode(mode os.FileMode) string {
 		}
 	}
 	return string(buf[:])
+}
+
+// cmdCat implements a simple cat command
+func cmdCat() {
+	if len(os.Args) < 3 {
+		fmt.Fprintln(os.Stderr, "cat: missing file operand")
+		os.Exit(1)
+	}
+
+	exitCode := 0
+	for i := 2; i < len(os.Args); i++ {
+		if err := catFile(os.Args[i]); err != nil {
+			fmt.Fprintf(os.Stderr, "cat: %s: %v\n", os.Args[i], err)
+			exitCode = 1
+		}
+	}
+	os.Exit(exitCode)
+}
+
+// catFile displays contents of a single file
+func catFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+
+	_, err = io.Copy(os.Stdout, file)
+	return err
 }
