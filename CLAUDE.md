@@ -203,6 +203,158 @@ Copy `dcv.toml.example` to one of the locations above and modify as needed:
 cp dcv.toml.example ~/.config/dcv/config.toml
 ```
 
+## Next Action Plan
+
+Based on comprehensive codebase analysis, here are prioritized improvements:
+
+### Immediate Actions (High Impact, Low Effort)
+1. **Standardize Error Handling**
+   - Create consistent error handling pattern across all views
+   - Use message-based errors for UI updates
+   - Return errors from Docker operations
+
+2. **Extract Common View Model Base**
+   - Create `BaseListViewModel` interface for all list-based views
+   - Reduce code duplication across 16+ similar view models
+   - Implement common navigation, search, and refresh logic
+
+3. **Centralize Styling System**
+   - Move all colors and styles to `internal/ui/styles.go`
+   - Create theme support foundation
+   - Eliminate hard-coded colors throughout codebase
+
+4. **Add Command Timeouts**
+   - Implement configurable timeouts for Docker commands
+   - Prevent hanging on long-running operations
+   - Add timeout configuration to TOML config
+
+### Short Term Actions (1-2 weeks)
+1. **Implement Copy Operations**
+   - Add `docker cp` functionality for file transfers
+   - Create UI for source/destination selection
+   - Support both directions (to/from container)
+
+2. **Add Bulk Operations**
+   - Implement multi-select in container lists
+   - Support batch operations (stop, start, remove)
+   - Add select all/none shortcuts
+
+3. **Improve Memory Management**
+   - Add configurable limits for log storage
+   - Implement ring buffer for large logs
+   - Add pagination for large container/image lists
+
+4. **Unified Confirmation Dialog**
+   - Create single confirmation component
+   - Standardize confirmation messages
+   - Support custom confirmation prompts
+
+### Medium Term Actions (2-4 weeks)
+1. **Performance Optimization**
+   - Implement lazy loading for large datasets
+   - Add virtual scrolling for long lists
+   - Cache frequently accessed data
+
+2. **Advanced Search and Filtering**
+   - Add persistent search/filter across views
+   - Implement regex support in searches
+   - Create filter presets
+
+3. **Export Functionality**
+   - Add ability to save logs to file
+   - Export container lists as CSV/JSON
+   - Support output redirection
+
+4. **Resource Monitoring Enhancements**
+   - Add real-time CPU/memory graphs
+   - Implement historical data tracking
+   - Create alert thresholds
+
+### Long Term Actions (1-2 months)
+1. **Plugin Architecture**
+   - Design extensible command system
+   - Support custom commands via plugins
+   - Create plugin API documentation
+
+2. **Remote Docker Support**
+   - Add support for remote Docker hosts
+   - Implement SSH tunnel support
+   - Handle multiple Docker contexts
+
+3. **Custom Key Bindings**
+   - Create keybinding configuration system
+   - Support user-defined shortcuts
+   - Add keybinding conflict detection
+
+4. **Advanced UI Features**
+   - Implement split-pane views
+   - Add tab support for multiple views
+   - Create customizable layouts
+
+## Code Quality Improvements
+
+### Refactoring Priorities
+1. **Interface Consolidation**
+   - Merge single-method interfaces where appropriate
+   - Create comprehensive view interfaces
+   - Standardize interface naming conventions
+
+2. **State Management**
+   - Reduce Model struct complexity (currently 89 fields)
+   - Implement view-specific state containers
+   - Add state validation
+
+3. **Test Coverage Enhancement**
+   - Add integration tests for Docker operations
+   - Improve error path testing
+   - Create performance benchmarks
+   - Add UI interaction tests
+
+### Technical Debt Resolution
+1. **View Model Duplication**
+   - Extract common patterns to shared components
+   - Use composition over inheritance
+   - Implement view model factory pattern
+
+2. **Naming Consistency**
+   - Standardize view naming conventions
+   - Unify function naming patterns
+   - Consistent interface suffixes
+
+3. **Documentation**
+   - Add inline documentation for complex logic
+   - Create architecture decision records (ADRs)
+   - Document plugin development guide
+
+## Implementation Strategy
+
+1. **Phase 1 (Week 1-2)**: Foundation
+   - Implement immediate actions
+   - Set up base interfaces and styling system
+   - Standardize error handling
+
+2. **Phase 2 (Week 3-4)**: Core Features
+   - Add copy operations and bulk selection
+   - Implement memory management improvements
+   - Create unified confirmation system
+
+3. **Phase 3 (Week 5-8)**: Enhancement
+   - Add export functionality
+   - Implement advanced search/filtering
+   - Optimize performance
+
+4. **Phase 4 (Month 2+)**: Advanced Features
+   - Design plugin architecture
+   - Add remote Docker support
+   - Implement custom keybindings
+
+## Success Metrics
+- Reduce code duplication by 40%
+- Improve test coverage to 80%+
+- Reduce memory usage for large datasets by 50%
+- Decrease average response time by 30%
+- Zero hanging operations with timeout implementation
+
 ## License
 
 MIT License - Copyright © 2025 Tokuhiro Matsuno
