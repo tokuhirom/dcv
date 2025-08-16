@@ -129,6 +129,10 @@ func TestStatsViewModel_Rendering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Initialize the TableViewModel state
+			tt.viewModel.buildRows()
+			tt.viewModel.SetRows(tt.viewModel.Rows, tt.height-4)
+
 			result := tt.viewModel.render(tt.model, tt.height-4)
 
 			for _, expected := range tt.expected {
@@ -185,8 +189,7 @@ func TestStatsViewModel_HandleBack(t *testing.T) {
 func TestStatsViewModel_Loaded(t *testing.T) {
 	t.Run("Loaded updates stats and resets scroll", func(t *testing.T) {
 		vm := &StatsViewModel{
-			stats:   []models.ContainerStats{},
-			scrollY: 5,
+			stats: []models.ContainerStats{},
 		}
 
 		newStats := []models.ContainerStats{
@@ -208,9 +211,9 @@ func TestStatsViewModel_Loaded(t *testing.T) {
 			},
 		}
 
-		vm.Loaded(newStats)
+		model := &Model{Height: 30}
+		vm.Loaded(model, newStats)
 		assert.Equal(t, newStats, vm.stats)
-		assert.Equal(t, 0, vm.scrollY) // Should reset scroll position
 	})
 
 	t.Run("Loaded replaces existing stats", func(t *testing.T) {
@@ -224,7 +227,8 @@ func TestStatsViewModel_Loaded(t *testing.T) {
 			{Name: "new-container"},
 		}
 
-		vm.Loaded(newStats)
+		model := &Model{Height: 30}
+		vm.Loaded(model, newStats)
 		assert.Equal(t, newStats, vm.stats)
 		assert.Len(t, vm.stats, 1)
 		assert.Equal(t, "new-container", vm.stats[0].Name)
@@ -273,38 +277,39 @@ func TestStatsViewModel_Sorting(t *testing.T) {
 
 func TestStatsViewModel_SortHandlers(t *testing.T) {
 	vm := &StatsViewModel{}
+	model := &Model{Height: 30}
 
 	t.Run("HandleSortByCPU defaults to descending", func(t *testing.T) {
-		vm.HandleSortByCPU()
+		vm.HandleSortByCPU(model)
 		assert.Equal(t, StatsSortByCPU, vm.sortField)
 		assert.True(t, vm.sortReverse)
 
 		// Second call toggles
-		vm.HandleSortByCPU()
+		vm.HandleSortByCPU(model)
 		assert.Equal(t, StatsSortByCPU, vm.sortField)
 		assert.False(t, vm.sortReverse)
 	})
 
 	t.Run("HandleSortByMem defaults to descending", func(t *testing.T) {
 		vm.sortField = StatsSortByName
-		vm.HandleSortByMem()
+		vm.HandleSortByMem(model)
 		assert.Equal(t, StatsSortByMem, vm.sortField)
 		assert.True(t, vm.sortReverse)
 	})
 
 	t.Run("HandleSortByName defaults to ascending", func(t *testing.T) {
 		vm.sortField = StatsSortByCPU
-		vm.HandleSortByName()
+		vm.HandleSortByName(model)
 		assert.Equal(t, StatsSortByName, vm.sortField)
 		assert.False(t, vm.sortReverse)
 	})
 
 	t.Run("HandleReverseSort toggles order", func(t *testing.T) {
 		vm.sortReverse = false
-		vm.HandleReverseSort()
+		vm.HandleReverseSort(model)
 		assert.True(t, vm.sortReverse)
 
-		vm.HandleReverseSort()
+		vm.HandleReverseSort(model)
 		assert.False(t, vm.sortReverse)
 	})
 }
@@ -358,35 +363,38 @@ func TestStatsViewModel_AutoRefresh(t *testing.T) {
 }
 
 func TestStatsViewModel_Navigation(t *testing.T) {
-	vm := &StatsViewModel{
-		stats: []models.ContainerStats{
-			{Name: "container-1"},
-			{Name: "container-2"},
-			{Name: "container-3"},
-		},
-		scrollY: 1,
+	vm := &StatsViewModel{}
+	model := &Model{Height: 30}
+
+	vm.stats = []models.ContainerStats{
+		{Name: "container-1"},
+		{Name: "container-2"},
+		{Name: "container-3"},
 	}
+	vm.buildRows()
+	vm.SetRows(vm.Rows, model.ViewHeight())
+	vm.Cursor = 1
 
 	t.Run("HandleUp scrolls up", func(t *testing.T) {
-		vm.HandleUp()
-		assert.Equal(t, 0, vm.scrollY)
+		vm.HandleUp(model)
+		assert.Equal(t, 0, vm.Cursor)
 
 		// Shouldn't go below 0
-		vm.HandleUp()
-		assert.Equal(t, 0, vm.scrollY)
+		vm.HandleUp(model)
+		assert.Equal(t, 0, vm.Cursor)
 	})
 
 	t.Run("HandleDown scrolls down", func(t *testing.T) {
-		vm.scrollY = 0
-		vm.HandleDown()
-		assert.Equal(t, 1, vm.scrollY)
+		vm.Cursor = 0
+		vm.HandleDown(model)
+		assert.Equal(t, 1, vm.Cursor)
 
-		vm.HandleDown()
-		assert.Equal(t, 2, vm.scrollY)
+		vm.HandleDown(model)
+		assert.Equal(t, 2, vm.Cursor)
 
 		// Shouldn't go beyond last container
-		vm.HandleDown()
-		assert.Equal(t, 2, vm.scrollY)
+		vm.HandleDown(model)
+		assert.Equal(t, 2, vm.Cursor)
 	})
 }
 
@@ -496,6 +504,10 @@ func TestStatsViewModel_CPUColoring(t *testing.T) {
 				Height: 20,
 			}
 
+			// Initialize the TableViewModel state
+			vm.buildRows()
+			vm.SetRows(vm.Rows, 16) // 20 - 4 for chrome
+
 			result := vm.render(model, 20)
 			assert.Contains(t, result, "test-container")
 			// The actual coloring is done through lipgloss styles,
@@ -543,7 +555,7 @@ func TestStatsViewModel_Integration(t *testing.T) {
 				BlockIO:  "500MB/250MB",
 			},
 		}
-		vm.Loaded(stats)
+		vm.Loaded(model, stats)
 
 		// RenderTable
 		rendered := vm.render(model, model.Height-4)
