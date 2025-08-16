@@ -115,6 +115,9 @@ func (m *Model) GetStatsViewModel() *StatsViewModel {
 
 func (vm *StatsViewModel) SetStats(stats []models.ContainerStats) {
 	vm.stats = stats
+	vm.buildRows()
+	// Use a default height for screenshots
+	vm.SetRows(vm.Rows, 20)
 }
 
 func (m *Model) GetTopViewModel() *TopViewModel {
