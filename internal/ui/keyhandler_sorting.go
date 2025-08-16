@@ -12,7 +12,7 @@ func (m *Model) CmdSortByCPU(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.topViewModel.HandleSortByCPU()
 		return m, nil
 	case StatsView:
-		m.statsViewModel.HandleSortByCPU()
+		m.statsViewModel.HandleSortByCPU(m)
 		return m, nil
 	default:
 		return m, nil
@@ -25,7 +25,7 @@ func (m *Model) CmdSortByMem(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.topViewModel.HandleSortByMem()
 		return m, nil
 	case StatsView:
-		m.statsViewModel.HandleSortByMem()
+		m.statsViewModel.HandleSortByMem(m)
 		return m, nil
 	default:
 		return m, nil
@@ -58,7 +58,7 @@ func (m *Model) CmdSortByCommand(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.topViewModel.HandleSortByCommand()
 		return m, nil
 	case StatsView:
-		m.statsViewModel.HandleSortByName()
+		m.statsViewModel.HandleSortByName(m)
 		return m, nil
 	default:
 		return m, nil
@@ -71,7 +71,7 @@ func (m *Model) CmdReverseSort(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.topViewModel.HandleReverseSort()
 		return m, nil
 	case StatsView:
-		m.statsViewModel.HandleReverseSort()
+		m.statsViewModel.HandleReverseSort(m)
 		return m, nil
 	default:
 		return m, nil

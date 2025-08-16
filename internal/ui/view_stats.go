@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -45,10 +46,10 @@ func (s StatsSortField) String() string {
 
 // StatsViewModel manages the state and rendering of the stats view
 type StatsViewModel struct {
+	TableViewModel
 	stats           []models.ContainerStats
 	sortField       StatsSortField
 	sortReverse     bool
-	scrollY         int
 	autoRefresh     bool
 	refreshInterval time.Duration
 }
@@ -65,7 +66,7 @@ func (m *StatsViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) 
 			model.err = nil
 		}
 
-		m.Loaded(msg.stats)
+		m.Loaded(model, msg.stats)
 		return model, nil
 	default:
 		return model, nil
@@ -125,33 +126,16 @@ func (m *StatsViewModel) render(model *Model, availableHeight int) string {
 		columns[3].Title = highlightStyle.Render("MEM %")
 	}
 
-	rows := make([]table.Row, 0, len(m.stats))
-	for _, stat := range m.stats {
-		// Truncate name if too long
-		name := stat.Name
-		if len(name) > 20 {
-			name = name[:17] + "..."
+	// Build rows for the TableViewModel
+	m.buildRows()
+
+	// Use RenderTable for consistent table rendering
+	return s.String() + m.RenderTable(model, columns, availableHeight-3, func(row, col int) lipgloss.Style {
+		if row == m.Cursor {
+			return tableSelectedCellStyle
 		}
-
-		// Color CPU usage
-		cpu := stat.CPUPerc
-		if cpuVal := strings.TrimSuffix(cpu, "%"); cpuVal != "" {
-			var cpuPercent float64
-			if _, err := fmt.Sscanf(cpuVal, "%f", &cpuPercent); err == nil {
-				if cpuPercent > 80.0 {
-					cpu = errorStyle.Render(cpu)
-				} else if cpuPercent > 50.0 {
-					cpu = searchStyle.Render(cpu)
-				}
-			}
-		}
-
-		rows = append(rows, table.Row{name, cpu, stat.MemUsage, stat.MemPerc, stat.NetIO, stat.BlockIO})
-	}
-
-	retableOutput := RenderUnfocusedTable(columns, rows, availableHeight-3)
-	s.WriteString(retableOutput)
-	return s.String()
+		return tableNormalCellStyle
+	})
 }
 
 // Show switches to the stats view
@@ -195,9 +179,10 @@ func (m *StatsViewModel) HandleBack(model *Model) tea.Cmd {
 }
 
 // Loaded updates the stats list after loading
-func (m *StatsViewModel) Loaded(stats []models.ContainerStats) {
+func (m *StatsViewModel) Loaded(model *Model, stats []models.ContainerStats) {
 	m.stats = stats
-	m.scrollY = 0
+	m.buildRows()
+	m.SetRows(m.Rows, model.ViewHeight())
 }
 
 func (m *StatsViewModel) sortStats() {
@@ -225,53 +210,89 @@ func (m *StatsViewModel) sortStats() {
 	})
 }
 
-// HandleUp scrolls up in the stats list
-func (m *StatsViewModel) HandleUp() {
-	if m.scrollY > 0 {
-		m.scrollY--
+// buildRows builds the table rows for the stats
+func (m *StatsViewModel) buildRows() {
+	// Sort stats first
+	m.sortStats()
+
+	rows := make([]table.Row, 0, len(m.stats))
+	for _, stat := range m.stats {
+		// Truncate name if too long
+		name := stat.Name
+		if len(name) > 20 {
+			name = name[:17] + "..."
+		}
+
+		// Color CPU usage
+		cpu := stat.CPUPerc
+		if cpuVal := strings.TrimSuffix(cpu, "%"); cpuVal != "" {
+			var cpuPercent float64
+			if _, err := fmt.Sscanf(cpuVal, "%f", &cpuPercent); err == nil {
+				if cpuPercent > 80.0 {
+					cpu = errorStyle.Render(cpu)
+				} else if cpuPercent > 50.0 {
+					cpu = searchStyle.Render(cpu)
+				}
+			}
+		}
+
+		rows = append(rows, table.Row{name, cpu, stat.MemUsage, stat.MemPerc, stat.NetIO, stat.BlockIO})
 	}
+
+	m.Rows = rows
+}
+
+// HandleUp scrolls up in the stats list
+func (m *StatsViewModel) HandleUp(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleUp(model)
 }
 
 // HandleDown scrolls down in the stats list
-func (m *StatsViewModel) HandleDown() {
-	if m.scrollY < len(m.stats)-1 {
-		m.scrollY++
-	}
+func (m *StatsViewModel) HandleDown(model *Model) tea.Cmd {
+	return m.TableViewModel.HandleDown(model)
 }
 
 // HandleSortByCPU sorts containers by CPU usage
-func (m *StatsViewModel) HandleSortByCPU() {
+func (m *StatsViewModel) HandleSortByCPU(model *Model) {
 	if m.sortField == StatsSortByCPU {
 		m.sortReverse = !m.sortReverse
 	} else {
 		m.sortField = StatsSortByCPU
 		m.sortReverse = true // Default to descending for CPU
 	}
+	m.buildRows()
+	m.SetRows(m.Rows, model.ViewHeight())
 }
 
 // HandleSortByMem sorts containers by memory usage
-func (m *StatsViewModel) HandleSortByMem() {
+func (m *StatsViewModel) HandleSortByMem(model *Model) {
 	if m.sortField == StatsSortByMem {
 		m.sortReverse = !m.sortReverse
 	} else {
 		m.sortField = StatsSortByMem
 		m.sortReverse = true // Default to descending for memory
 	}
+	m.buildRows()
+	m.SetRows(m.Rows, model.ViewHeight())
 }
 
 // HandleSortByName sorts containers by name
-func (m *StatsViewModel) HandleSortByName() {
+func (m *StatsViewModel) HandleSortByName(model *Model) {
 	if m.sortField == StatsSortByName {
 		m.sortReverse = !m.sortReverse
 	} else {
 		m.sortField = StatsSortByName
 		m.sortReverse = false // Default to ascending for name
 	}
+	m.buildRows()
+	m.SetRows(m.Rows, model.ViewHeight())
 }
 
 // HandleReverseSort reverses the current sort order
-func (m *StatsViewModel) HandleReverseSort() {
+func (m *StatsViewModel) HandleReverseSort(model *Model) {
 	m.sortReverse = !m.sortReverse
+	m.buildRows()
+	m.SetRows(m.Rows, model.ViewHeight())
 }
 
 // HandleToggleAutoRefresh toggles the auto-refresh feature

@@ -38,8 +38,7 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.topViewModel.HandleUp()
 		return m, nil
 	case StatsView:
-		m.statsViewModel.HandleUp()
-		return m, nil
+		return m, m.statsViewModel.HandleUp(m)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleUp()
 	case CommandActionView:
@@ -89,8 +88,7 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.topViewModel.HandleDown()
 		return m, nil
 	case StatsView:
-		m.statsViewModel.HandleDown()
-		return m, nil
+		return m, m.statsViewModel.HandleDown(m)
 	case CommandExecutionView:
 		return m, m.commandExecutionViewModel.HandleDown(m)
 	case CommandActionView:
