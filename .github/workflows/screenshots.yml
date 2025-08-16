@@ -2,10 +2,6 @@ name: Screenshots Check
 
 on:
   pull_request:
-    paths:
-      - 'internal/ui/**'
-      - 'cmd/generate-screenshots/**'
-      - '.github/workflows/screenshots.yml'
   workflow_dispatch:
 
 jobs:
