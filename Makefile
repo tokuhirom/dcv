@@ -1,4 +1,4 @@
-.PHONY: all test fmt dev-deps lint clean screenshots screenshots-deps build-helpers clean-helpers
+.PHONY: all test fmt dev-deps lint clean screenshots screenshots-deps clean-helpers
 
 all: build-helpers
 	go build -o dcv
@@ -46,33 +46,40 @@ screenshots: screenshots-deps
 	@go run -tags screenshots cmd/generate-screenshots/main.go
 	@echo "Screenshots generated successfully!"
 
+# Define helper binary targets
+HELPER_BINARIES = internal/docker/static-binaries/dcv-helper-amd64 \
+                  internal/docker/static-binaries/dcv-helper-arm64 \
+                  internal/docker/static-binaries/dcv-helper-arm
+
 # Build helper binaries for embedding
-build-helpers:
-	@echo "Building helper binaries..."
-	@mkdir -p internal/docker/static-binaries
-	
+build-helpers: $(HELPER_BINARIES)
+
+internal/docker/static-binaries/dcv-helper-amd64: cmd/dcv-helper/main.go
 	@echo "  Building for linux/amd64 (x86_64)..."
+	@mkdir -p internal/docker/static-binaries
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 		go build -ldflags="-s -w" -trimpath \
-		-o internal/docker/static-binaries/dcv-helper-amd64 \
+		-o $@ \
 		cmd/dcv-helper/main.go
-	@strip internal/docker/static-binaries/dcv-helper-amd64 2>/dev/null || true
-	
+	@strip $@ 2>/dev/null || true
+
+internal/docker/static-binaries/dcv-helper-arm64: cmd/dcv-helper/main.go
 	@echo "  Building for linux/arm64 (aarch64)..."
+	@mkdir -p internal/docker/static-binaries
 	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
 		go build -ldflags="-s -w" -trimpath \
-		-o internal/docker/static-binaries/dcv-helper-arm64 \
+		-o $@ \
 		cmd/dcv-helper/main.go
-	@strip internal/docker/static-binaries/dcv-helper-arm64 2>/dev/null || true
-	
+	@strip $@ 2>/dev/null || true
+
+internal/docker/static-binaries/dcv-helper-arm: cmd/dcv-helper/main.go
 	@echo "  Building for linux/arm (armv7/armhf)..."
+	@mkdir -p internal/docker/static-binaries
 	@CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 \
 		go build -ldflags="-s -w" -trimpath \
-		-o internal/docker/static-binaries/dcv-helper-arm \
+		-o $@ \
 		cmd/dcv-helper/main.go
-	@strip internal/docker/static-binaries/dcv-helper-arm 2>/dev/null || true
-	
-	@echo "Helper binaries built successfully"
+	@strip $@ 2>/dev/null || true
 
 # Clean helper binaries
 clean-helpers:
