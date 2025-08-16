@@ -6,12 +6,16 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/docker/docker/client"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
@@ -29,6 +33,8 @@ type HelperInjectorViewModel struct {
 	currentCmd      *exec.Cmd
 	currentCmdStr   string // Store the current command string for display
 	pendingCommands [][]string
+	tempDir         string // Store temp directory to clean up later
+	helperPath      string // Path where helper will be injected
 }
 
 func (m *HelperInjectorViewModel) render(model *Model) string {
@@ -161,6 +167,83 @@ func (m *HelperInjectorViewModel) render(model *Model) string {
 	)
 }
 
+// buildCommands returns the list of commands needed to inject the helper
+func (m *HelperInjectorViewModel) buildCommands(container *docker.Container, tempFile string) [][]string {
+	if container.IsDind() {
+		return [][]string{
+			{"docker", "cp", tempFile, fmt.Sprintf("%s:%s", container.HostContainerID(), m.helperPath)},
+			{"docker", "exec", container.HostContainerID(), "docker", "cp", m.helperPath, fmt.Sprintf("%s:%s", container.ContainerID(), m.helperPath)},
+		}
+	} else {
+		return [][]string{
+			{"docker", "cp", tempFile, fmt.Sprintf("%s:%s", container.ContainerID(), m.helperPath)},
+		}
+	}
+}
+
+// detectArch tries to detect the container's architecture
+func (m *HelperInjectorViewModel) detectArch(ctx context.Context, dockerClient *client.Client, container *docker.Container) string {
+	// Inspect container to get architecture
+	inspect, err := dockerClient.ContainerInspect(ctx, container.ContainerID())
+	if err != nil {
+		slog.Debug("Failed to inspect container for architecture", "error", err)
+		return ""
+	}
+
+	// Architecture is in format like "amd64", "arm64", etc.
+	if inspect.Platform != "" {
+		// Platform might be like "linux/amd64"
+		parts := strings.Split(inspect.Platform, "/")
+		if len(parts) > 1 {
+			return parts[1]
+		}
+	}
+
+	// Try to get from image config
+	if inspect.Config.Labels != nil {
+		if arch, ok := inspect.Config.Labels["architecture"]; ok {
+			return arch
+		}
+	}
+
+	// Default detection failed
+	return ""
+}
+
+// getHelperTempFile creates a temporary file with the helper binary and returns the temp directory and file path
+func (m *HelperInjectorViewModel) getHelperTempFile(ctx context.Context, dockerClient *client.Client, container *docker.Container) (string, string, error) {
+	// Detect container architecture (default to runtime arch)
+	arch := m.detectArch(ctx, dockerClient, container)
+	if arch == "" {
+		arch = runtime.GOARCH
+		slog.Info("Using runtime architecture",
+			slog.String("arch", arch))
+	} else {
+		slog.Info("Detected container architecture",
+			slog.String("arch", arch))
+	}
+
+	// Get the embedded binary
+	binaryData, err := docker.GetHelperBinary(arch)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get helper binary: %w", err)
+	}
+
+	// Create a temporary file to store the binary
+	tempDir, err := os.MkdirTemp("", "dcv-helper-*")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create temp directory: %w", err)
+	}
+
+	tempFile := filepath.Join(tempDir, "dcv-helper")
+	if err := os.WriteFile(tempFile, binaryData, 0755); err != nil {
+		_ = os.RemoveAll(tempDir)
+		return "", "", fmt.Errorf("failed to write helper binary to temp file: %w", err)
+	}
+
+	return tempDir, tempFile, nil
+}
+
 // HandleInjectHelper starts the helper injection process
 func (m *HelperInjectorViewModel) HandleInjectHelper(model *Model, container *docker.Container) tea.Cmd {
 	model.SwitchView(HelperInjectorView)
@@ -173,37 +256,34 @@ func (m *HelperInjectorViewModel) HandleInjectHelper(model *Model, container *do
 	m.err = nil
 	m.currentStep = 0
 	m.currentCmdStr = ""
+	m.helperPath = "/.dcv-helper"
 
-	// Build commands using the helper injector
+	// Build commands using the moved logic
 	if model.dockerSDKClient == nil {
 		m.err = fmt.Errorf("docker SDK client not available")
 		m.done = true
 		return nil
 	}
-	injector := docker.NewHelperInjector(model.dockerSDKClient)
 
 	// Get temporary file path for helper binary
-	tempFile, err := m.prepareHelperBinary(injector, container)
+	ctx := context.Background()
+	tempDir, tempFile, err := m.getHelperTempFile(ctx, model.dockerSDKClient, container)
 	if err != nil {
 		m.err = err
 		m.done = true
 		return nil
 	}
+	m.tempDir = tempDir // Store for cleanup later
 	slog.Info("Wrote temporary file",
+		slog.String("tempDir", tempDir),
 		slog.String("tempFile", tempFile))
 
-	m.commands = injector.BuildCommands(container, tempFile)
+	m.commands = m.buildCommands(container, tempFile)
 	m.totalSteps = len(m.commands)
 	m.pendingCommands = m.commands
 
 	// Start executing the first command
 	return m.executeNextCommand()
-}
-
-func (m *HelperInjectorViewModel) prepareHelperBinary(injector *docker.HelperInjector, container *docker.Container) (string, error) {
-	// Get the temporary file with the helper binary
-	ctx := context.Background()
-	return injector.GetHelperTempFile(ctx, container)
 }
 
 func (m *HelperInjectorViewModel) executeNextCommand() tea.Cmd {
@@ -302,6 +382,14 @@ func (m *HelperInjectorViewModel) HandleBack(model *Model) tea.Cmd {
 		}
 	}
 
+	// Clean up temp directory if it exists
+	if m.tempDir != "" {
+		if err := os.RemoveAll(m.tempDir); err != nil {
+			slog.Debug("Failed to clean up temp directory", "error", err, "path", m.tempDir)
+		}
+		m.tempDir = ""
+	}
+
 	// Go back to previous view
 	model.SwitchToPreviousView()
 
@@ -378,4 +466,12 @@ func (m *HelperInjectorViewModel) Complete(success bool, err error) {
 	m.done = true
 	m.success = success
 	m.err = err
+
+	// Clean up temp directory on completion
+	if m.tempDir != "" {
+		if cleanupErr := os.RemoveAll(m.tempDir); cleanupErr != nil {
+			slog.Debug("Failed to clean up temp directory", "error", cleanupErr, "path", m.tempDir)
+		}
+		m.tempDir = ""
+	}
 }
