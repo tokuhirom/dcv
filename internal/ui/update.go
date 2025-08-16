@@ -194,6 +194,11 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// Handle input mode in FileBrowserActionView
+	if m.currentView == FileBrowserActionView && m.fileBrowserActionViewModel.inputMode {
+		return m.fileBrowserActionViewModel.HandleInput(m, msg)
+	}
+
 	// Handle search mode
 	if m.currentView == LogView && m.logViewModel.searchMode {
 		return m.handleSearchMode(msg, &m.logViewModel.SearchViewModel)
