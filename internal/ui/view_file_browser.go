@@ -77,15 +77,41 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 		return content.String()
 	}
 
-	// Create table
-	columns := []table.Column{
-		{Title: "PERMISSIONS", Width: 11}, // drwxrwxrwx format
-		{Title: "LINKS", Width: 5},        // Number of hard links
-		{Title: "OWNER", Width: 10},       // Owner name
-		{Title: "GROUP", Width: 10},       // Group name
-		{Title: "SIZE", Width: 10},        // File size
-		{Title: "NAME", Width: -1},        // File/directory name (takes remaining space)
+	// Create columns based on screen width
+	// Minimum width needed: permissions(11) + size(10) + name(20 min) = 41
+	// Medium width adds: links(5) = 46
+	// Full width adds: owner(10) + group(10) = 66
+	var columns []table.Column
+
+	if model.width < 60 {
+		// Narrow screen: Show only essential columns
+		columns = []table.Column{
+			{Title: "PERMISSIONS", Width: 11},
+			{Title: "SIZE", Width: 10},
+			{Title: "NAME", Width: -1},
+		}
+	} else if model.width < 80 {
+		// Medium screen: Add links column
+		columns = []table.Column{
+			{Title: "PERMISSIONS", Width: 11},
+			{Title: "LINKS", Width: 5},
+			{Title: "SIZE", Width: 10},
+			{Title: "NAME", Width: -1},
+		}
+	} else {
+		// Wide screen: Show all columns
+		columns = []table.Column{
+			{Title: "PERMISSIONS", Width: 11},
+			{Title: "LINKS", Width: 5},
+			{Title: "OWNER", Width: 10},
+			{Title: "GROUP", Width: 10},
+			{Title: "SIZE", Width: 10},
+			{Title: "NAME", Width: -1},
+		}
 	}
+
+	// Build rows based on visible columns
+	m.buildRowsForWidth(model.width)
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
 		if row == m.Cursor {
@@ -95,8 +121,65 @@ func (m *FileBrowserViewModel) render(model *Model, availableHeight int) string 
 	})
 }
 
-// buildRows builds the table rows from container files
+// buildRowsForWidth builds table rows based on screen width
+func (m *FileBrowserViewModel) buildRowsForWidth(width int) {
+	// Define styles for different file types
+	dirStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
+	linkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
+
+	rows := make([]table.Row, 0, len(m.containerFiles))
+	for _, file := range m.containerFiles {
+		// Style the name based on file type
+		name := file.GetDisplayName()
+		if file.IsDir {
+			name = dirStyle.Render(name)
+		} else if file.LinkTarget != "" {
+			name = linkStyle.Render(name)
+		}
+
+		var row table.Row
+		if width < 60 {
+			// Narrow: permissions, size, name
+			row = table.Row{
+				file.Permissions,
+				file.GetSizeString(),
+				name,
+			}
+		} else if width < 80 {
+			// Medium: permissions, links, size, name
+			row = table.Row{
+				file.Permissions,
+				file.Links,
+				file.GetSizeString(),
+				name,
+			}
+		} else {
+			// Wide: all columns
+			row = table.Row{
+				file.Permissions,
+				file.Links,
+				file.Owner,
+				file.Group,
+				file.GetSizeString(),
+				name,
+			}
+		}
+		rows = append(rows, row)
+	}
+
+	// Update the table view model's rows
+	currentHeight := m.End - m.Start
+	if currentHeight <= 0 {
+		currentHeight = 20 // Default height
+	}
+	m.SetRows(rows, currentHeight)
+}
+
+// buildRows builds the table rows from container files (for compatibility)
 func (m *FileBrowserViewModel) buildRows() []table.Row {
+	// Default behavior - return all columns for backward compatibility
+	// This is used by tests and other parts that don't have width information
+
 	// Define styles for different file types
 	dirStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
 	linkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("51"))
