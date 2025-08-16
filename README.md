@@ -261,6 +261,16 @@ go build -o dcv
 - Docker and Docker Compose installed
 - Terminal with TUI support
 
+## Known Issues
+
+### Snap-packaged Docker
+
+If you're using Docker installed via snap (common on Ubuntu), the helper binary injection feature may fail due to snap confinement restrictions. Snap's security model prevents Docker from accessing files in `/tmp` and other system directories.
+
+**Workaround**: The helper injection will use your home directory for temporary files. Ensure your home directory has sufficient space for temporary files (a few MB).
+
+**Note**: This limitation only affects the file browser's helper injection feature. All other dcv functionality works normally with snap-packaged Docker.
+
 ## Implementation Details
 
 - Language: Go
