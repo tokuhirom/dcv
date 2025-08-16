@@ -18,7 +18,7 @@ import (
 
 type HelperInjectorViewModel struct {
 	container       *docker.Container
-	commands        []string
+	commands        [][]string
 	currentStep     int
 	totalSteps      int
 	output          []string
@@ -28,7 +28,7 @@ type HelperInjectorViewModel struct {
 	err             error
 	currentCmd      *exec.Cmd
 	currentCmdStr   string // Store the current command string for display
-	pendingCommands []string
+	pendingCommands [][]string
 }
 
 func (m *HelperInjectorViewModel) render(model *Model) string {
@@ -101,7 +101,8 @@ func (m *HelperInjectorViewModel) render(model *Model) string {
 				prefix = "✗ "
 				style = lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
 			}
-			content.WriteString(fmt.Sprintf("%s%d. %s\n", prefix, i+1, style.Render(cmd)))
+			cmdStr := strings.Join(cmd, " ")
+			content.WriteString(fmt.Sprintf("%s%d. %s\n", prefix, i+1, style.Render(cmdStr)))
 		}
 	}
 
@@ -214,18 +215,17 @@ func (m *HelperInjectorViewModel) executeNextCommand() tea.Cmd {
 	}
 
 	m.currentStep++
-	cmdStr := m.pendingCommands[0]
+	cmdArgs := m.pendingCommands[0]
 	m.pendingCommands = m.pendingCommands[1:]
-	m.currentCmdStr = cmdStr // Store for display
+	m.currentCmdStr = strings.Join(cmdArgs, " ") // Store for display
 
 	return func() tea.Msg {
-		// Parse the command string
-		parts := strings.Fields(cmdStr)
-		if len(parts) == 0 {
+		// Use the command arguments directly
+		if len(cmdArgs) == 0 {
 			return helperInjectorCompleteMsg{success: false, err: fmt.Errorf("empty command")}
 		}
 
-		cmd := exec.Command(parts[0], parts[1:]...)
+		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 
 		// Create pipes for stdout and stderr
 		stdout, err := cmd.StdoutPipe()

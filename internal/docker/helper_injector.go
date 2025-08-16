@@ -33,15 +33,15 @@ func (hi *HelperInjector) GetHelperPath(ctx context.Context, container *Containe
 }
 
 // BuildCommands returns the list of commands needed to inject the helper
-func (hi *HelperInjector) BuildCommands(container *Container, tempFile string) []string {
+func (hi *HelperInjector) BuildCommands(container *Container, tempFile string) [][]string {
 	if container.isDind {
-		return []string{
-			fmt.Sprintf("docker cp %s %s:%s", tempFile, container.hostContainerID, hi.path),
-			fmt.Sprintf("docker exec %s docker cp %s %s:%s", container.hostContainerID, hi.path, container.containerID, hi.path),
+		return [][]string{
+			{"docker", "cp", tempFile, fmt.Sprintf("%s:%s", container.hostContainerID, hi.path)},
+			{"docker", "exec", container.hostContainerID, "docker", "cp", hi.path, fmt.Sprintf("%s:%s", container.containerID, hi.path)},
 		}
 	} else {
-		return []string{
-			fmt.Sprintf("docker cp %s %s:%s", tempFile, container.containerID, hi.path),
+		return [][]string{
+			{"docker", "cp", tempFile, fmt.Sprintf("%s:%s", container.containerID, hi.path)},
 		}
 	}
 }
