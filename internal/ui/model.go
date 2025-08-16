@@ -26,6 +26,7 @@ const (
 	NetworkListView
 	VolumeListView
 	FileBrowserView
+	FileBrowserActionView
 	FileContentView
 	InspectView
 	HelpView
@@ -66,6 +67,8 @@ func (view ViewType) String() string {
 		return "Docker Volumes"
 	case FileBrowserView:
 		return "File Browser"
+	case FileBrowserActionView:
+		return "File Browser Actions"
 	case FileContentView:
 		return "File Content"
 	case InspectView:
@@ -102,6 +105,7 @@ type Model struct {
 	commandActionViewModel        CommandActionViewModel
 	composeProjectActionViewModel ComposeProjectActionViewModel
 	fileBrowserViewModel          FileBrowserViewModel
+	fileBrowserActionViewModel    FileBrowserActionViewModel
 	inspectViewModel              InspectViewModel
 	composeProjectListViewModel   ComposeProjectListViewModel
 	helperInjectorViewModel       HelperInjectorViewModel
@@ -168,6 +172,8 @@ type Model struct {
 	composeProjectActionHandlers    []KeyConfig
 	helperInjectorKeymap            map[string]KeyHandler
 	helperInjectorHandlers          []KeyConfig
+	fileBrowserActionKeymap         map[string]KeyHandler
+	fileBrowserActionHandlers       []KeyConfig
 
 	// Command-line mode state
 	commandViewModel CommandViewModel
@@ -308,6 +314,8 @@ func (m *Model) GetCurrentViewModel() interface{} {
 		return &m.composeProjectActionViewModel
 	case HelperInjectorView:
 		return &m.helperInjectorViewModel
+	case FileBrowserActionView:
+		return &m.fileBrowserActionViewModel
 	default:
 		panic("GetCurrentViewModel called with unknown view: " + m.currentView.String())
 	}
@@ -352,6 +360,8 @@ func (m *Model) GetViewKeyHandlers(view ViewType) []KeyConfig {
 		return m.composeProjectActionHandlers
 	case HelperInjectorView:
 		return m.helperInjectorHandlers
+	case FileBrowserActionView:
+		return m.fileBrowserActionHandlers
 	default:
 		return nil
 	}
@@ -401,6 +411,8 @@ func (m *Model) GetViewKeymap(view ViewType) map[string]KeyHandler {
 		return m.composeProjectActionKeymap
 	case HelperInjectorView:
 		return m.helperInjectorKeymap
+	case FileBrowserActionView:
+		return m.fileBrowserActionKeymap
 	default:
 		return nil
 	}

@@ -186,6 +186,7 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"up", "k"}, "move up", m.CmdUp},
 		{[]string{"down", "j"}, "move down", m.CmdDown},
 		{[]string{"enter"}, "open", m.CmdOpenFileOrDirectory},
+		{[]string{"x"}, "show actions", m.CmdShowFileActions},
 		{[]string{"u"}, "parent directory", m.CmdGoToParentDirectory},
 		{[]string{"r"}, "refresh", m.CmdRefresh},
 		{[]string{"esc"}, "back", m.CmdBack},
@@ -261,6 +262,16 @@ func (m *Model) initializeKeyHandlers() {
 		{[]string{"?"}, "help", m.CmdHelp},
 	}
 	m.composeProjectActionKeymap = m.createKeymap(m.composeProjectActionHandlers)
+
+	// File Browser Action View
+	m.fileBrowserActionHandlers = []KeyConfig{
+		{[]string{"up", "k"}, "move up", m.CmdUp},
+		{[]string{"down", "j"}, "move down", m.CmdDown},
+		{[]string{"enter"}, "execute action", m.CmdSelectFileAction},
+		{[]string{"esc"}, "cancel", m.CmdBack},
+		{[]string{"?"}, "help", m.CmdHelp},
+	}
+	m.fileBrowserActionKeymap = m.createKeymap(m.fileBrowserActionHandlers)
 
 	// Helper Injector View
 	m.helperInjectorHandlers = []KeyConfig{

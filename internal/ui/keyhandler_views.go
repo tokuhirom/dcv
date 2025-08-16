@@ -87,3 +87,29 @@ func (m *Model) CmdSelectComposeProjectAction(_ tea.KeyMsg) (tea.Model, tea.Cmd)
 		return m, nil
 	}
 }
+
+func (m *Model) CmdShowFileActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case FileBrowserView:
+		if m.fileBrowserViewModel.Cursor < len(m.fileBrowserViewModel.containerFiles) {
+			file := m.fileBrowserViewModel.containerFiles[m.fileBrowserViewModel.Cursor]
+			container := m.fileBrowserViewModel.browsingContainer
+			path := m.fileBrowserViewModel.currentPath
+
+			// Initialize the file browser action view
+			m.fileBrowserActionViewModel.Initialize(&file, container, path)
+			m.SwitchView(FileBrowserActionView)
+			return m, nil
+		}
+	}
+	return m, nil
+}
+
+func (m *Model) CmdSelectFileAction(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.currentView {
+	case FileBrowserActionView:
+		return m, m.fileBrowserActionViewModel.HandleSelect(m)
+	default:
+		return m, nil
+	}
+}

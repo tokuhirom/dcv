@@ -47,6 +47,9 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProjectActionViewModel.HandleUp()
 	case HelperInjectorView:
 		return m, m.helperInjectorViewModel.HandleUp()
+	case FileBrowserActionView:
+		m.fileBrowserActionViewModel.HandleUp()
+		return m, nil
 	default:
 		slog.Info("Unhandled key up in current view",
 			slog.String("view", m.currentView.String()))
@@ -97,6 +100,9 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProjectActionViewModel.HandleDown()
 	case HelperInjectorView:
 		return m, m.helperInjectorViewModel.HandleDown(m)
+	case FileBrowserActionView:
+		m.fileBrowserActionViewModel.HandleDown()
+		return m, nil
 	default:
 		slog.Info("Unhandled key down in current view",
 			slog.String("view", m.currentView.String()))
@@ -206,6 +212,8 @@ func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.composeProjectActionViewModel.HandleBack(m)
 	case HelperInjectorView:
 		return m, m.helperInjectorViewModel.HandleBack(m)
+	case FileBrowserActionView:
+		return m, m.fileBrowserActionViewModel.HandleBack(m)
 	case ComposeProcessListView:
 		// Should not happen in ComposeProcessListView, but handle it gracefully
 		// This is the main view, nowhere to go back to

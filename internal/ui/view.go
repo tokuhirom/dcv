@@ -242,6 +242,8 @@ func (m *Model) viewTitle() string {
 		return "Docker Volumes"
 	case FileBrowserView:
 		return m.fileBrowserViewModel.Title()
+	case FileBrowserActionView:
+		return "File Actions"
 	case FileContentView:
 		return m.fileContentViewModel.Title()
 	case InspectView:
@@ -295,6 +297,8 @@ func (m *Model) viewBody(availableHeight int) string {
 		return m.volumeListViewModel.render(m, availableHeight)
 	case FileBrowserView:
 		return m.fileBrowserViewModel.render(m, availableHeight)
+	case FileBrowserActionView:
+		return m.fileBrowserActionViewModel.render(m)
 	case FileContentView:
 		return m.fileContentViewModel.render(m)
 	case InspectView:
@@ -347,6 +351,8 @@ func (m *Model) viewFooter() string {
 		switch m.currentView {
 		case ComposeProcessListView, DockerContainerListView, DindProcessListView:
 			helpText += " | Press x for actions"
+		case FileBrowserView:
+			helpText += " | Press x for file actions"
 		}
 
 		if m.navbarHidden {
