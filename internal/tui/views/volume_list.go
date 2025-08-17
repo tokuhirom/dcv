@@ -15,10 +15,11 @@ import (
 
 // VolumeListView displays Docker volumes
 type VolumeListView struct {
-	docker        *docker.Client
-	table         *tview.Table
-	dockerVolumes []models.DockerVolume
-	pages         *tview.Pages
+	docker                *docker.Client
+	table                 *tview.Table
+	dockerVolumes         []models.DockerVolume
+	pages                 *tview.Pages
+	switchToInspectViewFn func(targetID string, target interface{})
 }
 
 // NewVolumeListView creates a new volume list view
@@ -117,8 +118,11 @@ func (v *VolumeListView) setupKeyHandlers() {
 			// Inspect volume
 			if row > 0 && row <= len(v.dockerVolumes) {
 				volume := v.dockerVolumes[row-1]
-				// TODO: Switch to inspect view
-				slog.Info("Inspect volume", slog.String("volume", volume.Name))
+				if v.switchToInspectViewFn != nil {
+					v.switchToInspectViewFn(volume.Name, volume)
+				} else {
+					slog.Info("Inspect volume", slog.String("volume", volume.Name))
+				}
 			}
 			return nil
 
@@ -171,6 +175,11 @@ func (v *VolumeListView) Refresh() {
 // GetTitle returns the title of the view
 func (v *VolumeListView) GetTitle() string {
 	return "Docker Volumes"
+}
+
+// SetSwitchToInspectViewCallback sets the callback for switching to inspect view
+func (v *VolumeListView) SetSwitchToInspectViewCallback(fn func(targetID string, target interface{})) {
+	v.switchToInspectViewFn = fn
 }
 
 // loadVolumes loads the volume list from Docker

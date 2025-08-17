@@ -97,16 +97,19 @@ func (a *App) initializeViews() {
 
 	// Create Image List view
 	imageView := views.NewImageListView(a.docker)
+	imageView.SetSwitchToInspectViewCallback(a.SwitchToInspectView)
 	a.views[ui.ImageListView] = imageView
 	a.pages.AddPage("images", imageView.GetPrimitive(), true, false)
 
 	// Create Network List view
 	networkView := views.NewNetworkListView(a.docker)
+	networkView.SetSwitchToInspectViewCallback(a.SwitchToInspectView)
 	a.views[ui.NetworkListView] = networkView
 	a.pages.AddPage("networks", networkView.GetPrimitive(), true, false)
 
 	// Create Volume List view
 	volumeView := views.NewVolumeListView(a.docker)
+	volumeView.SetSwitchToInspectViewCallback(a.SwitchToInspectView)
 	a.views[ui.VolumeListView] = volumeView
 	a.pages.AddPage("volumes", volumeView.GetPrimitive(), true, false)
 
@@ -429,20 +432,32 @@ func (a *App) SwitchToFileContent(containerID, path string, file models.Containe
 	a.SwitchView(ui.FileContentView)
 }
 
-// SwitchToInspectView switches to the inspect view for a container
-func (a *App) SwitchToInspectView(containerID string, container interface{}) {
+// SwitchToInspectView switches to the inspect view with a specific target
+func (a *App) SwitchToInspectView(targetID string, target interface{}) {
 	// Set the target in the inspect view
 	if inspectView, ok := a.views[ui.InspectView]; ok {
 		if iv, ok := inspectView.(*views.InspectView); ok {
-			containerName := ""
-			// Extract container name based on type
-			switch c := container.(type) {
+			targetName := ""
+			targetType := ""
+			// Extract target name and type based on the actual type
+			switch t := target.(type) {
 			case models.DockerContainer:
-				containerName = c.Names
+				targetName = t.Names
+				targetType = "container"
 			case models.ComposeContainer:
-				containerName = c.Name
+				targetName = t.Name
+				targetType = "container"
+			case models.DockerVolume:
+				targetName = t.Name
+				targetType = "volume"
+			case models.DockerNetwork:
+				targetName = t.Name
+				targetType = "network"
+			case models.DockerImage:
+				targetName = t.GetRepoTag()
+				targetType = "image"
 			}
-			iv.SetTarget(containerID, containerName, "container")
+			iv.SetTarget(targetID, targetName, targetType)
 		}
 	}
 
