@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	
+
 	"github.com/tokuhirom/dcv/internal/ui"
 )
 
 func TestNewState(t *testing.T) {
 	state := NewState()
-	
+
 	assert.NotNil(t, state)
 	assert.NotNil(t, state.ViewHistory)
 	assert.Equal(t, 0, len(state.ViewHistory))
@@ -49,14 +49,14 @@ func TestState_PushView(t *testing.T) {
 			expected:    []ui.ViewType{ui.DockerContainerListView, ui.ComposeProcessListView, ui.ImageListView},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			state := NewState()
 			state.ViewHistory = tt.initialView
-			
+
 			state.PushView(tt.pushView)
-			
+
 			assert.Equal(t, tt.expected, state.ViewHistory)
 			assert.Equal(t, tt.pushView, state.CurrentView)
 		})
@@ -89,7 +89,7 @@ func TestState_PopView(t *testing.T) {
 			expectedHistory: []ui.ViewType{ui.DockerContainerListView, ui.ComposeProcessListView},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			state := NewState()
@@ -97,9 +97,9 @@ func TestState_PopView(t *testing.T) {
 			if len(tt.initialHistory) > 0 {
 				state.CurrentView = tt.initialHistory[len(tt.initialHistory)-1]
 			}
-			
+
 			result := state.PopView()
-			
+
 			assert.Equal(t, tt.expectedView, result)
 			assert.Equal(t, tt.expectedHistory, state.ViewHistory)
 			assert.Equal(t, tt.expectedView, state.CurrentView)
@@ -110,9 +110,9 @@ func TestState_PopView(t *testing.T) {
 func TestState_ClearError(t *testing.T) {
 	state := NewState()
 	state.Error = errors.New("test error")
-	
+
 	state.ClearError()
-	
+
 	assert.Nil(t, state.Error)
 }
 
@@ -120,9 +120,9 @@ func TestState_SetError(t *testing.T) {
 	state := NewState()
 	state.Loading = true
 	testErr := errors.New("test error")
-	
+
 	state.SetError(testErr)
-	
+
 	assert.Equal(t, testErr, state.Error)
 	assert.False(t, state.Loading)
 }
@@ -147,14 +147,14 @@ func TestState_SetLoading(t *testing.T) {
 			expectedError: errors.New("test error"),
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			state := NewState()
 			state.Error = tt.initialError
-			
+
 			state.SetLoading(tt.loading)
-			
+
 			assert.Equal(t, tt.loading, state.Loading)
 			if tt.expectedError == nil {
 				assert.Nil(t, state.Error)
@@ -167,7 +167,7 @@ func TestState_SetLoading(t *testing.T) {
 
 func TestState_ViewHistoryManagement(t *testing.T) {
 	state := NewState()
-	
+
 	// Test pushing multiple views
 	views := []ui.ViewType{
 		ui.DockerContainerListView,
@@ -176,21 +176,21 @@ func TestState_ViewHistoryManagement(t *testing.T) {
 		ui.NetworkListView,
 		ui.VolumeListView,
 	}
-	
+
 	for _, view := range views {
 		state.PushView(view)
 	}
-	
+
 	assert.Equal(t, len(views), len(state.ViewHistory))
 	assert.Equal(t, views[len(views)-1], state.CurrentView)
-	
+
 	// Test popping views
 	for i := len(views) - 1; i > 0; i-- {
 		result := state.PopView()
 		assert.Equal(t, views[i-1], result)
 		assert.Equal(t, i, len(state.ViewHistory))
 	}
-	
+
 	// Test popping when only one view remains
 	result := state.PopView()
 	assert.Equal(t, views[0], result)
@@ -199,23 +199,23 @@ func TestState_ViewHistoryManagement(t *testing.T) {
 
 func TestState_SearchAndCommand(t *testing.T) {
 	state := NewState()
-	
+
 	// Test search text
 	state.SearchText = "test search"
 	assert.Equal(t, "test search", state.SearchText)
-	
+
 	// Test command mode
 	state.CommandMode = true
 	state.CommandText = ":quit"
 	assert.True(t, state.CommandMode)
 	assert.Equal(t, ":quit", state.CommandText)
-	
+
 	// Test selected items
 	state.SelectedProject = "my-project"
 	state.SelectedContainer = "container-123"
 	assert.Equal(t, "my-project", state.SelectedProject)
 	assert.Equal(t, "container-123", state.SelectedContainer)
-	
+
 	// Test show all toggle
 	state.ShowAll = true
 	assert.True(t, state.ShowAll)

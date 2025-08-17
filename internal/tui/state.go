@@ -6,16 +6,16 @@ import (
 
 // State holds the application state
 type State struct {
-	CurrentView     ui.ViewType
-	ViewHistory     []ui.ViewType
-	SelectedProject string
+	CurrentView       ui.ViewType
+	ViewHistory       []ui.ViewType
+	SelectedProject   string
 	SelectedContainer string
-	ShowAll         bool
-	SearchText      string
-	CommandMode     bool
-	CommandText     string
-	Error           error
-	Loading         bool
+	ShowAll           bool
+	SearchText        string
+	CommandMode       bool
+	CommandText       string
+	Error             error
+	Loading           bool
 }
 
 // NewState creates a new state instance

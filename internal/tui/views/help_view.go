@@ -14,7 +14,7 @@ func NewHelpView() *HelpView {
 	v := &HelpView{
 		textView: tview.NewTextView(),
 	}
-	
+
 	v.setupHelp()
 	return v
 }
@@ -40,7 +40,7 @@ func (v *HelpView) setupHelp() {
 [cyan]Container Operations:[-]
   [white]s[-]      Stop container
   [white]S[-]      Start container
-  [white]k[-]      Kill container
+  [white]K[-]      Kill container (uppercase K)
   [white]d[-]      Delete container
   [white]r[-]      Restart container
   [white]l[-]      View logs

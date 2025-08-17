@@ -57,7 +57,7 @@ func NewApp(initialView ui.ViewType) *App {
 func (a *App) Run() error {
 	// Switch to initial view
 	a.SwitchView(a.initialView)
-	
+
 	return a.app.Run()
 }
 

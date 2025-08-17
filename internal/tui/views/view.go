@@ -8,10 +8,10 @@ import (
 type View interface {
 	// GetPrimitive returns the tview primitive for this view
 	GetPrimitive() tview.Primitive
-	
+
 	// Refresh refreshes the view's data
 	Refresh()
-	
+
 	// GetTitle returns the title of the view
 	GetTitle() string
 }

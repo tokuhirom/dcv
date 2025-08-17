@@ -3,7 +3,7 @@ package tui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	
+
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -17,10 +17,10 @@ func NewTestApplication() (*tview.Application, tcell.SimulationScreen) {
 		panic(err)
 	}
 	simScreen.SetSize(80, 24)
-	
+
 	app := tview.NewApplication()
 	app.SetScreen(simScreen)
-	
+
 	return app, simScreen
 }
 
@@ -46,7 +46,7 @@ func CreateTestContainers() []models.DockerContainer {
 			Names:   "database",
 			Image:   "postgres:13",
 			Status:  "Up 3 hours",
-			State:   "running", 
+			State:   "running",
 			Ports:   "5432/tcp -> 0.0.0.0:5432",
 			Command: "postgres",
 		},
@@ -92,7 +92,7 @@ func CreateTestNetworks() []models.DockerNetwork {
 			Scope:  "local",
 		},
 		{
-			ID:     "net456", 
+			ID:     "net456",
 			Name:   "host",
 			Driver: "host",
 			Scope:  "local",
@@ -110,7 +110,7 @@ func CreateTestVolumes() []models.DockerVolume {
 		},
 		{
 			Name:   "config-volume",
-			Driver: "local", 
+			Driver: "local",
 			Scope:  "local",
 		},
 	}

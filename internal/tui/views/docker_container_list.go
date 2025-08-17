@@ -30,7 +30,7 @@ func NewDockerContainerListView(dockerClient *docker.Client) *DockerContainerLis
 
 	v.setupTable()
 	v.setupKeyHandlers()
-	
+
 	return v
 }
 
@@ -51,14 +51,42 @@ func (v *DockerContainerListView) setupTable() {
 func (v *DockerContainerListView) setupKeyHandlers() {
 	v.table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		row, _ := v.table.GetSelection()
-		
+
 		switch event.Rune() {
+		case 'j':
+			// Move down (vim style)
+			if row < v.table.GetRowCount()-1 {
+				v.table.Select(row+1, 0)
+			}
+			return nil
+
+		case 'k':
+			// Move up (vim style)
+			if row > 1 { // Skip header row
+				v.table.Select(row-1, 0)
+			}
+			return nil
+
+		case 'g':
+			// Go to top (vim style - gg)
+			// This is simplified - in real vim you'd need to track double 'g'
+			v.table.Select(1, 0) // Select first data row
+			return nil
+
+		case 'G':
+			// Go to bottom (vim style)
+			rowCount := v.table.GetRowCount()
+			if rowCount > 1 {
+				v.table.Select(rowCount-1, 0)
+			}
+			return nil
+
 		case 'a', 'A':
 			// Toggle show all containers
 			v.showAll = !v.showAll
 			v.Refresh()
 			return nil
-			
+
 		case 's':
 			// Stop container
 			if row > 0 && row <= len(v.containers) {
@@ -66,7 +94,7 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 				go v.stopContainer(container.ID)
 			}
 			return nil
-			
+
 		case 'S':
 			// Start container
 			if row > 0 && row <= len(v.containers) {
@@ -74,15 +102,15 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 				go v.startContainer(container.ID)
 			}
 			return nil
-			
-		case 'k':
-			// Kill container
+
+		case 'K':
+			// Kill container (uppercase K to avoid conflict with vim navigation)
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
 				go v.killContainer(container.ID)
 			}
 			return nil
-			
+
 		case 'd':
 			// Delete container
 			if row > 0 && row <= len(v.containers) {
@@ -90,7 +118,7 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 				go v.deleteContainer(container.ID)
 			}
 			return nil
-			
+
 		case 'l':
 			// View logs
 			if row > 0 && row <= len(v.containers) {
@@ -99,7 +127,7 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 				slog.Info("View logs for container", slog.String("container", container.ID))
 			}
 			return nil
-			
+
 		case 'e':
 			// Execute shell
 			if row > 0 && row <= len(v.containers) {
@@ -107,7 +135,7 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 				go v.execShell(container.ID)
 			}
 			return nil
-			
+
 		case 'i':
 			// Inspect container
 			if row > 0 && row <= len(v.containers) {
@@ -151,7 +179,7 @@ func (v *DockerContainerListView) GetTitle() string {
 // loadContainers loads the container list from Docker
 func (v *DockerContainerListView) loadContainers() {
 	slog.Info("Loading Docker containers", slog.Bool("showAll", v.showAll))
-	
+
 	containers, err := v.docker.ListContainers(v.showAll)
 	if err != nil {
 		slog.Error("Failed to load containers", slog.Any("error", err))
@@ -159,7 +187,7 @@ func (v *DockerContainerListView) loadContainers() {
 	}
 
 	v.containers = containers
-	
+
 	// Update table in UI thread
 	QueueUpdateDraw(func() {
 		v.updateTable()

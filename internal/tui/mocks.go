@@ -2,16 +2,16 @@ package tui
 
 import (
 	"github.com/rivo/tview"
-	
+
 	"github.com/tokuhirom/dcv/internal/models"
 	"github.com/tokuhirom/dcv/internal/tui/views"
 )
 
 // MockView is a mock implementation of the View interface
 type MockView struct {
-	Title          string
-	RefreshCalled  int
-	Primitive      tview.Primitive
+	Title         string
+	RefreshCalled int
+	Primitive     tview.Primitive
 }
 
 // NewMockView creates a new mock view
@@ -39,26 +39,26 @@ func (m *MockView) GetTitle() string {
 
 // MockDockerClient is a mock implementation of Docker operations
 type MockDockerClient struct {
-	Containers       []models.DockerContainer
-	Images           []models.DockerImage
-	Networks         []models.DockerNetwork
-	Volumes          []models.DockerVolume
-	Projects         []models.ComposeProject
+	Containers        []models.DockerContainer
+	Images            []models.DockerImage
+	Networks          []models.DockerNetwork
+	Volumes           []models.DockerVolume
+	Projects          []models.ComposeProject
 	ComposeContainers []models.ComposeContainer
-	
+
 	ListContainersCalled int
 	StopCalled           int
 	StartCalled          int
 	KillCalled           int
 	RemoveCalled         int
-	
-	LastStoppedID  string
-	LastStartedID  string
-	LastKilledID   string
-	LastRemovedID  string
-	
-	ShouldError    bool
-	ErrorMessage   string
+
+	LastStoppedID string
+	LastStartedID string
+	LastKilledID  string
+	LastRemovedID string
+
+	ShouldError  bool
+	ErrorMessage string
 }
 
 // NewMockDockerClient creates a new mock Docker client
@@ -78,7 +78,7 @@ func (m *MockDockerClient) ListContainers(showAll bool) ([]models.DockerContaine
 	if m.ShouldError {
 		return nil, &MockError{Message: m.ErrorMessage}
 	}
-	
+
 	if !showAll {
 		// Filter only running containers
 		var running []models.DockerContainer
