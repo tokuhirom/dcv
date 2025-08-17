@@ -136,7 +136,7 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 			}
 			return nil
 
-		case 'b':
+		case 'f':
 			// Browse files
 			if row > 0 && row <= len(v.composeContainers) {
 				container := v.composeContainers[row-1]
