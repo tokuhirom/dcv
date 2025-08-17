@@ -153,7 +153,9 @@ func (v *StatsView) setupKeyHandlers() {
 
 		case 'R':
 			// Reverse sort order
+			v.mu.Lock()
 			v.sortReverse = !v.sortReverse
+			v.mu.Unlock()
 			v.updateTable()
 			return nil
 
@@ -177,27 +179,27 @@ func (v *StatsView) setupKeyHandlers() {
 
 		case '+':
 			// Increase refresh interval
+			v.mu.Lock()
 			if v.refreshInterval < 10*time.Second {
 				v.refreshInterval += time.Second
-				v.mu.RLock()
-				autoRefresh := v.autoRefresh
-				v.mu.RUnlock()
-				if autoRefresh {
-					v.restartAutoRefresh()
-				}
+			}
+			autoRefresh := v.autoRefresh
+			v.mu.Unlock()
+			if autoRefresh {
+				v.restartAutoRefresh()
 			}
 			return nil
 
 		case '-':
 			// Decrease refresh interval
+			v.mu.Lock()
 			if v.refreshInterval > time.Second {
 				v.refreshInterval -= time.Second
-				v.mu.RLock()
-				autoRefresh := v.autoRefresh
-				v.mu.RUnlock()
-				if autoRefresh {
-					v.restartAutoRefresh()
-				}
+			}
+			autoRefresh := v.autoRefresh
+			v.mu.Unlock()
+			if autoRefresh {
+				v.restartAutoRefresh()
 			}
 			return nil
 		}
@@ -228,9 +230,10 @@ func (v *StatsView) GetTitle() string {
 	v.mu.RLock()
 	autoRefresh := v.autoRefresh
 	showAll := v.showAll
+	refreshInterval := v.refreshInterval
 	v.mu.RUnlock()
 	if autoRefresh {
-		title += fmt.Sprintf(" [Auto-refresh: %ds]", int(v.refreshInterval.Seconds()))
+		title += fmt.Sprintf(" [Auto-refresh: %ds]", int(refreshInterval.Seconds()))
 	} else {
 		title += " [Auto-refresh: OFF]"
 	}

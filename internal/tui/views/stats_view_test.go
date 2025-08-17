@@ -91,18 +91,24 @@ func TestStatsView_GetTitle(t *testing.T) {
 	assert.Contains(t, title, "[Running]")
 
 	// Test with auto-refresh disabled
+	view.mu.Lock()
 	view.autoRefresh = false
+	view.mu.Unlock()
 	title = view.GetTitle()
 	assert.Contains(t, title, "[Auto-refresh: OFF]")
 
 	// Test with show all enabled
+	view.mu.Lock()
 	view.showAll = true
+	view.mu.Unlock()
 	title = view.GetTitle()
 	assert.Contains(t, title, "[All]")
 
 	// Test with different refresh interval
+	view.mu.Lock()
 	view.autoRefresh = true
 	view.refreshInterval = 5 * time.Second
+	view.mu.Unlock()
 	title = view.GetTitle()
 	assert.Contains(t, title, "[Auto-refresh: 5s]")
 }
@@ -111,7 +117,9 @@ func TestStatsView_UpdateTable(t *testing.T) {
 	dockerClient := docker.NewClient()
 	view := NewStatsView(dockerClient)
 	defer view.Stop()
+	view.mu.Lock()
 	view.stats = createTestContainerStats()
+	view.mu.Unlock()
 
 	// Create a test app
 	app := tview.NewApplication()
@@ -188,7 +196,9 @@ func TestStatsView_Sorting(t *testing.T) {
 	dockerClient := docker.NewClient()
 	view := NewStatsView(dockerClient)
 	defer view.Stop()
+	view.mu.Lock()
 	view.stats = createTestContainerStats()
+	view.mu.Unlock()
 
 	// Create a test app
 	app := tview.NewApplication()
@@ -246,8 +256,10 @@ func TestStatsView_Sorting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			view.mu.Lock()
 			view.sortField = tt.sortField
 			view.sortReverse = tt.sortReverse
+			view.mu.Unlock()
 			view.updateTable()
 
 			// Check that the first data row contains the expected container
@@ -307,21 +319,37 @@ func TestStatsView_AutoRefresh(t *testing.T) {
 	defer view.Stop()
 
 	// Test initial state
-	assert.True(t, view.autoRefresh)
+	view.mu.RLock()
+	autoRefresh := view.autoRefresh
+	view.mu.RUnlock()
+	assert.True(t, autoRefresh)
 
 	// Test toggle off
 	view.toggleAutoRefresh()
-	assert.False(t, view.autoRefresh)
+	view.mu.RLock()
+	autoRefresh = view.autoRefresh
+	view.mu.RUnlock()
+	assert.False(t, autoRefresh)
 
 	// Test toggle on
 	view.toggleAutoRefresh()
-	assert.True(t, view.autoRefresh)
+	view.mu.RLock()
+	autoRefresh = view.autoRefresh
+	view.mu.RUnlock()
+	assert.True(t, autoRefresh)
 
 	// Test refresh interval changes
+	view.mu.RLock()
 	originalInterval := view.refreshInterval
+	view.mu.RUnlock()
+	view.mu.Lock()
 	view.refreshInterval = 3 * time.Second
-	assert.Equal(t, 3*time.Second, view.refreshInterval)
-	assert.NotEqual(t, originalInterval, view.refreshInterval)
+	view.mu.Unlock()
+	view.mu.RLock()
+	interval := view.refreshInterval
+	view.mu.RUnlock()
+	assert.Equal(t, 3*time.Second, interval)
+	assert.NotEqual(t, originalInterval, interval)
 }
 
 func TestStatsView_EmptyStatsList(t *testing.T) {
@@ -351,7 +379,9 @@ func TestStatsView_GetSelectedStat(t *testing.T) {
 	dockerClient := docker.NewClient()
 	view := NewStatsView(dockerClient)
 	defer view.Stop()
+	view.mu.Lock()
 	view.stats = createTestContainerStats()
+	view.mu.Unlock()
 
 	// Create a test app
 	app := tview.NewApplication()
@@ -418,17 +448,27 @@ func TestStatsView_ShowAll(t *testing.T) {
 	defer view.Stop()
 
 	// Test initial state
-	assert.False(t, view.showAll)
+	view.mu.RLock()
+	showAll := view.showAll
+	view.mu.RUnlock()
+	assert.False(t, showAll)
 
 	// Test toggle
+	view.mu.Lock()
 	view.showAll = true
-	assert.True(t, view.showAll)
+	view.mu.Unlock()
+	view.mu.RLock()
+	showAll = view.showAll
+	view.mu.RUnlock()
+	assert.True(t, showAll)
 
 	// Verify it affects the title
 	title := view.GetTitle()
 	assert.Contains(t, title, "[All]")
 
+	view.mu.Lock()
 	view.showAll = false
+	view.mu.Unlock()
 	title = view.GetTitle()
 	assert.Contains(t, title, "[Running]")
 }
@@ -439,6 +479,7 @@ func TestStatsView_LongNameTruncation(t *testing.T) {
 	defer view.Stop()
 
 	// Create stats with a very long name
+	view.mu.Lock()
 	view.stats = []models.ContainerStats{
 		{
 			Container: "abc123",
@@ -451,6 +492,7 @@ func TestStatsView_LongNameTruncation(t *testing.T) {
 			PIDs:      "2",
 		},
 	}
+	view.mu.Unlock()
 
 	// Create a test app
 	app := tview.NewApplication()

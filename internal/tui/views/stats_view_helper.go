@@ -33,7 +33,9 @@ func (v *StatsView) loadStats() {
 		return
 	}
 
+	v.mu.Lock()
 	v.stats = stats
+	v.mu.Unlock()
 
 	// Update table in UI thread
 	QueueUpdateDraw(func() {
@@ -50,6 +52,10 @@ func (v *StatsView) updateTable() {
 
 	// Set headers
 	headers := []string{"NAME", "CPU %", "MEM USAGE", "MEM %", "NET I/O", "BLOCK I/O", "PIDS"}
+	v.mu.RLock()
+	sortField := v.sortField
+	sortReverse := v.sortReverse
+	v.mu.RUnlock()
 	for col, header := range headers {
 		cell := tview.NewTableCell(header).
 			SetTextColor(tcell.ColorYellow).
@@ -57,13 +63,13 @@ func (v *StatsView) updateTable() {
 			SetSelectable(false)
 
 		// Highlight the current sort field
-		if (col == 0 && v.sortField == StatsSortByName) ||
-			(col == 1 && v.sortField == StatsSortByCPU) ||
-			(col == 3 && v.sortField == StatsSortByMem) ||
-			(col == 4 && v.sortField == StatsSortByNetIO) ||
-			(col == 5 && v.sortField == StatsSortByBlockIO) {
+		if (col == 0 && sortField == StatsSortByName) ||
+			(col == 1 && sortField == StatsSortByCPU) ||
+			(col == 3 && sortField == StatsSortByMem) ||
+			(col == 4 && sortField == StatsSortByNetIO) ||
+			(col == 5 && sortField == StatsSortByBlockIO) {
 			cell.SetTextColor(tcell.ColorBlue)
-			if v.sortReverse {
+			if sortReverse {
 				cell.SetText(header + " ↓")
 			} else {
 				cell.SetText(header + " ↑")
@@ -74,7 +80,10 @@ func (v *StatsView) updateTable() {
 	}
 
 	// Add stats rows
-	for row, stat := range v.stats {
+	v.mu.RLock()
+	stats := v.stats
+	v.mu.RUnlock()
+	for row, stat := range stats {
 		// Name
 		name := stat.Name
 		if len(name) > 20 {
@@ -134,13 +143,18 @@ func (v *StatsView) updateTable() {
 	}
 
 	// Select first row if available
-	if len(v.stats) > 0 {
+	v.mu.RLock()
+	statsLen := len(v.stats)
+	v.mu.RUnlock()
+	if statsLen > 0 {
 		v.table.Select(1, 0)
 	}
 }
 
 // sortStats sorts the stats based on the current sort field and order
 func (v *StatsView) sortStats() {
+	v.mu.Lock()
+	defer v.mu.Unlock()
 	sort.Slice(v.stats, func(i, j int) bool {
 		var less bool
 		switch v.sortField {
@@ -175,6 +189,8 @@ func (v *StatsView) sortStats() {
 
 // setSortField sets the sort field and adjusts the sort order
 func (v *StatsView) setSortField(field StatsSortField) {
+	v.mu.Lock()
+	defer v.mu.Unlock()
 	if v.sortField == field {
 		// Toggle reverse if clicking same field
 		v.sortReverse = !v.sortReverse
@@ -215,7 +231,10 @@ func (v *StatsView) startAutoRefresh() {
 	}
 
 	go func() {
-		ticker := time.NewTicker(v.refreshInterval)
+		v.mu.RLock()
+		refreshInterval := v.refreshInterval
+		v.mu.RUnlock()
+		ticker := time.NewTicker(refreshInterval)
 		defer ticker.Stop()
 
 		// Initial load
@@ -327,6 +346,8 @@ func parseSizeString(s string) float64 {
 // GetSelectedStat returns the currently selected container stat
 func (v *StatsView) GetSelectedStat() *models.ContainerStats {
 	row, _ := v.table.GetSelection()
+	v.mu.RLock()
+	defer v.mu.RUnlock()
 	if row > 0 && row <= len(v.stats) {
 		return &v.stats[row-1]
 	}
