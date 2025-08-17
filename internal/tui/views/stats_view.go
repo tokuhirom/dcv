@@ -1,23 +1,206 @@
 package views
 
 import (
+	"fmt"
+	"time"
+
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/models"
 )
+
+// StatsSortField represents the field to sort container stats by
+type StatsSortField int
+
+const (
+	StatsSortByName StatsSortField = iota
+	StatsSortByCPU
+	StatsSortByMem
+	StatsSortByNetIO
+	StatsSortByBlockIO
+)
+
+func (s StatsSortField) String() string {
+	switch s {
+	case StatsSortByName:
+		return "NAME"
+	case StatsSortByCPU:
+		return "CPU%"
+	case StatsSortByMem:
+		return "MEM%"
+	case StatsSortByNetIO:
+		return "NET I/O"
+	case StatsSortByBlockIO:
+		return "BLOCK I/O"
+	default:
+		return "NAME"
+	}
+}
 
 // StatsView displays container statistics
 type StatsView struct {
-	docker *docker.Client
-	table  *tview.Table
+	docker          *docker.Client
+	table           *tview.Table
+	stats           []models.ContainerStats
+	sortField       StatsSortField
+	sortReverse     bool
+	autoRefresh     bool
+	refreshInterval time.Duration
+	stopRefresh     chan bool
+	isRefreshing    bool
+	showAll         bool // Show all containers or just running ones
 }
 
 // NewStatsView creates a new stats view
 func NewStatsView(dockerClient *docker.Client) *StatsView {
-	return &StatsView{
-		docker: dockerClient,
-		table:  tview.NewTable(),
+	v := &StatsView{
+		docker:          dockerClient,
+		table:           tview.NewTable(),
+		sortField:       StatsSortByCPU,
+		sortReverse:     true, // Default to descending for CPU
+		autoRefresh:     true,
+		refreshInterval: 2 * time.Second,
+		stopRefresh:     make(chan bool, 1),
+		showAll:         false,
 	}
+
+	v.setupTable()
+	v.setupKeyHandlers()
+	v.startAutoRefresh()
+
+	return v
+}
+
+// setupTable configures the table widget
+func (v *StatsView) setupTable() {
+	v.table.SetBorders(false).
+		SetSelectable(true, false).
+		SetSeparator(' ').
+		SetFixed(1, 0)
+
+	// Set header style
+	v.table.SetSelectedStyle(tcell.StyleDefault.
+		Background(tcell.ColorDarkCyan).
+		Foreground(tcell.ColorWhite))
+}
+
+// setupKeyHandlers sets up keyboard shortcuts for the view
+func (v *StatsView) setupKeyHandlers() {
+	v.table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		row, _ := v.table.GetSelection()
+
+		switch event.Rune() {
+		case 'j':
+			// Move down (vim style)
+			if row < v.table.GetRowCount()-1 {
+				v.table.Select(row+1, 0)
+			}
+			return nil
+
+		case 'k':
+			// Move up (vim style)
+			if row > 1 { // Skip header row
+				v.table.Select(row-1, 0)
+			}
+			return nil
+
+		case 'g':
+			// Go to top (vim style)
+			v.table.Select(1, 0)
+			return nil
+
+		case 'G':
+			// Go to bottom (vim style)
+			rowCount := v.table.GetRowCount()
+			if rowCount > 1 {
+				v.table.Select(rowCount-1, 0)
+			}
+			return nil
+
+		case 'c':
+			// Sort by CPU
+			v.setSortField(StatsSortByCPU)
+			v.updateTable()
+			return nil
+
+		case 'm':
+			// Sort by memory
+			v.setSortField(StatsSortByMem)
+			v.updateTable()
+			return nil
+
+		case 'n':
+			// Sort by name
+			v.setSortField(StatsSortByName)
+			v.updateTable()
+			return nil
+
+		case 'N':
+			// Sort by network I/O
+			v.setSortField(StatsSortByNetIO)
+			v.updateTable()
+			return nil
+
+		case 'B':
+			// Sort by block I/O
+			v.setSortField(StatsSortByBlockIO)
+			v.updateTable()
+			return nil
+
+		case 'R':
+			// Reverse sort order
+			v.sortReverse = !v.sortReverse
+			v.updateTable()
+			return nil
+
+		case 'a':
+			// Toggle auto-refresh
+			v.toggleAutoRefresh()
+			return nil
+
+		case 'A':
+			// Toggle show all containers
+			v.showAll = !v.showAll
+			v.Refresh()
+			return nil
+
+		case 'r':
+			// Manual refresh
+			v.Refresh()
+			return nil
+
+		case '+':
+			// Increase refresh interval
+			if v.refreshInterval < 10*time.Second {
+				v.refreshInterval += time.Second
+				if v.autoRefresh {
+					v.restartAutoRefresh()
+				}
+			}
+			return nil
+
+		case '-':
+			// Decrease refresh interval
+			if v.refreshInterval > time.Second {
+				v.refreshInterval -= time.Second
+				if v.autoRefresh {
+					v.restartAutoRefresh()
+				}
+			}
+			return nil
+		}
+
+		switch event.Key() {
+		case tcell.KeyCtrlR:
+			// Force refresh
+			v.Refresh()
+			return nil
+		}
+
+		return event
+	})
 }
 
 func (v *StatsView) GetPrimitive() tview.Primitive {
@@ -25,9 +208,22 @@ func (v *StatsView) GetPrimitive() tview.Primitive {
 }
 
 func (v *StatsView) Refresh() {
-	// TODO: Implement
+	if !v.isRefreshing {
+		go v.loadStats()
+	}
 }
 
 func (v *StatsView) GetTitle() string {
-	return "Container Statistics"
+	title := "Container Statistics"
+	if v.autoRefresh {
+		title += fmt.Sprintf(" [Auto-refresh: %ds]", int(v.refreshInterval.Seconds()))
+	} else {
+		title += " [Auto-refresh: OFF]"
+	}
+	if v.showAll {
+		title += " [All]"
+	} else {
+		title += " [Running]"
+	}
+	return title
 }
