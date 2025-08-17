@@ -9,6 +9,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/models"
 	"github.com/tokuhirom/dcv/internal/tui/views"
 	"github.com/tokuhirom/dcv/internal/ui"
 )
@@ -86,6 +87,7 @@ func (a *App) initializeViews() {
 
 	// Create Project List view
 	projectView := views.NewProjectListView(a.docker)
+	projectView.SetOnProjectSelected(a.SwitchToComposeProcessList)
 	a.views[ui.ComposeProjectListView] = projectView
 	a.pages.AddPage("projects", projectView.GetPrimitive(), true, false)
 
@@ -337,6 +339,19 @@ func (a *App) SwitchToLogView(containerID string, container interface{}) {
 
 	// Switch to the log view
 	a.SwitchView(ui.LogView)
+}
+
+// SwitchToComposeProcessList switches to the compose process list view with a specific project
+func (a *App) SwitchToComposeProcessList(project models.ComposeProject) {
+	// Set the project in the compose process list view
+	if composeView, ok := a.views[ui.ComposeProcessListView]; ok {
+		if cv, ok := composeView.(*views.ComposeProcessListView); ok {
+			cv.SetProject(project.Name)
+		}
+	}
+
+	// Switch to the compose process list view
+	a.SwitchView(ui.ComposeProcessListView)
 }
 
 // toggleNavbar toggles the navbar visibility
