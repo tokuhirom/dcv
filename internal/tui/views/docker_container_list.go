@@ -136,7 +136,7 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			}
 			return nil
 
-		case 'b':
+		case 'f':
 			// Browse files
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
