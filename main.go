@@ -10,13 +10,16 @@ import (
 	"github.com/fujiwara/sloghandler"
 
 	"github.com/tokuhirom/dcv/internal/config"
+	"github.com/tokuhirom/dcv/internal/tui"
 	"github.com/tokuhirom/dcv/internal/ui"
 )
 
 func main() {
 	// Parse command-line flags
 	var debugLog string
+	var useTview bool
 	flag.StringVar(&debugLog, "debug", "", "enable debug logging to a file")
+	flag.BoolVar(&useTview, "tview", false, "use tview UI instead of Bubble Tea")
 	flag.Parse()
 
 	setupLog(debugLog)
@@ -47,18 +50,24 @@ func main() {
 		initialView = ui.DockerContainerListView
 	}
 
-	slog.Info("Starting dcv", slog.String("initial_view", cfg.General.InitialView))
+	slog.Info("Starting dcv", 
+		slog.String("initial_view", cfg.General.InitialView),
+		slog.Bool("tview", useTview))
 
-	// Create the initial model with configured view
-	m := ui.NewModel(initialView)
-
-	// Create the program
-	p := tea.NewProgram(m, tea.WithAltScreen())
-
-	// Run the program
-	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error running program: %v\n", err)
-		os.Exit(1)
+	if useTview {
+		// Use tview implementation
+		if err := runTviewApp(initialView); err != nil {
+			fmt.Printf("Error running tview program: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		// Use Bubble Tea implementation
+		m := ui.NewModel(initialView)
+		p := tea.NewProgram(m, tea.WithAltScreen())
+		if _, err := p.Run(); err != nil {
+			fmt.Printf("Error running program: %v\n", err)
+			os.Exit(1)
+		}
 	}
 }
 
@@ -87,4 +96,9 @@ func setupLog(debugLog string) {
 		// Set the default logger to discard if no debug log is specified
 		slog.SetDefault(slog.New(slog.DiscardHandler))
 	}
+}
+
+func runTviewApp(initialView ui.ViewType) error {
+	app := tui.NewApp(initialView)
+	return app.Run()
 }

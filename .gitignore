@@ -43,3 +43,5 @@ dcv_test
 # Generated helper binaries
 internal/docker/static-binaries/dcv-helper-*
 !internal/docker/static-binaries/.gitkeep
+
+/dcv-test
