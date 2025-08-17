@@ -58,7 +58,7 @@ View and manage all Docker containers
 | `esc` | back | :back |
 | `?` | help | :help |
 | `d` | entering DinD | :dind |
-| `x` | show actions | :show-actions |
+| `x` | execute command | :exec-command |
 | `f` | browse files | :file-browse |
 | `!` | exec /bin/sh | :shell |
 | `i` | inspect | :inspect |

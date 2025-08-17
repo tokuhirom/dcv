@@ -139,6 +139,14 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			}
 			return nil
 
+		case 'x':
+			// Execute command in container
+			if row > 0 && row <= len(v.containers) {
+				container := v.containers[row-1]
+				v.showExecDialog(container.ID, container.Names)
+			}
+			return nil
+
 		case 'i':
 			// Inspect container
 			if row > 0 && row <= len(v.containers) {
@@ -303,6 +311,115 @@ func (v *DockerContainerListView) execShell(containerID string) {
 	slog.Info("Executing shell in container", slog.String("container", containerID))
 	// TODO: Implement shell execution
 	// This would typically launch an external terminal or switch to a shell view
+}
+
+// showExecDialog shows a dialog for executing a command in the container
+func (v *DockerContainerListView) showExecDialog(containerID string, containerName string) {
+	// Create input field for command
+	inputField := tview.NewInputField().
+		SetLabel("Command: ").
+		SetText("/bin/sh").
+		SetFieldWidth(50)
+
+	// Create a form for command input
+	form := tview.NewForm().
+		AddFormItem(inputField).
+		AddButton("Execute", func() {
+			command := inputField.GetText()
+			if command != "" {
+				v.executeCommand(containerID, command)
+			}
+			v.pages.RemovePage("exec")
+		}).
+		AddButton("Cancel", func() {
+			v.pages.RemovePage("exec")
+		})
+
+	// Set form attributes
+	form.SetBorder(true).
+		SetTitle(fmt.Sprintf(" Execute Command in %s ", containerName)).
+		SetTitleAlign(tview.AlignCenter)
+
+	// Calculate position to center the form
+	modal := tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(nil, 0, 1, false).
+			AddItem(form, 7, 1, true).
+			AddItem(nil, 0, 1, false), 60, 1, true).
+		AddItem(nil, 0, 1, false)
+
+	v.pages.AddPage("exec", modal, true, true)
+}
+
+// executeCommand executes a command in the container
+func (v *DockerContainerListView) executeCommand(containerID string, command string) {
+	slog.Info("Executing command in container",
+		slog.String("container", containerID),
+		slog.String("command", command))
+
+	// Parse the command into parts
+	parts := strings.Fields(command)
+	if len(parts) == 0 {
+		return
+	}
+
+	// Execute the command using docker exec
+	args := append([]string{"exec", "-it", containerID}, parts...)
+	output, err := docker.ExecuteCaptured(args...)
+	if err != nil {
+		slog.Error("Failed to execute command", slog.Any("error", err))
+		// Show error in a modal
+		v.showErrorDialog(fmt.Sprintf("Failed to execute command: %v", err))
+		return
+	}
+
+	// Show output in a modal
+	v.showOutputDialog("Command Output", string(output))
+}
+
+// showErrorDialog shows an error message in a modal
+func (v *DockerContainerListView) showErrorDialog(message string) {
+	modal := tview.NewModal().
+		SetText(message).
+		AddButtons([]string{"OK"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("error")
+		})
+
+	v.pages.AddPage("error", modal, true, true)
+}
+
+// showOutputDialog shows command output in a modal
+func (v *DockerContainerListView) showOutputDialog(title string, output string) {
+	textView := tview.NewTextView().
+		SetText(output).
+		SetScrollable(true).
+		SetWrap(true)
+
+	textView.SetBorder(true).
+		SetTitle(fmt.Sprintf(" %s ", title)).
+		SetTitleAlign(tview.AlignCenter)
+
+	// Add key handler to close the dialog
+	textView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape || event.Rune() == 'q' {
+			v.pages.RemovePage("output")
+			return nil
+		}
+		return event
+	})
+
+	// Create a flex to center the output
+	modal := tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(nil, 0, 1, false).
+			AddItem(textView, 0, 8, true).
+			AddItem(nil, 0, 1, false), 0, 8, true).
+		AddItem(nil, 0, 1, false)
+
+	v.pages.AddPage("output", modal, true, true)
 }
 
 // showConfirmation shows a confirmation dialog for aggressive operations
