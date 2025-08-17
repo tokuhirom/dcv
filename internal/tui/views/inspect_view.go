@@ -21,7 +21,6 @@ type InspectView struct {
 	content          string
 	targetName       string
 	targetType       string // "container", "image", "volume", "network"
-	scrollY          int
 	searchText       string
 	searchRegex      bool
 	searchIgnoreCase bool
@@ -51,12 +50,7 @@ func (v *InspectView) setupTextView() {
 	v.textView.
 		SetDynamicColors(true).
 		SetScrollable(true).
-		SetWordWrap(false).
-		SetChangedFunc(func() {
-			// Update scroll position when content changes
-			row, _ := v.textView.GetScrollOffset()
-			v.scrollY = row
-		})
+		SetWordWrap(false)
 
 	// Set up key handlers
 	v.textView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

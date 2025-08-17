@@ -23,7 +23,6 @@ func TestNewInspectView(t *testing.T) {
 	assert.Empty(t, view.content)
 	assert.Empty(t, view.targetName)
 	assert.Empty(t, view.targetType)
-	assert.Equal(t, 0, view.scrollY)
 	assert.False(t, view.isSearchMode)
 }
 

@@ -15,12 +15,19 @@ import (
 
 // loadStats loads container statistics from Docker
 func (v *StatsView) loadStats() {
-	v.isRefreshing = true
-	defer func() { v.isRefreshing = false }()
+	defer func() {
+		v.mu.Lock()
+		v.isRefreshing = false
+		v.mu.Unlock()
+	}()
 
-	slog.Info("Loading container stats", slog.Bool("showAll", v.showAll))
+	v.mu.RLock()
+	showAll := v.showAll
+	v.mu.RUnlock()
 
-	stats, err := v.docker.GetStats(v.showAll)
+	slog.Info("Loading container stats", slog.Bool("showAll", showAll))
+
+	stats, err := v.docker.GetStats(showAll)
 	if err != nil {
 		slog.Error("Failed to load container stats", slog.Any("error", err))
 		return
@@ -185,8 +192,12 @@ func (v *StatsView) setSortField(field StatsSortField) {
 
 // toggleAutoRefresh toggles the auto-refresh feature
 func (v *StatsView) toggleAutoRefresh() {
+	v.mu.Lock()
 	v.autoRefresh = !v.autoRefresh
-	if v.autoRefresh {
+	autoRefresh := v.autoRefresh
+	v.mu.Unlock()
+
+	if autoRefresh {
 		v.startAutoRefresh()
 	} else {
 		v.stopAutoRefresh()
@@ -195,7 +206,11 @@ func (v *StatsView) toggleAutoRefresh() {
 
 // startAutoRefresh starts the auto-refresh goroutine
 func (v *StatsView) startAutoRefresh() {
-	if !v.autoRefresh {
+	v.mu.RLock()
+	autoRefresh := v.autoRefresh
+	v.mu.RUnlock()
+
+	if !autoRefresh {
 		return
 	}
 
@@ -209,7 +224,10 @@ func (v *StatsView) startAutoRefresh() {
 		for {
 			select {
 			case <-ticker.C:
-				if v.autoRefresh {
+				v.mu.RLock()
+				autoRefresh := v.autoRefresh
+				v.mu.RUnlock()
+				if autoRefresh {
 					v.Refresh()
 				}
 			case <-v.stopRefresh:

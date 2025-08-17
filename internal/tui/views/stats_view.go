@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -50,7 +51,8 @@ type StatsView struct {
 	refreshInterval time.Duration
 	stopRefresh     chan bool
 	isRefreshing    bool
-	showAll         bool // Show all containers or just running ones
+	showAll         bool         // Show all containers or just running ones
+	mu              sync.RWMutex // Protects showAll, autoRefresh, isRefreshing
 }
 
 // NewStatsView creates a new stats view
@@ -162,7 +164,9 @@ func (v *StatsView) setupKeyHandlers() {
 
 		case 'A':
 			// Toggle show all containers
+			v.mu.Lock()
 			v.showAll = !v.showAll
+			v.mu.Unlock()
 			v.Refresh()
 			return nil
 
@@ -175,7 +179,10 @@ func (v *StatsView) setupKeyHandlers() {
 			// Increase refresh interval
 			if v.refreshInterval < 10*time.Second {
 				v.refreshInterval += time.Second
-				if v.autoRefresh {
+				v.mu.RLock()
+				autoRefresh := v.autoRefresh
+				v.mu.RUnlock()
+				if autoRefresh {
 					v.restartAutoRefresh()
 				}
 			}
@@ -185,7 +192,10 @@ func (v *StatsView) setupKeyHandlers() {
 			// Decrease refresh interval
 			if v.refreshInterval > time.Second {
 				v.refreshInterval -= time.Second
-				if v.autoRefresh {
+				v.mu.RLock()
+				autoRefresh := v.autoRefresh
+				v.mu.RUnlock()
+				if autoRefresh {
 					v.restartAutoRefresh()
 				}
 			}
@@ -215,12 +225,16 @@ func (v *StatsView) Refresh() {
 
 func (v *StatsView) GetTitle() string {
 	title := "Container Statistics"
-	if v.autoRefresh {
+	v.mu.RLock()
+	autoRefresh := v.autoRefresh
+	showAll := v.showAll
+	v.mu.RUnlock()
+	if autoRefresh {
 		title += fmt.Sprintf(" [Auto-refresh: %ds]", int(v.refreshInterval.Seconds()))
 	} else {
 		title += " [Auto-refresh: OFF]"
 	}
-	if v.showAll {
+	if showAll {
 		title += " [All]"
 	} else {
 		title += " [Running]"
