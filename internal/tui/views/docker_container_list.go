@@ -15,11 +15,12 @@ import (
 
 // DockerContainerListView displays Docker containers
 type DockerContainerListView struct {
-	docker     *docker.Client
-	table      *tview.Table
-	containers []models.DockerContainer
-	showAll    bool
-	pages      *tview.Pages
+	docker            *docker.Client
+	table             *tview.Table
+	containers        []models.DockerContainer
+	showAll           bool
+	pages             *tview.Pages
+	switchToLogViewFn func(containerID string, container interface{})
 }
 
 // NewDockerContainerListView creates a new Docker container list view
@@ -126,8 +127,11 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			// View logs
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
-				// TODO: Switch to log view
-				slog.Info("View logs for container", slog.String("container", container.ID))
+				if v.switchToLogViewFn != nil {
+					v.switchToLogViewFn(container.ID, container)
+				} else {
+					slog.Info("View logs for container", slog.String("container", container.ID))
+				}
 			}
 			return nil
 
@@ -189,6 +193,11 @@ func (v *DockerContainerListView) Refresh() {
 // GetTitle returns the title of the view
 func (v *DockerContainerListView) GetTitle() string {
 	return "Docker Containers"
+}
+
+// SetSwitchToLogViewCallback sets the callback for switching to log view
+func (v *DockerContainerListView) SetSwitchToLogViewCallback(fn func(containerID string, container interface{})) {
+	v.switchToLogViewFn = fn
 }
 
 // loadContainers loads the container list from Docker

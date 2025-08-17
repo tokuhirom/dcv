@@ -74,11 +74,13 @@ func (a *App) Stop() {
 func (a *App) initializeViews() {
 	// Create Docker Container List view
 	dockerView := views.NewDockerContainerListView(a.docker)
+	dockerView.SetSwitchToLogViewCallback(a.SwitchToLogView)
 	a.views[ui.DockerContainerListView] = dockerView
 	a.pages.AddPage("docker", dockerView.GetPrimitive(), true, false)
 
 	// Create Compose Process List view
 	composeView := views.NewComposeProcessListView(a.docker)
+	composeView.SetSwitchToLogViewCallback(a.SwitchToLogView)
 	a.views[ui.ComposeProcessListView] = composeView
 	a.pages.AddPage("compose", composeView.GetPrimitive(), true, false)
 
@@ -322,6 +324,19 @@ func (a *App) SwitchView(viewType ui.ViewType) {
 	}
 
 	a.app.ForceDraw()
+}
+
+// SwitchToLogView switches to the log view with a specific container
+func (a *App) SwitchToLogView(containerID string, container interface{}) {
+	// Set the container in the log view
+	if logView, ok := a.views[ui.LogView]; ok {
+		if lv, ok := logView.(*views.LogView); ok {
+			lv.SetContainer(containerID, container)
+		}
+	}
+
+	// Switch to the log view
+	a.SwitchView(ui.LogView)
 }
 
 // toggleNavbar toggles the navbar visibility
