@@ -15,13 +15,14 @@ import (
 
 // ComposeProcessListView displays Docker Compose processes
 type ComposeProcessListView struct {
-	docker            *docker.Client
-	table             *tview.Table
-	composeContainers []models.ComposeContainer
-	projectName       string
-	showAll           bool
-	pages             *tview.Pages
-	switchToLogViewFn func(containerID string, container interface{})
+	docker                *docker.Client
+	table                 *tview.Table
+	composeContainers     []models.ComposeContainer
+	projectName           string
+	showAll               bool
+	pages                 *tview.Pages
+	switchToLogViewFn     func(containerID string, container interface{})
+	switchToFileBrowserFn func(containerID string, container interface{})
 }
 
 // NewComposeProcessListView creates a new compose process list view
@@ -135,6 +136,18 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 			}
 			return nil
 
+		case 'b':
+			// Browse files
+			if row > 0 && row <= len(v.composeContainers) {
+				container := v.composeContainers[row-1]
+				if v.switchToFileBrowserFn != nil {
+					v.switchToFileBrowserFn(container.ID, container)
+				} else {
+					slog.Info("Browse files for compose container", slog.String("container", container.Name))
+				}
+			}
+			return nil
+
 		case 'e':
 			// Execute shell
 			if row > 0 && row <= len(v.composeContainers) {
@@ -203,6 +216,11 @@ func (v *ComposeProcessListView) GetTitle() string {
 // SetSwitchToLogViewCallback sets the callback for switching to log view
 func (v *ComposeProcessListView) SetSwitchToLogViewCallback(fn func(containerID string, container interface{})) {
 	v.switchToLogViewFn = fn
+}
+
+// SetSwitchToFileBrowserCallback sets the callback for switching to file browser view
+func (v *ComposeProcessListView) SetSwitchToFileBrowserCallback(fn func(containerID string, container interface{})) {
+	v.switchToFileBrowserFn = fn
 }
 
 // loadContainers loads the container list from Docker Compose

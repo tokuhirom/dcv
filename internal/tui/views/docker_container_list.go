@@ -15,12 +15,13 @@ import (
 
 // DockerContainerListView displays Docker containers
 type DockerContainerListView struct {
-	docker            *docker.Client
-	table             *tview.Table
-	containers        []models.DockerContainer
-	showAll           bool
-	pages             *tview.Pages
-	switchToLogViewFn func(containerID string, container interface{})
+	docker                *docker.Client
+	table                 *tview.Table
+	containers            []models.DockerContainer
+	showAll               bool
+	pages                 *tview.Pages
+	switchToLogViewFn     func(containerID string, container interface{})
+	switchToFileBrowserFn func(containerID string, container interface{})
 }
 
 // NewDockerContainerListView creates a new Docker container list view
@@ -135,6 +136,18 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			}
 			return nil
 
+		case 'b':
+			// Browse files
+			if row > 0 && row <= len(v.containers) {
+				container := v.containers[row-1]
+				if v.switchToFileBrowserFn != nil {
+					v.switchToFileBrowserFn(container.ID, container)
+				} else {
+					slog.Info("Browse files for container", slog.String("container", container.ID))
+				}
+			}
+			return nil
+
 		case 'e':
 			// Execute shell
 			if row > 0 && row <= len(v.containers) {
@@ -198,6 +211,11 @@ func (v *DockerContainerListView) GetTitle() string {
 // SetSwitchToLogViewCallback sets the callback for switching to log view
 func (v *DockerContainerListView) SetSwitchToLogViewCallback(fn func(containerID string, container interface{})) {
 	v.switchToLogViewFn = fn
+}
+
+// SetSwitchToFileBrowserCallback sets the callback for switching to file browser view
+func (v *DockerContainerListView) SetSwitchToFileBrowserCallback(fn func(containerID string, container interface{})) {
+	v.switchToFileBrowserFn = fn
 }
 
 // loadContainers loads the container list from Docker

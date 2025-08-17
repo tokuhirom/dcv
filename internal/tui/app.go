@@ -76,12 +76,14 @@ func (a *App) initializeViews() {
 	// Create Docker Container List view
 	dockerView := views.NewDockerContainerListView(a.docker)
 	dockerView.SetSwitchToLogViewCallback(a.SwitchToLogView)
+	dockerView.SetSwitchToFileBrowserCallback(a.SwitchToFileBrowser)
 	a.views[ui.DockerContainerListView] = dockerView
 	a.pages.AddPage("docker", dockerView.GetPrimitive(), true, false)
 
 	// Create Compose Process List view
 	composeView := views.NewComposeProcessListView(a.docker)
 	composeView.SetSwitchToLogViewCallback(a.SwitchToLogView)
+	composeView.SetSwitchToFileBrowserCallback(a.SwitchToFileBrowser)
 	a.views[ui.ComposeProcessListView] = composeView
 	a.pages.AddPage("compose", composeView.GetPrimitive(), true, false)
 
@@ -120,6 +122,19 @@ func (a *App) initializeViews() {
 	helpView := views.NewHelpView()
 	a.views[ui.HelpView] = helpView
 	a.pages.AddPage("help", helpView.GetPrimitive(), true, false)
+
+	// Create File Browser view
+	fileBrowserView := views.NewFileBrowserView(a.docker)
+	a.views[ui.FileBrowserView] = fileBrowserView
+	a.pages.AddPage("file-browser", fileBrowserView.GetPrimitive(), true, false)
+
+	// Create File Content view
+	fileContentView := views.NewFileContentView(a.docker)
+	a.views[ui.FileContentView] = fileContentView
+	a.pages.AddPage("file-content", fileContentView.GetPrimitive(), true, false)
+
+	// Set callbacks for file browser
+	fileBrowserView.SetSwitchToContentViewCallback(a.SwitchToFileContent)
 }
 
 // setupLayout creates the main layout with navbar and status bar
@@ -323,6 +338,13 @@ func (a *App) SwitchView(viewType ui.ViewType) {
 		}
 	case ui.HelpView:
 		a.pages.SwitchToPage("help")
+	case ui.FileBrowserView:
+		a.pages.SwitchToPage("file-browser")
+		if view, ok := a.views[viewType]; ok {
+			view.Refresh()
+		}
+	case ui.FileContentView:
+		a.pages.SwitchToPage("file-content")
 	}
 
 	a.app.ForceDraw()
@@ -352,6 +374,47 @@ func (a *App) SwitchToComposeProcessList(project models.ComposeProject) {
 
 	// Switch to the compose process list view
 	a.SwitchView(ui.ComposeProcessListView)
+}
+
+// SwitchToFileBrowser switches to the file browser view with a specific container
+func (a *App) SwitchToFileBrowser(containerID string, container interface{}) {
+	// Set the container in the file browser view
+	if fileBrowserView, ok := a.views[ui.FileBrowserView]; ok {
+		if fbv, ok := fileBrowserView.(*views.FileBrowserView); ok {
+			containerName := ""
+			// Extract container name based on type
+			switch c := container.(type) {
+			case models.DockerContainer:
+				containerName = c.Names
+			case models.ComposeContainer:
+				containerName = c.Name
+			}
+			fbv.SetContainer(containerID, containerName)
+		}
+	}
+
+	// Switch to the file browser view
+	a.SwitchView(ui.FileBrowserView)
+}
+
+// SwitchToFileContent switches to the file content view with a specific file
+func (a *App) SwitchToFileContent(containerID, path string, file models.ContainerFile) {
+	// Set the file in the file content view
+	if fileContentView, ok := a.views[ui.FileContentView]; ok {
+		if fcv, ok := fileContentView.(*views.FileContentView); ok {
+			// Get container name from file browser
+			containerName := ""
+			if fileBrowserView, ok := a.views[ui.FileBrowserView]; ok {
+				if fbv, ok := fileBrowserView.(*views.FileBrowserView); ok {
+					containerName = fbv.GetContainerName()
+				}
+			}
+			fcv.SetFile(containerID, containerName, path, file)
+		}
+	}
+
+	// Switch to the file content view
+	a.SwitchView(ui.FileContentView)
 }
 
 // toggleNavbar toggles the navbar visibility

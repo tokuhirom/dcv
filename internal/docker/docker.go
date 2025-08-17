@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -11,10 +12,24 @@ import (
 )
 
 type Client struct {
+	fileOps *FileOperations
 }
 
 func NewClient() *Client {
-	return &Client{}
+	return &Client{
+		fileOps: NewFileOperations(nil),
+	}
+}
+
+// ListContainerFiles lists files in a container directory
+func (c *Client) ListContainerFiles(containerID, path string) ([]models.ContainerFile, error) {
+	container := NewContainer(containerID, "", "", "")
+	return c.fileOps.ListFiles(context.TODO(), container, path)
+}
+
+// GetFileContent retrieves file content from a container
+func (c *Client) GetFileContent(containerID, filePath string) (string, error) {
+	return c.fileOps.GetFileContent(context.TODO(), containerID, filePath)
 }
 
 // ListComposeContainers lists containers for a Docker Compose project
