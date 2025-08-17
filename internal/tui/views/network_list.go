@@ -15,10 +15,11 @@ import (
 
 // NetworkListView displays Docker networks
 type NetworkListView struct {
-	docker         *docker.Client
-	table          *tview.Table
-	dockerNetworks []models.DockerNetwork
-	pages          *tview.Pages
+	docker                *docker.Client
+	table                 *tview.Table
+	dockerNetworks        []models.DockerNetwork
+	pages                 *tview.Pages
+	switchToInspectViewFn func(targetID string, target interface{})
 }
 
 // NewNetworkListView creates a new network list view
@@ -99,8 +100,11 @@ func (v *NetworkListView) setupKeyHandlers() {
 			// Inspect network
 			if row > 0 && row <= len(v.dockerNetworks) {
 				network := v.dockerNetworks[row-1]
-				// TODO: Switch to inspect view
-				slog.Info("Inspect network", slog.String("network", network.Name))
+				if v.switchToInspectViewFn != nil {
+					v.switchToInspectViewFn(network.Name, network)
+				} else {
+					slog.Info("Inspect network", slog.String("network", network.Name))
+				}
 			}
 			return nil
 
@@ -158,6 +162,11 @@ func (v *NetworkListView) Refresh() {
 // GetTitle returns the title of the view
 func (v *NetworkListView) GetTitle() string {
 	return "Docker Networks"
+}
+
+// SetSwitchToInspectViewCallback sets the callback for switching to inspect view
+func (v *NetworkListView) SetSwitchToInspectViewCallback(fn func(targetID string, target interface{})) {
+	v.switchToInspectViewFn = fn
 }
 
 // loadNetworks loads the network list from Docker

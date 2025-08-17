@@ -15,11 +15,12 @@ import (
 
 // ImageListView displays Docker images
 type ImageListView struct {
-	docker       *docker.Client
-	table        *tview.Table
-	dockerImages []models.DockerImage
-	showAll      bool
-	pages        *tview.Pages
+	docker                *docker.Client
+	table                 *tview.Table
+	dockerImages          []models.DockerImage
+	showAll               bool
+	pages                 *tview.Pages
+	switchToInspectViewFn func(targetID string, target interface{})
 }
 
 // NewImageListView creates a new image list view
@@ -126,8 +127,11 @@ func (v *ImageListView) setupKeyHandlers() {
 			// Inspect image
 			if row > 0 && row <= len(v.dockerImages) {
 				image := v.dockerImages[row-1]
-				// TODO: Switch to inspect view
-				slog.Info("Inspect image", slog.String("image", image.GetRepoTag()))
+				if v.switchToInspectViewFn != nil {
+					v.switchToInspectViewFn(image.ID, image)
+				} else {
+					slog.Info("Inspect image", slog.String("image", image.GetRepoTag()))
+				}
 			}
 			return nil
 
@@ -191,6 +195,11 @@ func (v *ImageListView) GetTitle() string {
 		return "Docker Images (all)"
 	}
 	return "Docker Images"
+}
+
+// SetSwitchToInspectViewCallback sets the callback for switching to inspect view
+func (v *ImageListView) SetSwitchToInspectViewCallback(fn func(targetID string, target interface{})) {
+	v.switchToInspectViewFn = fn
 }
 
 // loadImages loads the image list from Docker
