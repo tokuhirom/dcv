@@ -319,4 +319,3 @@ func (v *StatsView) GetSelectedStat() *models.ContainerStats {
 func (v *StatsView) Stop() {
 	v.stopAutoRefresh()
 }
-

@@ -465,4 +465,3 @@ func TestStatsView_LongNameTruncation(t *testing.T) {
 	assert.Equal(t, "very-long-contain...", nameCell.Text)
 	assert.True(t, len(nameCell.Text) <= 20)
 }
-
