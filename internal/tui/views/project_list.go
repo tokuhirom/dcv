@@ -18,6 +18,7 @@ type ProjectListView struct {
 	docker   *docker.Client
 	table    *tview.Table
 	projects []models.ComposeProject
+	pages    *tview.Pages
 
 	// Callback for when a project is selected
 	onProjectSelected func(project models.ComposeProject)
@@ -28,6 +29,7 @@ func NewProjectListView(dockerClient *docker.Client) *ProjectListView {
 	v := &ProjectListView{
 		docker: dockerClient,
 		table:  tview.NewTable(),
+		pages:  tview.NewPages(),
 	}
 
 	v.setupTable()
@@ -86,7 +88,7 @@ func (v *ProjectListView) setupKeyHandlers() {
 			// Stop project
 			if row > 0 && row <= len(v.projects) {
 				project := v.projects[row-1]
-				go v.stopProject(project)
+				v.showConfirmation("compose stop", project)
 			}
 			return nil
 
@@ -102,7 +104,7 @@ func (v *ProjectListView) setupKeyHandlers() {
 			// Down (stop) project
 			if row > 0 && row <= len(v.projects) {
 				project := v.projects[row-1]
-				go v.downProject(project)
+				v.showConfirmation("compose down", project)
 			}
 			return nil
 
@@ -110,7 +112,7 @@ func (v *ProjectListView) setupKeyHandlers() {
 			// Remove project (down and remove volumes)
 			if row > 0 && row <= len(v.projects) {
 				project := v.projects[row-1]
-				go v.removeProject(project)
+				v.showConfirmation("compose down -v", project)
 			}
 			return nil
 
@@ -205,7 +207,11 @@ func (v *ProjectListView) SetOnProjectSelected(callback func(project models.Comp
 
 // GetPrimitive returns the tview primitive for this view
 func (v *ProjectListView) GetPrimitive() tview.Primitive {
-	return v.table
+	if v.pages.HasPage("main") {
+		return v.pages
+	}
+	v.pages.AddPage("main", v.table, true, true)
+	return v.pages
 }
 
 // Refresh refreshes the project list
@@ -449,4 +455,46 @@ func (v *ProjectListView) GetProjectLogs(project models.ComposeProject, tail int
 		return "", fmt.Errorf("failed to get project logs: %w", err)
 	}
 	return string(output), nil
+}
+
+// showConfirmation shows a confirmation dialog for aggressive operations
+func (v *ProjectListView) showConfirmation(operation string, project models.ComposeProject) {
+	var commandText string
+	switch operation {
+	case "compose stop":
+		commandText = fmt.Sprintf("docker compose -p %s stop", project.Name)
+	case "compose down":
+		commandText = fmt.Sprintf("docker compose -p %s down", project.Name)
+	case "compose down -v":
+		commandText = fmt.Sprintf("docker compose -p %s down -v", project.Name)
+	}
+
+	var message string
+	switch operation {
+	case "compose down -v":
+		message = "This will stop and remove all containers, networks, and volumes for this project!"
+	case "compose down":
+		message = "This will stop and remove all containers and networks for this project."
+	default:
+		message = "This will stop all containers for this project."
+	}
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nProject: %s\n\n%s", commandText, project.Name, message)).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("confirm")
+			if buttonLabel == "Yes" {
+				switch operation {
+				case "compose stop":
+					go v.stopProject(project)
+				case "compose down":
+					go v.downProject(project)
+				case "compose down -v":
+					go v.removeProject(project)
+				}
+			}
+		})
+
+	v.pages.AddPage("confirm", modal, true, true)
 }

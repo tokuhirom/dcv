@@ -50,7 +50,7 @@ func main() {
 		initialView = ui.DockerContainerListView
 	}
 
-	slog.Info("Starting dcv", 
+	slog.Info("Starting dcv",
 		slog.String("initial_view", cfg.General.InitialView),
 		slog.Bool("tview", useTview))
 

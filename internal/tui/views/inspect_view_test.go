@@ -477,4 +477,3 @@ func TestInspectView_EmptySearch(t *testing.T) {
 	assert.Empty(t, view.searchText)
 	assert.Empty(t, view.searchResults)
 }
-

@@ -133,7 +133,7 @@ func CreateTestProjects() []models.ComposeProject {
 // SimulateKeyPress simulates a key press event on the screen
 func SimulateKeyPress(screen tcell.SimulationScreen, key tcell.Key, ch rune) {
 	ev := tcell.NewEventKey(key, ch, tcell.ModNone)
-	screen.PostEvent(ev)
+	_ = screen.PostEvent(ev)
 }
 
 // GetScreenContent gets the content at a specific position on the screen

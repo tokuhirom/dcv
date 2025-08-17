@@ -18,6 +18,7 @@ type VolumeListView struct {
 	docker        *docker.Client
 	table         *tview.Table
 	dockerVolumes []models.DockerVolume
+	pages         *tview.Pages
 }
 
 // NewVolumeListView creates a new volume list view
@@ -25,6 +26,7 @@ func NewVolumeListView(dockerClient *docker.Client) *VolumeListView {
 	v := &VolumeListView{
 		docker: dockerClient,
 		table:  tview.NewTable(),
+		pages:  tview.NewPages(),
 	}
 
 	v.setupTable()
@@ -83,7 +85,7 @@ func (v *VolumeListView) setupKeyHandlers() {
 			// Delete volume
 			if row > 0 && row <= len(v.dockerVolumes) {
 				volume := v.dockerVolumes[row-1]
-				go v.deleteVolume(volume, false)
+				v.showConfirmation("volume rm", volume.Name, false)
 			}
 			return nil
 
@@ -91,18 +93,18 @@ func (v *VolumeListView) setupKeyHandlers() {
 			// Force delete volume
 			if row > 0 && row <= len(v.dockerVolumes) {
 				volume := v.dockerVolumes[row-1]
-				go v.deleteVolume(volume, true)
+				v.showConfirmation("volume rm -f", volume.Name, true)
 			}
 			return nil
 
 		case 'p':
 			// Prune unused volumes
-			go v.pruneVolumes()
+			v.showPruneConfirmation(false)
 			return nil
 
 		case 'P':
-			// Prune all volumes (with confirmation)
-			go v.pruneAllVolumes()
+			// Prune all volumes
+			v.showPruneConfirmation(true)
 			return nil
 
 		case 'c':
@@ -154,7 +156,11 @@ func (v *VolumeListView) setupKeyHandlers() {
 
 // GetPrimitive returns the tview primitive for this view
 func (v *VolumeListView) GetPrimitive() tview.Primitive {
-	return v.table
+	if v.pages.HasPage("main") {
+		return v.pages
+	}
+	v.pages.AddPage("main", v.table, true, true)
+	return v.pages
 }
 
 // Refresh refreshes the volume list
@@ -308,6 +314,59 @@ func (v *VolumeListView) pruneAllVolumes() {
 	slog.Info("All volumes pruned", slog.String("output", string(output)))
 	time.Sleep(500 * time.Millisecond)
 	v.Refresh()
+}
+
+// showConfirmation shows a confirmation dialog for aggressive operations
+func (v *VolumeListView) showConfirmation(operation string, volumeName string, force bool) {
+	var commandText string
+	if force {
+		commandText = fmt.Sprintf("docker %s -f %s", operation, volumeName)
+	} else {
+		commandText = fmt.Sprintf("docker %s %s", operation, volumeName)
+	}
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nVolume: %s", commandText, volumeName)).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("confirm")
+			if buttonLabel == "Yes" {
+				if row, _ := v.table.GetSelection(); row > 0 && row <= len(v.dockerVolumes) {
+					volume := v.dockerVolumes[row-1]
+					go v.deleteVolume(volume, force)
+				}
+			}
+		})
+
+	v.pages.AddPage("confirm", modal, true, true)
+}
+
+// showPruneConfirmation shows a confirmation dialog for prune operations
+func (v *VolumeListView) showPruneConfirmation(all bool) {
+	var commandText, message string
+	if all {
+		commandText = "docker volume prune -f --all"
+		message = "This will remove ALL unused volumes, including named volumes!"
+	} else {
+		commandText = "docker volume prune -f"
+		message = "This will remove all unused anonymous volumes."
+	}
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\n%s", commandText, message)).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("confirm")
+			if buttonLabel == "Yes" {
+				if all {
+					go v.pruneAllVolumes()
+				} else {
+					go v.pruneVolumes()
+				}
+			}
+		})
+
+	v.pages.AddPage("confirm", modal, true, true)
 }
 
 // GetSelectedVolume returns the currently selected volume

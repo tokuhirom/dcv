@@ -22,7 +22,6 @@ type InspectView struct {
 	targetName       string
 	targetType       string // "container", "image", "volume", "network"
 	scrollY          int
-	maxScrollY       int
 	searchText       string
 	searchRegex      bool
 	searchIgnoreCase bool
@@ -187,10 +186,11 @@ func (v *InspectView) setupSearchInput() {
 		SetFieldBackgroundColor(tcell.ColorBlack).
 		SetLabelColor(tcell.ColorYellow).
 		SetDoneFunc(func(key tcell.Key) {
-			if key == tcell.KeyEnter {
+			switch key {
+			case tcell.KeyEnter:
 				v.performSearch(v.searchInput.GetText())
 				v.isSearchMode = false
-			} else if key == tcell.KeyEscape {
+			case tcell.KeyEscape:
 				v.isSearchMode = false
 				v.searchInput.SetText("")
 			}
@@ -511,4 +511,3 @@ func (v *InspectView) GetSearchResults() []int {
 func (v *InspectView) IsSearchMode() bool {
 	return v.isSearchMode
 }
-

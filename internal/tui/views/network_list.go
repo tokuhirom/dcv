@@ -18,6 +18,7 @@ type NetworkListView struct {
 	docker         *docker.Client
 	table          *tview.Table
 	dockerNetworks []models.DockerNetwork
+	pages          *tview.Pages
 }
 
 // NewNetworkListView creates a new network list view
@@ -25,6 +26,7 @@ func NewNetworkListView(dockerClient *docker.Client) *NetworkListView {
 	v := &NetworkListView{
 		docker: dockerClient,
 		table:  tview.NewTable(),
+		pages:  tview.NewPages(),
 	}
 
 	v.setupTable()
@@ -83,7 +85,7 @@ func (v *NetworkListView) setupKeyHandlers() {
 			// Delete network
 			if row > 0 && row <= len(v.dockerNetworks) {
 				network := v.dockerNetworks[row-1]
-				go v.deleteNetwork(network)
+				v.showConfirmation("network rm", network)
 			}
 			return nil
 
@@ -104,7 +106,7 @@ func (v *NetworkListView) setupKeyHandlers() {
 
 		case 'p':
 			// Prune unused networks
-			go v.pruneNetworks()
+			v.showPruneConfirmation()
 			return nil
 
 		case 'r':
@@ -141,7 +143,11 @@ func (v *NetworkListView) setupKeyHandlers() {
 
 // GetPrimitive returns the tview primitive for this view
 func (v *NetworkListView) GetPrimitive() tview.Primitive {
-	return v.table
+	if v.pages.HasPage("main") {
+		return v.pages
+	}
+	v.pages.AddPage("main", v.table, true, true)
+	return v.pages
 }
 
 // Refresh refreshes the network list
@@ -275,6 +281,41 @@ func (v *NetworkListView) pruneNetworks() {
 	slog.Info("Networks pruned", slog.String("output", string(output)))
 	time.Sleep(500 * time.Millisecond)
 	v.Refresh()
+}
+
+// showConfirmation shows a confirmation dialog for aggressive operations
+func (v *NetworkListView) showConfirmation(operation string, network models.DockerNetwork) {
+	commandText := fmt.Sprintf("docker %s %s", operation, network.ID)
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nNetwork: %s", commandText, network.Name)).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("confirm")
+			if buttonLabel == "Yes" {
+				go v.deleteNetwork(network)
+			}
+		})
+
+	v.pages.AddPage("confirm", modal, true, true)
+}
+
+// showPruneConfirmation shows a confirmation dialog for prune operations
+func (v *NetworkListView) showPruneConfirmation() {
+	commandText := "docker network prune -f"
+	message := "This will remove all unused networks."
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\n%s", commandText, message)).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("confirm")
+			if buttonLabel == "Yes" {
+				go v.pruneNetworks()
+			}
+		})
+
+	v.pages.AddPage("confirm", modal, true, true)
 }
 
 // GetSelectedNetwork returns the currently selected network

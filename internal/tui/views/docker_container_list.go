@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ type DockerContainerListView struct {
 	table      *tview.Table
 	containers []models.DockerContainer
 	showAll    bool
+	pages      *tview.Pages
 }
 
 // NewDockerContainerListView creates a new Docker container list view
@@ -26,6 +28,7 @@ func NewDockerContainerListView(dockerClient *docker.Client) *DockerContainerLis
 		docker:  dockerClient,
 		table:   tview.NewTable(),
 		showAll: false,
+		pages:   tview.NewPages(),
 	}
 
 	v.setupTable()
@@ -91,7 +94,7 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			// Stop container
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
-				go v.stopContainer(container.ID)
+				v.showConfirmation("stop", container.ID, container.Names)
 			}
 			return nil
 
@@ -107,7 +110,7 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			// Kill container (uppercase K to avoid conflict with vim navigation)
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
-				go v.killContainer(container.ID)
+				v.showConfirmation("kill", container.ID, container.Names)
 			}
 			return nil
 
@@ -115,7 +118,7 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			// Delete container
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
-				go v.deleteContainer(container.ID)
+				v.showConfirmation("rm -f", container.ID, container.Names)
 			}
 			return nil
 
@@ -163,7 +166,11 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 
 // GetPrimitive returns the tview primitive for this view
 func (v *DockerContainerListView) GetPrimitive() tview.Primitive {
-	return v.table
+	if v.pages.HasPage("main") {
+		return v.pages
+	}
+	v.pages.AddPage("main", v.table, true, true)
+	return v.pages
 }
 
 // Refresh refreshes the container list
@@ -296,4 +303,33 @@ func (v *DockerContainerListView) execShell(containerID string) {
 	slog.Info("Executing shell in container", slog.String("container", containerID))
 	// TODO: Implement shell execution
 	// This would typically launch an external terminal or switch to a shell view
+}
+
+// showConfirmation shows a confirmation dialog for aggressive operations
+func (v *DockerContainerListView) showConfirmation(operation string, containerID string, containerName string) {
+	var commandText string
+	if operation == "rm -f" {
+		commandText = fmt.Sprintf("docker rm -f %s", containerID)
+	} else {
+		commandText = fmt.Sprintf("docker %s %s", operation, containerID)
+	}
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nContainer: %s", commandText, containerName)).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("confirm")
+			if buttonLabel == "Yes" {
+				switch operation {
+				case "stop":
+					go v.stopContainer(containerID)
+				case "kill":
+					go v.killContainer(containerID)
+				case "rm -f":
+					go v.deleteContainer(containerID)
+				}
+			}
+		})
+
+	v.pages.AddPage("confirm", modal, true, true)
 }

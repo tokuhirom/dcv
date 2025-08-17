@@ -178,7 +178,7 @@ func (a *App) updateNavbar(navbar *tview.TextView) {
 	for _, item := range items {
 		// Format: [number] name
 		itemText := fmt.Sprintf("[%s] %s", item.number, item.name)
-		
+
 		// Highlight current view
 		if item.viewType == a.state.CurrentView {
 			// White text on cyan background for current view
@@ -194,7 +194,7 @@ func (a *App) updateNavbar(navbar *tview.TextView) {
 
 	// Join with separator
 	text := strings.Join(parts, " [darkgray]|[-] ")
-	
+
 	// Add help hint at the end
 	if a.navbarHidden {
 		text += "  [darkgray]|[-] [yellow][H][-] Show navbar"
@@ -212,12 +212,12 @@ func (a *App) setupGlobalKeys() {
 		if event.Rune() >= '1' && event.Rune() <= '9' {
 			viewIndex := int(event.Rune() - '1')
 			viewTypes := []ui.ViewType{
-				ui.DockerContainerListView,  // 1
-				ui.ComposeProjectListView,   // 2
-				ui.ImageListView,            // 3
-				ui.NetworkListView,          // 4
-				ui.VolumeListView,           // 5
-				ui.StatsView,                // 6
+				ui.DockerContainerListView, // 1
+				ui.ComposeProjectListView,  // 2
+				ui.ImageListView,           // 3
+				ui.NetworkListView,         // 4
+				ui.VolumeListView,          // 5
+				ui.StatsView,               // 6
 			}
 			if viewIndex < len(viewTypes) {
 				a.SwitchView(viewTypes[viewIndex])
@@ -327,7 +327,7 @@ func (a *App) SwitchView(viewType ui.ViewType) {
 // toggleNavbar toggles the navbar visibility
 func (a *App) toggleNavbar() {
 	a.navbarHidden = !a.navbarHidden
-	
+
 	if a.navbarHidden {
 		// Remove navbar from layout
 		a.layout.RemoveItem(a.navbar)
@@ -336,12 +336,12 @@ func (a *App) toggleNavbar() {
 		a.layout.Clear()
 		a.layout.AddItem(a.navbar, 1, 0, false)
 		a.layout.AddItem(a.pages, 0, 1, true)
-		
+
 		// Re-add status bar if it exists
 		statusBar := a.createStatusBar()
 		a.layout.AddItem(statusBar, 1, 0, false)
 	}
-	
+
 	// Update navbar text
 	a.updateNavbar(a.navbar)
 	a.app.ForceDraw()

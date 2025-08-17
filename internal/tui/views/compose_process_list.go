@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ type ComposeProcessListView struct {
 	composeContainers []models.ComposeContainer
 	projectName       string
 	showAll           bool
+	pages             *tview.Pages
 }
 
 // NewComposeProcessListView creates a new compose process list view
@@ -27,6 +29,7 @@ func NewComposeProcessListView(dockerClient *docker.Client) *ComposeProcessListV
 		docker:  dockerClient,
 		table:   tview.NewTable(),
 		showAll: false,
+		pages:   tview.NewPages(),
 	}
 
 	v.setupTable()
@@ -91,7 +94,7 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 			// Stop container
 			if row > 0 && row <= len(v.composeContainers) {
 				container := v.composeContainers[row-1]
-				go v.stopContainer(container)
+				v.showConfirmation("compose stop", container)
 			}
 			return nil
 
@@ -107,7 +110,7 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 			// Restart container
 			if row > 0 && row <= len(v.composeContainers) {
 				container := v.composeContainers[row-1]
-				go v.restartContainer(container)
+				v.showConfirmation("compose restart", container)
 			}
 			return nil
 
@@ -115,7 +118,7 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 			// Delete container
 			if row > 0 && row <= len(v.composeContainers) {
 				container := v.composeContainers[row-1]
-				go v.deleteContainer(container)
+				v.showConfirmation("compose rm -f", container)
 			}
 			return nil
 
@@ -169,7 +172,11 @@ func (v *ComposeProcessListView) SetProject(projectName string) {
 
 // GetPrimitive returns the tview primitive for this view
 func (v *ComposeProcessListView) GetPrimitive() tview.Primitive {
-	return v.table
+	if v.pages.HasPage("main") {
+		return v.pages
+	}
+	v.pages.AddPage("main", v.table, true, true)
+	return v.pages
 }
 
 // Refresh refreshes the container list
@@ -333,4 +340,36 @@ func (v *ComposeProcessListView) execShell(container models.ComposeContainer) {
 		slog.String("service", container.Service))
 	// TODO: Implement shell execution
 	// This would typically launch an external terminal or switch to a shell view
+}
+
+// showConfirmation shows a confirmation dialog for aggressive operations
+func (v *ComposeProcessListView) showConfirmation(operation string, container models.ComposeContainer) {
+	var commandText string
+	switch operation {
+	case "compose stop":
+		commandText = fmt.Sprintf("docker compose -p %s stop %s", v.projectName, container.Service)
+	case "compose restart":
+		commandText = fmt.Sprintf("docker compose -p %s restart %s", v.projectName, container.Service)
+	case "compose rm -f":
+		commandText = fmt.Sprintf("docker compose -p %s rm -f %s", v.projectName, container.Service)
+	}
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nService: %s", commandText, container.Name)).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("confirm")
+			if buttonLabel == "Yes" {
+				switch operation {
+				case "compose stop":
+					go v.stopContainer(container)
+				case "compose restart":
+					go v.restartContainer(container)
+				case "compose rm -f":
+					go v.deleteContainer(container)
+				}
+			}
+		})
+
+	v.pages.AddPage("confirm", modal, true, true)
 }

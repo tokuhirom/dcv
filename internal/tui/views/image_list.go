@@ -19,6 +19,7 @@ type ImageListView struct {
 	table        *tview.Table
 	dockerImages []models.DockerImage
 	showAll      bool
+	pages        *tview.Pages
 }
 
 // NewImageListView creates a new image list view
@@ -27,6 +28,7 @@ func NewImageListView(dockerClient *docker.Client) *ImageListView {
 		docker:  dockerClient,
 		table:   tview.NewTable(),
 		showAll: false,
+		pages:   tview.NewPages(),
 	}
 
 	v.setupTable()
@@ -91,7 +93,7 @@ func (v *ImageListView) setupKeyHandlers() {
 			// Delete image
 			if row > 0 && row <= len(v.dockerImages) {
 				image := v.dockerImages[row-1]
-				go v.deleteImage(image)
+				v.showConfirmation("rmi", image, false)
 			}
 			return nil
 
@@ -99,7 +101,7 @@ func (v *ImageListView) setupKeyHandlers() {
 			// Force delete image
 			if row > 0 && row <= len(v.dockerImages) {
 				image := v.dockerImages[row-1]
-				go v.forceDeleteImage(image)
+				v.showConfirmation("rmi -f", image, true)
 			}
 			return nil
 
@@ -171,7 +173,11 @@ func (v *ImageListView) setupKeyHandlers() {
 
 // GetPrimitive returns the tview primitive for this view
 func (v *ImageListView) GetPrimitive() tview.Primitive {
-	return v.table
+	if v.pages.HasPage("main") {
+		return v.pages
+	}
+	v.pages.AddPage("main", v.table, true, true)
+	return v.pages
 }
 
 // Refresh refreshes the image list
@@ -339,6 +345,32 @@ func (v *ImageListView) showHistory(image models.DockerImage) {
 
 	// TODO: Display history in a dialog or switch to a history view
 	slog.Info("Image history", slog.String("output", string(output)))
+}
+
+// showConfirmation shows a confirmation dialog for aggressive operations
+func (v *ImageListView) showConfirmation(operation string, image models.DockerImage, force bool) {
+	var commandText string
+	if force {
+		commandText = fmt.Sprintf("docker rmi -f %s", image.GetRepoTag())
+	} else {
+		commandText = fmt.Sprintf("docker rmi %s", image.GetRepoTag())
+	}
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nImage: %s", commandText, image.GetRepoTag())).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("confirm")
+			if buttonLabel == "Yes" {
+				if force {
+					go v.forceDeleteImage(image)
+				} else {
+					go v.deleteImage(image)
+				}
+			}
+		})
+
+	v.pages.AddPage("confirm", modal, true, true)
 }
 
 // GetSelectedImage returns the currently selected image

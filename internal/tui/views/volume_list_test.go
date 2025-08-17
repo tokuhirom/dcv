@@ -57,7 +57,7 @@ func TestVolumeListView_GetPrimitive(t *testing.T) {
 	primitive := view.GetPrimitive()
 
 	assert.NotNil(t, primitive)
-	_, ok := primitive.(*tview.Table)
+	_, ok := primitive.(*tview.Pages)
 	assert.True(t, ok)
 }
 
@@ -337,9 +337,9 @@ func TestVolumeListView_KeyHandling(t *testing.T) {
 	// We can't easily test the actual key handling without running the app,
 	// but we can verify the structure is in place
 	primitive := view.GetPrimitive()
-	table, ok := primitive.(*tview.Table)
+	pages, ok := primitive.(*tview.Pages)
 	assert.True(t, ok)
-	assert.NotNil(t, table)
+	assert.NotNil(t, pages)
 }
 
 func TestVolumeListView_VolumeLabels(t *testing.T) {
