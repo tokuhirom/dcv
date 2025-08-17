@@ -21,6 +21,7 @@ type ComposeProcessListView struct {
 	projectName       string
 	showAll           bool
 	pages             *tview.Pages
+	switchToLogViewFn func(containerID string, container interface{})
 }
 
 // NewComposeProcessListView creates a new compose process list view
@@ -126,8 +127,11 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 			// View logs
 			if row > 0 && row <= len(v.composeContainers) {
 				container := v.composeContainers[row-1]
-				// TODO: Switch to log view
-				slog.Info("View logs for compose container", slog.String("container", container.Name))
+				if v.switchToLogViewFn != nil {
+					v.switchToLogViewFn(container.ID, container)
+				} else {
+					slog.Info("View logs for compose container", slog.String("container", container.Name))
+				}
 			}
 			return nil
 
@@ -194,6 +198,11 @@ func (v *ComposeProcessListView) GetTitle() string {
 		return "Compose: " + v.projectName
 	}
 	return "Compose Processes"
+}
+
+// SetSwitchToLogViewCallback sets the callback for switching to log view
+func (v *ComposeProcessListView) SetSwitchToLogViewCallback(fn func(containerID string, container interface{})) {
+	v.switchToLogViewFn = fn
 }
 
 // loadContainers loads the container list from Docker Compose

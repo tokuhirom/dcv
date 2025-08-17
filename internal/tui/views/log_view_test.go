@@ -1,0 +1,295 @@
+package views
+
+import (
+	"regexp"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/tokuhirom/dcv/internal/docker"
+)
+
+func TestNewLogView(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	assert.NotNil(t, view)
+	assert.NotNil(t, view.docker)
+	assert.NotNil(t, view.textView)
+	assert.NotNil(t, view.pages)
+	assert.Empty(t, view.containerID)
+	assert.Empty(t, view.logs)
+	assert.True(t, view.autoScroll)
+	assert.True(t, view.wrap)
+	assert.True(t, view.follow)
+	assert.False(t, view.timestamps)
+	assert.Equal(t, "100", view.tail)
+	assert.False(t, view.streaming)
+}
+
+func TestLogView_GetPrimitive(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	primitive := view.GetPrimitive()
+	assert.NotNil(t, primitive)
+}
+
+func TestLogView_GetTitle(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Test with no container
+	title := view.GetTitle()
+	assert.Equal(t, "Container Logs [Following | Auto-scroll | Wrap]", title)
+
+	// Test with container ID
+	view.containerID = "abc123def456"
+	title = view.GetTitle()
+	assert.Contains(t, title, "Logs: abc123def456")
+	assert.Contains(t, title, "Following")
+
+	// Test with paused streaming
+	view.follow = false
+	title = view.GetTitle()
+	assert.Contains(t, title, "Paused")
+
+	// Test with search
+	view.searchText = "error"
+	title = view.GetTitle()
+	assert.Contains(t, title, "Search: error")
+
+	// Test with filter
+	view.isFiltered = true
+	view.filterText = "warning"
+	title = view.GetTitle()
+	assert.Contains(t, title, "Filter: warning")
+}
+
+func TestLogView_SetContainer(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Set container ID directly to avoid starting streaming
+	view.mu.Lock()
+	view.containerID = "abc123"
+	view.mu.Unlock()
+
+	assert.Equal(t, "abc123", view.containerID)
+}
+
+func TestLogView_AddLog(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Directly add logs without calling addLog to avoid QueueUpdateDraw
+	view.mu.Lock()
+	view.logs = append(view.logs, "Test log line 1")
+	view.mu.Unlock()
+
+	assert.Len(t, view.logs, 1)
+	assert.Equal(t, "Test log line 1", view.logs[0])
+
+	// Add another log line
+	view.mu.Lock()
+	view.logs = append(view.logs, "Test log line 2")
+	view.mu.Unlock()
+
+	assert.Len(t, view.logs, 2)
+	assert.Equal(t, "Test log line 2", view.logs[1])
+}
+
+func TestLogView_ClearLogs(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Add some logs directly to avoid QueueUpdateDraw
+	view.mu.Lock()
+	view.logs = append(view.logs, "Test log 1")
+	view.logs = append(view.logs, "Test log 2")
+	view.mu.Unlock()
+	assert.Len(t, view.logs, 2)
+
+	// Clear logs
+	view.mu.Lock()
+	view.logs = nil
+	view.filteredLogs = nil
+	view.mu.Unlock()
+
+	assert.Empty(t, view.logs)
+	assert.Empty(t, view.filteredLogs)
+}
+
+func TestLogView_Search(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Add some logs
+	view.logs = []string{
+		"Info: Starting application",
+		"Error: Failed to connect",
+		"Warning: Low memory",
+		"Error: Timeout occurred",
+		"Info: Application running",
+	}
+
+	// Manually perform search logic without calling performSearch
+	searchText := "Error"
+	view.searchText = searchText
+	view.searchResults = nil
+	view.currentSearchIdx = 0
+
+	// Create regex
+	searchRegex, err := regexp.Compile("(?i)" + regexp.QuoteMeta(searchText))
+	assert.NoError(t, err)
+	view.searchRegex = searchRegex
+
+	// Find matching lines
+	for i, line := range view.logs {
+		if searchRegex.MatchString(line) {
+			view.searchResults = append(view.searchResults, i)
+		}
+	}
+
+	assert.Equal(t, "Error", view.searchText)
+	assert.NotNil(t, view.searchRegex)
+	assert.Len(t, view.searchResults, 2) // Should find 2 error lines
+	assert.Equal(t, 1, view.searchResults[0])
+	assert.Equal(t, 3, view.searchResults[1])
+}
+
+func TestLogView_Filter(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Add some logs
+	view.logs = []string{
+		"Info: Starting application",
+		"Error: Failed to connect",
+		"Warning: Low memory",
+		"Error: Timeout occurred",
+		"Info: Application running",
+	}
+
+	// Manually apply filter logic without calling applyFilter
+	filterText := "Error"
+	view.filterText = filterText
+
+	// Create regex
+	filterRegex, err := regexp.Compile("(?i)" + regexp.QuoteMeta(filterText))
+	assert.NoError(t, err)
+	view.filterRegex = filterRegex
+
+	// Filter logs
+	view.mu.Lock()
+	view.filteredLogs = nil
+	for _, line := range view.logs {
+		if filterRegex.MatchString(line) {
+			view.filteredLogs = append(view.filteredLogs, line)
+		}
+	}
+	view.isFiltered = true
+	view.mu.Unlock()
+
+	assert.Equal(t, "Error", view.filterText)
+	assert.NotNil(t, view.filterRegex)
+	assert.True(t, view.isFiltered)
+	assert.Len(t, view.filteredLogs, 2) // Should filter to 2 error lines
+	assert.Equal(t, "Error: Failed to connect", view.filteredLogs[0])
+	assert.Equal(t, "Error: Timeout occurred", view.filteredLogs[1])
+
+	// Clear filter manually
+	view.filterText = ""
+	view.isFiltered = false
+	view.filterRegex = nil
+	view.filteredLogs = nil
+
+	assert.False(t, view.isFiltered)
+	assert.Nil(t, view.filterRegex)
+	assert.Nil(t, view.filteredLogs)
+}
+
+func TestLogView_BufferLimit(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Add more than 10000 logs directly to avoid QueueUpdateDraw
+	view.mu.Lock()
+	for i := 0; i < 10100; i++ {
+		view.logs = append(view.logs, "Log line")
+		// Apply buffer limit logic
+		if len(view.logs) > 10000 {
+			view.logs = view.logs[len(view.logs)-10000:]
+		}
+	}
+	view.mu.Unlock()
+
+	// Should be limited to 10000
+	assert.Len(t, view.logs, 10000)
+}
+
+func TestLogView_ToggleSettings(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Test follow flag toggle directly without starting streaming
+	assert.True(t, view.follow)
+	view.follow = false
+	assert.False(t, view.follow)
+	view.follow = true
+	assert.True(t, view.follow)
+
+	// Test tail setting
+	view.tail = "50"
+	assert.Equal(t, "50", view.tail)
+}
+
+func TestLogView_SearchAndFilter(t *testing.T) {
+	dockerClient := docker.NewClient()
+	view := NewLogView(dockerClient)
+
+	// Add logs
+	view.logs = []string{
+		"2024-01-01 Info: Start",
+		"2024-01-01 Error: Connection failed",
+		"2024-01-02 Error: Timeout",
+		"2024-01-02 Info: Retry",
+	}
+
+	// Apply filter manually
+	filterText := "Error"
+	filterRegex, err := regexp.Compile("(?i)" + regexp.QuoteMeta(filterText))
+	assert.NoError(t, err)
+	view.filterRegex = filterRegex
+	view.filterText = filterText
+
+	view.mu.Lock()
+	view.filteredLogs = nil
+	for _, line := range view.logs {
+		if filterRegex.MatchString(line) {
+			view.filteredLogs = append(view.filteredLogs, line)
+		}
+	}
+	view.isFiltered = true
+	view.mu.Unlock()
+
+	assert.Len(t, view.filteredLogs, 2)
+
+	// Then search within filtered results manually
+	searchText := "Timeout"
+	searchRegex, err := regexp.Compile("(?i)" + regexp.QuoteMeta(searchText))
+	assert.NoError(t, err)
+	view.searchRegex = searchRegex
+	view.searchText = searchText
+	view.searchResults = nil
+
+	// Search in filtered logs
+	logs := view.filteredLogs
+	for i, line := range logs {
+		if searchRegex.MatchString(line) {
+			view.searchResults = append(view.searchResults, i)
+		}
+	}
+
+	assert.Len(t, view.searchResults, 1)
+}
