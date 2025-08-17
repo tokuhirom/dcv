@@ -23,6 +23,7 @@ type ComposeProcessListView struct {
 	pages                 *tview.Pages
 	switchToLogViewFn     func(containerID string, container interface{})
 	switchToFileBrowserFn func(containerID string, container interface{})
+	switchToInspectViewFn func(containerID string, container interface{})
 }
 
 // NewComposeProcessListView creates a new compose process list view
@@ -160,8 +161,11 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 			// Inspect container
 			if row > 0 && row <= len(v.composeContainers) {
 				container := v.composeContainers[row-1]
-				// TODO: Switch to inspect view
-				slog.Info("Inspect compose container", slog.String("container", container.Name))
+				if v.switchToInspectViewFn != nil {
+					v.switchToInspectViewFn(container.ID, container)
+				} else {
+					slog.Info("Inspect compose container", slog.String("container", container.Name))
+				}
 			}
 			return nil
 		}
@@ -221,6 +225,11 @@ func (v *ComposeProcessListView) SetSwitchToLogViewCallback(fn func(containerID 
 // SetSwitchToFileBrowserCallback sets the callback for switching to file browser view
 func (v *ComposeProcessListView) SetSwitchToFileBrowserCallback(fn func(containerID string, container interface{})) {
 	v.switchToFileBrowserFn = fn
+}
+
+// SetSwitchToInspectViewCallback sets the callback for switching to inspect view
+func (v *ComposeProcessListView) SetSwitchToInspectViewCallback(fn func(containerID string, container interface{})) {
+	v.switchToInspectViewFn = fn
 }
 
 // loadContainers loads the container list from Docker Compose

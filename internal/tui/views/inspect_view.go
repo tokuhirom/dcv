@@ -222,6 +222,23 @@ func (v *InspectView) GetTitle() string {
 	return title
 }
 
+// SetTarget sets the target for inspection and loads the data asynchronously
+func (v *InspectView) SetTarget(targetID, targetName, targetType string) {
+	v.targetName = targetName
+	v.targetType = targetType
+
+	// Load inspect data asynchronously to avoid blocking the UI
+	go func() {
+		err := v.LoadInspectData(targetID, targetType)
+		if err != nil {
+			slog.Error("Failed to load inspect data", slog.Any("error", err))
+			QueueUpdateDraw(func() {
+				v.textView.SetText(fmt.Sprintf("[red]Error loading inspect data: %v[-]", err))
+			})
+		}
+	}()
+}
+
 // LoadInspectData loads and displays inspect data for a Docker resource
 func (v *InspectView) LoadInspectData(targetName, targetType string) error {
 	v.targetName = targetName
