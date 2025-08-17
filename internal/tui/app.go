@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -14,12 +15,15 @@ import (
 
 // App represents the main tview application
 type App struct {
-	app         *tview.Application
-	pages       *tview.Pages
-	state       *State
-	docker      *docker.Client
-	views       map[ui.ViewType]views.View
-	initialView ui.ViewType
+	app          *tview.Application
+	pages        *tview.Pages
+	state        *State
+	docker       *docker.Client
+	views        map[ui.ViewType]views.View
+	initialView  ui.ViewType
+	navbar       *tview.TextView
+	navbarHidden bool
+	layout       *tview.Flex
 }
 
 // NewApp creates a new tview application
@@ -117,19 +121,19 @@ func (a *App) initializeViews() {
 // setupLayout creates the main layout with navbar and status bar
 func (a *App) setupLayout() {
 	// Create navbar
-	navbar := a.createNavbar()
+	a.navbar = a.createNavbar()
 
 	// Create status bar
 	statusBar := a.createStatusBar()
 
 	// Create main layout
-	flex := tview.NewFlex().
+	a.layout = tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(navbar, 1, 0, false).
+		AddItem(a.navbar, 1, 0, false).
 		AddItem(a.pages, 0, 1, true).
 		AddItem(statusBar, 1, 0, false)
 
-	a.app.SetRoot(flex, true)
+	a.app.SetRoot(a.layout, true)
 }
 
 // createNavbar creates the navigation bar
@@ -154,25 +158,48 @@ func (a *App) createStatusBar() *tview.TextView {
 
 // updateNavbar updates the navbar based on current view
 func (a *App) updateNavbar(navbar *tview.TextView) {
-	viewNames := map[ui.ViewType]string{
-		ui.DockerContainerListView: "Docker",
-		ui.ComposeProcessListView:  "Compose",
-		ui.ComposeProjectListView:  "Projects",
-		ui.ImageListView:           "Images",
-		ui.NetworkListView:         "Networks",
-		ui.VolumeListView:          "Volumes",
-		ui.LogView:                 "Logs",
-		ui.StatsView:               "Stats",
-		ui.HelpView:                "Help",
+	// Define views with their numbers and names
+	type navItem struct {
+		viewType ui.ViewType
+		number   string
+		name     string
 	}
 
-	var text string
-	for viewType, name := range viewNames {
-		if viewType == a.state.CurrentView {
-			text += fmt.Sprintf("[black:cyan] %s [-:-] ", name)
+	items := []navItem{
+		{ui.DockerContainerListView, "1", "Containers"},
+		{ui.ComposeProjectListView, "2", "Projects"},
+		{ui.ImageListView, "3", "Images"},
+		{ui.NetworkListView, "4", "Networks"},
+		{ui.VolumeListView, "5", "Volumes"},
+		{ui.StatsView, "6", "Stats"},
+	}
+
+	var parts []string
+	for _, item := range items {
+		// Format: [number] name
+		itemText := fmt.Sprintf("[%s] %s", item.number, item.name)
+		
+		// Highlight current view
+		if item.viewType == a.state.CurrentView {
+			// White text on cyan background for current view
+			parts = append(parts, fmt.Sprintf("[black:cyan] %s [-:-]", itemText))
+		} else if item.viewType == ui.ComposeProjectListView && a.state.CurrentView == ui.ComposeProcessListView {
+			// Also highlight Projects when in Compose Process view
+			parts = append(parts, fmt.Sprintf("[black:cyan] %s [-:-]", itemText))
 		} else {
-			text += fmt.Sprintf(" %s  ", name)
+			// Normal gray text for inactive views
+			parts = append(parts, fmt.Sprintf("[gray]%s[-]", itemText))
 		}
+	}
+
+	// Join with separator
+	text := strings.Join(parts, " [darkgray]|[-] ")
+	
+	// Add help hint at the end
+	if a.navbarHidden {
+		text += "  [darkgray]|[-] [yellow][H][-] Show navbar"
+	} else {
+		text += "  [darkgray]|[-] [yellow][H][-] Hide navbar"
 	}
 
 	navbar.SetText(text)
@@ -185,12 +212,12 @@ func (a *App) setupGlobalKeys() {
 		if event.Rune() >= '1' && event.Rune() <= '9' {
 			viewIndex := int(event.Rune() - '1')
 			viewTypes := []ui.ViewType{
-				ui.DockerContainerListView,
-				ui.ComposeProcessListView,
-				ui.ComposeProjectListView,
-				ui.ImageListView,
-				ui.NetworkListView,
-				ui.VolumeListView,
+				ui.DockerContainerListView,  // 1
+				ui.ComposeProjectListView,   // 2
+				ui.ImageListView,            // 3
+				ui.NetworkListView,          // 4
+				ui.VolumeListView,           // 5
+				ui.StatsView,                // 6
 			}
 			if viewIndex < len(viewTypes) {
 				a.SwitchView(viewTypes[viewIndex])
@@ -226,6 +253,10 @@ func (a *App) setupGlobalKeys() {
 			if view, ok := a.views[a.state.CurrentView]; ok {
 				view.Refresh()
 			}
+			return nil
+		case 'h', 'H':
+			// Toggle navbar visibility
+			a.toggleNavbar()
 			return nil
 		}
 
@@ -290,6 +321,29 @@ func (a *App) SwitchView(viewType ui.ViewType) {
 		a.pages.SwitchToPage("help")
 	}
 
+	a.app.ForceDraw()
+}
+
+// toggleNavbar toggles the navbar visibility
+func (a *App) toggleNavbar() {
+	a.navbarHidden = !a.navbarHidden
+	
+	if a.navbarHidden {
+		// Remove navbar from layout
+		a.layout.RemoveItem(a.navbar)
+	} else {
+		// Add navbar back to layout at the top
+		a.layout.Clear()
+		a.layout.AddItem(a.navbar, 1, 0, false)
+		a.layout.AddItem(a.pages, 0, 1, true)
+		
+		// Re-add status bar if it exists
+		statusBar := a.createStatusBar()
+		a.layout.AddItem(statusBar, 1, 0, false)
+	}
+	
+	// Update navbar text
+	a.updateNavbar(a.navbar)
 	a.app.ForceDraw()
 }
 
