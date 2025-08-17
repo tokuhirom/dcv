@@ -77,6 +77,7 @@ func (a *App) initializeViews() {
 	dockerView := views.NewDockerContainerListView(a.docker)
 	dockerView.SetSwitchToLogViewCallback(a.SwitchToLogView)
 	dockerView.SetSwitchToFileBrowserCallback(a.SwitchToFileBrowser)
+	dockerView.SetSwitchToInspectViewCallback(a.SwitchToInspectView)
 	a.views[ui.DockerContainerListView] = dockerView
 	a.pages.AddPage("docker", dockerView.GetPrimitive(), true, false)
 
@@ -84,6 +85,7 @@ func (a *App) initializeViews() {
 	composeView := views.NewComposeProcessListView(a.docker)
 	composeView.SetSwitchToLogViewCallback(a.SwitchToLogView)
 	composeView.SetSwitchToFileBrowserCallback(a.SwitchToFileBrowser)
+	composeView.SetSwitchToInspectViewCallback(a.SwitchToInspectView)
 	a.views[ui.ComposeProcessListView] = composeView
 	a.pages.AddPage("compose", composeView.GetPrimitive(), true, false)
 
@@ -132,6 +134,11 @@ func (a *App) initializeViews() {
 	fileContentView := views.NewFileContentView(a.docker)
 	a.views[ui.FileContentView] = fileContentView
 	a.pages.AddPage("file-content", fileContentView.GetPrimitive(), true, false)
+
+	// Create Inspect view
+	inspectView := views.NewInspectView(a.docker)
+	a.views[ui.InspectView] = inspectView
+	a.pages.AddPage("inspect", inspectView.GetPrimitive(), true, false)
 
 	// Set callbacks for file browser
 	fileBrowserView.SetSwitchToContentViewCallback(a.SwitchToFileContent)
@@ -345,6 +352,11 @@ func (a *App) SwitchView(viewType ui.ViewType) {
 		}
 	case ui.FileContentView:
 		a.pages.SwitchToPage("file-content")
+	case ui.InspectView:
+		a.pages.SwitchToPage("inspect")
+		if view, ok := a.views[viewType]; ok {
+			view.Refresh()
+		}
 	}
 
 	a.app.ForceDraw()
@@ -415,6 +427,27 @@ func (a *App) SwitchToFileContent(containerID, path string, file models.Containe
 
 	// Switch to the file content view
 	a.SwitchView(ui.FileContentView)
+}
+
+// SwitchToInspectView switches to the inspect view for a container
+func (a *App) SwitchToInspectView(containerID string, container interface{}) {
+	// Set the target in the inspect view
+	if inspectView, ok := a.views[ui.InspectView]; ok {
+		if iv, ok := inspectView.(*views.InspectView); ok {
+			containerName := ""
+			// Extract container name based on type
+			switch c := container.(type) {
+			case models.DockerContainer:
+				containerName = c.Names
+			case models.ComposeContainer:
+				containerName = c.Name
+			}
+			iv.SetTarget(containerID, containerName, "container")
+		}
+	}
+
+	// Switch to the inspect view
+	a.SwitchView(ui.InspectView)
 }
 
 // toggleNavbar toggles the navbar visibility

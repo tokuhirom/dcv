@@ -22,6 +22,7 @@ type DockerContainerListView struct {
 	pages                 *tview.Pages
 	switchToLogViewFn     func(containerID string, container interface{})
 	switchToFileBrowserFn func(containerID string, container interface{})
+	switchToInspectViewFn func(containerID string, container interface{})
 }
 
 // NewDockerContainerListView creates a new Docker container list view
@@ -168,8 +169,11 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			// Inspect container
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
-				// TODO: Switch to inspect view
-				slog.Info("Inspect container", slog.String("container", container.ID))
+				if v.switchToInspectViewFn != nil {
+					v.switchToInspectViewFn(container.ID, container)
+				} else {
+					slog.Info("Inspect container", slog.String("container", container.ID))
+				}
 			}
 			return nil
 		}
@@ -216,6 +220,11 @@ func (v *DockerContainerListView) SetSwitchToLogViewCallback(fn func(containerID
 // SetSwitchToFileBrowserCallback sets the callback for switching to file browser view
 func (v *DockerContainerListView) SetSwitchToFileBrowserCallback(fn func(containerID string, container interface{})) {
 	v.switchToFileBrowserFn = fn
+}
+
+// SetSwitchToInspectViewCallback sets the callback for switching to inspect view
+func (v *DockerContainerListView) SetSwitchToInspectViewCallback(fn func(containerID string, container interface{})) {
+	v.switchToInspectViewFn = fn
 }
 
 // loadContainers loads the container list from Docker
