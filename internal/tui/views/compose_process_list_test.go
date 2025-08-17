@@ -354,7 +354,7 @@ func TestComposeProcessListView_ContainerOperations(t *testing.T) {
 		view := NewComposeProcessListView(dockerClient)
 		view.composeContainers = createTestComposeContainers()
 		view.projectName = "myapp"
-		
+
 		assert.NotPanics(t, func() {
 			view.stopContainer(view.composeContainers[0])
 		})
@@ -365,7 +365,7 @@ func TestComposeProcessListView_ContainerOperations(t *testing.T) {
 		view := NewComposeProcessListView(dockerClient)
 		view.composeContainers = createTestComposeContainers()
 		view.projectName = "myapp"
-		
+
 		assert.NotPanics(t, func() {
 			view.startContainer(view.composeContainers[0])
 		})
@@ -376,7 +376,7 @@ func TestComposeProcessListView_ContainerOperations(t *testing.T) {
 		view := NewComposeProcessListView(dockerClient)
 		view.composeContainers = createTestComposeContainers()
 		view.projectName = "myapp"
-		
+
 		assert.NotPanics(t, func() {
 			view.restartContainer(view.composeContainers[0])
 		})
@@ -387,7 +387,7 @@ func TestComposeProcessListView_ContainerOperations(t *testing.T) {
 		view := NewComposeProcessListView(dockerClient)
 		view.composeContainers = createTestComposeContainers()
 		view.projectName = "myapp"
-		
+
 		assert.NotPanics(t, func() {
 			view.deleteContainer(view.composeContainers[0])
 		})
@@ -398,7 +398,7 @@ func TestComposeProcessListView_ContainerOperations(t *testing.T) {
 		view := NewComposeProcessListView(dockerClient)
 		view.composeContainers = createTestComposeContainers()
 		view.projectName = "myapp"
-		
+
 		assert.NotPanics(t, func() {
 			view.execShell(view.composeContainers[0])
 		})
