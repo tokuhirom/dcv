@@ -181,7 +181,7 @@ func (a *App) createStatusBar() *tview.TextView {
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignLeft)
 
-	statusBar.SetText(" [yellow]?[white] Help | [yellow]q[white] Quit | [yellow]1-9[white] Switch View")
+	statusBar.SetText(" [yellow]?[white] Help | [yellow]x[white] Actions/Execute | [yellow]q[white] Quit | [yellow]1-9[white] Switch View")
 	return statusBar
 }
 
