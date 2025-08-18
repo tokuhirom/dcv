@@ -3,6 +3,7 @@ package views
 import (
 	"sync"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -29,4 +30,39 @@ func QueueUpdateDraw(f func()) {
 	if app != nil {
 		app.QueueUpdateDraw(f)
 	}
+}
+
+// CreateConfirmationModal creates a confirmation modal with y/n keyboard shortcuts
+func CreateConfirmationModal(text string, onYes, onNo func()) *tview.Modal {
+	modal := tview.NewModal().
+		SetText(text).
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "Yes" && onYes != nil {
+				onYes()
+			} else if onNo != nil {
+				onNo()
+			}
+		})
+
+	// Add keyboard shortcuts for y/n
+	modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Rune() {
+		case 'y', 'Y':
+			// Yes - execute the onYes callback
+			if onYes != nil {
+				onYes()
+			}
+			return nil
+		case 'n', 'N':
+			// No - execute the onNo callback
+			if onNo != nil {
+				onNo()
+			}
+			return nil
+		}
+		return event
+	})
+
+	return modal
 }

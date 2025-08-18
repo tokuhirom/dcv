@@ -42,17 +42,19 @@ func (s StatsSortField) String() string {
 
 // StatsView displays container statistics
 type StatsView struct {
-	docker          *docker.Client
-	table           *tview.Table
-	stats           []models.ContainerStats
-	sortField       StatsSortField
-	sortReverse     bool
-	autoRefresh     bool
-	refreshInterval time.Duration
-	stopRefresh     chan bool
-	isRefreshing    bool
-	showAll         bool         // Show all containers or just running ones
-	mu              sync.RWMutex // Protects showAll, autoRefresh, isRefreshing
+	docker            *docker.Client
+	table             *tview.Table
+	stats             []models.ContainerStats
+	sortField         StatsSortField
+	sortReverse       bool
+	autoRefresh       bool
+	refreshInterval   time.Duration
+	stopRefresh       chan bool
+	isRefreshing      bool
+	showAll           bool         // Show all containers or just running ones
+	mu                sync.RWMutex // Protects showAll, autoRefresh, isRefreshing
+	switchToLogViewFn func(containerID string, container interface{})
+	switchToTopViewFn func(containerID string, container interface{})
 }
 
 // NewStatsView creates a new stats view
@@ -177,6 +179,28 @@ func (v *StatsView) setupKeyHandlers() {
 			v.Refresh()
 			return nil
 
+		case 'l':
+			// View logs
+			if row > 0 && row <= len(v.stats) {
+				stat := v.stats[row-1]
+				if v.switchToLogViewFn != nil {
+					// Use Container ID from stats
+					v.switchToLogViewFn(stat.Container, stat)
+				}
+			}
+			return nil
+
+		case 't':
+			// View top (processes)
+			if row > 0 && row <= len(v.stats) {
+				stat := v.stats[row-1]
+				if v.switchToTopViewFn != nil {
+					// Use Container ID from stats
+					v.switchToTopViewFn(stat.Container, stat)
+				}
+			}
+			return nil
+
 		case '+':
 			// Increase refresh interval
 			v.mu.Lock()
@@ -243,4 +267,14 @@ func (v *StatsView) GetTitle() string {
 		title += " [Running]"
 	}
 	return title
+}
+
+// SetSwitchToLogViewCallback sets the callback for switching to log view
+func (v *StatsView) SetSwitchToLogViewCallback(fn func(containerID string, container interface{})) {
+	v.switchToLogViewFn = fn
+}
+
+// SetSwitchToTopViewCallback sets the callback for switching to top view
+func (v *StatsView) SetSwitchToTopViewCallback(fn func(containerID string, container interface{})) {
+	v.switchToTopViewFn = fn
 }

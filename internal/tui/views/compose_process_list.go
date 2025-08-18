@@ -24,6 +24,7 @@ type ComposeProcessListView struct {
 	switchToLogViewFn     func(containerID string, container interface{})
 	switchToFileBrowserFn func(containerID string, container interface{})
 	switchToInspectViewFn func(containerID string, container interface{})
+	switchToTopViewFn     func(containerID string, container interface{})
 }
 
 // NewComposeProcessListView creates a new compose process list view
@@ -176,6 +177,18 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 				}
 			}
 			return nil
+
+		case 't':
+			// View top (processes)
+			if row > 0 && row <= len(v.composeContainers) {
+				container := v.composeContainers[row-1]
+				if v.switchToTopViewFn != nil {
+					v.switchToTopViewFn(container.ID, container)
+				} else {
+					slog.Info("View top for compose container", slog.String("container", container.Name))
+				}
+			}
+			return nil
 		}
 
 		switch event.Key() {
@@ -238,6 +251,11 @@ func (v *ComposeProcessListView) SetSwitchToFileBrowserCallback(fn func(containe
 // SetSwitchToInspectViewCallback sets the callback for switching to inspect view
 func (v *ComposeProcessListView) SetSwitchToInspectViewCallback(fn func(containerID string, container interface{})) {
 	v.switchToInspectViewFn = fn
+}
+
+// SetSwitchToTopViewCallback sets the callback for switching to top view
+func (v *ComposeProcessListView) SetSwitchToTopViewCallback(fn func(containerID string, container interface{})) {
+	v.switchToTopViewFn = fn
 }
 
 // loadContainers loads the container list from Docker Compose
@@ -457,22 +475,24 @@ func (v *ComposeProcessListView) showConfirmation(operation string, container mo
 		commandText = fmt.Sprintf("docker compose -p %s rm -f %s", v.projectName, container.Service)
 	}
 
-	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nService: %s", commandText, container.Name)).
-		AddButtons([]string{"Yes", "No"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			v.pages.RemovePage("confirm")
-			if buttonLabel == "Yes" {
-				switch operation {
-				case "compose stop":
-					go v.stopContainer(container)
-				case "compose restart":
-					go v.restartContainer(container)
-				case "compose rm -f":
-					go v.deleteContainer(container)
-				}
-			}
-		})
+	text := fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nService: %s", commandText, container.Name)
 
+	onYes := func() {
+		v.pages.RemovePage("confirm")
+		switch operation {
+		case "compose stop":
+			go v.stopContainer(container)
+		case "compose restart":
+			go v.restartContainer(container)
+		case "compose rm -f":
+			go v.deleteContainer(container)
+		}
+	}
+
+	onNo := func() {
+		v.pages.RemovePage("confirm")
+	}
+
+	modal := CreateConfirmationModal(text, onYes, onNo)
 	v.pages.AddPage("confirm", modal, true, true)
 }

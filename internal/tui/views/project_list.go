@@ -479,22 +479,24 @@ func (v *ProjectListView) showConfirmation(operation string, project models.Comp
 		message = "This will stop all containers for this project."
 	}
 
-	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nProject: %s\n\n%s", commandText, project.Name, message)).
-		AddButtons([]string{"Yes", "No"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			v.pages.RemovePage("confirm")
-			if buttonLabel == "Yes" {
-				switch operation {
-				case "compose stop":
-					go v.stopProject(project)
-				case "compose down":
-					go v.downProject(project)
-				case "compose down -v":
-					go v.removeProject(project)
-				}
-			}
-		})
+	text := fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nProject: %s\n\n%s", commandText, project.Name, message)
 
+	onYes := func() {
+		v.pages.RemovePage("confirm")
+		switch operation {
+		case "compose stop":
+			go v.stopProject(project)
+		case "compose down":
+			go v.downProject(project)
+		case "compose down -v":
+			go v.removeProject(project)
+		}
+	}
+
+	onNo := func() {
+		v.pages.RemovePage("confirm")
+	}
+
+	modal := CreateConfirmationModal(text, onYes, onNo)
 	v.pages.AddPage("confirm", modal, true, true)
 }

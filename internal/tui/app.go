@@ -78,6 +78,7 @@ func (a *App) initializeViews() {
 	dockerView.SetSwitchToLogViewCallback(a.SwitchToLogView)
 	dockerView.SetSwitchToFileBrowserCallback(a.SwitchToFileBrowser)
 	dockerView.SetSwitchToInspectViewCallback(a.SwitchToInspectView)
+	dockerView.SetSwitchToTopViewCallback(a.SwitchToTopView)
 	a.views[ui.DockerContainerListView] = dockerView
 	a.pages.AddPage("docker", dockerView.GetPrimitive(), true, false)
 
@@ -86,6 +87,7 @@ func (a *App) initializeViews() {
 	composeView.SetSwitchToLogViewCallback(a.SwitchToLogView)
 	composeView.SetSwitchToFileBrowserCallback(a.SwitchToFileBrowser)
 	composeView.SetSwitchToInspectViewCallback(a.SwitchToInspectView)
+	composeView.SetSwitchToTopViewCallback(a.SwitchToTopView)
 	a.views[ui.ComposeProcessListView] = composeView
 	a.pages.AddPage("compose", composeView.GetPrimitive(), true, false)
 
@@ -120,8 +122,15 @@ func (a *App) initializeViews() {
 
 	// Create Stats view
 	statsView := views.NewStatsView(a.docker)
+	statsView.SetSwitchToLogViewCallback(a.SwitchToLogView)
+	statsView.SetSwitchToTopViewCallback(a.SwitchToTopView)
 	a.views[ui.StatsView] = statsView
 	a.pages.AddPage("stats", statsView.GetPrimitive(), true, false)
+
+	// Create Top view
+	topView := views.NewTopView(a.docker)
+	a.views[ui.TopView] = topView
+	a.pages.AddPage("top", topView.GetPrimitive(), true, false)
 
 	// Create Help view
 	helpView := views.NewHelpView()
@@ -360,6 +369,11 @@ func (a *App) SwitchView(viewType ui.ViewType) {
 		if view, ok := a.views[viewType]; ok {
 			view.Refresh()
 		}
+	case ui.TopView:
+		a.pages.SwitchToPage("top")
+		if view, ok := a.views[viewType]; ok {
+			view.Refresh()
+		}
 	}
 
 	a.app.ForceDraw()
@@ -465,6 +479,19 @@ func (a *App) SwitchToInspectView(targetID string, target interface{}) {
 	a.SwitchView(ui.InspectView)
 }
 
+// SwitchToTopView switches to the top view with a specific container
+func (a *App) SwitchToTopView(containerID string, container interface{}) {
+	// Set the container in the top view
+	if topView, ok := a.views[ui.TopView]; ok {
+		if tv, ok := topView.(*views.TopView); ok {
+			tv.SetContainer(containerID, container)
+		}
+	}
+
+	// Switch to the top view
+	a.SwitchView(ui.TopView)
+}
+
 // toggleNavbar toggles the navbar visibility
 func (a *App) toggleNavbar() {
 	a.navbarHidden = !a.navbarHidden
@@ -499,6 +526,22 @@ func (a *App) showQuitConfirmation() {
 			}
 			a.pages.RemovePage("quit-confirm")
 		})
+
+	// Add keyboard shortcuts for y/n
+	modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Rune() {
+		case 'y', 'Y':
+			// Yes - quit the application
+			a.Stop()
+			a.pages.RemovePage("quit-confirm")
+			return nil
+		case 'n', 'N':
+			// No - close the dialog
+			a.pages.RemovePage("quit-confirm")
+			return nil
+		}
+		return event
+	})
 
 	a.pages.AddPage("quit-confirm", modal, true, true)
 }
