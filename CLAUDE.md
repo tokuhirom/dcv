@@ -203,6 +203,40 @@ Copy `dcv.toml.example` to one of the locations above and modify as needed:
 cp dcv.toml.example ~/.config/dcv/config.toml
 ```
 
+## TView UI Migration Status
+
+The project is migrating from Bubble Tea to TView for the UI framework. Both implementations currently coexist in the codebase.
+
+### Completed TView Views
+- ✅ **Docker Container List View** - Full container management with all operations
+- ✅ **Compose Process List View** - Docker Compose container management  
+- ✅ **Project List View** - Docker Compose project selection and management
+- ✅ **Image List View** - Docker image management with pull/delete operations
+- ✅ **Network List View** - Docker network listing and management
+- ✅ **Volume List View** - Docker volume listing and management
+- ✅ **File Browser View** - Browse container filesystems
+- ✅ **File Content View** - View file contents from containers
+- ✅ **Log View** - Container log viewing with search/filter
+- ✅ **Inspect View** - Container/image/network/volume inspection
+- ✅ **Stats View** - Container resource usage statistics
+- ✅ **Top View** - Container process information
+- ✅ **Help View** - Context-sensitive help display
+
+### Remaining TView Views to Migrate
+- ❌ **Command Execution View** - Real-time Docker command output display
+- ❌ **Command Action View** - Action selection menu for containers
+- ❌ **Compose Project Action View** - Project-level operations menu
+- ❌ **Dind Process List View** - Docker-in-Docker container management
+- ❌ **File Browser Action View** - File operation actions menu
+- ❌ **Helper Injector View** - Helper binary injection for dind containers
+
+### Migration Notes
+- TView implementation is in `/internal/tui/` directory
+- Bubble Tea implementation remains in `/internal/ui/` directory
+- The application can be run with `--ui tview` flag to use TView interface
+- All core functionality has been ported, only specialized action/menu views remain
+- Keyboard shortcuts ('y'/'n') have been added to all confirmation dialogs for consistency
+
 ## Next Action Plan
 
 Based on comprehensive codebase analysis, here are prioritized improvements:
