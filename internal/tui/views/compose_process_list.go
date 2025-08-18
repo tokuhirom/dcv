@@ -149,11 +149,19 @@ func (v *ComposeProcessListView) setupKeyHandlers() {
 			}
 			return nil
 
-		case 'e':
-			// Execute shell
+		case '!':
+			// Execute shell (/bin/sh)
 			if row > 0 && row <= len(v.composeContainers) {
 				container := v.composeContainers[row-1]
 				go v.execShell(container)
+			}
+			return nil
+
+		case 'x':
+			// Show actions menu
+			if row > 0 && row <= len(v.composeContainers) {
+				container := v.composeContainers[row-1]
+				v.showActionsMenu(container)
 			}
 			return nil
 
@@ -376,6 +384,65 @@ func (v *ComposeProcessListView) execShell(container models.ComposeContainer) {
 		slog.String("service", container.Service))
 	// TODO: Implement shell execution
 	// This would typically launch an external terminal or switch to a shell view
+}
+
+// showActionsMenu shows a menu of available actions for the container
+func (v *ComposeProcessListView) showActionsMenu(container models.ComposeContainer) {
+	// Create a list of actions
+	actions := []string{
+		"View Logs (l)",
+		"Browse Files (f)",
+		"Inspect (i)",
+		"Execute Shell (!)",
+	}
+
+	// Add state-dependent actions
+	status := container.GetStatus()
+	if strings.Contains(status, "Up") || strings.Contains(status, "running") {
+		actions = append(actions, "Stop (s)")
+	} else {
+		actions = append(actions, "Start (S)")
+	}
+	actions = append(actions, "Restart (r)")
+	actions = append(actions, "Delete (d)")
+	actions = append(actions, "Cancel")
+
+	// Create modal with action buttons
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Select action for service: %s", container.Name)).
+		AddButtons(actions).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("actions")
+			// Handle the selected action
+			switch buttonLabel {
+			case "View Logs (l)":
+				if v.switchToLogViewFn != nil {
+					v.switchToLogViewFn(container.ID, container)
+				}
+			case "Browse Files (f)":
+				if v.switchToFileBrowserFn != nil {
+					v.switchToFileBrowserFn(container.ID, container)
+				}
+			case "Inspect (i)":
+				if v.switchToInspectViewFn != nil {
+					v.switchToInspectViewFn(container.ID, container)
+				}
+			case "Execute Shell (!)":
+				go v.execShell(container)
+			case "Stop (s)":
+				v.showConfirmation("compose stop", container)
+			case "Start (S)":
+				go v.startContainer(container)
+			case "Restart (r)":
+				v.showConfirmation("compose restart", container)
+			case "Delete (d)":
+				v.showConfirmation("compose rm -f", container)
+			case "Cancel":
+				// Do nothing
+			}
+		})
+
+	v.pages.AddPage("actions", modal, true, true)
 }
 
 // showConfirmation shows a confirmation dialog for aggressive operations
