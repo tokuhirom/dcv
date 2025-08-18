@@ -26,10 +26,7 @@ func TestCommandExecutionView_GetPrimitive(t *testing.T) {
 }
 
 func TestCommandExecutionView_ExecuteCommand(t *testing.T) {
-	app := tview.NewApplication()
-	SetApp(app)
-	defer SetApp(nil)
-
+	// Don't set app to avoid QueueUpdateDraw blocking in tests
 	view := NewCommandExecutionView()
 
 	// Test setting command
@@ -135,9 +132,7 @@ func TestCommandExecutionView_CancelCommand(t *testing.T) {
 }
 
 func TestCommandExecutionView_UpdateDisplay(t *testing.T) {
-	app := tview.NewApplication()
-	SetApp(app)
-	defer SetApp(nil)
+	// Don't set app to avoid QueueUpdateDraw blocking in tests
 
 	view := NewCommandExecutionView()
 
@@ -155,9 +150,7 @@ func TestCommandExecutionView_UpdateDisplay(t *testing.T) {
 }
 
 func TestCommandExecutionView_ShowConfirmationAndExecute(t *testing.T) {
-	app := tview.NewApplication()
-	SetApp(app)
-	defer SetApp(nil)
+	// Don't set app to avoid QueueUpdateDraw blocking in tests
 
 	view := NewCommandExecutionView()
 
@@ -170,9 +163,7 @@ func TestCommandExecutionView_ShowConfirmationAndExecute(t *testing.T) {
 }
 
 func TestExecuteWithProgress(t *testing.T) {
-	app := tview.NewApplication()
-	SetApp(app)
-	defer SetApp(nil)
+	// Don't set app to avoid QueueUpdateDraw blocking in tests
 
 	closeCalled := false
 	view := ExecuteWithProgress([]string{"ps"}, func() {
@@ -188,9 +179,7 @@ func TestExecuteWithProgress(t *testing.T) {
 }
 
 func TestExecuteAggressiveCommand(t *testing.T) {
-	app := tview.NewApplication()
-	SetApp(app)
-	defer SetApp(nil)
+	// Don't set app to avoid QueueUpdateDraw blocking in tests
 
 	view := ExecuteAggressiveCommand([]string{"rm", "-f", "container1"}, func() {
 		// Close callback
@@ -202,9 +191,7 @@ func TestExecuteAggressiveCommand(t *testing.T) {
 }
 
 func TestCommandExecutionView_KeyHandling(t *testing.T) {
-	app := tview.NewApplication()
-	SetApp(app)
-	defer SetApp(nil)
+	// Don't set app to avoid QueueUpdateDraw blocking in tests
 
 	view := NewCommandExecutionView()
 
@@ -237,9 +224,7 @@ func TestCommandExecutionView_CommandExecution(t *testing.T) {
 	// This test would require mocking exec.Command which is complex
 	// We're testing the structure and flow rather than actual command execution
 
-	app := tview.NewApplication()
-	SetApp(app)
-	defer SetApp(nil)
+	// Don't set app to avoid QueueUpdateDraw blocking in tests
 
 	view := NewCommandExecutionView()
 

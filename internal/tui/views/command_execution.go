@@ -20,6 +20,7 @@ type CommandExecutionView struct {
 	pages        *tview.Pages
 	command      string
 	cmd          *exec.Cmd
+	cmdMux       sync.Mutex // Protects cmd field
 	output       []string
 	outputMux    sync.Mutex
 	done         bool
@@ -49,12 +50,21 @@ func (v *CommandExecutionView) setupView() {
 	// Configure text view for output
 	v.textView.
 		SetDynamicColors(true).
-		SetScrollable(true).
-		SetChangedFunc(func() {
+		SetScrollable(true)
+
+	// Only set changed func if we have an app (not in test mode)
+	// This avoids race conditions in tests where the app isn't properly running
+	mu.RLock()
+	hasApp := appInstance != nil
+	mu.RUnlock()
+
+	if hasApp {
+		v.textView.SetChangedFunc(func() {
 			if v.autoScroll {
 				v.textView.ScrollToEnd()
 			}
 		})
+	}
 
 	// Create a flex layout for the modal
 	v.flex = tview.NewFlex().
@@ -188,11 +198,11 @@ func (v *CommandExecutionView) ExecuteCommand(command string, args ...string) {
 	v.currentLines = 0
 	v.autoScroll = true
 
-	// Clear previous output
-	v.textView.Clear()
-
-	// Update header with new command
-	v.updateDisplay()
+	// Clear previous output and update display in UI thread
+	QueueUpdateDraw(func() {
+		v.textView.Clear()
+		v.updateDisplay()
+	})
 
 	// Start command execution in background
 	go v.runCommand(args)
@@ -208,10 +218,14 @@ func (v *CommandExecutionView) runCommand(args []string) {
 	slog.Info("Executing command in modal", slog.String("command", v.command))
 
 	// Create the command
-	v.cmd = exec.Command("docker", args...)
+	cmd := exec.Command("docker", args...)
+
+	v.cmdMux.Lock()
+	v.cmd = cmd
+	v.cmdMux.Unlock()
 
 	// Create pipes for stdout and stderr
-	stdout, err := v.cmd.StdoutPipe()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		v.appendOutput(fmt.Sprintf("[red]Error creating stdout pipe: %v[-]", err))
 		v.done = true
@@ -222,7 +236,7 @@ func (v *CommandExecutionView) runCommand(args []string) {
 		return
 	}
 
-	stderr, err := v.cmd.StderrPipe()
+	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		v.appendOutput(fmt.Sprintf("[red]Error creating stderr pipe: %v[-]", err))
 		v.done = true
@@ -234,7 +248,7 @@ func (v *CommandExecutionView) runCommand(args []string) {
 	}
 
 	// Start the command
-	if err := v.cmd.Start(); err != nil {
+	if err := cmd.Start(); err != nil {
 		v.appendOutput(fmt.Sprintf("[red]Error starting command: %v[-]", err))
 		v.done = true
 		v.exitCode = 1
@@ -260,7 +274,7 @@ func (v *CommandExecutionView) runCommand(args []string) {
 	}
 
 	// Wait for command to complete
-	if err := v.cmd.Wait(); err != nil {
+	if err := cmd.Wait(); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			v.exitCode = exitError.ExitCode()
 		} else {
@@ -323,11 +337,15 @@ func (v *CommandExecutionView) updateDisplay() {
 
 // cancelCommand cancels the running command
 func (v *CommandExecutionView) cancelCommand() {
-	if v.cmd != nil && v.cmd.Process != nil && !v.done {
+	v.cmdMux.Lock()
+	cmd := v.cmd
+	v.cmdMux.Unlock()
+
+	if cmd != nil && cmd.Process != nil && !v.done {
 		slog.Info("Cancelling command", slog.String("command", v.command))
 
 		// Kill the process
-		if err := v.cmd.Process.Kill(); err != nil {
+		if err := cmd.Process.Kill(); err != nil {
 			v.appendOutput(fmt.Sprintf("[red]Error cancelling command: %v[-]", err))
 		} else {
 			v.appendOutput("[yellow]Command cancelled by user[-]")
@@ -342,8 +360,14 @@ func (v *CommandExecutionView) cancelCommand() {
 // close closes the modal and returns to the previous view
 func (v *CommandExecutionView) close() {
 	// Cancel command if still running
-	if !v.done && v.cmd != nil {
-		v.cancelCommand()
+	if !v.done {
+		v.cmdMux.Lock()
+		hasCmd := v.cmd != nil
+		v.cmdMux.Unlock()
+
+		if hasCmd {
+			v.cancelCommand()
+		}
 	}
 
 	// Call the close callback if set

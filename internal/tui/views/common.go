@@ -29,6 +29,9 @@ func QueueUpdateDraw(f func()) {
 
 	if app != nil {
 		app.QueueUpdateDraw(f)
+	} else {
+		// In test mode or when app is not running, execute directly
+		f()
 	}
 }
 
