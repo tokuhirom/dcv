@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -429,13 +430,24 @@ type InspectProvider func() ([]byte, error)
 
 func (m *InspectViewModel) Inspect(model *Model, targetName string, inspectProvider InspectProvider) tea.Cmd {
 	model.loading = true
+	model.spinnerFrame = 0           // Reset spinner frame
+	m.inspectTargetName = targetName // Set the target name for loading display
 	model.SwitchView(InspectView)
-	return func() tea.Msg {
-		content, err := inspectProvider()
-		return inspectLoadedMsg{
-			content:    string(content),
-			err:        err,
-			targetName: targetName,
-		}
-	}
+
+	// Start the spinner animation and the inspect operation in parallel
+	return tea.Batch(
+		// Start spinner animation
+		tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
+			return SpinnerTickMsg(t)
+		}),
+		// Execute the inspect operation
+		func() tea.Msg {
+			content, err := inspectProvider()
+			return inspectLoadedMsg{
+				content:    string(content),
+				err:        err,
+				targetName: targetName,
+			}
+		},
+	)
 }

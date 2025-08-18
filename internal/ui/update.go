@@ -13,6 +13,9 @@ import (
 // RefreshMsg signals that the current view should be refreshed
 type RefreshMsg struct{}
 
+// SpinnerTickMsg is sent to animate the loading spinner
+type SpinnerTickMsg time.Time
+
 // Update handles messages and updates the model
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -41,6 +44,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case commandExecutedMsg:
 		// HandleStart polling for logs after command is set
 		return m, m.logViewModel.pollForLogs()
+
+	case SpinnerTickMsg:
+		// Animate the spinner only when loading
+		if m.loading {
+			m.spinnerFrame = (m.spinnerFrame + 1) % 10
+			return m, tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
+				return SpinnerTickMsg(t)
+			})
+		}
+		return m, nil
 
 	case errorMsg:
 		m.err = msg.err

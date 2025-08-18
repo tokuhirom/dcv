@@ -127,7 +127,8 @@ type Model struct {
 	Height int
 
 	// Loading state
-	loading bool
+	loading      bool
+	spinnerFrame int
 
 	// Navigation bar visibility
 	navbarHidden bool
