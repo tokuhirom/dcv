@@ -295,17 +295,18 @@ func (v *NetworkListView) pruneNetworks() {
 // showConfirmation shows a confirmation dialog for aggressive operations
 func (v *NetworkListView) showConfirmation(operation string, network models.DockerNetwork) {
 	commandText := fmt.Sprintf("docker %s %s", operation, network.ID)
+	text := fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nNetwork: %s", commandText, network.Name)
 
-	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nNetwork: %s", commandText, network.Name)).
-		AddButtons([]string{"Yes", "No"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			v.pages.RemovePage("confirm")
-			if buttonLabel == "Yes" {
-				go v.deleteNetwork(network)
-			}
-		})
+	onYes := func() {
+		v.pages.RemovePage("confirm")
+		go v.deleteNetwork(network)
+	}
 
+	onNo := func() {
+		v.pages.RemovePage("confirm")
+	}
+
+	modal := CreateConfirmationModal(text, onYes, onNo)
 	v.pages.AddPage("confirm", modal, true, true)
 }
 

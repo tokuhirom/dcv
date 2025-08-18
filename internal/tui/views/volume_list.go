@@ -334,19 +334,21 @@ func (v *VolumeListView) showConfirmation(operation string, volumeName string, f
 		commandText = fmt.Sprintf("docker %s %s", operation, volumeName)
 	}
 
-	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nVolume: %s", commandText, volumeName)).
-		AddButtons([]string{"Yes", "No"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			v.pages.RemovePage("confirm")
-			if buttonLabel == "Yes" {
-				if row, _ := v.table.GetSelection(); row > 0 && row <= len(v.dockerVolumes) {
-					volume := v.dockerVolumes[row-1]
-					go v.deleteVolume(volume, force)
-				}
-			}
-		})
+	text := fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nVolume: %s", commandText, volumeName)
 
+	onYes := func() {
+		v.pages.RemovePage("confirm")
+		if row, _ := v.table.GetSelection(); row > 0 && row <= len(v.dockerVolumes) {
+			volume := v.dockerVolumes[row-1]
+			go v.deleteVolume(volume, force)
+		}
+	}
+
+	onNo := func() {
+		v.pages.RemovePage("confirm")
+	}
+
+	modal := CreateConfirmationModal(text, onYes, onNo)
 	v.pages.AddPage("confirm", modal, true, true)
 }
 

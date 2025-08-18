@@ -23,6 +23,7 @@ type DockerContainerListView struct {
 	switchToLogViewFn     func(containerID string, container interface{})
 	switchToFileBrowserFn func(containerID string, container interface{})
 	switchToInspectViewFn func(containerID string, container interface{})
+	switchToTopViewFn     func(containerID string, container interface{})
 }
 
 // NewDockerContainerListView creates a new Docker container list view
@@ -176,6 +177,18 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 				}
 			}
 			return nil
+
+		case 't':
+			// View top (processes)
+			if row > 0 && row <= len(v.containers) {
+				container := v.containers[row-1]
+				if v.switchToTopViewFn != nil {
+					v.switchToTopViewFn(container.ID, container)
+				} else {
+					slog.Info("View top for container", slog.String("container", container.ID))
+				}
+			}
+			return nil
 		}
 
 		switch event.Key() {
@@ -225,6 +238,11 @@ func (v *DockerContainerListView) SetSwitchToFileBrowserCallback(fn func(contain
 // SetSwitchToInspectViewCallback sets the callback for switching to inspect view
 func (v *DockerContainerListView) SetSwitchToInspectViewCallback(fn func(containerID string, container interface{})) {
 	v.switchToInspectViewFn = fn
+}
+
+// SetSwitchToTopViewCallback sets the callback for switching to top view
+func (v *DockerContainerListView) SetSwitchToTopViewCallback(fn func(containerID string, container interface{})) {
+	v.switchToTopViewFn = fn
 }
 
 // loadContainers loads the container list from Docker
@@ -543,24 +561,26 @@ func (v *DockerContainerListView) showConfirmation(operation string, containerID
 		commandText = fmt.Sprintf("docker %s %s", operation, containerID)
 	}
 
-	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nContainer: %s", commandText, containerName)).
-		AddButtons([]string{"Yes", "No"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			v.pages.RemovePage("confirm")
-			if buttonLabel == "Yes" {
-				switch operation {
-				case "stop":
-					go v.stopContainer(containerID)
-				case "kill":
-					go v.killContainer(containerID)
-				case "restart":
-					go v.restartContainer(containerID)
-				case "rm -f":
-					go v.deleteContainer(containerID)
-				}
-			}
-		})
+	text := fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nContainer: %s", commandText, containerName)
 
+	onYes := func() {
+		v.pages.RemovePage("confirm")
+		switch operation {
+		case "stop":
+			go v.stopContainer(containerID)
+		case "kill":
+			go v.killContainer(containerID)
+		case "restart":
+			go v.restartContainer(containerID)
+		case "rm -f":
+			go v.deleteContainer(containerID)
+		}
+	}
+
+	onNo := func() {
+		v.pages.RemovePage("confirm")
+	}
+
+	modal := CreateConfirmationModal(text, onYes, onNo)
 	v.pages.AddPage("confirm", modal, true, true)
 }

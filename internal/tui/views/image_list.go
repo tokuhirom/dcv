@@ -365,20 +365,22 @@ func (v *ImageListView) showConfirmation(operation string, image models.DockerIm
 		commandText = fmt.Sprintf("docker rmi %s", image.GetRepoTag())
 	}
 
-	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nImage: %s", commandText, image.GetRepoTag())).
-		AddButtons([]string{"Yes", "No"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			v.pages.RemovePage("confirm")
-			if buttonLabel == "Yes" {
-				if force {
-					go v.forceDeleteImage(image)
-				} else {
-					go v.deleteImage(image)
-				}
-			}
-		})
+	text := fmt.Sprintf("Are you sure you want to execute:\n\n%s\n\nImage: %s", commandText, image.GetRepoTag())
 
+	onYes := func() {
+		v.pages.RemovePage("confirm")
+		if force {
+			go v.forceDeleteImage(image)
+		} else {
+			go v.deleteImage(image)
+		}
+	}
+
+	onNo := func() {
+		v.pages.RemovePage("confirm")
+	}
+
+	modal := CreateConfirmationModal(text, onYes, onNo)
 	v.pages.AddPage("confirm", modal, true, true)
 }
 
