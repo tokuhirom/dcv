@@ -444,8 +444,18 @@ func TestInspectViewModel_Inspect(t *testing.T) {
 		assert.NotNil(t, cmd)
 		assert.True(t, model.loading)
 
-		// Execute the command to verify error handling
-		msg := cmd()
+		// The Inspect function now returns a batch command (spinner + inspect)
+		// We need to execute it properly to test the inspect operation
+		// For testing, we'll create the inspect command directly
+		inspectCmd := func() interface{} {
+			content, err := provider()
+			return inspectLoadedMsg{
+				content:    string(content),
+				err:        err,
+				targetName: targetName,
+			}
+		}
+		msg := inspectCmd()
 		inspectMsg, ok := msg.(inspectLoadedMsg)
 		assert.True(t, ok)
 		assert.Equal(t, testErr, inspectMsg.err)

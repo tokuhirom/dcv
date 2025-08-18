@@ -266,6 +266,10 @@ func (m *Model) viewTitle() string {
 func (m *Model) viewBody(availableHeight int) string {
 	// Handle loading state
 	if m.loading && m.currentView != LogView {
+		// Show a more informative loading message for InspectView
+		if m.currentView == InspectView {
+			return m.renderInspectLoading(availableHeight)
+		}
 		return "\nLoading...\n"
 	}
 
@@ -360,4 +364,53 @@ func (m *Model) viewFooter() string {
 		}
 		return helpStyle.Render(helpText)
 	}
+}
+
+// renderInspectLoading renders a loading indicator for the inspect view
+func (m *Model) renderInspectLoading(availableHeight int) string {
+	// Calculate center position
+	centerY := availableHeight / 2
+	if centerY < 1 {
+		centerY = 1
+	}
+
+	// Create spinner frames
+	spinnerFrames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+	// Use the animated frame counter
+	spinner := spinnerFrames[m.spinnerFrame%len(spinnerFrames)]
+
+	// Build the loading message
+	loadingStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("86")).
+		Bold(true)
+
+	messageStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("245"))
+
+	var output strings.Builder
+
+	// Add empty lines to center vertically
+	for i := 0; i < centerY-2; i++ {
+		output.WriteString("\n")
+	}
+
+	// Add loading indicator with target name if available
+	loadingText := "Inspecting"
+	if m.inspectViewModel.inspectTargetName != "" {
+		loadingText = fmt.Sprintf("Inspecting %s", m.inspectViewModel.inspectTargetName)
+	}
+	output.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center,
+		loadingStyle.Render(spinner)+" "+messageStyle.Render(loadingText+"...")))
+	output.WriteString("\n\n")
+
+	// Add helpful message
+	output.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center,
+		helpStyle.Render("This may take a moment for large objects")))
+
+	// Fill remaining space
+	for i := centerY + 1; i < availableHeight; i++ {
+		output.WriteString("\n")
+	}
+
+	return output.String()
 }
