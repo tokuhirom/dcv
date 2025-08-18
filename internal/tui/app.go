@@ -152,6 +152,11 @@ func (a *App) initializeViews() {
 	a.views[ui.InspectView] = inspectView
 	a.pages.AddPage("inspect", inspectView.GetPrimitive(), true, false)
 
+	// Create Command Execution view (modal)
+	commandExecView := views.NewCommandExecutionView()
+	a.views[ui.CommandExecutionView] = commandExecView
+	// Command execution is shown as a modal overlay
+
 	// Set callbacks for file browser
 	fileBrowserView.SetSwitchToContentViewCallback(a.SwitchToFileContent)
 }
@@ -559,4 +564,38 @@ func (a *App) GetDocker() *docker.Client {
 // GetState returns the application state
 func (a *App) GetState() *State {
 	return a.state
+}
+
+// ExecuteCommand executes a Docker command and shows progress in a modal
+func (a *App) ExecuteCommand(aggressive bool, args ...string) {
+	cmdView := a.views[ui.CommandExecutionView].(*views.CommandExecutionView)
+
+	// Set callback to refresh the current view when modal closes
+	cmdView.SetOnClose(func() {
+		a.pages.RemovePage("command-exec-modal")
+		// Refresh the current view
+		if view, ok := a.views[a.state.CurrentView]; ok {
+			view.Refresh()
+		}
+	})
+
+	if aggressive {
+		// Show confirmation first
+		cmdView.ShowConfirmationAndExecute("docker", args, func() {
+			// Show the command execution modal
+			a.pages.AddPage("command-exec-modal", cmdView.GetPrimitive(), true, true)
+		})
+		a.pages.AddPage("command-exec-modal", cmdView.GetPrimitive(), true, true)
+	} else {
+		// Execute directly without confirmation
+		cmdView.ExecuteDockerCommand(args...)
+		a.pages.AddPage("command-exec-modal", cmdView.GetPrimitive(), true, true)
+	}
+}
+
+// ExecuteComposeCommand executes a Docker Compose command and shows progress in a modal
+func (a *App) ExecuteComposeCommand(projectName string, aggressive bool, args ...string) {
+	// Prepend compose and project args
+	fullArgs := append([]string{"compose", "-p", projectName}, args...)
+	a.ExecuteCommand(aggressive, fullArgs...)
 }
