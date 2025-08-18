@@ -149,8 +149,8 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			}
 			return nil
 
-		case 'e':
-			// Execute shell
+		case '!':
+			// Execute shell (/bin/sh)
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
 				go v.execShell(container.ID)
@@ -158,10 +158,10 @@ func (v *DockerContainerListView) setupKeyHandlers() {
 			return nil
 
 		case 'x':
-			// Execute command in container
+			// Show actions menu
 			if row > 0 && row <= len(v.containers) {
 				container := v.containers[row-1]
-				v.showExecDialog(container.ID, container.Names)
+				v.showActionsMenu(container)
 			}
 			return nil
 
@@ -343,6 +343,17 @@ func (v *DockerContainerListView) deleteContainer(containerID string) {
 	v.Refresh()
 }
 
+func (v *DockerContainerListView) restartContainer(containerID string) {
+	slog.Info("Restarting container", slog.String("container", containerID))
+	_, err := docker.ExecuteCaptured("restart", containerID)
+	if err != nil {
+		slog.Error("Failed to restart container", slog.Any("error", err))
+		return
+	}
+	time.Sleep(500 * time.Millisecond)
+	v.Refresh()
+}
+
 func (v *DockerContainerListView) execShell(containerID string) {
 	slog.Info("Executing shell in container", slog.String("container", containerID))
 	// TODO: Implement shell execution
@@ -458,6 +469,71 @@ func (v *DockerContainerListView) showOutputDialog(title string, output string) 
 	v.pages.AddPage("output", modal, true, true)
 }
 
+// showActionsMenu shows a menu of available actions for the container
+func (v *DockerContainerListView) showActionsMenu(container models.DockerContainer) {
+	// Create a list of actions
+	actions := []string{
+		"View Logs (l)",
+		"Browse Files (f)",
+		"Inspect (i)",
+		"Execute Shell (!)",
+		"Execute Command...",
+	}
+
+	// Add state-dependent actions
+	if strings.HasPrefix(container.State, "running") {
+		actions = append(actions, "Stop (S)")
+		// TODO: Add pause/unpause
+	} else {
+		actions = append(actions, "Start (S)")
+	}
+	actions = append(actions, "Restart (R)")
+	actions = append(actions, "Kill (K)")
+	actions = append(actions, "Delete (d)")
+	actions = append(actions, "Cancel")
+
+	// Create modal with action buttons
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Select action for container: %s", container.Names)).
+		AddButtons(actions).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			v.pages.RemovePage("actions")
+			// Handle the selected action
+			switch buttonLabel {
+			case "View Logs (l)":
+				if v.switchToLogViewFn != nil {
+					v.switchToLogViewFn(container.ID, container)
+				}
+			case "Browse Files (f)":
+				if v.switchToFileBrowserFn != nil {
+					v.switchToFileBrowserFn(container.ID, container)
+				}
+			case "Inspect (i)":
+				if v.switchToInspectViewFn != nil {
+					v.switchToInspectViewFn(container.ID, container)
+				}
+			case "Execute Shell (!)":
+				go v.execShell(container.ID)
+			case "Execute Command...":
+				v.showExecDialog(container.ID, container.Names)
+			case "Stop (S)":
+				v.showConfirmation("stop", container.ID, container.Names)
+			case "Start (S)":
+				go v.startContainer(container.ID)
+			case "Restart (R)":
+				v.showConfirmation("restart", container.ID, container.Names)
+			case "Kill (K)":
+				v.showConfirmation("kill", container.ID, container.Names)
+			case "Delete (d)":
+				v.showConfirmation("rm -f", container.ID, container.Names)
+			case "Cancel":
+				// Do nothing
+			}
+		})
+
+	v.pages.AddPage("actions", modal, true, true)
+}
+
 // showConfirmation shows a confirmation dialog for aggressive operations
 func (v *DockerContainerListView) showConfirmation(operation string, containerID string, containerName string) {
 	var commandText string
@@ -478,6 +554,8 @@ func (v *DockerContainerListView) showConfirmation(operation string, containerID
 					go v.stopContainer(containerID)
 				case "kill":
 					go v.killContainer(containerID)
+				case "restart":
+					go v.restartContainer(containerID)
 				case "rm -f":
 					go v.deleteContainer(containerID)
 				}
