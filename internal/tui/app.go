@@ -376,6 +376,7 @@ func (a *App) SwitchView(viewType ui.ViewType) {
 		}
 	}
 
+	a.updateNavbar(a.navbar)
 	a.app.ForceDraw()
 }
 
