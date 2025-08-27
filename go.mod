@@ -13,7 +13,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.16
 	github.com/muesli/termenv v0.16.0
 	github.com/pavelpatrin/go-ansi-to-image v0.0.0-20220322093528-7a32ac9e149c
-	github.com/rivo/tview v0.0.0-20250625164341-a4a78f1e05cb
+	github.com/rivo/tview v0.0.0-20250827170525-39dce1f64fd6
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1
 )
