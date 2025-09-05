@@ -233,10 +233,14 @@ Or install directly:
 brew install tokuhirom/tap/dcv
 ```
 
-### Using go install
+### Build from source
 
 ```bash
-go install github.com/tokuhirom/dcv@latest
+git clone https://github.com/tokuhirom/dcv.git
+cd dcv
+make build-helpers
+go build -o dcv
+./dcv
 ```
 
 ### Download from GitHub Releases
