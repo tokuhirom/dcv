@@ -61,3 +61,37 @@ brews:
       system "#{bin}/dcv", "--version"
     install: |
       bin.install "dcv"
+
+winget:
+  - name: tokuhirom.dcv
+    publisher: tokuhirom
+    short_description: "Docker Compose Viewer - A TUI tool for monitoring Docker containers"
+    description: |
+      DCV (Docker Container Viewer) is a TUI tool for monitoring Docker containers and Docker Compose applications.
+      It provides an interactive interface to manage containers, images, networks, and volumes with vim-like navigation.
+    license: MIT
+    publisher_url: https://github.com/tokuhirom
+    publisher_support_url: https://github.com/tokuhirom/dcv/issues
+    homepage: https://github.com/tokuhirom/dcv
+    license_url: https://github.com/tokuhirom/dcv/blob/main/LICENSE
+    copyright: Copyright (c) 2025 Tokuhiro Matsuno
+    tags:
+      - docker
+      - docker-compose
+      - tui
+      - container
+      - monitoring
+      - devops
+      - cli
+    repository:
+      owner: microsoft
+      name: winget-pkgs
+      branch: master
+      token: "{{ .Env.WINGET_GITHUB_TOKEN }}"
+      pull_request:
+        enabled: true
+        draft: false
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
