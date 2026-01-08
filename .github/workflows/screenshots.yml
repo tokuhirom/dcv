@@ -43,7 +43,7 @@ jobs:
     
     - name: Upload screenshots diff as artifact (if failed)
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: screenshots-diff
         path: docs/screenshots/
