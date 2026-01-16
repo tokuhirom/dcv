@@ -8,7 +8,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/docker/docker v28.4.0+incompatible
-	github.com/fujiwara/sloghandler v0.0.5
+	github.com/fujiwara/sloghandler v0.0.6
 	github.com/gdamore/tcell/v2 v2.9.0
 	github.com/mattn/go-runewidth v0.0.16
 	github.com/muesli/termenv v0.16.0
