@@ -8,7 +8,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/docker/docker v28.4.0+incompatible
-	github.com/fujiwara/sloghandler v0.0.5
+	github.com/fujiwara/sloghandler v0.1.0
 	github.com/mattn/go-runewidth v0.0.20
 	github.com/muesli/termenv v0.16.0
 	github.com/pavelpatrin/go-ansi-to-image v0.0.0-20220322093528-7a32ac9e149c
