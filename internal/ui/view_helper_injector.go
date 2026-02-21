@@ -53,9 +53,9 @@ func (m *HelperInjectorViewModel) render(model *Model) string {
 	content.WriteString("\n\n")
 
 	// Show container info
-	content.WriteString(fmt.Sprintf("Container: %s\n", m.container.Title()))
+	fmt.Fprintf(&content, "Container: %s\n", m.container.Title())
 	if m.container.IsDind() {
-		content.WriteString(fmt.Sprintf("Host Container: %s\n", m.container.HostContainerID()))
+		fmt.Fprintf(&content, "Host Container: %s\n", m.container.HostContainerID())
 	}
 	content.WriteString("\n")
 
@@ -108,7 +108,7 @@ func (m *HelperInjectorViewModel) render(model *Model) string {
 				style = lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
 			}
 			cmdStr := strings.Join(cmd, " ")
-			content.WriteString(fmt.Sprintf("%s%d. %s\n", prefix, i+1, style.Render(cmdStr)))
+			fmt.Fprintf(&content, "%s%d. %s\n", prefix, i+1, style.Render(cmdStr))
 		}
 	}
 
