@@ -6,7 +6,6 @@
 *.dylib
 dcv
 
-mise.toml
 
 # Test binary, built with `go test -c`
 *.test
