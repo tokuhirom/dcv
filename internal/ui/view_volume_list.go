@@ -55,6 +55,7 @@ func (m *VolumeListViewModel) render(model *Model, availableHeight int) string {
 		{Title: "Name", Width: -1},
 		{Title: "Driver", Width: -1},
 		{Title: "Scope", Width: -1},
+		{Title: "Size", Width: -1},
 	}
 
 	return m.RenderTable(model, columns, availableHeight, func(row, col int) lipgloss.Style {
@@ -73,6 +74,7 @@ func (m *VolumeListViewModel) buildRows() []table.Row {
 			volume.Name,
 			volume.Driver,
 			volume.Scope,
+			volume.Size,
 		})
 	}
 	return rows

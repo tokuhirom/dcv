@@ -173,6 +173,71 @@ invalid json line
 	}
 }
 
+func TestParseSystemDfVolumes(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   []byte
+		want    []models.DockerVolume
+		wantErr bool
+	}{
+		{
+			name:  "empty input",
+			input: []byte(""),
+			want:  []models.DockerVolume{},
+		},
+		{
+			name:  "newline only",
+			input: []byte("\n"),
+			want:  []models.DockerVolume{},
+		},
+		{
+			name:  "no volumes key",
+			input: []byte(`{"Images":[]}`),
+			want:  []models.DockerVolume{},
+		},
+		{
+			name:  "parse volumes with size",
+			input: []byte(`{"Images":[],"Volumes":[{"Driver":"local","Labels":"","Mountpoint":"/var/lib/docker/volumes/my-volume/_data","Name":"my-volume","Scope":"local","Size":"183.8kB"},{"Driver":"local","Labels":"com.example.label=value","Mountpoint":"/var/lib/docker/volumes/data-volume/_data","Name":"data-volume","Scope":"local","Size":"1.234GB"}]}`),
+			want: []models.DockerVolume{
+				{
+					Name:       "my-volume",
+					Driver:     "local",
+					Scope:      "local",
+					Size:       "183.8kB",
+					Labels:     "",
+					Mountpoint: "/var/lib/docker/volumes/my-volume/_data",
+				},
+				{
+					Name:       "data-volume",
+					Driver:     "local",
+					Scope:      "local",
+					Size:       "1.234GB",
+					Labels:     "com.example.label=value",
+					Mountpoint: "/var/lib/docker/volumes/data-volume/_data",
+				},
+			},
+		},
+		{
+			name:    "invalid JSON",
+			input:   []byte(`not json`),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseSystemDfVolumes(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseSystemDfVolumes() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseSystemDfVolumes() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestParseComposeProjectsJSON(t *testing.T) {
 	tests := []struct {
 		name    string

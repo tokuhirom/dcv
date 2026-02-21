@@ -141,14 +141,13 @@ func (c *Client) ListNetworks() ([]models.DockerNetwork, error) {
 }
 
 func (c *Client) ListVolumes() ([]models.DockerVolume, error) {
-	// Use docker volume ls with JSON format
-	output, err := ExecuteCaptured([]string{"volume", "ls", "--format", "json"}...)
+	// Use docker system df -v to get volume sizes
+	output, err := ExecuteCaptured([]string{"system", "df", "-v", "--format", "json"}...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute docker volume ls: %w\nOutput: %s", err, string(output))
+		return nil, fmt.Errorf("failed to execute docker system df -v: %w\nOutput: %s", err, string(output))
 	}
 
-	// Handle empty output
-	volumes, err := ParseVolumeJSON(output)
+	volumes, err := ParseSystemDfVolumes(output)
 	if err != nil {
 		return nil, err
 	}

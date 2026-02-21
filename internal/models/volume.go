@@ -10,6 +10,7 @@ type DockerVolume struct {
 	Driver     string            `json:"Driver"`
 	Mountpoint string            `json:"Mountpoint"`
 	Scope      string            `json:"Scope"`
+	Size       string            `json:"Size"`
 	Labels     string            `json:"Labels"` // Raw labels string from docker
 	Options    map[string]string `json:"Options"`
 	labelMap   map[string]string // Parsed labels, populated on demand

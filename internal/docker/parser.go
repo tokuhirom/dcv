@@ -156,6 +156,29 @@ func ParseVolumeJSON(output []byte) ([]models.DockerVolume, error) {
 	return volumes, nil
 }
 
+// systemDfJSON represents the JSON output of docker system df -v --format json
+type systemDfJSON struct {
+	Volumes []models.DockerVolume `json:"Volumes"`
+}
+
+// ParseSystemDfVolumes parses docker system df -v --format json output and extracts volumes
+func ParseSystemDfVolumes(output []byte) ([]models.DockerVolume, error) {
+	if len(output) == 0 || string(output) == "" || string(output) == "\n" {
+		return []models.DockerVolume{}, nil
+	}
+
+	var df systemDfJSON
+	if err := json.Unmarshal(output, &df); err != nil {
+		return nil, fmt.Errorf("error parsing system df JSON: %w", err)
+	}
+
+	if df.Volumes == nil {
+		return []models.DockerVolume{}, nil
+	}
+
+	return df.Volumes, nil
+}
+
 // ParseComposeProjectsJSON parses docker compose ls JSON output
 func ParseComposeProjectsJSON(output []byte) ([]models.ComposeProject, error) {
 	// Handle empty output
