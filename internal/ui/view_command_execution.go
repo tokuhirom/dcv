@@ -41,14 +41,15 @@ func (m *CommandExecutionViewModel) render(model *Model) string {
 	// Build content
 	var content strings.Builder
 
-	// Show command
+	// Show command (wrap to fit terminal width)
+	wrapStyle := lipgloss.NewStyle().Width(model.width)
 	content.WriteString(lipgloss.NewStyle().Bold(true).Render("Executing: "))
-	content.WriteString(m.cmdString)
+	content.WriteString(wrapStyle.Render(m.cmdString))
 	content.WriteString("\n\n")
 
-	// Show output
+	// Show output (wrap long lines to fit terminal width)
 	for _, line := range m.output {
-		content.WriteString(line)
+		content.WriteString(wrapStyle.Render(line))
 		content.WriteString("\n")
 	}
 
