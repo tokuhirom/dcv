@@ -17,10 +17,10 @@
 
 ## Phase 3 - Special views
 
-- [ ] `view_file_browser.go` - Long filenames, responsive columns
-- [ ] `view_dind_process_list.go` - Same as container list + DinD
-- [ ] `view_compose_project_list.go` - Long ConfigFiles paths
-- [ ] `view_command_execution.go` - Viewport, confirmation dialog
+- [x] `view_file_browser.go` - Long filenames, responsive columns
+- [x] `view_dind_process_list.go` - Same as container list + DinD
+- [x] `view_compose_project_list.go` - Long ConfigFiles paths
+- [x] `view_command_execution.go` - Viewport, confirmation dialog
 
 ## Phase 4 - Docker client functions
 

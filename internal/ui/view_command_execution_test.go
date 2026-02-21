@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,6 +106,123 @@ func TestCommandExecutionViewModel_RenderConfirmationDialog(t *testing.T) {
 	assert.Contains(t, result, "Are you sure you want to execute:")
 	assert.Contains(t, result, "docker stop container_id")
 	assert.Contains(t, result, "Press 'y' to confirm, 'n' to cancel")
+}
+
+func TestCommandExecutionViewModel_LongStrings(t *testing.T) {
+	t.Run("render with very long output lines", func(t *testing.T) {
+		vm := &CommandExecutionViewModel{
+			cmdString: "docker logs container123",
+			output: func() []string {
+				var lines []string
+				for range 50 {
+					lines = append(lines, strings.Repeat("A very long log line output ", 20))
+				}
+				return lines
+			}(),
+			done:     true,
+			exitCode: 0,
+		}
+		model := &Model{width: 80, Height: 20}
+
+		// Should not panic
+		result := vm.render(model)
+		assert.NotEmpty(t, result)
+	})
+
+	t.Run("render with very long command string", func(t *testing.T) {
+		longArgs := strings.Repeat("--very-long-argument=value ", 30)
+		vm := &CommandExecutionViewModel{
+			cmdString: "docker " + longArgs,
+			output:    []string{"output line 1"},
+			done:      false,
+		}
+		model := &Model{width: 80, Height: 20}
+
+		result := vm.render(model)
+		assert.NotEmpty(t, result)
+	})
+
+	t.Run("render with narrow terminal", func(t *testing.T) {
+		vm := &CommandExecutionViewModel{
+			cmdString: "docker stop " + strings.Repeat("x", 200),
+			output:    []string{strings.Repeat("output ", 100)},
+			done:      true,
+			exitCode:  1,
+		}
+		model := &Model{width: 30, Height: 20}
+
+		result := vm.render(model)
+		assert.NotEmpty(t, result)
+	})
+
+	t.Run("render with very small height", func(t *testing.T) {
+		vm := &CommandExecutionViewModel{
+			cmdString: "docker logs container",
+			output: func() []string {
+				var lines []string
+				for range 100 {
+					lines = append(lines, "log line")
+				}
+				return lines
+			}(),
+			done:     true,
+			exitCode: 0,
+		}
+		model := &Model{width: 80, Height: 5}
+
+		result := vm.render(model)
+		assert.NotEmpty(t, result)
+	})
+
+	t.Run("confirmation dialog with very long args", func(t *testing.T) {
+		longArgs := make([]string, 0, 30)
+		for range 30 {
+			longArgs = append(longArgs, strings.Repeat("long-arg-value-", 10))
+		}
+		vm := &CommandExecutionViewModel{
+			pendingConfirmation: true,
+			pendingArgs:         longArgs,
+		}
+		model := &Model{width: 80, Height: 24}
+
+		result := vm.renderConfirmationDialog(model)
+		assert.NotEmpty(t, result)
+		assert.Contains(t, result, "WARNING")
+	})
+
+	t.Run("confirmation dialog with narrow terminal", func(t *testing.T) {
+		vm := &CommandExecutionViewModel{
+			pendingConfirmation: true,
+			pendingArgs:         []string{"stop", strings.Repeat("container-id-", 20)},
+		}
+		model := &Model{width: 30, Height: 10}
+
+		result := vm.renderConfirmationDialog(model)
+		assert.NotEmpty(t, result)
+	})
+
+	t.Run("confirmation dialog with very small height", func(t *testing.T) {
+		vm := &CommandExecutionViewModel{
+			pendingConfirmation: true,
+			pendingArgs:         []string{"kill", "container123"},
+		}
+		model := &Model{width: 80, Height: 5}
+
+		result := vm.renderConfirmationDialog(model)
+		assert.NotEmpty(t, result)
+	})
+
+	t.Run("render with zero dimensions", func(t *testing.T) {
+		vm := &CommandExecutionViewModel{
+			cmdString: "docker ps",
+			output:    []string{"line1"},
+			done:      true,
+		}
+		model := &Model{width: 0, Height: 0}
+
+		result := vm.render(model)
+		assert.Equal(t, "Loading...", result)
+	})
 }
 
 func TestCommandExecutionViewModel_HandleBack(t *testing.T) {

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -441,6 +442,106 @@ func TestFileBrowserViewModel_Loaded(t *testing.T) {
 		assert.Equal(t, files, vm.containerFiles)
 		assert.Equal(t, 1, vm.Cursor, "Should preserve valid selection")
 	})
+}
+
+func TestFileBrowserViewModel_LongStrings(t *testing.T) {
+	longName := strings.Repeat("very-long-filename-", 20)
+	longPerms := strings.Repeat("drwxr-xr-x", 5)
+	longOwner := strings.Repeat("longowner-", 20)
+	longGroup := strings.Repeat("longgroup-", 20)
+
+	tests := []struct {
+		name   string
+		files  []models.ContainerFile
+		width  int
+		height int
+	}{
+		{
+			name: "very long filename",
+			files: []models.ContainerFile{
+				{Name: longName, Permissions: "drwxr-xr-x", IsDir: true, Owner: "root", Group: "root", Size: 4096},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long permissions string",
+			files: []models.ContainerFile{
+				{Name: "file.txt", Permissions: longPerms, Owner: "root", Group: "root", Size: 100},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long owner and group",
+			files: []models.ContainerFile{
+				{Name: "file.txt", Permissions: "-rw-r--r--", Owner: longOwner, Group: longGroup, Size: 100},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			files: []models.ContainerFile{
+				{Name: longName, Permissions: longPerms, Owner: longOwner, Group: longGroup, Size: 999999999, Links: "999"},
+			},
+			width: 60, height: 20,
+		},
+		{
+			name: "narrow terminal with responsive columns",
+			files: []models.ContainerFile{
+				{Name: longName, Permissions: "drwxr-xr-x", IsDir: true, Owner: "root", Group: "root", Size: 4096},
+			},
+			width: 30, height: 20,
+		},
+		{
+			name: "medium terminal width",
+			files: []models.ContainerFile{
+				{Name: longName, Permissions: "drwxr-xr-x", IsDir: true, Owner: "root", Group: "root", Size: 4096},
+			},
+			width: 70, height: 20,
+		},
+		{
+			name: "wide terminal with all columns",
+			files: []models.ContainerFile{
+				{Name: longName, Permissions: "drwxr-xr-x", IsDir: true, Owner: longOwner, Group: longGroup, Size: 4096, Links: "999"},
+			},
+			width: 120, height: 20,
+		},
+		{
+			name: "very small height with many files",
+			files: func() []models.ContainerFile {
+				var files []models.ContainerFile
+				for range 20 {
+					files = append(files, models.ContainerFile{
+						Name: longName, Permissions: "drwxr-xr-x", IsDir: true, Owner: "root", Group: "root", Size: 4096,
+					})
+				}
+				return files
+			}(),
+			width: 80, height: 5,
+		},
+		{
+			name: "long symlink target",
+			files: []models.ContainerFile{
+				{Name: "link", Permissions: "lrwxrwxrwx", LinkTarget: strings.Repeat("/very/long/path", 20)},
+			},
+			width: 80, height: 20,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vm := &FileBrowserViewModel{
+				containerFiles: tt.files,
+				TableViewModel: TableViewModel{Cursor: 0},
+				currentPath:    "/",
+			}
+			model := &Model{width: tt.width, Height: tt.height}
+			vm.buildRowsForWidth(tt.width)
+
+			// Should not panic
+			result := vm.render(model, tt.height-4)
+			assert.NotEmpty(t, result)
+		})
+	}
 }
 
 func TestFileBrowserViewModel_Title(t *testing.T) {

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -321,6 +322,92 @@ func TestDindProcessListViewModel_Title(t *testing.T) {
 		title := vm.Title()
 		assert.Equal(t, "Docker in Docker: test (all)", title)
 	})
+}
+
+func TestDindProcessListViewModel_LongStrings(t *testing.T) {
+	longImage := strings.Repeat("registry.example.com/org/", 20) + "my-image:latest"
+	longPorts := strings.Repeat("8080->80/tcp, ", 50)
+	longName := strings.Repeat("my-very-long-container-name-", 10)
+
+	tests := []struct {
+		name       string
+		containers []models.DockerContainer
+		width      int
+		height     int
+	}{
+		{
+			name: "very long image name",
+			containers: []models.DockerContainer{
+				{ID: "abc123def456", Image: longImage, State: "running", Status: "Up", Names: "web"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long ports string",
+			containers: []models.DockerContainer{
+				{ID: "abc123def456", Image: "nginx", State: "running", Status: "Up", Ports: longPorts, Names: "web"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long container name",
+			containers: []models.DockerContainer{
+				{ID: "abc123def456", Image: "nginx", State: "running", Status: "Up", Names: longName},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			containers: []models.DockerContainer{
+				{
+					ID:     strings.Repeat("a", 200),
+					Image:  longImage,
+					State:  strings.Repeat("running-", 20),
+					Status: strings.Repeat("Up for a very long time ", 10),
+					Ports:  longPorts,
+					Names:  longName,
+				},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "narrow terminal with long fields",
+			containers: []models.DockerContainer{
+				{ID: "abc123def456", Image: longImage, State: "running", Status: "Up", Names: longName},
+			},
+			width: 30, height: 20,
+		},
+		{
+			name: "very small height with many containers",
+			containers: func() []models.DockerContainer {
+				var cs []models.DockerContainer
+				for range 20 {
+					cs = append(cs, models.DockerContainer{
+						ID: strings.Repeat("x", 64), Image: longImage,
+						State: "running", Status: "Up", Names: strings.Repeat("c", 100),
+					})
+				}
+				return cs
+			}(),
+			width: 80, height: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vm := &DindProcessListViewModel{
+				dindContainers: tt.containers,
+				TableViewModel: TableViewModel{Cursor: 0},
+				hostContainer:  docker.NewDindContainer("host-1", "host-container", "container-1", "test", "running"),
+			}
+			model := &Model{width: tt.width, Height: tt.height}
+			vm.SetRows(vm.buildRows(), model.ViewHeight())
+
+			// Should not panic
+			result := vm.render(model, tt.height-4)
+			assert.NotEmpty(t, result)
+		})
+	}
 }
 
 func TestDindProcessListViewModel_DoLoad(t *testing.T) {
