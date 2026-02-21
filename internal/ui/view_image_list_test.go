@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -121,6 +122,108 @@ func TestImageListViewModel_Rendering(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestImageListViewModel_LongStrings(t *testing.T) {
+	longRepo := strings.Repeat("registry.example.com/org/", 20) + "my-image"
+	longTag := strings.Repeat("v1.0.0-alpha-beta-", 20)
+
+	tests := []struct {
+		name   string
+		images []models.DockerImage
+		width  int
+		height int
+	}{
+		{
+			name: "very long repository name",
+			images: []models.DockerImage{
+				{Repository: longRepo, Tag: "latest", ID: "sha256:abc123", CreatedSince: "1 hour ago", Size: "100MB"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long tag name",
+			images: []models.DockerImage{
+				{Repository: "nginx", Tag: longTag, ID: "sha256:abc123", CreatedSince: "1 hour ago", Size: "100MB"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long image ID",
+			images: []models.DockerImage{
+				{Repository: "nginx", Tag: "latest", ID: "sha256:" + strings.Repeat("abcdef", 50), CreatedSince: "1 hour ago", Size: "100MB"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			images: []models.DockerImage{
+				{Repository: longRepo, Tag: longTag, ID: "sha256:" + strings.Repeat("x", 200), CreatedSince: strings.Repeat("a long time ago ", 10), Size: strings.Repeat("999GB", 10)},
+			},
+			width: 60, height: 20,
+		},
+		{
+			name: "narrow terminal",
+			images: []models.DockerImage{
+				{Repository: longRepo, Tag: "latest", ID: "sha256:abc123", CreatedSince: "1 hour ago", Size: "100MB"},
+			},
+			width: 30, height: 20,
+		},
+		{
+			name: "very small height with many images",
+			images: func() []models.DockerImage {
+				var imgs []models.DockerImage
+				for range 20 {
+					imgs = append(imgs, models.DockerImage{
+						Repository: longRepo, Tag: "latest", ID: "sha256:abc123", CreatedSince: "1 hour ago", Size: "100MB",
+					})
+				}
+				return imgs
+			}(),
+			width: 80, height: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vm := &ImageListViewModel{
+				dockerImages:   tt.images,
+				TableViewModel: TableViewModel{Cursor: 0},
+			}
+			model := &Model{width: tt.width, Height: tt.height}
+			vm.SetRows(vm.buildRows(), model.ViewHeight())
+
+			// Should not panic
+			result := vm.render(model, tt.height-4)
+			assert.NotEmpty(t, result)
+		})
+	}
+}
+
+func TestImageListViewModel_IDTruncation(t *testing.T) {
+	t.Run("image ID is truncated to 12 chars in rows", func(t *testing.T) {
+		longID := "sha256:abcdef1234567890abcdef"
+		vm := &ImageListViewModel{
+			dockerImages: []models.DockerImage{
+				{Repository: "nginx", Tag: "latest", ID: longID, CreatedSince: "1h", Size: "100MB"},
+			},
+			TableViewModel: TableViewModel{Cursor: 0},
+		}
+		rows := vm.buildRows()
+		assert.Equal(t, "sha256:abcde", rows[0][2]) // ID column truncated to 12
+	})
+
+	t.Run("short image ID is not truncated", func(t *testing.T) {
+		shortID := "abc123"
+		vm := &ImageListViewModel{
+			dockerImages: []models.DockerImage{
+				{Repository: "nginx", Tag: "latest", ID: shortID, CreatedSince: "1h", Size: "100MB"},
+			},
+			TableViewModel: TableViewModel{Cursor: 0},
+		}
+		rows := vm.buildRows()
+		assert.Equal(t, shortID, rows[0][2])
+	})
 }
 
 func TestImageListViewModel_Navigation(t *testing.T) {

@@ -247,6 +247,118 @@ func TestDockerContainerListView_Update(t *testing.T) {
 	})
 }
 
+func TestDockerContainerListView_LongStrings(t *testing.T) {
+	longImage := strings.Repeat("registry.example.com/org/", 20) + "my-image:latest"
+	longPorts := strings.Repeat("8080->80/tcp, ", 50)
+	longName := strings.Repeat("my-very-long-container-name-", 10)
+
+	tests := []struct {
+		name       string
+		containers []models.DockerContainer
+		width      int
+		height     int
+	}{
+		{
+			name: "very long image name",
+			containers: []models.DockerContainer{
+				{ID: "abc123def456", Image: longImage, Status: "Up", Names: "web"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long ports string",
+			containers: []models.DockerContainer{
+				{ID: "abc123def456", Image: "nginx", Status: "Up", Ports: longPorts, Names: "web"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long container name",
+			containers: []models.DockerContainer{
+				{ID: "abc123def456", Image: "nginx", Status: "Up", Names: longName},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			containers: []models.DockerContainer{
+				{
+					ID:     strings.Repeat("a", 200),
+					Image:  longImage,
+					Status: strings.Repeat("Up for a very long time ", 10),
+					State:  strings.Repeat("running-", 20),
+					Ports:  longPorts,
+					Names:  longName,
+				},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "narrow terminal with long fields",
+			containers: []models.DockerContainer{
+				{ID: "abc123def456", Image: longImage, Status: "Up", Names: longName},
+			},
+			width: 30, height: 20,
+		},
+		{
+			name: "very small height with many containers",
+			containers: func() []models.DockerContainer {
+				var cs []models.DockerContainer
+				for i := range 20 {
+					cs = append(cs, models.DockerContainer{
+						ID: strings.Repeat("x", 64), Image: longImage,
+						Status: "Up", Names: strings.Repeat("c", 100),
+					})
+					_ = i
+				}
+				return cs
+			}(),
+			width: 80, height: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := createTestModel(DockerContainerListView)
+			m.width = tt.width
+			m.Height = tt.height
+			m.dockerContainerListViewModel.dockerContainers = tt.containers
+			m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.ViewHeight())
+
+			// Should not panic
+			result := m.dockerContainerListViewModel.renderDockerList(m, tt.height-4)
+			assert.NotEmpty(t, result)
+		})
+	}
+}
+
+func TestDockerContainerListView_IDTruncation(t *testing.T) {
+	t.Run("container ID is truncated to 12 chars", func(t *testing.T) {
+		m := createTestModel(DockerContainerListView)
+		longID := "abcdef1234567890abcdef1234567890abcdef1234567890"
+		m.dockerContainerListViewModel.dockerContainers = []models.DockerContainer{
+			{ID: longID, Image: "nginx", Status: "Up", Names: "web"},
+		}
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.ViewHeight())
+
+		result := m.dockerContainerListViewModel.renderDockerList(m, 20)
+		assert.Contains(t, result, "abcdef123456")
+		assert.NotContains(t, result, longID)
+	})
+
+	t.Run("short container ID is not truncated", func(t *testing.T) {
+		m := createTestModel(DockerContainerListView)
+		shortID := "abc123"
+		m.dockerContainerListViewModel.dockerContainers = []models.DockerContainer{
+			{ID: shortID, Image: "nginx", Status: "Up", Names: "web"},
+		}
+		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.ViewHeight())
+
+		result := m.dockerContainerListViewModel.renderDockerList(m, 20)
+		assert.Contains(t, result, shortID)
+	})
+}
+
 // Test the view content directly without teatest to avoid Docker daemon calls
 func TestDockerContainerListView_FullOutput(t *testing.T) {
 	t.Run("renders complete view", func(t *testing.T) {

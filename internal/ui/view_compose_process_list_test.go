@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -175,6 +176,109 @@ func TestComposeProcessListView_Rendering(t *testing.T) {
 		assert.Contains(t, output, "Up")         // GetStatus() returns "Up" for running
 		assert.Contains(t, output, "Exited (0)") // GetStatus() returns "Exited (0)" for exited with code 0
 	})
+}
+
+func TestComposeProcessListView_LongStrings(t *testing.T) {
+	longImage := strings.Repeat("registry.example.com/org/", 20) + "my-image:latest"
+	longService := strings.Repeat("my-service-", 20)
+
+	tests := []struct {
+		name       string
+		containers []models.ComposeContainer
+		width      int
+		height     int
+	}{
+		{
+			name: "very long image name",
+			containers: []models.ComposeContainer{
+				{Service: "web", Image: longImage, State: "running"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long service name",
+			containers: []models.ComposeContainer{
+				{Service: longService, Image: "nginx:latest", State: "running"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "many ports",
+			containers: []models.ComposeContainer{
+				{
+					Service: "web", Image: "nginx:latest", State: "running",
+					Publishers: func() []struct {
+						URL           string `json:"URL"`
+						TargetPort    int    `json:"TargetPort"`
+						PublishedPort int    `json:"PublishedPort"`
+						Protocol      string `json:"Protocol"`
+					} {
+						var pubs []struct {
+							URL           string `json:"URL"`
+							TargetPort    int    `json:"TargetPort"`
+							PublishedPort int    `json:"PublishedPort"`
+							Protocol      string `json:"Protocol"`
+						}
+						for i := range 50 {
+							pubs = append(pubs, struct {
+								URL           string `json:"URL"`
+								TargetPort    int    `json:"TargetPort"`
+								PublishedPort int    `json:"PublishedPort"`
+								Protocol      string `json:"Protocol"`
+							}{PublishedPort: 8000 + i, TargetPort: 80 + i, Protocol: "tcp"})
+						}
+						return pubs
+					}(),
+				},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			containers: []models.ComposeContainer{
+				{
+					Service: longService, Image: longImage,
+					State: "running", Name: strings.Repeat("name-", 50),
+				},
+			},
+			width: 60, height: 20,
+		},
+		{
+			name: "narrow terminal",
+			containers: []models.ComposeContainer{
+				{Service: "web", Image: longImage, State: "running"},
+			},
+			width: 30, height: 20,
+		},
+		{
+			name: "very small height with many containers",
+			containers: func() []models.ComposeContainer {
+				var cs []models.ComposeContainer
+				for i := range 20 {
+					cs = append(cs, models.ComposeContainer{
+						Service: fmt.Sprintf("service-%d-%s", i, strings.Repeat("x", 50)),
+						Image:   longImage, State: "running",
+					})
+				}
+				return cs
+			}(),
+			width: 80, height: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := createTestModel(ComposeProcessListView)
+			m.width = tt.width
+			m.Height = tt.height
+			m.composeProcessListViewModel.composeContainers = tt.containers
+			m.composeProcessListViewModel.SetRows(m.composeProcessListViewModel.buildRows(), m.ViewHeight())
+
+			// Should not panic
+			result := m.composeProcessListViewModel.render(m, tt.height-4)
+			assert.NotEmpty(t, result)
+		})
+	}
 }
 
 func TestComposeProcessListView_Navigation(t *testing.T) {
