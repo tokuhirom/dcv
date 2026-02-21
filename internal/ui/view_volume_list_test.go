@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -85,6 +86,83 @@ func TestVolumeListViewModel_Rendering(t *testing.T) {
 			for _, expected := range tt.expected {
 				assert.Contains(t, result, expected, "Expected to find '%s' in output", expected)
 			}
+		})
+	}
+}
+
+func TestVolumeListViewModel_LongStrings(t *testing.T) {
+	longName := strings.Repeat("my-very-long-volume-name-", 20)
+	longDriver := strings.Repeat("custom-driver-", 20)
+	longSize := strings.Repeat("999.9GB", 20)
+
+	tests := []struct {
+		name    string
+		volumes []models.DockerVolume
+		width   int
+		height  int
+	}{
+		{
+			name: "very long volume name",
+			volumes: []models.DockerVolume{
+				{Name: longName, Driver: "local", Scope: "local", Size: "100MB"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long driver name",
+			volumes: []models.DockerVolume{
+				{Name: "vol", Driver: longDriver, Scope: "local", Size: "100MB"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long size string",
+			volumes: []models.DockerVolume{
+				{Name: "vol", Driver: "local", Scope: "local", Size: longSize},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			volumes: []models.DockerVolume{
+				{Name: longName, Driver: longDriver, Scope: strings.Repeat("scope-", 20), Size: longSize},
+			},
+			width: 60, height: 20,
+		},
+		{
+			name: "narrow terminal",
+			volumes: []models.DockerVolume{
+				{Name: longName, Driver: "local", Scope: "local", Size: "100MB"},
+			},
+			width: 30, height: 20,
+		},
+		{
+			name: "very small height with many volumes",
+			volumes: func() []models.DockerVolume {
+				var vols []models.DockerVolume
+				for range 20 {
+					vols = append(vols, models.DockerVolume{
+						Name: longName, Driver: "local", Scope: "local", Size: "100MB",
+					})
+				}
+				return vols
+			}(),
+			width: 80, height: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vm := &VolumeListViewModel{
+				dockerVolumes:  tt.volumes,
+				TableViewModel: TableViewModel{Cursor: 0},
+			}
+			model := &Model{width: tt.width, Height: tt.height}
+			vm.SetRows(vm.buildRows(), model.ViewHeight())
+
+			// Should not panic
+			result := vm.render(model, tt.height-4)
+			assert.NotEmpty(t, result)
 		})
 	}
 }

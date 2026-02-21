@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,6 +95,83 @@ func TestNetworkListView(t *testing.T) {
 			for _, expected := range tc.expected {
 				assert.Contains(t, view, expected, "View should contain: %s", expected)
 			}
+		})
+	}
+}
+
+func TestNetworkListView_LongStrings(t *testing.T) {
+	longName := strings.Repeat("my-very-long-network-name-", 10)
+	longDriver := strings.Repeat("custom-driver-", 20)
+	longID := strings.Repeat("abcdef", 20)
+
+	tests := []struct {
+		name     string
+		networks []models.DockerNetwork
+		width    int
+		height   int
+	}{
+		{
+			name: "very long network name",
+			networks: []models.DockerNetwork{
+				{ID: "abc123", Name: longName, Driver: "bridge", Scope: "local"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long driver name",
+			networks: []models.DockerNetwork{
+				{ID: "abc123", Name: "net", Driver: longDriver, Scope: "local"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long network ID",
+			networks: []models.DockerNetwork{
+				{ID: longID, Name: "net", Driver: "bridge", Scope: "local"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			networks: []models.DockerNetwork{
+				{ID: longID, Name: longName, Driver: longDriver, Scope: strings.Repeat("scope-", 20)},
+			},
+			width: 60, height: 20,
+		},
+		{
+			name: "narrow terminal",
+			networks: []models.DockerNetwork{
+				{ID: "abc123", Name: longName, Driver: "bridge", Scope: "local"},
+			},
+			width: 30, height: 20,
+		},
+		{
+			name: "very small height with many networks",
+			networks: func() []models.DockerNetwork {
+				var nets []models.DockerNetwork
+				for range 20 {
+					nets = append(nets, models.DockerNetwork{
+						ID: longID, Name: longName, Driver: "bridge", Scope: "local",
+					})
+				}
+				return nets
+			}(),
+			width: 80, height: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vm := &NetworkListViewModel{
+				dockerNetworks: tt.networks,
+				TableViewModel: TableViewModel{Cursor: 0},
+			}
+			model := &Model{width: tt.width, Height: tt.height}
+			vm.SetRows(vm.buildRows(), model.ViewHeight())
+
+			// Should not panic
+			result := vm.render(model, tt.height-4)
+			assert.NotEmpty(t, result)
 		})
 	}
 }

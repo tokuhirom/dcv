@@ -9,11 +9,11 @@
 
 ## Phase 2 - List views using RenderTable (medium risk)
 
-- [ ] `view_docker_container_list.go` - Long Image/Ports/Names fields
-- [ ] `view_compose_process_list.go` - Long field values
-- [ ] `view_image_list.go` - Long repository names
-- [ ] `view_network_list.go` - Long network names
-- [ ] `view_volume_list.go` - Long volume names (UI rendering tests)
+- [x] `view_docker_container_list.go` - Long Image/Ports/Names fields
+- [x] `view_compose_process_list.go` - Long field values
+- [x] `view_image_list.go` - Long repository names
+- [x] `view_network_list.go` - Long network names
+- [x] `view_volume_list.go` - Long volume names (UI rendering tests)
 
 ## Phase 3 - Special views
 
