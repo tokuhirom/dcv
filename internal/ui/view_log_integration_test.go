@@ -9,17 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/tokuhirom/dcv/internal/docker"
+	"github.com/tokuhirom/dcv/internal/testutil"
 )
 
-func skipIfNoDocker(t *testing.T) {
-	t.Helper()
-	if err := exec.Command("docker", "info").Run(); err != nil {
-		t.Skip("Docker is not available, skipping integration test")
-	}
-}
-
 func TestLogView_LongLines_Integration(t *testing.T) {
-	skipIfNoDocker(t)
+	testutil.SkipIfNoDocker(t)
 
 	containerName := "dcv-test-log-longlines"
 

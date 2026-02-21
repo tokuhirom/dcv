@@ -113,18 +113,18 @@ For a complete list of keyboard shortcuts and commands in each view, see [docs/k
 
 ## Integration Tests
 
-Integration tests use real Docker commands and are placed in `*_integration_test.go` files. They are automatically skipped when Docker is not available.
+Integration tests use real Docker commands and are placed in `*_integration_test.go` files. They are skipped locally when Docker is not available, but **fail in CI** to prevent silent skips.
 
 ### Writing Integration Tests
 
 1. **File naming**: Use `*_integration_test.go` suffix (e.g., `view_log_integration_test.go`)
-2. **Skip guard**: Always add a `skipIfNoDocker` helper at the top of each test:
+2. **Skip guard**: Use `testutil.SkipIfNoDocker(t)` at the top of each test. In CI (`CI` env var is set), Docker being unavailable causes a test failure instead of a skip:
    ```go
-   func skipIfNoDocker(t *testing.T) {
-       t.Helper()
-       if err := exec.Command("docker", "info").Run(); err != nil {
-           t.Skip("Docker is not available, skipping integration test")
-       }
+   import "github.com/tokuhirom/dcv/internal/testutil"
+
+   func TestMyFeature_Integration(t *testing.T) {
+       testutil.SkipIfNoDocker(t)
+       // ...
    }
    ```
 3. **Cleanup**: Use `t.Cleanup()` to remove Docker resources (containers, volumes, etc.) created during the test
@@ -141,7 +141,7 @@ For Bubble Tea view models, you can feed real Docker command output into the mod
 
 ```go
 func TestMyView_Integration(t *testing.T) {
-    skipIfNoDocker(t)
+    testutil.SkipIfNoDocker(t)
 
     // 1. Run a Docker command to generate real output
     out, err := exec.Command("docker", "run", "--rm", "alpine:latest", "sh", "-c", "echo hello").CombinedOutput()

@@ -7,17 +7,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/tokuhirom/dcv/internal/testutil"
 )
 
-func skipIfNoDocker(t *testing.T) {
-	t.Helper()
-	if err := exec.Command("docker", "info").Run(); err != nil {
-		t.Skip("Docker is not available, skipping integration test")
-	}
-}
-
 func TestClient_ListVolumes_Integration(t *testing.T) {
-	skipIfNoDocker(t)
+	testutil.SkipIfNoDocker(t)
 
 	volumeName := "dcv-test-volume-" + t.Name()
 
