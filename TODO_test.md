@@ -24,4 +24,4 @@
 
 ## Phase 4 - Docker client functions
 
-- [ ] `internal/docker/` - ListContainers, ListImages, ListNetworks, ListComposeProjects, GetStats
+- [x] `internal/docker/` - ListContainers, ListImages, ListNetworks, ListComposeProjects, GetStats
