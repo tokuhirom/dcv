@@ -49,7 +49,7 @@ func generateKeymapDocumentation() string {
 	for _, handler := range globalHandlers {
 		keys := formatKeys(handler.Keys)
 		command := getCommandName(handler)
-		sb.WriteString(fmt.Sprintf("| `%s` | %s | :%s |\n", keys, handler.Description, command))
+		fmt.Fprintf(&sb, "| `%s` | %s | :%s |\n", keys, handler.Description, command)
 	}
 
 	sb.WriteString("\n## View-Specific Shortcuts\n\n")
@@ -83,15 +83,15 @@ func generateKeymapDocumentation() string {
 			continue
 		}
 
-		sb.WriteString(fmt.Sprintf("### %s\n\n", view.Name))
-		sb.WriteString(fmt.Sprintf("%s\n\n", view.Description))
+		fmt.Fprintf(&sb, "### %s\n\n", view.Name)
+		fmt.Fprintf(&sb, "%s\n\n", view.Description)
 		sb.WriteString("| Key | Description | Command |\n")
 		sb.WriteString("|-----|-------------|----------|\n")
 
 		for _, handler := range handlers {
 			keys := formatKeys(handler.Keys)
 			command := getCommandName(handler)
-			sb.WriteString(fmt.Sprintf("| `%s` | %s | :%s |\n", keys, handler.Description, command))
+			fmt.Fprintf(&sb, "| `%s` | %s | :%s |\n", keys, handler.Description, command)
 		}
 		sb.WriteString("\n")
 	}
