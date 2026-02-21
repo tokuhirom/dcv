@@ -121,15 +121,15 @@ func TestLogView_Rendering(t *testing.T) {
 
 func TestLogView_WrappedLines(t *testing.T) {
 	t.Run("long lines wrap and affect scroll calculations", func(t *testing.T) {
-		// Create a very long line that will wrap to multiple visual lines
-		// For a terminal width of 80, this should wrap to at least 3 visual lines
-		longLine := strings.Repeat("This is a very long log line that will definitely wrap ", 10)
+		// Create a long line that wraps to about 3 visual lines at width 80
+		// Effective width is 80 - 2 = 78 (accounting for "  " prefix)
+		longLine := strings.Repeat("A", 200) // 200 chars = ceil(200/78) = 3 visual lines
 
 		model := &Model{
 			logViewModel: LogViewModel{
 				logs: []string{
 					"Short line 1",
-					longLine, // This should take multiple visual lines
+					longLine,
 					"Short line 2",
 					"Short line 3",
 					"Short line 4",
@@ -137,33 +137,27 @@ func TestLogView_WrappedLines(t *testing.T) {
 				logScrollY: 0,
 			},
 			width:  80, // Terminal width
-			Height: 10, // Terminal height (10 - 4 = 6 visible lines)
+			Height: 10, // Terminal height
 		}
 
-		// The long line wraps to ~3 visual lines, so:
-		// Visual line 1: "Short line 1"
-		// Visual lines 2-4: longLine (wrapped)
-		// Visual line 5: "Short line 2"
-		// Visual line 6: "Short line 3"
-		// "Short line 4" should not be visible initially
+		// Available height = 10 - 2 = 8 visual lines
+		// "Short line 1" = 1 visual line
+		// longLine (200 chars) = ceil(200/78) = 3 visual lines
+		// "Short line 2" = 1 visual line
+		// "Short line 3" = 1 visual line
+		// Total = 6 visual lines, all fit in 8
+		// "Short line 4" = 1 visual line (total 7, still fits)
 
 		result := model.logViewModel.render(model, 10)
 
-		// With the current bug, it will try to show all 5 logical lines
-		// But with wrapping, only the first 3-4 logical lines should be visible
 		assert.Contains(t, result, "Short line 1")
-		assert.Contains(t, result, longLine[:50]) // Part of the long line
-
-		// This test will fail with the current implementation because
-		// it doesn't account for wrapped lines taking multiple visual lines
-		// The display will be broken when scrolling
+		assert.Contains(t, result, longLine[:50])
 
 		// Test scrolling with wrapped lines
 		model.logViewModel.HandleDown(model)
 		result = model.logViewModel.render(model, 10)
 
-		// After scrolling down by 1 logical line, we should skip "Short line 1"
-		// but the long wrapped line should still be partially visible
+		// After scrolling down by 1 logical line, "Short line 1" should be gone
 		assert.NotContains(t, result, "Short line 1", "First line should be scrolled out")
 	})
 

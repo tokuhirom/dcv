@@ -7,9 +7,23 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
+
+// visualLineCount calculates how many visual lines a string occupies
+// when displayed in a terminal of the given width.
+func visualLineCount(line string, width int) int {
+	if width <= 0 {
+		return 1
+	}
+	lineWidth := runewidth.StringWidth(line)
+	if lineWidth == 0 {
+		return 1
+	}
+	return (lineWidth + width - 1) / width
+}
 
 type LogViewModel struct {
 	SearchViewModel
@@ -68,16 +82,11 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 	visualLinesUsed := 0
 	endIdx := startIdx
 
+	// Each log line is prefixed with "  " or "> " (2 chars), reducing effective width
+	effectiveWidth := model.width - 2
 	for i := startIdx; i < len(logsToDisplay) && visualLinesUsed < visibleHeight; i++ {
-		lineLength := len(logsToDisplay[i])
-		// Calculate how many visual lines this log line will take
-		visualLines := 1
-		if model.width > 0 {
-			visualLines = (lineLength + model.width - 1) / model.width
-			if visualLines < 1 {
-				visualLines = 1
-			}
-		}
+		// Calculate how many visual lines this log line will take using display width
+		visualLines := visualLineCount(logsToDisplay[i], effectiveWidth)
 
 		if visualLinesUsed+visualLines <= visibleHeight {
 			endIdx = i + 1
@@ -252,23 +261,15 @@ func (m *LogViewModel) calculateMaxScroll(model *Model) int {
 
 	// Work backwards to find the max scroll position
 	// We want to find the highest index where we can still fill the screen
+	// Each log line is prefixed with "  " or "> " (2 chars)
+	effectiveWidth := model.width - 2
 	for startIdx := len(logsToDisplay) - 1; startIdx >= 0; startIdx-- {
 		visualLinesUsed := 0
 
 		for i := startIdx; i < len(logsToDisplay); i++ {
-			lineLength := len(logsToDisplay[i])
-			visualLines := 1
-			if model.width > 0 {
-				visualLines = (lineLength + model.width - 1) / model.width
-				if visualLines < 1 {
-					visualLines = 1
-				}
-			}
-
-			visualLinesUsed += visualLines
+			visualLinesUsed += visualLineCount(logsToDisplay[i], effectiveWidth)
 
 			if visualLinesUsed >= visibleHeight {
-				// We've filled the screen, this is a valid max scroll position
 				return startIdx
 			}
 		}
@@ -389,7 +390,7 @@ func (m *LogViewModel) LogLines(model *Model, lines []string) {
 		m.performFilter()
 	} else {
 		// Auto-scroll to bottom only when not filtering
-		maxScroll := len(m.logs) - model.PageSize()
+		maxScroll := m.calculateMaxScroll(model)
 		if maxScroll > 0 {
 			m.logScrollY = maxScroll
 		}
