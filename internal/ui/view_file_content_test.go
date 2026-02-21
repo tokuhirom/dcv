@@ -340,6 +340,95 @@ func TestFileContentViewModel_EmptyContent(t *testing.T) {
 
 // Test message types are already defined in model.go
 
+func TestFileContentViewModel_LongStrings(t *testing.T) {
+	longLine := strings.Repeat("x", 1000)
+
+	tests := []struct {
+		name      string
+		viewModel FileContentViewModel
+		model     *Model
+	}{
+		{
+			name: "very long single line",
+			viewModel: FileContentViewModel{
+				content:     longLine,
+				contentPath: "/etc/config.conf",
+				scrollY:     0,
+			},
+			model: &Model{width: 80, Height: 20, err: nil},
+		},
+		{
+			name: "many long lines",
+			viewModel: FileContentViewModel{
+				content:     strings.Repeat(longLine+"\n", 100),
+				contentPath: "/etc/config.conf",
+				scrollY:     0,
+			},
+			model: &Model{width: 80, Height: 20, err: nil},
+		},
+		{
+			name: "very long file path",
+			viewModel: FileContentViewModel{
+				content:     "content",
+				contentPath: "/" + strings.Repeat("dir/", 100) + "file.txt",
+				scrollY:     0,
+			},
+			model: &Model{width: 80, Height: 20, err: nil},
+		},
+		{
+			name: "narrow terminal width",
+			viewModel: FileContentViewModel{
+				content:     "Line 1\nLine 2\nLine 3",
+				contentPath: "/etc/config.conf",
+				scrollY:     0,
+			},
+			model: &Model{width: 10, Height: 20, err: nil},
+		},
+		{
+			name: "very small height",
+			viewModel: FileContentViewModel{
+				content:     "Line 1\nLine 2\nLine 3\nLine 4\nLine 5",
+				contentPath: "/etc/config.conf",
+				scrollY:     0,
+			},
+			model: &Model{width: 80, Height: 5, err: nil},
+		},
+		{
+			name: "minimum height of 4 (viewport gets 0 height)",
+			viewModel: FileContentViewModel{
+				content:     "Line 1\nLine 2\nLine 3",
+				contentPath: "/etc/config.conf",
+				scrollY:     0,
+			},
+			model: &Model{width: 80, Height: 4, err: nil},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.model.fileContentViewModel = tt.viewModel
+			// Should not panic
+			result := tt.viewModel.render(tt.model)
+			assert.NotEmpty(t, result)
+		})
+	}
+}
+
+func TestFileContentViewModel_TitleLongPath(t *testing.T) {
+	longPath := "/" + strings.Repeat("dir/", 100) + "file.txt"
+	container := docker.NewContainer("test123", "test-container", "test-container", "running")
+	vm := &FileContentViewModel{
+		content:     "content",
+		contentPath: longPath,
+		container:   container,
+		scrollY:     0,
+	}
+
+	title := vm.Title()
+	assert.Contains(t, title, "File:")
+	assert.Contains(t, title, longPath)
+}
+
 func TestFileContentViewModel_PageNavigation(t *testing.T) {
 	tests := []struct {
 		name           string

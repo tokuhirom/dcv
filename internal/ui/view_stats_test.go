@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -432,6 +433,142 @@ func TestParsePercentage(t *testing.T) {
 		t.Run(tt.input, func(t *testing.T) {
 			result := models.ParsePercentage(tt.input)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestStatsViewModel_LongStrings(t *testing.T) {
+	longName := strings.Repeat("n", 200)
+	longNetIO := strings.Repeat("x", 200) + "/" + strings.Repeat("y", 200)
+	longBlockIO := strings.Repeat("a", 200) + "/" + strings.Repeat("b", 200)
+	longMemUsage := strings.Repeat("m", 200) + "/" + strings.Repeat("g", 200)
+
+	tests := []struct {
+		name  string
+		stats []models.ContainerStats
+		model *Model
+	}{
+		{
+			name: "very long container name",
+			stats: []models.ContainerStats{
+				{
+					Name:     longName,
+					CPUPerc:  "10.0%",
+					MemUsage: "100MiB/1GiB",
+					MemPerc:  "10.0%",
+					NetIO:    "1MB/500KB",
+					BlockIO:  "10MB/5MB",
+				},
+			},
+			model: &Model{width: 80, Height: 20},
+		},
+		{
+			name: "very long NET I/O value",
+			stats: []models.ContainerStats{
+				{
+					Name:     "web",
+					CPUPerc:  "10.0%",
+					MemUsage: "100MiB/1GiB",
+					MemPerc:  "10.0%",
+					NetIO:    longNetIO,
+					BlockIO:  "10MB/5MB",
+				},
+			},
+			model: &Model{width: 80, Height: 20},
+		},
+		{
+			name: "very long BLOCK I/O value",
+			stats: []models.ContainerStats{
+				{
+					Name:     "web",
+					CPUPerc:  "10.0%",
+					MemUsage: "100MiB/1GiB",
+					MemPerc:  "10.0%",
+					NetIO:    "1MB/500KB",
+					BlockIO:  longBlockIO,
+				},
+			},
+			model: &Model{width: 80, Height: 20},
+		},
+		{
+			name: "very long MEM USAGE value",
+			stats: []models.ContainerStats{
+				{
+					Name:     "web",
+					CPUPerc:  "10.0%",
+					MemUsage: longMemUsage,
+					MemPerc:  "10.0%",
+					NetIO:    "1MB/500KB",
+					BlockIO:  "10MB/5MB",
+				},
+			},
+			model: &Model{width: 80, Height: 20},
+		},
+		{
+			name: "all fields long simultaneously",
+			stats: []models.ContainerStats{
+				{
+					Name:     longName,
+					CPUPerc:  "10.0%",
+					MemUsage: longMemUsage,
+					MemPerc:  "99.9%",
+					NetIO:    longNetIO,
+					BlockIO:  longBlockIO,
+				},
+			},
+			model: &Model{width: 60, Height: 20},
+		},
+		{
+			name: "narrow terminal width",
+			stats: []models.ContainerStats{
+				{
+					Name:     "web-container",
+					CPUPerc:  "10.0%",
+					MemUsage: "100MiB/1GiB",
+					MemPerc:  "10.0%",
+					NetIO:    "1MB/500KB",
+					BlockIO:  "10MB/5MB",
+				},
+			},
+			model: &Model{width: 30, Height: 20},
+		},
+		{
+			name: "very small available height",
+			stats: []models.ContainerStats{
+				{
+					Name:     "web",
+					CPUPerc:  "10.0%",
+					MemUsage: "100MiB/1GiB",
+					MemPerc:  "10.0%",
+					NetIO:    "1MB/500KB",
+					BlockIO:  "10MB/5MB",
+				},
+				{
+					Name:     "db",
+					CPUPerc:  "5.0%",
+					MemUsage: "200MiB/2GiB",
+					MemPerc:  "10.0%",
+					NetIO:    "2MB/1MB",
+					BlockIO:  "20MB/10MB",
+				},
+			},
+			model: &Model{width: 100, Height: 5},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vm := &StatsViewModel{stats: tt.stats}
+			vm.buildRows()
+			height := tt.model.Height - 4
+			if height < 1 {
+				height = 1
+			}
+			vm.SetRows(vm.Rows, height)
+
+			// Should not panic
+			result := vm.render(tt.model, height)
+			assert.NotEmpty(t, result)
 		})
 	}
 }

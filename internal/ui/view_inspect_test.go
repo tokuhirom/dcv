@@ -411,6 +411,102 @@ func TestInspectViewModel_Title(t *testing.T) {
 	}
 }
 
+func TestInspectViewModel_LongStrings(t *testing.T) {
+	longValue := strings.Repeat("x", 500)
+	longKey := strings.Repeat("k", 500)
+
+	tests := []struct {
+		name      string
+		viewModel InspectViewModel
+		height    int
+	}{
+		{
+			name: "very long JSON value",
+			viewModel: InspectViewModel{
+				inspectContent: "key: " + longValue,
+			},
+			height: 20,
+		},
+		{
+			name: "very long JSON key",
+			viewModel: InspectViewModel{
+				inspectContent: longKey + ": value",
+			},
+			height: 20,
+		},
+		{
+			name: "very long line without key-value",
+			viewModel: InspectViewModel{
+				inspectContent: strings.Repeat("z", 1000),
+			},
+			height: 20,
+		},
+		{
+			name: "many long lines",
+			viewModel: InspectViewModel{
+				inspectContent: strings.Repeat(strings.Repeat("a", 300)+"\n", 100),
+			},
+			height: 10,
+		},
+		{
+			name: "very small available height of 1",
+			viewModel: InspectViewModel{
+				inspectContent: "line1\nline2\nline3\nline4\nline5",
+			},
+			height: 1,
+		},
+		{
+			name: "zero available height",
+			viewModel: InspectViewModel{
+				inspectContent: "line1\nline2\nline3",
+			},
+			height: 0,
+		},
+		{
+			name: "negative available height",
+			viewModel: InspectViewModel{
+				inspectContent: "line1\nline2\nline3",
+			},
+			height: -5,
+		},
+		{
+			name: "long list item",
+			viewModel: InspectViewModel{
+				inspectContent: "- " + longValue,
+			},
+			height: 20,
+		},
+		{
+			name: "search on long lines",
+			viewModel: InspectViewModel{
+				SearchViewModel: SearchViewModel{
+					searchText:       "xxx",
+					searchMode:       false,
+					searchResults:    []int{0},
+					currentSearchIdx: 0,
+				},
+				inspectContent: strings.Repeat("x", 1000),
+			},
+			height: 20,
+		},
+		{
+			name: "deeply indented content",
+			viewModel: InspectViewModel{
+				inspectContent: strings.Repeat("  ", 100) + "key: value",
+			},
+			height: 20,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic
+			result := tt.viewModel.render(tt.height)
+			assert.NotEmpty(t, result)
+		})
+	}
+}
+
 func TestInspectViewModel_Inspect(t *testing.T) {
 	t.Run("Inspect initiates loading", func(t *testing.T) {
 		model := &Model{

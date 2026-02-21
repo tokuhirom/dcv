@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -307,6 +309,165 @@ func TestTopViewModel_Navigation(t *testing.T) {
 		// Shouldn't go beyond last process
 		vm.HandleDown()
 		assert.Equal(t, 2, vm.scrollY)
+	})
+}
+
+func TestTopViewModel_LongStrings(t *testing.T) {
+	longUID := strings.Repeat("u", 200)
+	longPID := strings.Repeat("1", 200)
+	longCMD := strings.Repeat("x", 200)
+
+	tests := []struct {
+		name      string
+		viewModel TopViewModel
+		height    int
+	}{
+		{
+			name: "long UID does not panic",
+			viewModel: TopViewModel{
+				processes: []models.Process{
+					{UID: longUID, PID: "1", PPID: "0", CMD: "sh"},
+				},
+			},
+			height: 20,
+		},
+		{
+			name: "long PID does not panic",
+			viewModel: TopViewModel{
+				processes: []models.Process{
+					{UID: "root", PID: longPID, PPID: "0", CMD: "sh"},
+				},
+			},
+			height: 20,
+		},
+		{
+			name: "long command is truncated",
+			viewModel: TopViewModel{
+				processes: []models.Process{
+					{UID: "root", PID: "1", PPID: "0", CMD: longCMD},
+				},
+			},
+			height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			viewModel: TopViewModel{
+				processes: []models.Process{
+					{
+						UID:   longUID,
+						PID:   longPID,
+						PPID:  strings.Repeat("2", 200),
+						STIME: strings.Repeat("s", 200),
+						TIME:  strings.Repeat("t", 200),
+						CMD:   longCMD,
+					},
+				},
+				containerStats: &models.ContainerStats{
+					CPUPerc:  "99.9%",
+					MemUsage: strings.Repeat("m", 200),
+					MemPerc:  "99.9%",
+					PIDs:     strings.Repeat("9", 200),
+				},
+			},
+			height: 20,
+		},
+		{
+			name: "very small available height",
+			viewModel: TopViewModel{
+				processes: []models.Process{
+					{UID: "root", PID: "1", PPID: "0", CMD: "sh"},
+					{UID: "root", PID: "2", PPID: "0", CMD: "bash"},
+					{UID: "root", PID: "3", PPID: "0", CMD: "zsh"},
+				},
+				containerStats: &models.ContainerStats{
+					CPUPerc:  "10%",
+					MemUsage: "100MiB / 1GiB",
+					MemPerc:  "10%",
+					PIDs:     "3",
+				},
+			},
+			height: 1,
+		},
+		{
+			name: "zero available height",
+			viewModel: TopViewModel{
+				processes: []models.Process{
+					{UID: "root", PID: "1", PPID: "0", CMD: "sh"},
+				},
+			},
+			height: 0,
+		},
+		{
+			name: "negative available height",
+			viewModel: TopViewModel{
+				processes: []models.Process{
+					{UID: "root", PID: "1", PPID: "0", CMD: "sh"},
+				},
+			},
+			height: -5,
+		},
+		{
+			name: "many processes with small height",
+			viewModel: TopViewModel{
+				processes: func() []models.Process {
+					var procs []models.Process
+					for i := 0; i < 100; i++ {
+						procs = append(procs, models.Process{
+							UID: "root", PID: fmt.Sprintf("%d", i), PPID: "0",
+							CMD: fmt.Sprintf("process-%d-%s", i, strings.Repeat("x", 100)),
+						})
+					}
+					return procs
+				}(),
+			},
+			height: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic
+			result := tt.viewModel.render(tt.height)
+			assert.NotEmpty(t, result)
+		})
+	}
+}
+
+func TestTopViewModel_CommandTruncation(t *testing.T) {
+	t.Run("command exactly 50 chars is not truncated", func(t *testing.T) {
+		cmd50 := strings.Repeat("a", 50)
+		vm := &TopViewModel{
+			processes: []models.Process{
+				{UID: "root", PID: "1", PPID: "0", CMD: cmd50},
+			},
+		}
+		result := vm.render(20)
+		assert.Contains(t, result, cmd50)
+		assert.NotContains(t, result, "...")
+	})
+
+	t.Run("command over 50 chars is truncated with ellipsis", func(t *testing.T) {
+		cmd51 := strings.Repeat("b", 51)
+		vm := &TopViewModel{
+			processes: []models.Process{
+				{UID: "root", PID: "1", PPID: "0", CMD: cmd51},
+			},
+		}
+		result := vm.render(20)
+		assert.Contains(t, result, strings.Repeat("b", 47)+"...")
+		assert.NotContains(t, result, cmd51)
+	})
+}
+
+func TestTopViewModel_HardcodedSeparator(t *testing.T) {
+	t.Run("separator line is always 100 chars wide", func(t *testing.T) {
+		vm := &TopViewModel{
+			processes: []models.Process{
+				{UID: "root", PID: "1", PPID: "0", CMD: "sh"},
+			},
+		}
+		result := vm.render(20)
+		assert.Contains(t, result, strings.Repeat("─", 100))
 	})
 }
 
