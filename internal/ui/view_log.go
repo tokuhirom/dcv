@@ -88,7 +88,10 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 		// Calculate how many visual lines this log line will take using display width
 		visualLines := visualLineCount(logsToDisplay[i], effectiveWidth)
 
-		if visualLinesUsed+visualLines <= visibleHeight {
+		// Always include at least the first line at the current scroll position,
+		// even if it exceeds the visible height (terminal will clip it).
+		// For subsequent lines, only include if they fit.
+		if i == startIdx || visualLinesUsed+visualLines <= visibleHeight {
 			endIdx = i + 1
 			visualLinesUsed += visualLines
 		} else {
@@ -257,25 +260,55 @@ func (m *LogViewModel) calculateMaxScroll(model *Model) int {
 		return 0
 	}
 
-	visibleHeight := model.PageSize()
+	// Must match the visibleHeight used in render(): availableHeight - 2
+	// PageSize() returns Height - LogViewChromeOffset, which corresponds to
+	// the availableHeight passed to render(). Render then subtracts 2 more.
+	visibleHeight := model.PageSize() - 2
 
-	// Work backwards to find the max scroll position
-	// We want to find the highest index where we can still fill the screen
+	// Work backwards from the last line accumulating visual lines.
+	// When adding a line would exceed visibleHeight, the max scroll
+	// is the next line (i+1) — all lines from i+1 to end fit on screen.
 	// Each log line is prefixed with "  " or "> " (2 chars)
 	effectiveWidth := model.width - 2
-	for startIdx := len(logsToDisplay) - 1; startIdx >= 0; startIdx-- {
-		visualLinesUsed := 0
+	visualLinesFromEnd := 0
+	maxScroll := 0
 
-		for i := startIdx; i < len(logsToDisplay); i++ {
-			visualLinesUsed += visualLineCount(logsToDisplay[i], effectiveWidth)
-
-			if visualLinesUsed >= visibleHeight {
-				return startIdx
+	for i := len(logsToDisplay) - 1; i >= 0; i-- {
+		lineVisualLines := visualLineCount(logsToDisplay[i], effectiveWidth)
+		visualLinesFromEnd += lineVisualLines
+		if visualLinesFromEnd > visibleHeight {
+			maxScroll = i + 1
+			// Cap at last valid index — if only the last line exceeds
+			// visibleHeight, we still want to be able to scroll to it.
+			if maxScroll >= len(logsToDisplay) {
+				maxScroll = len(logsToDisplay) - 1
 			}
+			break
 		}
 	}
 
-	return 0
+	if maxScroll == 0 {
+		// All content fits on screen, no scrolling needed
+		return 0
+	}
+
+	// Ensure every line from maxScroll to end is actually visible in
+	// the render by walking forward. The render always includes the
+	// first line, then subsequent lines only if they fit. If some line
+	// would be skipped, increase maxScroll so that line becomes the
+	// first line shown.
+	visualLinesUsed := 0
+	for i := maxScroll; i < len(logsToDisplay); i++ {
+		lineVisualLines := visualLineCount(logsToDisplay[i], effectiveWidth)
+		if i == maxScroll || visualLinesUsed+lineVisualLines <= visibleHeight {
+			visualLinesUsed += lineVisualLines
+		} else {
+			// This line won't be shown from maxScroll, so allow scrolling further
+			return len(logsToDisplay) - 1
+		}
+	}
+
+	return maxScroll
 }
 
 func (m *LogViewModel) HandleUp() tea.Cmd {
@@ -439,7 +472,11 @@ func (m *LogViewModel) HandleCancel() tea.Cmd {
 }
 
 func (m *LogViewModel) HandlePageUp(model *Model) tea.Cmd {
-	pageSize := model.PageSize()
+	// Use the actual visible line count (matching render's visibleHeight)
+	pageSize := model.PageSize() - 2
+	if pageSize < 1 {
+		pageSize = 1
+	}
 	m.logScrollY -= pageSize
 	if m.logScrollY < 0 {
 		m.logScrollY = 0
@@ -448,7 +485,11 @@ func (m *LogViewModel) HandlePageUp(model *Model) tea.Cmd {
 }
 
 func (m *LogViewModel) HandlePageDown(model *Model) tea.Cmd {
-	pageSize := model.PageSize()
+	// Use the actual visible line count (matching render's visibleHeight)
+	pageSize := model.PageSize() - 2
+	if pageSize < 1 {
+		pageSize = 1
+	}
 	maxScroll := m.calculateMaxScroll(model)
 	m.logScrollY += pageSize
 	if m.logScrollY > maxScroll && maxScroll > 0 {
