@@ -10,7 +10,7 @@ require (
 	github.com/docker/docker v28.4.0+incompatible
 	github.com/fujiwara/sloghandler v0.0.5
 	github.com/gdamore/tcell/v2 v2.9.0
-	github.com/mattn/go-runewidth v0.0.19
+	github.com/mattn/go-runewidth v0.0.20
 	github.com/muesli/termenv v0.16.0
 	github.com/pavelpatrin/go-ansi-to-image v0.0.0-20220322093528-7a32ac9e149c
 	github.com/rivo/tview v0.42.0
