@@ -25,7 +25,7 @@ func TestClient_ListVolumes_Integration(t *testing.T) {
 	out, err := exec.Command("docker", "volume", "create", volumeName).CombinedOutput()
 	require.NoError(t, err, "failed to create test volume: %s", string(out))
 	t.Cleanup(func() {
-		exec.Command("docker", "volume", "rm", "-f", volumeName).Run()
+		_ = exec.Command("docker", "volume", "rm", "-f", volumeName).Run()
 	})
 
 	// Write some data into the volume so it has a non-zero size

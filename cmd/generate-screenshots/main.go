@@ -449,26 +449,31 @@ func setupVolumeList(m *ui.Model) {
 			Driver: "local",
 			Name:   "myapp_db_data",
 			Scope:  "local",
+			Size:   "1.234GB",
 		},
 		{
 			Driver: "local",
 			Name:   "myapp_redis_data",
 			Scope:  "local",
+			Size:   "56.78MB",
 		},
 		{
 			Driver: "local",
 			Name:   "nginx_config",
 			Scope:  "local",
+			Size:   "4.096kB",
 		},
 		{
 			Driver: "local",
 			Name:   "jenkins_home",
 			Scope:  "local",
+			Size:   "892.3MB",
 		},
 		{
 			Driver: "local",
 			Name:   "postgres_backup",
 			Scope:  "local",
+			Size:   "2.456GB",
 		},
 	})
 }
