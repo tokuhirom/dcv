@@ -111,6 +111,62 @@ For a complete list of keyboard shortcuts and commands in each view, see [docs/k
   - CI will fail if screenshots are not up-to-date
   - Lefthook will automatically generate screenshots on commit if UI files are changed
 
+## Integration Tests
+
+Integration tests use real Docker commands and are placed in `*_integration_test.go` files. They are automatically skipped when Docker is not available.
+
+### Writing Integration Tests
+
+1. **File naming**: Use `*_integration_test.go` suffix (e.g., `view_log_integration_test.go`)
+2. **Skip guard**: Always add a `skipIfNoDocker` helper at the top of each test:
+   ```go
+   func skipIfNoDocker(t *testing.T) {
+       t.Helper()
+       if err := exec.Command("docker", "info").Run(); err != nil {
+           t.Skip("Docker is not available, skipping integration test")
+       }
+   }
+   ```
+3. **Cleanup**: Use `t.Cleanup()` to remove Docker resources (containers, volumes, etc.) created during the test
+4. **Container names**: Use a descriptive prefix like `dcv-test-` to avoid conflicts
+
+### Examples
+
+- **Docker client tests** (`internal/docker/docker_integration_test.go`): Creates real Docker volumes, writes data, and verifies `ListVolumes()` returns correct results including size
+- **Log view rendering tests** (`internal/ui/view_log_integration_test.go`): Runs an Alpine container that outputs lines of varying lengths, feeds the output into `LogViewModel`, and verifies scroll/render behavior with wrapped lines
+
+### Pattern: Testing UI with Real Docker Output
+
+For Bubble Tea view models, you can feed real Docker command output into the model and verify rendering:
+
+```go
+func TestMyView_Integration(t *testing.T) {
+    skipIfNoDocker(t)
+
+    // 1. Run a Docker command to generate real output
+    out, err := exec.Command("docker", "run", "--rm", "alpine:latest", "sh", "-c", "echo hello").CombinedOutput()
+    require.NoError(t, err)
+
+    // 2. Create a Model and view model with terminal dimensions
+    model := &Model{
+        currentView: LogView,
+        width:       80,
+        Height:      20,
+    }
+    container := docker.NewContainer("test", "test-container", "exited", "exited")
+    model.logViewModel.SwitchToLogView(model, container)
+
+    // 3. Feed real output into the view model
+    logs := strings.Split(strings.TrimRight(string(out), "\n"), "\n")
+    model.logViewModel.LogLines(model, logs)
+
+    // 4. Verify rendering and navigation
+    availableHeight := model.Height - 4
+    result := model.logViewModel.render(model, availableHeight)
+    assert.Contains(t, result, "hello")
+}
+```
+
 ## Git Hooks with Lefthook
 
 The project uses [lefthook](https://github.com/evilmartians/lefthook) for git hooks to ensure code quality:
