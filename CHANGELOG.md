@@ -1,0 +1,484 @@
+# Changelog
+
+## [v0.3.2](https://github.com/tokuhirom/dcv/compare/v0.3.1...v0.3.2) - 2026-02-21
+- fix(deps): update module github.com/charmbracelet/bubbletea to v1.3.7 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/314
+- fix(deps): update module github.com/charmbracelet/bubbletea to v1.3.10 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/316
+- chore(deps): update actions/upload-artifact action to v6 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/320
+- fix(deps): update module github.com/burntsushi/toml to v1.6.0 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/328
+- chore(deps): update actions/cache action to v5 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/327
+- fix(deps): update module github.com/charmbracelet/bubbles to v1 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/331
+- fix(deps): update module github.com/mattn/go-runewidth to v0.0.20 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/318
+- Remove experimental tview UI support by @tokuhirom in https://github.com/tokuhirom/dcv/pull/333
+- chore(deps): update dependency go to 1.26 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/332
+- Add mise.toml and update Go to 1.26 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/334
+- Remove sloghandler dependency, use stdlib TextHandler by @tokuhirom in https://github.com/tokuhirom/dcv/pull/335
+- chore(deps): update actions/checkout action to v6 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/324
+- Show volume size in volume list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/336
+- chore(deps): update docker docker tag to v29 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/322
+- chore(deps): update golangci/golangci-lint-action action to v9 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/321
+- fix(deps): update module github.com/docker/docker to v28.5.2+incompatible by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/319
+- Fix log view scroll calculation for long wrapped lines by @tokuhirom in https://github.com/tokuhirom/dcv/pull/337
+- Make integration tests fail in CI when Docker is unavailable by @tokuhirom in https://github.com/tokuhirom/dcv/pull/338
+- Add long string and edge case tests for Phase 1 views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/339
+- Add long string and edge case tests for Phase 2 list views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/340
+- Add long string/edge case tests for Phase 3 special views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/341
+- Add integration tests for Docker client functions by @tokuhirom in https://github.com/tokuhirom/dcv/pull/342
+- Add tagpr workflow for automated release PRs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/343
+- Update actions/create-github-app-token action to v2 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/346
+- Fix command execution view to wrap long lines by @tokuhirom in https://github.com/tokuhirom/dcv/pull/347
+- Update actions/checkout action to v6 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/345
+
+## [v0.3.1](https://github.com/tokuhirom/dcv/compare/v0.3.0...v0.3.1) - 2025-09-05
+- before run goreleaser, run `make build-helpers` by @tokuhirom in https://github.com/tokuhirom/dcv/pull/313
+
+## [v0.3.0](https://github.com/tokuhirom/dcv/compare/v0.2.0...v0.3.0) - 2025-09-05
+- docs: add comprehensive next action plan to CLAUDE.md by @tokuhirom in https://github.com/tokuhirom/dcv/pull/281
+- feat: add file browser action menu with docker cp support by @tokuhirom in https://github.com/tokuhirom/dcv/pull/282
+- feat: add tview UI mode as alternative to Bubble Tea by @tokuhirom in https://github.com/tokuhirom/dcv/pull/285
+- feat: implement comprehensive log view for tview UI mode by @tokuhirom in https://github.com/tokuhirom/dcv/pull/288
+- fix(deps): update module github.com/gdamore/tcell/v2 to v2.8.1 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/287
+- fix(deps): update github.com/rivo/tview digest to a4a78f1 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/286
+- feat: enable Enter key to navigate from project list to compose proce… by @tokuhirom in https://github.com/tokuhirom/dcv/pull/289
+- feat: implement file browser and content viewer for tview UI by @tokuhirom in https://github.com/tokuhirom/dcv/pull/290
+- fix: change file browser shortcut from 'b' to 'f' by @tokuhirom in https://github.com/tokuhirom/dcv/pull/291
+- feat: implement inspect view integration for tview UI by @tokuhirom in https://github.com/tokuhirom/dcv/pull/292
+- feat: implement inspect view for volumes, networks, and images in tview UI by @tokuhirom in https://github.com/tokuhirom/dcv/pull/293
+- feat: align tview keyboard shortcuts with bubbletea implementation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/294
+- feat: add 'x' key hint to tview status bar by @tokuhirom in https://github.com/tokuhirom/dcv/pull/295
+- feat: add animated loading indicator for inspect operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/296
+- feat: add keyboard shortcuts (y/n) to all confirmation dialogs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/297
+- docs: update CLAUDE.md with TView migration status by @tokuhirom in https://github.com/tokuhirom/dcv/pull/298
+- update navbar after switching view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/300
+- fix(deps): update module github.com/rivo/tview to v0.42.0 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/304
+- fix(deps): update module github.com/gdamore/tcell/v2 to v2.9.0 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/301
+- chore(deps): update actions/setup-go action to v6 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/310
+- fix(deps): update module github.com/docker/docker to v28.4.0+incompatible by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/309
+- fix(deps): update module github.com/stretchr/testify to v1.11.1 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/302
+- go install no longer works... by @tokuhirom in https://github.com/tokuhirom/dcv/pull/312
+
+## [v0.2.0](https://github.com/tokuhirom/dcv/compare/v0.1.0...v0.2.0) - 2025-08-16
+- feat: add keyboard shortcuts for compose project operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/254
+- feat: add port display to dind container list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/256
+- use RenderTable in compose process list view. by @tokuhirom in https://github.com/tokuhirom/dcv/pull/257
+- rewrite table renderer by @tokuhirom in https://github.com/tokuhirom/dcv/pull/260
+- chore(deps): update dependency go to 1.25 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/258
+- feat: use TableViewModel in Docker container list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/261
+- feat: use TableViewModel in Compose Project List view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/263
+- refactor: migrate ComposeProjectListViewModel to use TableViewModel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/264
+- refactor: use TableViewModel in ComposeProcessListViewModel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/265
+- refactor: migrate DindProcessListViewModel to use TableViewModel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/266
+- refactor: use TableViewModel for remaining view models by @tokuhirom in https://github.com/tokuhirom/dcv/pull/267
+- cleanup: remove unused RenderTable function from table.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/268
+- fix: replace dindStyle.Render with emoji pictogram by @tokuhirom in https://github.com/tokuhirom/dcv/pull/269
+- fix: correctly calculate height for wrapped log lines by @tokuhirom in https://github.com/tokuhirom/dcv/pull/270
+- feat: add search UI display for container list views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/271
+- Adjust navbar functionality and clean up code by @tokuhirom in https://github.com/tokuhirom/dcv/pull/272
+- rendering screenshot by @tokuhirom in https://github.com/tokuhirom/dcv/pull/273
+- adjust cell width automatically by @tokuhirom in https://github.com/tokuhirom/dcv/pull/274
+- refactor: use auto-width calculation for table columns by @tokuhirom in https://github.com/tokuhirom/dcv/pull/275
+- feat: add file browsing support for minimal/distroless containers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/247
+- Enhanced file browser with complete ls -la details by @tokuhirom in https://github.com/tokuhirom/dcv/pull/276
+- Make file browser responsive to screen width by @tokuhirom in https://github.com/tokuhirom/dcv/pull/277
+- always run screenshots.yml by @tokuhirom in https://github.com/tokuhirom/dcv/pull/279
+- refactor: replace ExecuteInContainer with ExecuteCaptured by @tokuhirom in https://github.com/tokuhirom/dcv/pull/278
+- refactor: update stats view to use consistent table rendering by @tokuhirom in https://github.com/tokuhirom/dcv/pull/280
+
+## [v0.1.0](https://github.com/tokuhirom/dcv/compare/v0.0.6...v0.1.0) - 2025-08-12
+- build(deps): bump golang.org/x/image from 0.0.0-20220302094943-723b81ca9867 to 0.18.0 by @dependabot[bot] in https://github.com/tokuhirom/dcv/pull/246
+- feat: add action menu for Docker Compose projects by @tokuhirom in https://github.com/tokuhirom/dcv/pull/250
+- feat: add Deploy action for running Docker Compose projects by @tokuhirom in https://github.com/tokuhirom/dcv/pull/252
+
+## [v0.0.6](https://github.com/tokuhirom/dcv/compare/v0.0.5...v0.0.6) - 2025-08-11
+- feat: add automated screenshot generation system by @tokuhirom in https://github.com/tokuhirom/dcv/pull/225
+- chore(deps): update dependency go to 1.24 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/226
+- docs: add screenshots to README by @tokuhirom in https://github.com/tokuhirom/dcv/pull/227
+- fix: enable colors in generated screenshots by @tokuhirom in https://github.com/tokuhirom/dcv/pull/228
+- feat: add missing screenshots for all views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/229
+- fix: display file permissions in File Browser screenshot by @tokuhirom in https://github.com/tokuhirom/dcv/pull/231
+- feat: add file size display to File Browser view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/233
+- feat: add page navigation to File Content view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/237
+- fix: correct pink coloration in stats view header (#234) by @tokuhirom in https://github.com/tokuhirom/dcv/pull/238
+- fix: grant write permissions for screenshots workflow on main branch by @tokuhirom in https://github.com/tokuhirom/dcv/pull/239
+- chore(deps): update actions/checkout action to v5 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/240
+- fix: auto-create PR for screenshot updates on protected main branch by @tokuhirom in https://github.com/tokuhirom/dcv/pull/242
+- fix: remove auto-commit from screenshots workflow for protected main branch by @tokuhirom in https://github.com/tokuhirom/dcv/pull/241
+- chore(deps): update peter-evans/create-pull-request action to v7 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/243
+- fix: change screenshot workflow to check-only mode by @tokuhirom in https://github.com/tokuhirom/dcv/pull/245
+
+## [v0.0.5](https://github.com/tokuhirom/dcv/compare/v0.0.4...v0.0.5) - 2025-08-11
+- fix: resolve release workflow permissions and archive deprecations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/224
+
+## [v0.0.4](https://github.com/tokuhirom/dcv/compare/v0.0.3...v0.0.4) - 2025-08-11
+- fix: resolve release workflow failures and deprecation warnings by @tokuhirom in https://github.com/tokuhirom/dcv/pull/223
+
+## [v0.0.3](https://github.com/tokuhirom/dcv/compare/v0.0.2...v0.0.3) - 2025-08-11
+- refactor: split CI and release workflows by @tokuhirom in https://github.com/tokuhirom/dcv/pull/222
+
+## [v0.0.2](https://github.com/tokuhirom/dcv/commits/v0.0.2) - 2025-08-11
+- chore: Configure Renovate by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/1
+- chore(deps): update codecov/codecov-action action to v5 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/2
+- Remove auto-refresh from docker compose top view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/5
+- chore(deps): update docker docker tag to v28 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/3
+- chore(deps): update redis docker tag to v8 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/7
+- chore(deps): update postgres docker tag to v17 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/6
+- Add docker compose kill and stop commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/9
+- Fix incorrect content in README-test.md and CLAUDE.md by @tokuhirom in https://github.com/tokuhirom/dcv/pull/10
+- Implement stats view with docker compose stats by @tokuhirom in https://github.com/tokuhirom/dcv/pull/12
+- Add docker compose restart and start commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/15
+- Add toggle for --all flag and start command by @tokuhirom in https://github.com/tokuhirom/dcv/pull/14
+- Add multi-project support by @tokuhirom in https://github.com/tokuhirom/dcv/pull/18
+- Add verbose logger container by @tokuhirom in https://github.com/tokuhirom/dcv/pull/19
+- Fix dind view to use service name instead of container name by @tokuhirom in https://github.com/tokuhirom/dcv/pull/20
+- Add shortcut key to display project list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/21
+- Fix JSON parsing for docker compose ls output by @tokuhirom in https://github.com/tokuhirom/dcv/pull/22
+- Add --projects flag to show project list at startup by @tokuhirom in https://github.com/tokuhirom/dcv/pull/23
+- Fix misleading parameter names in docker compose logs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/24
+- Add docker compose rm and up commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/28
+- Add debug log view to track command history by @tokuhirom in https://github.com/tokuhirom/dcv/pull/29
+- Add string logging capability to debug log view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/30
+- Fix log view not displaying new log lines properly by @tokuhirom in https://github.com/tokuhirom/dcv/pull/31
+- Fix log viewer issues: reuse and keyboard responsiveness by @tokuhirom in https://github.com/tokuhirom/dcv/pull/32
+- Fix CI errors and add unit tests for renderHelpText by @tokuhirom in https://github.com/tokuhirom/dcv/pull/36
+- Refactor: Consistent keymap pattern with automatic help text generation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/35
+- feat: Add plain Docker ps view and refactor container structs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/37
+- Apply go fmt formatting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/38
+- Update documentation to reflect Docker container support by @tokuhirom in https://github.com/tokuhirom/dcv/pull/39
+- feat: add Docker image list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/40
+- docs: add potential missing features section to CLAUDE.md by @tokuhirom in https://github.com/tokuhirom/dcv/pull/41
+- feat: add Docker network list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/42
+- feat: add container file browser by @tokuhirom in https://github.com/tokuhirom/dcv/pull/43
+- feat: add execute shell command in containers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/44
+- feat: add docker inspect view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/45
+- Add vim-like command-line interface with quit confirmation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/46
+- fix: update UI tests to match current interface behavior by @tokuhirom in https://github.com/tokuhirom/dcv/pull/48
+- chore(deps): update dependency go to v1.24.5 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/47
+- docs: update documentation to reflect current implementation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/49
+- feat: implement enhanced vim-like search in log view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/50
+- feat: update file browser to use table format by @tokuhirom in https://github.com/tokuhirom/dcv/pull/51
+- refactor: centralize height calculations in viewBody by @tokuhirom in https://github.com/tokuhirom/dcv/pull/52
+- feat: add network inspect feature and enhance docker-compose.yml by @tokuhirom in https://github.com/tokuhirom/dcv/pull/53
+- fix: network list view not showing networks by @tokuhirom in https://github.com/tokuhirom/dcv/pull/54
+- feat: change network inspect shortcut from 'I' to 'Enter' by @tokuhirom in https://github.com/tokuhirom/dcv/pull/55
+- feat: add search functionality to inspect view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/56
+- feat: add vim-style command execution for all key handlers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/57
+- Replace staticcheck with golangci-lint for comprehensive linting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/58
+- chore(deps): update golangci/golangci-lint-action action to v8 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/59
+- feat: add filter mode to log viewer by @tokuhirom in https://github.com/tokuhirom/dcv/pull/60
+- Add command execution view for long-running operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/61
+- chore: remove matrix build from CI and simplify default view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/62
+- docs: add note about protected main branch by @tokuhirom in https://github.com/tokuhirom/dcv/pull/63
+- feat: add Docker volume list and inspect functionality by @tokuhirom in https://github.com/tokuhirom/dcv/pull/65
+- feat: add configuration file support by @tokuhirom in https://github.com/tokuhirom/dcv/pull/67
+- refactor: consolidate refresh methods into single handler by @tokuhirom in https://github.com/tokuhirom/dcv/pull/68
+- test: add comprehensive tests for Docker Container and Compose Process List views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/70
+- feat/split docker container list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/71
+- use availableHeight in dind list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/72
+- more viewmodel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/73
+- feat/view bugfix by @tokuhirom in https://github.com/tokuhirom/dcv/pull/74
+- refactor compose project list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/75
+- Feat/view3 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/76
+- refactor: add FileContentViewModel to view_file_content.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/77
+- refactor: add HelpViewModel following established pattern by @tokuhirom in https://github.com/tokuhirom/dcv/pull/78
+- refactor: add NetworkListViewModel following established pattern by @tokuhirom in https://github.com/tokuhirom/dcv/pull/79
+- refactor: add StatsViewModel following established pattern by @tokuhirom in https://github.com/tokuhirom/dcv/pull/80
+- refactor: add ImageListViewModel and VolumeListViewModel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/81
+- refactor: implement TopViewModel and DindProcessListViewModel patterns by @tokuhirom in https://github.com/tokuhirom/dcv/pull/82
+- feat: add shorter command names for vim-style commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/83
+- test: add comprehensive tests for view models by @tokuhirom in https://github.com/tokuhirom/dcv/pull/84
+- merge all back commands to CmdBack by @tokuhirom in https://github.com/tokuhirom/dcv/pull/85
+- feat/inspect by @tokuhirom in https://github.com/tokuhirom/dcv/pull/86
+- Feat/refactor logs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/87
+- feat/view refactor 4 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/88
+- feat/view refactor 5 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/89
+- feat/view refactor 6 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/90
+- feat/view refactor 7 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/91
+- feat/refactor-docker by @tokuhirom in https://github.com/tokuhirom/dcv/pull/92
+- develop by @tokuhirom in https://github.com/tokuhirom/dcv/pull/93
+- refactor: Replace lipgloss/table with bubbles/table by @tokuhirom in https://github.com/tokuhirom/dcv/pull/95
+- develop by @tokuhirom in https://github.com/tokuhirom/dcv/pull/94
+- refactor: Remove empty DeleteContainer method by @tokuhirom in https://github.com/tokuhirom/dcv/pull/96
+- refactor: Rename DeployProject and DownProject to follow Cmd prefix convention by @tokuhirom in https://github.com/tokuhirom/dcv/pull/97
+- refactor: Add Cmd prefix to remaining handler methods by @tokuhirom in https://github.com/tokuhirom/dcv/pull/99
+- fix: Remove deprecated :set command by @tokuhirom in https://github.com/tokuhirom/dcv/pull/102
+- refactor: Remove unused GetStyledHelpText and related functions by @tokuhirom in https://github.com/tokuhirom/dcv/pull/103
+- cleanup command execution by @tokuhirom in https://github.com/tokuhirom/dcv/pull/106
+- refactor table by @tokuhirom in https://github.com/tokuhirom/dcv/pull/105
+- table by @tokuhirom in https://github.com/tokuhirom/dcv/pull/107
+- clenaup compose related files by @tokuhirom in https://github.com/tokuhirom/dcv/pull/108
+- cleanup by @tokuhirom in https://github.com/tokuhirom/dcv/pull/109
+- docs: Update README to match current implementation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/110
+- fix: Remove cmd- prefix from commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/111
+- remove trash by @tokuhirom in https://github.com/tokuhirom/dcv/pull/112
+- move demo files to demos by @tokuhirom in https://github.com/tokuhirom/dcv/pull/113
+- refactor: Use CommandExecutionView for network, image, and volume deletion by @tokuhirom in https://github.com/tokuhirom/dcv/pull/114
+- Add lefthook for automatic code formatting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/115
+- Clean up Makefile by @tokuhirom in https://github.com/tokuhirom/dcv/pull/116
+- refactor: Move CmdCancel to keyhandler.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/117
+- refactor: Split keyhandler.go into multiple focused files by @tokuhirom in https://github.com/tokuhirom/dcv/pull/118
+- refactor: Remove unused pause/unpause wrapper functions by @tokuhirom in https://github.com/tokuhirom/dcv/pull/120
+- fix: Use CommandExecutionView for pause/unpause operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/119
+- refactor: Use CommandExecutionView for all remove operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/121
+- refactor: Use ViewType.String() in help view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/122
+- refactor: Consolidate view-specific key handlers into generic method by @tokuhirom in https://github.com/tokuhirom/dcv/pull/123
+- refactor: Remove Inspect wrapper methods from docker client by @tokuhirom in https://github.com/tokuhirom/dcv/pull/124
+- refactor: Use SwitchView method instead of direct currentView assignment by @tokuhirom in https://github.com/tokuhirom/dcv/pull/125
+- refactor: Consolidate all JSON parsing in parser.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/126
+- refactor: Clean up removed commands from command registry by @tokuhirom in https://github.com/tokuhirom/dcv/pull/127
+- refactor: Remove dead findCommandForCurrentView function by @tokuhirom in https://github.com/tokuhirom/dcv/pull/128
+- refactor: Remove global variables from command registry by @tokuhirom in https://github.com/tokuhirom/dcv/pull/129
+- remove trash by @tokuhirom in https://github.com/tokuhirom/dcv/pull/130
+- fix key handlers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/131
+- refactor compose by @tokuhirom in https://github.com/tokuhirom/dcv/pull/132
+- feat/cleanup viewmask by @tokuhirom in https://github.com/tokuhirom/dcv/pull/133
+- feat/cleanup viewmask by @tokuhirom in https://github.com/tokuhirom/dcv/pull/134
+- adjust padding by @tokuhirom in https://github.com/tokuhirom/dcv/pull/135
+- cleanup compose related by @tokuhirom in https://github.com/tokuhirom/dcv/pull/136
+- cleanup container operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/137
+- refactor: Move projectName from Model to view models by @tokuhirom in https://github.com/tokuhirom/dcv/pull/138
+- feat: Add confirmation dialogs for aggressive Docker commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/139
+- feat: Add confirmation dialogs for aggressive Docker operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/140
+- docs: Fix README documentation for demos directory by @tokuhirom in https://github.com/tokuhirom/dcv/pull/141
+- refactor: Use RenderTable routine in stats view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/142
+- refactor by @tokuhirom in https://github.com/tokuhirom/dcv/pull/144
+- refactor inspect by @tokuhirom in https://github.com/tokuhirom/dcv/pull/146
+- cleanup loaders by @tokuhirom in https://github.com/tokuhirom/dcv/pull/147
+- Add 'top' command support to all process views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/149
+- pause by @tokuhirom in https://github.com/tokuhirom/dcv/pull/150
+- pause by @tokuhirom in https://github.com/tokuhirom/dcv/pull/151
+- restart, stop, etc. by @tokuhirom in https://github.com/tokuhirom/dcv/pull/152
+- fix: improve file browser navigation history management by @tokuhirom in https://github.com/tokuhirom/dcv/pull/153
+- test: add comprehensive tests for remaining UI views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/154
+- refactor: update CmdKill to use useContainerAware pattern by @tokuhirom in https://github.com/tokuhirom/dcv/pull/159
+- feat: improve inspect view with human-readable table format by @tokuhirom in https://github.com/tokuhirom/dcv/pull/162
+- Fix inspect view search highlighting bugs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/163
+- feat: add toggle-all functionality to DinD process list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/165
+- feat: add delete support to DindProcessListView by @tokuhirom in https://github.com/tokuhirom/dcv/pull/168
+- feat: add shell and file browser support for DindProcessListView by @tokuhirom in https://github.com/tokuhirom/dcv/pull/169
+- feat: add file browser support for DinD containers and refactor with Container interface by @tokuhirom in https://github.com/tokuhirom/dcv/pull/170
+- Remove internal/docker/compose.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/173
+- refactor: simplify Docker Compose container listing API by @tokuhirom in https://github.com/tokuhirom/dcv/pull/174
+- refactor: eliminate DindClient and simplify Docker-in-Docker operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/175
+- refactor: simplify Container interface to be purely informational by @tokuhirom in https://github.com/tokuhirom/dcv/pull/176
+- refactor: unify OperationArgs and FileOperationArgs into single method by @tokuhirom in https://github.com/tokuhirom/dcv/pull/177
+- refactor: remove unused parseVolumeSize function and DockerVolumeSize struct by @tokuhirom in https://github.com/tokuhirom/dcv/pull/178
+- refactor: unify ContainerImpl and DindContainerImpl into single Container struct by @tokuhirom in https://github.com/tokuhirom/dcv/pull/179
+- remove unused interfaces.go and generated mock file by @tokuhirom in https://github.com/tokuhirom/dcv/pull/180
+- consolidate volume functions into docker.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/181
+- restructure test suite in internal/docker by @tokuhirom in https://github.com/tokuhirom/dcv/pull/182
+- remove unused GenericContainer interface by @tokuhirom in https://github.com/tokuhirom/dcv/pull/183
+- refactor: use containerOperations for dindListViewHandlers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/184
+- feat: implement PageUp and PageDown in log view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/185
+- feat: add PageUp/PageDown support to inspect view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/186
+- refactor: replace magic numbers with PageSize() method by @tokuhirom in https://github.com/tokuhirom/dcv/pull/187
+- docs: fix Usage section in README to match actual implementation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/188
+- feat: add command action selector view for Docker containers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/189
+- refactor: enable command action selector for all container views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/190
+- refactor: use existing Cmd* methods in CommandActionViewModel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/191
+- test: add comprehensive tests for CommandActionView by @tokuhirom in https://github.com/tokuhirom/dcv/pull/193
+- fix: automatically reload list when returning from CommandExecutionView by @tokuhirom in https://github.com/tokuhirom/dcv/pull/194
+- cleanup container argument by @tokuhirom in https://github.com/tokuhirom/dcv/pull/195
+- cleanup HandleRemove and HandleDelete by @tokuhirom in https://github.com/tokuhirom/dcv/pull/196
+- refactor inspect by @tokuhirom in https://github.com/tokuhirom/dcv/pull/197
+- cleanup process list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/198
+- cleanup HandleFileBrowse by @tokuhirom in https://github.com/tokuhirom/dcv/pull/199
+- cleanup logging related features by @tokuhirom in https://github.com/tokuhirom/dcv/pull/200
+- refactor composeProcessesLoadedMsg by @tokuhirom in https://github.com/tokuhirom/dcv/pull/201
+- use ResetAll for each log line by @tokuhirom in https://github.com/tokuhirom/dcv/pull/202
+- feat: add global navigation header with active view highlighting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/203
+- feat: enhance top and stats views with CPU/memory usage and sorting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/204
+- feat: add auto-refresh functionality to top and stats views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/205
+- feat: add toggle functionality to hide/show navigation bar by @tokuhirom in https://github.com/tokuhirom/dcv/pull/206
+- feat: add action menu hint to footer in process list views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/207
+- fix: handle abbreviations correctly in toKebabCase function by @tokuhirom in https://github.com/tokuhirom/dcv/pull/208
+- Update CLAUDE.md by @tokuhirom in https://github.com/tokuhirom/dcv/pull/210
+- feat: implement automatic generation of keyboard shortcut documentation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/212
+- chore(deps): update dependency go to 1.24 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/213
+- refactor: rename go-to-start to go-to-beginning for better English by @tokuhirom in https://github.com/tokuhirom/dcv/pull/215
+- refactor: reorganize message handling to use UpdateAware interface by @tokuhirom in https://github.com/tokuhirom/dcv/pull/216
+- docs: simplify README by linking to keymap documentation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/217
+- Add container search by @tokuhirom in https://github.com/tokuhirom/dcv/pull/218
+- fix/adjust margin by @tokuhirom in https://github.com/tokuhirom/dcv/pull/219
+- fix/inspect by @tokuhirom in https://github.com/tokuhirom/dcv/pull/220
+- releng by @tokuhirom in https://github.com/tokuhirom/dcv/pull/221
+
+## [v0.0.1](https://github.com/tokuhirom/dcv/commits/v0.0.1) - 2025-08-11
+- chore: Configure Renovate by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/1
+- chore(deps): update codecov/codecov-action action to v5 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/2
+- Remove auto-refresh from docker compose top view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/5
+- chore(deps): update docker docker tag to v28 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/3
+- chore(deps): update redis docker tag to v8 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/7
+- chore(deps): update postgres docker tag to v17 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/6
+- Add docker compose kill and stop commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/9
+- Fix incorrect content in README-test.md and CLAUDE.md by @tokuhirom in https://github.com/tokuhirom/dcv/pull/10
+- Implement stats view with docker compose stats by @tokuhirom in https://github.com/tokuhirom/dcv/pull/12
+- Add docker compose restart and start commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/15
+- Add toggle for --all flag and start command by @tokuhirom in https://github.com/tokuhirom/dcv/pull/14
+- Add multi-project support by @tokuhirom in https://github.com/tokuhirom/dcv/pull/18
+- Add verbose logger container by @tokuhirom in https://github.com/tokuhirom/dcv/pull/19
+- Fix dind view to use service name instead of container name by @tokuhirom in https://github.com/tokuhirom/dcv/pull/20
+- Add shortcut key to display project list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/21
+- Fix JSON parsing for docker compose ls output by @tokuhirom in https://github.com/tokuhirom/dcv/pull/22
+- Add --projects flag to show project list at startup by @tokuhirom in https://github.com/tokuhirom/dcv/pull/23
+- Fix misleading parameter names in docker compose logs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/24
+- Add docker compose rm and up commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/28
+- Add debug log view to track command history by @tokuhirom in https://github.com/tokuhirom/dcv/pull/29
+- Add string logging capability to debug log view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/30
+- Fix log view not displaying new log lines properly by @tokuhirom in https://github.com/tokuhirom/dcv/pull/31
+- Fix log viewer issues: reuse and keyboard responsiveness by @tokuhirom in https://github.com/tokuhirom/dcv/pull/32
+- Fix CI errors and add unit tests for renderHelpText by @tokuhirom in https://github.com/tokuhirom/dcv/pull/36
+- Refactor: Consistent keymap pattern with automatic help text generation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/35
+- feat: Add plain Docker ps view and refactor container structs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/37
+- Apply go fmt formatting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/38
+- Update documentation to reflect Docker container support by @tokuhirom in https://github.com/tokuhirom/dcv/pull/39
+- feat: add Docker image list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/40
+- docs: add potential missing features section to CLAUDE.md by @tokuhirom in https://github.com/tokuhirom/dcv/pull/41
+- feat: add Docker network list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/42
+- feat: add container file browser by @tokuhirom in https://github.com/tokuhirom/dcv/pull/43
+- feat: add execute shell command in containers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/44
+- feat: add docker inspect view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/45
+- Add vim-like command-line interface with quit confirmation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/46
+- fix: update UI tests to match current interface behavior by @tokuhirom in https://github.com/tokuhirom/dcv/pull/48
+- chore(deps): update dependency go to v1.24.5 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/47
+- docs: update documentation to reflect current implementation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/49
+- feat: implement enhanced vim-like search in log view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/50
+- feat: update file browser to use table format by @tokuhirom in https://github.com/tokuhirom/dcv/pull/51
+- refactor: centralize height calculations in viewBody by @tokuhirom in https://github.com/tokuhirom/dcv/pull/52
+- feat: add network inspect feature and enhance docker-compose.yml by @tokuhirom in https://github.com/tokuhirom/dcv/pull/53
+- fix: network list view not showing networks by @tokuhirom in https://github.com/tokuhirom/dcv/pull/54
+- feat: change network inspect shortcut from 'I' to 'Enter' by @tokuhirom in https://github.com/tokuhirom/dcv/pull/55
+- feat: add search functionality to inspect view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/56
+- feat: add vim-style command execution for all key handlers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/57
+- Replace staticcheck with golangci-lint for comprehensive linting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/58
+- chore(deps): update golangci/golangci-lint-action action to v8 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/59
+- feat: add filter mode to log viewer by @tokuhirom in https://github.com/tokuhirom/dcv/pull/60
+- Add command execution view for long-running operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/61
+- chore: remove matrix build from CI and simplify default view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/62
+- docs: add note about protected main branch by @tokuhirom in https://github.com/tokuhirom/dcv/pull/63
+- feat: add Docker volume list and inspect functionality by @tokuhirom in https://github.com/tokuhirom/dcv/pull/65
+- feat: add configuration file support by @tokuhirom in https://github.com/tokuhirom/dcv/pull/67
+- refactor: consolidate refresh methods into single handler by @tokuhirom in https://github.com/tokuhirom/dcv/pull/68
+- test: add comprehensive tests for Docker Container and Compose Process List views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/70
+- feat/split docker container list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/71
+- use availableHeight in dind list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/72
+- more viewmodel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/73
+- feat/view bugfix by @tokuhirom in https://github.com/tokuhirom/dcv/pull/74
+- refactor compose project list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/75
+- Feat/view3 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/76
+- refactor: add FileContentViewModel to view_file_content.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/77
+- refactor: add HelpViewModel following established pattern by @tokuhirom in https://github.com/tokuhirom/dcv/pull/78
+- refactor: add NetworkListViewModel following established pattern by @tokuhirom in https://github.com/tokuhirom/dcv/pull/79
+- refactor: add StatsViewModel following established pattern by @tokuhirom in https://github.com/tokuhirom/dcv/pull/80
+- refactor: add ImageListViewModel and VolumeListViewModel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/81
+- refactor: implement TopViewModel and DindProcessListViewModel patterns by @tokuhirom in https://github.com/tokuhirom/dcv/pull/82
+- feat: add shorter command names for vim-style commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/83
+- test: add comprehensive tests for view models by @tokuhirom in https://github.com/tokuhirom/dcv/pull/84
+- merge all back commands to CmdBack by @tokuhirom in https://github.com/tokuhirom/dcv/pull/85
+- feat/inspect by @tokuhirom in https://github.com/tokuhirom/dcv/pull/86
+- Feat/refactor logs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/87
+- feat/view refactor 4 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/88
+- feat/view refactor 5 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/89
+- feat/view refactor 6 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/90
+- feat/view refactor 7 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/91
+- feat/refactor-docker by @tokuhirom in https://github.com/tokuhirom/dcv/pull/92
+- develop by @tokuhirom in https://github.com/tokuhirom/dcv/pull/93
+- refactor: Replace lipgloss/table with bubbles/table by @tokuhirom in https://github.com/tokuhirom/dcv/pull/95
+- develop by @tokuhirom in https://github.com/tokuhirom/dcv/pull/94
+- refactor: Remove empty DeleteContainer method by @tokuhirom in https://github.com/tokuhirom/dcv/pull/96
+- refactor: Rename DeployProject and DownProject to follow Cmd prefix convention by @tokuhirom in https://github.com/tokuhirom/dcv/pull/97
+- refactor: Add Cmd prefix to remaining handler methods by @tokuhirom in https://github.com/tokuhirom/dcv/pull/99
+- fix: Remove deprecated :set command by @tokuhirom in https://github.com/tokuhirom/dcv/pull/102
+- refactor: Remove unused GetStyledHelpText and related functions by @tokuhirom in https://github.com/tokuhirom/dcv/pull/103
+- cleanup command execution by @tokuhirom in https://github.com/tokuhirom/dcv/pull/106
+- refactor table by @tokuhirom in https://github.com/tokuhirom/dcv/pull/105
+- table by @tokuhirom in https://github.com/tokuhirom/dcv/pull/107
+- clenaup compose related files by @tokuhirom in https://github.com/tokuhirom/dcv/pull/108
+- cleanup by @tokuhirom in https://github.com/tokuhirom/dcv/pull/109
+- docs: Update README to match current implementation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/110
+- fix: Remove cmd- prefix from commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/111
+- remove trash by @tokuhirom in https://github.com/tokuhirom/dcv/pull/112
+- move demo files to demos by @tokuhirom in https://github.com/tokuhirom/dcv/pull/113
+- refactor: Use CommandExecutionView for network, image, and volume deletion by @tokuhirom in https://github.com/tokuhirom/dcv/pull/114
+- Add lefthook for automatic code formatting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/115
+- Clean up Makefile by @tokuhirom in https://github.com/tokuhirom/dcv/pull/116
+- refactor: Move CmdCancel to keyhandler.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/117
+- refactor: Split keyhandler.go into multiple focused files by @tokuhirom in https://github.com/tokuhirom/dcv/pull/118
+- refactor: Remove unused pause/unpause wrapper functions by @tokuhirom in https://github.com/tokuhirom/dcv/pull/120
+- fix: Use CommandExecutionView for pause/unpause operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/119
+- refactor: Use CommandExecutionView for all remove operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/121
+- refactor: Use ViewType.String() in help view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/122
+- refactor: Consolidate view-specific key handlers into generic method by @tokuhirom in https://github.com/tokuhirom/dcv/pull/123
+- refactor: Remove Inspect wrapper methods from docker client by @tokuhirom in https://github.com/tokuhirom/dcv/pull/124
+- refactor: Use SwitchView method instead of direct currentView assignment by @tokuhirom in https://github.com/tokuhirom/dcv/pull/125
+- refactor: Consolidate all JSON parsing in parser.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/126
+- refactor: Clean up removed commands from command registry by @tokuhirom in https://github.com/tokuhirom/dcv/pull/127
+- refactor: Remove dead findCommandForCurrentView function by @tokuhirom in https://github.com/tokuhirom/dcv/pull/128
+- refactor: Remove global variables from command registry by @tokuhirom in https://github.com/tokuhirom/dcv/pull/129
+- remove trash by @tokuhirom in https://github.com/tokuhirom/dcv/pull/130
+- fix key handlers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/131
+- refactor compose by @tokuhirom in https://github.com/tokuhirom/dcv/pull/132
+- feat/cleanup viewmask by @tokuhirom in https://github.com/tokuhirom/dcv/pull/133
+- feat/cleanup viewmask by @tokuhirom in https://github.com/tokuhirom/dcv/pull/134
+- adjust padding by @tokuhirom in https://github.com/tokuhirom/dcv/pull/135
+- cleanup compose related by @tokuhirom in https://github.com/tokuhirom/dcv/pull/136
+- cleanup container operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/137
+- refactor: Move projectName from Model to view models by @tokuhirom in https://github.com/tokuhirom/dcv/pull/138
+- feat: Add confirmation dialogs for aggressive Docker commands by @tokuhirom in https://github.com/tokuhirom/dcv/pull/139
+- feat: Add confirmation dialogs for aggressive Docker operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/140
+- docs: Fix README documentation for demos directory by @tokuhirom in https://github.com/tokuhirom/dcv/pull/141
+- refactor: Use RenderTable routine in stats view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/142
+- refactor by @tokuhirom in https://github.com/tokuhirom/dcv/pull/144
+- refactor inspect by @tokuhirom in https://github.com/tokuhirom/dcv/pull/146
+- cleanup loaders by @tokuhirom in https://github.com/tokuhirom/dcv/pull/147
+- Add 'top' command support to all process views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/149
+- pause by @tokuhirom in https://github.com/tokuhirom/dcv/pull/150
+- pause by @tokuhirom in https://github.com/tokuhirom/dcv/pull/151
+- restart, stop, etc. by @tokuhirom in https://github.com/tokuhirom/dcv/pull/152
+- fix: improve file browser navigation history management by @tokuhirom in https://github.com/tokuhirom/dcv/pull/153
+- test: add comprehensive tests for remaining UI views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/154
+- refactor: update CmdKill to use useContainerAware pattern by @tokuhirom in https://github.com/tokuhirom/dcv/pull/159
+- feat: improve inspect view with human-readable table format by @tokuhirom in https://github.com/tokuhirom/dcv/pull/162
+- Fix inspect view search highlighting bugs by @tokuhirom in https://github.com/tokuhirom/dcv/pull/163
+- feat: add toggle-all functionality to DinD process list view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/165
+- feat: add delete support to DindProcessListView by @tokuhirom in https://github.com/tokuhirom/dcv/pull/168
+- feat: add shell and file browser support for DindProcessListView by @tokuhirom in https://github.com/tokuhirom/dcv/pull/169
+- feat: add file browser support for DinD containers and refactor with Container interface by @tokuhirom in https://github.com/tokuhirom/dcv/pull/170
+- Remove internal/docker/compose.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/173
+- refactor: simplify Docker Compose container listing API by @tokuhirom in https://github.com/tokuhirom/dcv/pull/174
+- refactor: eliminate DindClient and simplify Docker-in-Docker operations by @tokuhirom in https://github.com/tokuhirom/dcv/pull/175
+- refactor: simplify Container interface to be purely informational by @tokuhirom in https://github.com/tokuhirom/dcv/pull/176
+- refactor: unify OperationArgs and FileOperationArgs into single method by @tokuhirom in https://github.com/tokuhirom/dcv/pull/177
+- refactor: remove unused parseVolumeSize function and DockerVolumeSize struct by @tokuhirom in https://github.com/tokuhirom/dcv/pull/178
+- refactor: unify ContainerImpl and DindContainerImpl into single Container struct by @tokuhirom in https://github.com/tokuhirom/dcv/pull/179
+- remove unused interfaces.go and generated mock file by @tokuhirom in https://github.com/tokuhirom/dcv/pull/180
+- consolidate volume functions into docker.go by @tokuhirom in https://github.com/tokuhirom/dcv/pull/181
+- restructure test suite in internal/docker by @tokuhirom in https://github.com/tokuhirom/dcv/pull/182
+- remove unused GenericContainer interface by @tokuhirom in https://github.com/tokuhirom/dcv/pull/183
+- refactor: use containerOperations for dindListViewHandlers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/184
+- feat: implement PageUp and PageDown in log view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/185
+- feat: add PageUp/PageDown support to inspect view by @tokuhirom in https://github.com/tokuhirom/dcv/pull/186
+- refactor: replace magic numbers with PageSize() method by @tokuhirom in https://github.com/tokuhirom/dcv/pull/187
+- docs: fix Usage section in README to match actual implementation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/188
+- feat: add command action selector view for Docker containers by @tokuhirom in https://github.com/tokuhirom/dcv/pull/189
+- refactor: enable command action selector for all container views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/190
+- refactor: use existing Cmd* methods in CommandActionViewModel by @tokuhirom in https://github.com/tokuhirom/dcv/pull/191
+- test: add comprehensive tests for CommandActionView by @tokuhirom in https://github.com/tokuhirom/dcv/pull/193
+- fix: automatically reload list when returning from CommandExecutionView by @tokuhirom in https://github.com/tokuhirom/dcv/pull/194
+- cleanup container argument by @tokuhirom in https://github.com/tokuhirom/dcv/pull/195
+- cleanup HandleRemove and HandleDelete by @tokuhirom in https://github.com/tokuhirom/dcv/pull/196
+- refactor inspect by @tokuhirom in https://github.com/tokuhirom/dcv/pull/197
+- cleanup process list by @tokuhirom in https://github.com/tokuhirom/dcv/pull/198
+- cleanup HandleFileBrowse by @tokuhirom in https://github.com/tokuhirom/dcv/pull/199
+- cleanup logging related features by @tokuhirom in https://github.com/tokuhirom/dcv/pull/200
+- refactor composeProcessesLoadedMsg by @tokuhirom in https://github.com/tokuhirom/dcv/pull/201
+- use ResetAll for each log line by @tokuhirom in https://github.com/tokuhirom/dcv/pull/202
+- feat: add global navigation header with active view highlighting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/203
+- feat: enhance top and stats views with CPU/memory usage and sorting by @tokuhirom in https://github.com/tokuhirom/dcv/pull/204
+- feat: add auto-refresh functionality to top and stats views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/205
+- feat: add toggle functionality to hide/show navigation bar by @tokuhirom in https://github.com/tokuhirom/dcv/pull/206
+- feat: add action menu hint to footer in process list views by @tokuhirom in https://github.com/tokuhirom/dcv/pull/207
+- fix: handle abbreviations correctly in toKebabCase function by @tokuhirom in https://github.com/tokuhirom/dcv/pull/208
+- Update CLAUDE.md by @tokuhirom in https://github.com/tokuhirom/dcv/pull/210
+- feat: implement automatic generation of keyboard shortcut documentation by @tokuhirom in https://github.com/tokuhirom/dcv/pull/212
+- chore(deps): update dependency go to 1.24 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/213
+- refactor: rename go-to-start to go-to-beginning for better English by @tokuhirom in https://github.com/tokuhirom/dcv/pull/215
+- refactor: reorganize message handling to use UpdateAware interface by @tokuhirom in https://github.com/tokuhirom/dcv/pull/216
