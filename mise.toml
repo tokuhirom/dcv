@@ -1,0 +1,4 @@
+[tools]
+go = "1.26"
+golangci-lint = "2.10.1"
+lefthook = "2.1.1"
