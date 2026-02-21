@@ -7,7 +7,6 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/fujiwara/sloghandler"
 
 	"github.com/tokuhirom/dcv/internal/config"
 	"github.com/tokuhirom/dcv/internal/ui"
@@ -68,15 +67,9 @@ func setupLog(debugLog string) {
 				slog.Any("error", err))
 			os.Exit(1)
 		}
-		opts := &sloghandler.HandlerOptions{
-			HandlerOptions: slog.HandlerOptions{
-				Level: slog.LevelDebug,
-			},
-			Color: true,
-		}
-		handler := sloghandler.NewLogHandler(logFile, opts)
-
-		// カスタムハンドラを使用してロガーを作成
+		handler := slog.NewTextHandler(logFile, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})
 		logger := slog.New(handler)
 		slog.SetDefault(logger)
 	} else {
