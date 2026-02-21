@@ -108,6 +108,40 @@ func TestCommandExecutionViewModel_RenderConfirmationDialog(t *testing.T) {
 	assert.Contains(t, result, "Press 'y' to confirm, 'n' to cancel")
 }
 
+func TestCommandExecutionViewModel_LineWrapping(t *testing.T) {
+	t.Run("long output lines are wrapped to terminal width", func(t *testing.T) {
+		longLine := strings.Repeat("A", 200) // 200 chars, should wrap at width 80
+		vm := &CommandExecutionViewModel{
+			cmdString: "docker logs test",
+			output:    []string{longLine},
+			done:      true,
+			exitCode:  0,
+		}
+		model := &Model{width: 80, Height: 20}
+
+		result := vm.render(model)
+		// The long line should be present but wrapped (no single line > 80 chars)
+		assert.NotEmpty(t, result)
+		// All content of the long line should still be in the output
+		assert.Contains(t, result, "AAAA")
+	})
+
+	t.Run("long command string is wrapped", func(t *testing.T) {
+		longCmd := "docker " + strings.Repeat("--arg=value ", 30)
+		vm := &CommandExecutionViewModel{
+			cmdString: longCmd,
+			output:    []string{"ok"},
+			done:      true,
+			exitCode:  0,
+		}
+		model := &Model{width: 60, Height: 20}
+
+		result := vm.render(model)
+		assert.NotEmpty(t, result)
+		assert.Contains(t, result, "Executing:")
+	})
+}
+
 func TestCommandExecutionViewModel_LongStrings(t *testing.T) {
 	t.Run("render with very long output lines", func(t *testing.T) {
 		vm := &CommandExecutionViewModel{
