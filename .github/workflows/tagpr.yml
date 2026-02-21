@@ -1,0 +1,28 @@
+name: tagpr
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  tagpr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1.12.0
+        id: app-token
+        with:
+          app-id: ${{ vars.TAGPR_APP_ID }}
+          private-key: ${{ secrets.TAGPR_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: Songmu/tagpr@da82ed6743aec90049892070edd5561335904a9e # v1.17.0
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
