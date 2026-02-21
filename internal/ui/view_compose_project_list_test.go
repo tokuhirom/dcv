@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -342,6 +343,83 @@ func TestComposeProjectListViewModel_Update(t *testing.T) {
 		assert.Equal(t, testErr, m.err)
 		assert.Nil(t, cmd)
 	})
+}
+
+func TestComposeProjectListViewModel_LongStrings(t *testing.T) {
+	longName := strings.Repeat("my-very-long-project-name-", 20)
+	longConfigFiles := strings.Repeat("/very/long/path/to/docker-compose/", 20) + "docker-compose.yml"
+	longStatus := strings.Repeat("running", 20)
+
+	tests := []struct {
+		name     string
+		projects []models.ComposeProject
+		width    int
+		height   int
+	}{
+		{
+			name: "very long project name",
+			projects: []models.ComposeProject{
+				{Name: longName, Status: "running(2)", ConfigFiles: "/home/user/docker-compose.yml"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long config files path",
+			projects: []models.ComposeProject{
+				{Name: "project", Status: "running(1)", ConfigFiles: longConfigFiles},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "very long status string",
+			projects: []models.ComposeProject{
+				{Name: "project", Status: longStatus, ConfigFiles: "/docker-compose.yml"},
+			},
+			width: 80, height: 20,
+		},
+		{
+			name: "all fields long simultaneously",
+			projects: []models.ComposeProject{
+				{Name: longName, Status: longStatus, ConfigFiles: longConfigFiles},
+			},
+			width: 60, height: 20,
+		},
+		{
+			name: "narrow terminal",
+			projects: []models.ComposeProject{
+				{Name: longName, Status: "running(1)", ConfigFiles: longConfigFiles},
+			},
+			width: 30, height: 20,
+		},
+		{
+			name: "very small height with many projects",
+			projects: func() []models.ComposeProject {
+				var ps []models.ComposeProject
+				for range 20 {
+					ps = append(ps, models.ComposeProject{
+						Name: longName, Status: "running(3)", ConfigFiles: longConfigFiles,
+					})
+				}
+				return ps
+			}(),
+			width: 80, height: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vm := &ComposeProjectListViewModel{
+				projects:       tt.projects,
+				TableViewModel: TableViewModel{Cursor: 0},
+			}
+			model := &Model{width: tt.width, Height: tt.height}
+			vm.SetRows(vm.buildRows(), model.ViewHeight())
+
+			// Should not panic
+			result := vm.render(model, tt.height-4)
+			assert.NotEmpty(t, result)
+		})
+	}
 }
 
 func TestComposeProjectListViewModel_StatusColors(t *testing.T) {
