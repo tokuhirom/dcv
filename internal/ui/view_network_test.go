@@ -89,7 +89,7 @@ func TestNetworkListView(t *testing.T) {
 			)
 
 			// RenderTable the view
-			view := tc.model.View()
+			view := tc.model.View().Content
 
 			// Check that expected strings are present
 			for _, expected := range tc.expected {

@@ -5,7 +5,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
@@ -59,9 +60,11 @@ type ContainerAware interface {
 const ResetAll = "\x1b[0m"
 
 // View returns the view for the current model
-func (m *Model) View() string {
+func (m *Model) View() tea.View {
 	if m.width == 0 || m.Height == 0 {
-		return "Loading..."
+		v := tea.NewView("Loading...")
+		v.AltScreen = true
+		return v
 	}
 
 	// Get navigation header (only if not hidden)
@@ -114,7 +117,9 @@ func (m *Model) View() string {
 		slog.Int("bodyHeight", lipgloss.Height(body)),
 		slog.Int("availableBodyHeight", availableBodyHeight),
 		slog.Int("footerHeight", lipgloss.Height(footer)))
-	return retval
+	v := tea.NewView(retval)
+	v.AltScreen = true
+	return v
 }
 
 func (m *Model) viewNavigationHeader() string {

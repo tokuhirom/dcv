@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // RefreshMsg signals that the current view should be refreshed
@@ -19,7 +19,7 @@ type SpinnerTickMsg time.Time
 // Update handles messages and updates the model
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.handleKeyPress(msg)
 
 	case tea.WindowSizeMsg:
@@ -181,7 +181,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleKeyPress(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// Handle command mode first
 	if m.commandViewModel.commandMode {
 		return m.commandViewModel.HandleKeys(m, msg)
@@ -242,7 +242,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // handleViewKeys handles key presses for the current view using the generic keymap
-func (m *Model) handleViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleViewKeys(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// Special case for ComposeProcessListView logging
 	if m.currentView == ComposeProcessListView {
 		slog.Info(fmt.Sprintf("Key: %s", msg.String()),
@@ -260,7 +260,7 @@ func (m *Model) handleViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) handleSearchMode(msg tea.KeyMsg, searchViewModel *SearchViewModel) (tea.Model, tea.Cmd) {
+func (m *Model) handleSearchMode(msg tea.KeyPressMsg, searchViewModel *SearchViewModel) (tea.Model, tea.Cmd) {
 	performSearch := func() {
 		switch m.currentView {
 		case LogView:
@@ -273,7 +273,7 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg, searchViewModel *SearchViewMode
 	}
 
 	// TODO: support CtrlD/Del
-	switch msg.Type {
+	switch msg.Code {
 	case tea.KeyEsc:
 		searchViewModel.InputEscape()
 		return m, nil
@@ -283,41 +283,47 @@ func (m *Model) handleSearchMode(msg tea.KeyMsg, searchViewModel *SearchViewMode
 		performSearch()
 		return m, nil
 
-	case tea.KeyBackspace, tea.KeyCtrlH:
+	case tea.KeyBackspace:
 		updated := searchViewModel.DeleteLastChar()
 		if updated {
 			performSearch()
 		}
 		return m, nil
 
-	case tea.KeyLeft, tea.KeyCtrlB:
+	case tea.KeyLeft:
 		searchViewModel.CursorLeft()
 		return m, nil
 
-	case tea.KeyRight, tea.KeyCtrlF:
+	case tea.KeyRight:
 		searchViewModel.CursorRight()
 		return m, nil
 
-	case tea.KeyCtrlI:
-		searchViewModel.ToggleIgnoreCase()
-		performSearch()
-		return m, nil
-
-	case tea.KeyCtrlR:
-		searchViewModel.ToggleRegex()
-		performSearch()
-		return m, nil
-
 	default:
-		if msg.Type == tea.KeyRunes {
-			searchViewModel.AppendString(msg.String())
+		switch {
+		case isCtrlKey(msg, 'h'):
+			updated := searchViewModel.DeleteLastChar()
+			if updated {
+				performSearch()
+			}
+		case isCtrlKey(msg, 'b'):
+			searchViewModel.CursorLeft()
+		case isCtrlKey(msg, 'f'):
+			searchViewModel.CursorRight()
+		case isCtrlKey(msg, 'i'):
+			searchViewModel.ToggleIgnoreCase()
+			performSearch()
+		case isCtrlKey(msg, 'r'):
+			searchViewModel.ToggleRegex()
+			performSearch()
+		case len(msg.Text) > 0:
+			searchViewModel.AppendString(msg.Text)
 			performSearch()
 		}
 		return m, nil
 	}
 }
 
-func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleQuitConfirmation(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "y", "Y":
 		// Confirm quit
@@ -331,9 +337,9 @@ func (m *Model) handleQuitConfirmation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) handleFilterMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) handleFilterMode(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// Check if ESC was pressed to clear filter
-	if msg.Type == tea.KeyEsc {
+	if msg.Code == tea.KeyEsc {
 		m.logViewModel.ClearFilter()
 		m.logViewModel.logScrollY = 0 // Reset scroll position when clearing filter
 		return m, nil

@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/models"
@@ -27,21 +27,21 @@ func TestContainerSearch(t *testing.T) {
 
 		// Start search mode
 		assert.False(t, m.composeProcessListViewModel.IsSearchActive())
-		newModel, _ := m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
+		newModel, _ := m.handleKeyPress(newKeyPress("/"))
 		m = newModel.(*Model)
 		assert.True(t, m.composeProcessListViewModel.IsSearchActive())
 
 		// Type search term "db"
-		newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
+		newModel, _ = m.handleKeyPress(newKeyPress("d"))
 		m = newModel.(*Model)
-		newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("b")})
+		newModel, _ = m.handleKeyPress(newKeyPress("b"))
 		m = newModel.(*Model)
 
 		// Check search text is set
 		assert.Equal(t, "db", m.composeProcessListViewModel.GetSearchText())
 
 		// Exit search mode
-		newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyEsc})
+		newModel, _ = m.handleKeyPress(newSpecialKey(tea.KeyEsc))
 		m = newModel.(*Model)
 		assert.False(t, m.composeProcessListViewModel.IsSearchActive())
 
@@ -66,13 +66,13 @@ func TestContainerSearch(t *testing.T) {
 
 		// Start search mode
 		assert.False(t, m.dockerContainerListViewModel.IsSearchActive())
-		newModel, _ := m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
+		newModel, _ := m.handleKeyPress(newKeyPress("/"))
 		m = newModel.(*Model)
 		assert.True(t, m.dockerContainerListViewModel.IsSearchActive())
 
 		// Type search term "redis"
 		for _, r := range "redis" {
-			newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+			newModel, _ = m.handleKeyPress(newKeyPress(string(r)))
 			m = newModel.(*Model)
 		}
 
@@ -80,7 +80,7 @@ func TestContainerSearch(t *testing.T) {
 		assert.Equal(t, "redis", m.dockerContainerListViewModel.GetSearchText())
 
 		// Exit search mode
-		newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyEnter})
+		newModel, _ = m.handleKeyPress(newSpecialKey(tea.KeyEnter))
 		m = newModel.(*Model)
 		assert.False(t, m.dockerContainerListViewModel.IsSearchActive())
 
@@ -105,30 +105,30 @@ func TestContainerSearch(t *testing.T) {
 		)
 
 		// Start search and search for "web"
-		newModel, _ := m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
+		newModel, _ := m.handleKeyPress(newKeyPress("/"))
 		m = newModel.(*Model)
 		for _, r := range "web" {
-			newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+			newModel, _ = m.handleKeyPress(newKeyPress(string(r)))
 			m = newModel.(*Model)
 		}
-		newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyEnter})
+		newModel, _ = m.handleKeyPress(newSpecialKey(tea.KeyEnter))
 		m = newModel.(*Model)
 
 		// Should be on first match (web1 at index 0)
 		assert.Equal(t, 0, m.composeProcessListViewModel.Cursor)
 
 		// Press 'n' to go to next match (web2 at index 1)
-		newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")})
+		newModel, _ = m.handleKeyPress(newKeyPress("n"))
 		m = newModel.(*Model)
 		assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
 
 		// Press 'n' again to go to next match (web3 at index 3)
-		newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")})
+		newModel, _ = m.handleKeyPress(newKeyPress("n"))
 		m = newModel.(*Model)
 		assert.Equal(t, 3, m.composeProcessListViewModel.Cursor)
 
 		// Press 'N' to go to previous match (web2 at index 1)
-		newModel, _ = m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("N")})
+		newModel, _ = m.handleKeyPress(newKeyPress("N"))
 		m = newModel.(*Model)
 		assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
 	})

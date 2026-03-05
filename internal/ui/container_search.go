@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // ContainerSearchViewModel handles search functionality for container views
@@ -202,7 +202,7 @@ func (m *ContainerSearchViewModel) InitContainerSearchViewModel(onSelectIndex fu
 	m.onPerformSearch = onPerformSearch
 }
 
-func (m *ContainerSearchViewModel) HandleSearchInput(_ *Model, msg tea.KeyMsg) tea.Cmd {
+func (m *ContainerSearchViewModel) HandleSearchInput(_ *Model, msg tea.KeyPressMsg) tea.Cmd {
 	switch msg.String() {
 	case "esc":
 		m.ExitSearch()

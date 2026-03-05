@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -204,7 +204,7 @@ func TestDindProcessListViewModel_ToggleAll(t *testing.T) {
 		model.initializeKeyHandlers()
 
 		// Test toggle via CmdToggleAll
-		_, cmd := model.CmdToggleAll(tea.KeyMsg{})
+		_, cmd := model.CmdToggleAll(tea.KeyPressMsg{})
 		assert.True(t, model.dindProcessListViewModel.showAll, "showAll should be toggled to true")
 		assert.NotNil(t, cmd, "Should return a command to trigger reload")
 		assert.True(t, model.loading, "Should set loading to true")
@@ -213,7 +213,7 @@ func TestDindProcessListViewModel_ToggleAll(t *testing.T) {
 		model.loading = false
 
 		// Toggle again
-		_, cmd = model.CmdToggleAll(tea.KeyMsg{})
+		_, cmd = model.CmdToggleAll(tea.KeyPressMsg{})
 		assert.False(t, model.dindProcessListViewModel.showAll, "showAll should be toggled back to false")
 		assert.NotNil(t, cmd, "Should return a command to trigger reload")
 		assert.True(t, model.loading, "Should set loading to true")

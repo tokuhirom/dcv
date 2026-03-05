@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -134,27 +134,27 @@ func TestDockerContainerListView_Navigation(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Test moving down
-		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
+		_, _ = m.CmdDown(newSpecialKey(tea.KeyDown))
 		assert.Equal(t, 1, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving down again
-		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
+		_, _ = m.CmdDown(newSpecialKey(tea.KeyDown))
 		assert.Equal(t, 2, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving down at the end (should stay at 2)
-		_, _ = m.CmdDown(tea.KeyMsg{Type: tea.KeyDown})
+		_, _ = m.CmdDown(newSpecialKey(tea.KeyDown))
 		assert.Equal(t, 2, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving up
-		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
+		_, _ = m.CmdUp(newSpecialKey(tea.KeyUp))
 		assert.Equal(t, 1, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving up again
-		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
+		_, _ = m.CmdUp(newSpecialKey(tea.KeyUp))
 		assert.Equal(t, 0, m.dockerContainerListViewModel.Cursor)
 
 		// Test moving up at the beginning (should stay at 0)
-		_, _ = m.CmdUp(tea.KeyMsg{Type: tea.KeyUp})
+		_, _ = m.CmdUp(newSpecialKey(tea.KeyUp))
 		assert.Equal(t, 0, m.dockerContainerListViewModel.Cursor)
 	})
 }
@@ -223,7 +223,7 @@ func TestDockerContainerListView_Update(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Try to move up from first item
-		_, cmd := m.CmdUp(tea.KeyMsg{})
+		_, cmd := m.CmdUp(tea.KeyPressMsg{})
 		assert.Nil(t, cmd)
 		assert.Equal(t, 0, m.dockerContainerListViewModel.Cursor)
 
@@ -231,7 +231,7 @@ func TestDockerContainerListView_Update(t *testing.T) {
 		m.dockerContainerListViewModel.Cursor = 1
 
 		// Try to move down from last item
-		_, cmd = m.CmdDown(tea.KeyMsg{})
+		_, cmd = m.CmdDown(tea.KeyPressMsg{})
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, m.dockerContainerListViewModel.Cursor)
 	})
@@ -242,7 +242,7 @@ func TestDockerContainerListView_Update(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Try operations on empty list
-		_, cmd := m.CmdKill(tea.KeyMsg{})
+		_, cmd := m.CmdKill(tea.KeyPressMsg{})
 		assert.Nil(t, cmd) // Should not crash
 	})
 }
@@ -379,7 +379,7 @@ func TestDockerContainerListView_FullOutput(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Test the View() method directly instead of using teatest
-		output := m.View()
+		output := m.View().Content
 
 		// Check that the output contains expected content
 		assert.Contains(t, output, "Docker Containers")

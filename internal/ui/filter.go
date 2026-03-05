@@ -1,8 +1,8 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type FilterViewModel struct {
@@ -60,23 +60,30 @@ func (m *FilterViewModel) RenderFilterCmdLine() string {
 	return "Filter: " + before + cursorStyle.Render(cursor) + after + " (ESC to clear)"
 }
 
-func (m *FilterViewModel) HandleKey(msg tea.KeyMsg) bool {
-	switch msg.Type {
+func (m *FilterViewModel) HandleKey(msg tea.KeyPressMsg) bool {
+	switch msg.Code {
 	case tea.KeyEsc:
 		m.ClearFilter()
 	case tea.KeyEnter:
 		m.filterMode = false
 		return true
-	case tea.KeyBackspace, tea.KeyCtrlH:
+	case tea.KeyBackspace:
 		m.FilterDeleteLastChar()
-	case tea.KeyLeft, tea.KeyCtrlF:
+	case tea.KeyLeft:
 		m.FilterCursorLeft()
-	case tea.KeyRight, tea.KeyCtrlB:
+	case tea.KeyRight:
 		m.FilterCursorRight()
 	default:
-		if msg.Type == tea.KeyRunes {
+		switch {
+		case isCtrlKey(msg, 'h'):
+			m.FilterDeleteLastChar()
+		case isCtrlKey(msg, 'f'):
+			m.FilterCursorLeft()
+		case isCtrlKey(msg, 'b'):
+			m.FilterCursorRight()
+		case len(msg.Text) > 0:
 			// Insert at the cursor position
-			m.AppendString(msg.String())
+			m.AppendString(msg.Text)
 			return true
 		}
 	}

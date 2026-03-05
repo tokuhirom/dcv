@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/models"
@@ -408,7 +408,7 @@ func TestComposeProcessListView_Update(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Try operations on empty list
-		_, cmd := m.CmdKill(tea.KeyMsg{})
+		_, cmd := m.CmdKill(tea.KeyPressMsg{})
 		assert.Nil(t, cmd) // Should not crash
 	})
 }
@@ -432,7 +432,7 @@ func TestComposeProcessListView_FullOutput(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Test the View() method directly instead of using teatest
-		output := m.View()
+		output := m.View().Content
 
 		// Check that the output contains expected content
 		assert.Contains(t, output, "test-project")
@@ -451,12 +451,12 @@ func TestComposeProcessListView_ServiceOperations(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Toggle show all
-		_, cmd := m.CmdToggleAll(tea.KeyMsg{})
+		_, cmd := m.CmdToggleAll(tea.KeyPressMsg{})
 		assert.NotNil(t, cmd) // Should return a command to refresh
 		assert.True(t, m.composeProcessListViewModel.showAll)
 
 		// Toggle back
-		_, cmd = m.CmdToggleAll(tea.KeyMsg{})
+		_, cmd = m.CmdToggleAll(tea.KeyPressMsg{})
 		assert.NotNil(t, cmd)
 		assert.False(t, m.composeProcessListViewModel.showAll)
 	})

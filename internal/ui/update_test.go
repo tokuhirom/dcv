@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -16,7 +16,7 @@ func TestHandleKeyPress(t *testing.T) {
 	tests := []struct {
 		name        string
 		model       Model
-		key         tea.KeyMsg
+		key         tea.KeyPressMsg
 		wantView    ViewType
 		wantLoading bool
 		checkFunc   func(t *testing.T, m *Model)
@@ -33,7 +33,7 @@ func TestHandleKeyPress(t *testing.T) {
 					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
-			key:      tea.KeyMsg{Type: tea.KeyDown},
+			key:      newSpecialKey(tea.KeyDown),
 			wantView: ComposeProcessListView,
 			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, 1, m.composeProcessListViewModel.Cursor)
@@ -51,7 +51,7 @@ func TestHandleKeyPress(t *testing.T) {
 					TableViewModel: TableViewModel{Cursor: 1},
 				},
 			},
-			key:      tea.KeyMsg{Type: tea.KeyUp},
+			key:      newSpecialKey(tea.KeyUp),
 			wantView: ComposeProcessListView,
 			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, 0, m.composeProcessListViewModel.Cursor)
@@ -68,7 +68,7 @@ func TestHandleKeyPress(t *testing.T) {
 					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
-			key:      tea.KeyMsg{Type: tea.KeyEnter},
+			key:      newSpecialKey(tea.KeyEnter),
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, "web-1", m.logViewModel.container.GetName())
@@ -88,7 +88,7 @@ func TestHandleKeyPress(t *testing.T) {
 					TableViewModel: TableViewModel{Cursor: 0},
 				},
 			},
-			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")},
+			key:         newKeyPress("d"),
 			wantView:    DindProcessListView,
 			wantLoading: true,
 			checkFunc: func(t *testing.T, m *Model) {
@@ -100,7 +100,7 @@ func TestHandleKeyPress(t *testing.T) {
 			model: Model{
 				currentView: ComposeProcessListView,
 			},
-			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")},
+			key:      newKeyPress("q"),
 			wantView: ComposeProcessListView,
 		},
 		{
@@ -112,7 +112,7 @@ func TestHandleKeyPress(t *testing.T) {
 					container: docker.NewContainer("web-1", "web-1", "web-1", "running"),
 				},
 			},
-			key:      tea.KeyMsg{Type: tea.KeyEsc},
+			key:      newSpecialKey(tea.KeyEsc),
 			wantView: ComposeProcessListView,
 		},
 		{
@@ -125,7 +125,7 @@ func TestHandleKeyPress(t *testing.T) {
 					logScrollY: 0,
 				},
 			},
-			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")},
+			key:      newKeyPress("j"),
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, 1, m.logViewModel.logScrollY)
@@ -141,7 +141,7 @@ func TestHandleKeyPress(t *testing.T) {
 					logScrollY: 0,
 				},
 			},
-			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")},
+			key:      newKeyPress("G"),
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m *Model) {
 				assert.Equal(t, 9, m.logViewModel.logScrollY) // 10 logs - (5 Height - 4 ui elements) = 9
@@ -152,7 +152,7 @@ func TestHandleKeyPress(t *testing.T) {
 			model: Model{
 				currentView: LogView,
 			},
-			key:      tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")},
+			key:      newKeyPress("/"),
 			wantView: LogView,
 			checkFunc: func(t *testing.T, m *Model) {
 				assert.True(t, m.logViewModel.searchMode)
@@ -164,7 +164,7 @@ func TestHandleKeyPress(t *testing.T) {
 			model: Model{
 				currentView: ComposeProcessListView,
 			},
-			key:         tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("r")},
+			key:         newKeyPress("r"),
 			wantView:    ComposeProcessListView,
 			wantLoading: false, // Loading is set in Update when handling RefreshMsg, not in the key handler
 		},
@@ -199,7 +199,7 @@ func TestHandleSearchMode(t *testing.T) {
 	tests := []struct {
 		name           string
 		model          Model
-		key            tea.KeyMsg
+		key            tea.KeyPressMsg
 		wantSearchMode bool
 		wantSearchText string
 	}{
@@ -215,7 +215,7 @@ func TestHandleSearchMode(t *testing.T) {
 					},
 				},
 			},
-			key:            tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("o")},
+			key:            newKeyPress("o"),
 			wantSearchMode: true,
 			wantSearchText: "erro",
 		},
@@ -231,7 +231,7 @@ func TestHandleSearchMode(t *testing.T) {
 					},
 				},
 			},
-			key:            tea.KeyMsg{Type: tea.KeyBackspace},
+			key:            newSpecialKey(tea.KeyBackspace),
 			wantSearchMode: true,
 			wantSearchText: "erro",
 		},
@@ -246,7 +246,7 @@ func TestHandleSearchMode(t *testing.T) {
 					},
 				},
 			},
-			key:            tea.KeyMsg{Type: tea.KeyEsc},
+			key:            newSpecialKey(tea.KeyEsc),
 			wantSearchMode: false,
 			wantSearchText: "",
 		},
@@ -261,7 +261,7 @@ func TestHandleSearchMode(t *testing.T) {
 					},
 				},
 			},
-			key:            tea.KeyMsg{Type: tea.KeyEnter},
+			key:            newSpecialKey(tea.KeyEnter),
 			wantSearchMode: false,
 			wantSearchText: "error",
 		},
@@ -304,12 +304,12 @@ func TestHandleDindListKeys(t *testing.T) {
 	)
 
 	// Test navigation
-	newModel, _ := model.handleViewKeys(tea.KeyMsg{Type: tea.KeyDown})
+	newModel, _ := model.handleViewKeys(newSpecialKey(tea.KeyDown))
 	m := newModel.(*Model)
 	assert.Equal(t, 1, m.dindProcessListViewModel.Cursor)
 
 	// Test entering log view
-	newModel, cmd := m.handleViewKeys(tea.KeyMsg{Type: tea.KeyEnter})
+	newModel, cmd := m.handleViewKeys(newSpecialKey(tea.KeyEnter))
 	m = newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView)
 	assert.NotNil(t, cmd)
@@ -317,7 +317,7 @@ func TestHandleDindListKeys(t *testing.T) {
 	// Test escape - add viewHistory for proper navigation
 	model.currentView = DindProcessListView
 	model.viewHistory = []ViewType{ComposeProcessListView}
-	newModel, _ = model.handleViewKeys(tea.KeyMsg{Type: tea.KeyEsc})
+	newModel, _ = model.handleViewKeys(newSpecialKey(tea.KeyEsc))
 	m = newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView)
 }
@@ -389,18 +389,18 @@ func TestBoundaryConditions(t *testing.T) {
 	model.Init() // Initialize key handlers
 
 	// Try to go up at the top
-	newModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyUp})
+	newModel, _ := model.Update(newSpecialKey(tea.KeyUp))
 	m := newModel.(*Model)
 	assert.Equal(t, 0, m.composeProcessListViewModel.Cursor) // Should stay at 0
 
 	// Try to go down at the bottom
-	newModel, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	newModel, _ = m.Update(newSpecialKey(tea.KeyDown))
 	m = newModel.(*Model)
 	assert.Equal(t, 0, m.composeProcessListViewModel.Cursor) // Should stay at 0 (only one item)
 
 	// Test with empty list
 	model.composeProcessListViewModel.composeContainers = []models.ComposeContainer{}
-	newModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	newModel, _ = model.Update(newSpecialKey(tea.KeyEnter))
 	m = newModel.(*Model)
 	assert.Equal(t, ComposeProcessListView, m.currentView) // Should stay in process list
 }
@@ -409,7 +409,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	// From process list - should show quit confirmation
 	model := Model{currentView: ComposeProcessListView}
 	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
-	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	newModel, cmd := model.handleKeyPress(newKeyPress("q"))
 	m := newModel.(*Model)
 	assert.True(t, m.quitConfirmation)
 	assert.Nil(t, cmd) // No command yet, just showing confirmation
@@ -417,7 +417,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	// From log view - should now show quit confirmation
 	model = Model{currentView: LogView}
 	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
-	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	newModel, cmd = model.handleKeyPress(newKeyPress("q"))
 	m = newModel.(*Model)
 	assert.Equal(t, LogView, m.currentView) // View should not change
 	assert.True(t, m.quitConfirmation)
@@ -426,7 +426,7 @@ func TestQuitBehaviorInDifferentViews(t *testing.T) {
 	// From dind view - should now show quit confirmation
 	model = Model{currentView: DindProcessListView}
 	model.initializeKeyHandlers() // Initialize key handlers to register global 'q' handler
-	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	newModel, cmd = model.handleKeyPress(newKeyPress("q"))
 	m = newModel.(*Model)
 	assert.Equal(t, DindProcessListView, m.currentView) // View should not change
 	assert.True(t, m.quitConfirmation)
@@ -453,7 +453,7 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 	model.initializeKeyHandlers()
 
 	// Press 'u' to go to parent directory
-	newModel, cmd := model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("u")})
+	newModel, cmd := model.handleKeyPress(newKeyPress("u"))
 	m := newModel.(*Model)
 
 	assert.Equal(t, "/app", m.fileBrowserViewModel.currentPath)
@@ -467,7 +467,7 @@ func TestFileBrowserParentDirectory(t *testing.T) {
 	model.fileBrowserViewModel.pathHistory = []string{"/"}
 	model.loading = false
 
-	newModel, cmd = model.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("u")})
+	newModel, cmd = model.handleKeyPress(newKeyPress("u"))
 	m = newModel.(*Model)
 
 	assert.Equal(t, "/", m.fileBrowserViewModel.currentPath) // Should stay at root

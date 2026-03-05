@@ -3,12 +3,12 @@ package ui
 import (
 	"log/slog"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // Search and filter commands
 
-func (m *Model) CmdSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSearch(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandleSearch()
@@ -28,7 +28,7 @@ func (m *Model) CmdSearch(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdNextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdNextSearchResult(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandleNextSearchResult(m)
@@ -48,7 +48,7 @@ func (m *Model) CmdNextSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdPrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdPrevSearchResult(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandlePrevSearchResult(m)
@@ -68,7 +68,7 @@ func (m *Model) CmdPrevSearchResult(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdFilter(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdFilter(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandleFilter()

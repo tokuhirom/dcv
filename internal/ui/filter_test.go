@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +22,7 @@ func TestFilterMode(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Press 'f' to start filter mode
-		newModel, _ := m.handleKeyPress(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("f")})
+		newModel, _ := m.handleKeyPress(newKeyPress("f"))
 		m = newModel.(*Model)
 
 		assert.True(t, m.logViewModel.filterMode)
@@ -46,7 +46,7 @@ func TestFilterMode(t *testing.T) {
 
 		// Type "error"
 		for _, ch := range "error" {
-			newModel, _ := m.handleFilterMode(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{ch}})
+			newModel, _ := m.handleFilterMode(newKeyPress(string(ch)))
 			m = newModel.(*Model)
 		}
 
@@ -71,7 +71,7 @@ func TestFilterMode(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Press Enter to exit filter mode
-		newModel, _ := m.handleFilterMode(tea.KeyMsg{Type: tea.KeyEnter})
+		newModel, _ := m.handleFilterMode(newSpecialKey(tea.KeyEnter))
 		m = newModel.(*Model)
 
 		assert.False(t, m.logViewModel.filterMode)
@@ -95,7 +95,7 @@ func TestFilterMode(t *testing.T) {
 		m.initializeKeyHandlers()
 
 		// Press Escape to exit filter mode and clear filter
-		newModel, _ := m.handleFilterMode(tea.KeyMsg{Type: tea.KeyEsc})
+		newModel, _ := m.handleFilterMode(newSpecialKey(tea.KeyEsc))
 		m = newModel.(*Model)
 
 		assert.False(t, m.logViewModel.filterMode)
@@ -120,7 +120,7 @@ func TestFilterMode(t *testing.T) {
 
 		// Type "error" - should match all case variations
 		for _, ch := range "error" {
-			newModel, _ := m.handleFilterMode(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{ch}})
+			newModel, _ := m.handleFilterMode(newKeyPress(string(ch)))
 			m = newModel.(*Model)
 		}
 

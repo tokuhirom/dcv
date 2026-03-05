@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/tokuhirom/dcv/internal/config"
 	"github.com/tokuhirom/dcv/internal/ui"
@@ -50,7 +50,7 @@ func main() {
 		slog.String("initial_view", cfg.General.InitialView))
 
 	m := ui.NewModel(initialView)
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v\n", err)
 		os.Exit(1)

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
@@ -51,7 +51,11 @@ func (m *FileContentViewModel) render(model *Model) string {
 		return errorStyle.Render(fmt.Sprintf("Error: %v", model.err))
 	}
 
-	v := viewport.New(model.width, model.Height-4)
+	height := model.Height - 4
+	if height < 1 {
+		height = 1
+	}
+	v := viewport.New(viewport.WithWidth(model.width), viewport.WithHeight(height))
 	v.SetContent(m.content)
 	v.ScrollDown(m.scrollY)
 	return v.View()

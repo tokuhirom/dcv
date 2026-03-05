@@ -1,14 +1,14 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import tea "charm.land/bubbletea/v2"
 
 // Docker Compose specific commands
 
-func (m *Model) CmdComposeLS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeLS(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.composeProjectListViewModel.Show(m)
 }
 
-func (m *Model) CmdSelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSelectProject(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProjectListView:
 		return m, m.composeProjectListViewModel.HandleSelectProject(m)
@@ -17,11 +17,11 @@ func (m *Model) CmdSelectProject(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdStats(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdStats(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.statsViewModel.Show(m)
 }
 
-func (m *Model) CmdDind(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdDind(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case DockerContainerListView:
 		return m, m.dockerContainerListViewModel.HandleDindProcessList(m)

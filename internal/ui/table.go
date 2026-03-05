@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/table"
+	"charm.land/lipgloss/v2"
 )
 
 // RenderUnfocusedTable renders a table without selection/focus capability

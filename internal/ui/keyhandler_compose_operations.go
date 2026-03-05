@@ -3,7 +3,7 @@ package ui
 import (
 	"log/slog"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/tokuhirom/dcv/internal/models"
 )
@@ -29,7 +29,7 @@ func (m *Model) useComposeProjectAware(cb func(project *models.ComposeProject) t
 }
 
 // CmdComposeUp runs docker compose up -d for the selected project
-func (m *Model) CmdComposeUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeUp(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useComposeProjectAware(func(project *models.ComposeProject) tea.Cmd {
 		args := []string{"compose", "-p", project.Name, "up", "-d"}
 		return m.commandExecutionViewModel.ExecuteCommand(m, false, args...) // up is not aggressive
@@ -37,7 +37,7 @@ func (m *Model) CmdComposeUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // CmdComposeDown runs docker compose down for the selected project
-func (m *Model) CmdComposeDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeDown(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useComposeProjectAware(func(project *models.ComposeProject) tea.Cmd {
 		args := []string{"compose", "-p", project.Name, "down"}
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // down is aggressive
@@ -45,7 +45,7 @@ func (m *Model) CmdComposeDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // CmdComposeStop runs docker compose stop for the selected project
-func (m *Model) CmdComposeStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeStop(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useComposeProjectAware(func(project *models.ComposeProject) tea.Cmd {
 		args := []string{"compose", "-p", project.Name, "stop"}
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // stop is aggressive
@@ -53,7 +53,7 @@ func (m *Model) CmdComposeStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // CmdComposeStart runs docker compose start for the selected project
-func (m *Model) CmdComposeStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeStart(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useComposeProjectAware(func(project *models.ComposeProject) tea.Cmd {
 		args := []string{"compose", "-p", project.Name, "start"}
 		return m.commandExecutionViewModel.ExecuteCommand(m, false, args...) // start is not aggressive
@@ -61,7 +61,7 @@ func (m *Model) CmdComposeStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // CmdComposeRestart runs docker compose restart for the selected project
-func (m *Model) CmdComposeRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeRestart(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useComposeProjectAware(func(project *models.ComposeProject) tea.Cmd {
 		args := []string{"compose", "-p", project.Name, "restart"}
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // restart is aggressive
@@ -69,7 +69,7 @@ func (m *Model) CmdComposeRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // CmdComposeBuild runs docker compose build for the selected project
-func (m *Model) CmdComposeBuild(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeBuild(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useComposeProjectAware(func(project *models.ComposeProject) tea.Cmd {
 		args := []string{"compose", "-f", project.ConfigFiles, "build"}
 		return m.commandExecutionViewModel.ExecuteCommand(m, false, args...) // build is not aggressive
@@ -77,7 +77,7 @@ func (m *Model) CmdComposeBuild(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // CmdComposePull runs docker compose pull for the selected project
-func (m *Model) CmdComposePull(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposePull(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useComposeProjectAware(func(project *models.ComposeProject) tea.Cmd {
 		args := []string{"compose", "-f", project.ConfigFiles, "pull"}
 		return m.commandExecutionViewModel.ExecuteCommand(m, false, args...) // pull is not aggressive
@@ -85,7 +85,7 @@ func (m *Model) CmdComposePull(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // CmdComposeLogs runs docker compose logs for the selected project
-func (m *Model) CmdComposeLogs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdComposeLogs(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useComposeProjectAware(func(project *models.ComposeProject) tea.Cmd {
 		args := []string{"compose", "-p", project.Name, "logs", "--follow", "--tail", "10"}
 		return m.commandExecutionViewModel.ExecuteCommand(m, false, args...) // logs is not aggressive

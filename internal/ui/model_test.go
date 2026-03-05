@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/models"
@@ -108,9 +108,9 @@ func TestKeyNavigation(t *testing.T) {
 
 			// Move down
 			if tt.expected > 0 {
-				msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)}
+				msg := newKeyPress(tt.key)
 				if tt.key == "down" {
-					msg = tea.KeyMsg{Type: tea.KeyDown}
+					msg = newSpecialKey(tea.KeyDown)
 				}
 				newModel, _ := m.Update(msg)
 				m = newModel.(*Model)
@@ -137,7 +137,7 @@ func TestViewSwitching(t *testing.T) {
 
 	// Test entering log view
 	m.composeProcessListViewModel.Cursor = 0
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := newSpecialKey(tea.KeyEnter)
 	newModel, cmd := m.Update(msg)
 	m = newModel.(*Model)
 
@@ -146,7 +146,7 @@ func TestViewSwitching(t *testing.T) {
 	assert.NotNil(t, cmd)
 
 	// Test going back with ESC
-	msg = tea.KeyMsg{Type: tea.KeyEsc}
+	msg = newSpecialKey(tea.KeyEsc)
 	newModel, cmd = m.Update(msg)
 	m = newModel.(*Model)
 
@@ -155,7 +155,7 @@ func TestViewSwitching(t *testing.T) {
 
 	// Test entering dind view
 	m.composeProcessListViewModel.Cursor = 1
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")}
+	msg = newKeyPress("d")
 	newModel, cmd = m.Update(msg)
 	m = newModel.(*Model)
 
@@ -172,7 +172,7 @@ func TestSearchMode(t *testing.T) {
 	m.logViewModel.logs = []string{"line 1", "line 2", "error occurred", "line 4"}
 
 	// Enter search mode
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")}
+	msg := newKeyPress("/")
 	newModel, _ := m.Update(msg)
 	m = newModel.(*Model)
 
@@ -181,7 +181,7 @@ func TestSearchMode(t *testing.T) {
 
 	// Type search text
 	for _, r := range "error" {
-		msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
+		msg = newKeyPress(string(r))
 		newModel, _ = m.Update(msg)
 		m = newModel.(*Model)
 	}
@@ -189,7 +189,7 @@ func TestSearchMode(t *testing.T) {
 	assert.Equal(t, "error", m.logViewModel.searchText)
 
 	// Exit search mode with ESC
-	msg = tea.KeyMsg{Type: tea.KeyEsc}
+	msg = newSpecialKey(tea.KeyEsc)
 	newModel, _ = m.Update(msg)
 	m = newModel.(*Model)
 
@@ -242,7 +242,7 @@ func TestQuitBehavior(t *testing.T) {
 			m.currentView = tt.currentView
 			m.loading = false
 
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
+			msg := newKeyPress("q")
 			newModel, cmd := m.Update(msg)
 			m = newModel.(*Model)
 

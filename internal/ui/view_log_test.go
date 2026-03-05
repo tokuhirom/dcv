@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -9,6 +10,12 @@ import (
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
+
+var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func stripANSI(s string) string {
+	return ansiEscapeRe.ReplaceAllString(s, "")
+}
 
 func TestLogView_Rendering(t *testing.T) {
 	tests := []struct {
@@ -111,9 +118,10 @@ func TestLogView_Rendering(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.model.logViewModel.render(tt.model, tt.height)
+			plain := stripANSI(result)
 
 			for _, expected := range tt.expected {
-				assert.Contains(t, result, expected, "Expected to find '%s' in output", expected)
+				assert.Contains(t, plain, expected, "Expected to find '%s' in output", expected)
 			}
 		})
 	}
@@ -148,7 +156,7 @@ func TestLogView_WrappedLines(t *testing.T) {
 		// Total = 6 visual lines, all fit in 8
 		// "Short line 4" = 1 visual line (total 7, still fits)
 
-		result := model.logViewModel.render(model, 10)
+		result := stripANSI(model.logViewModel.render(model, 10))
 
 		assert.Contains(t, result, "Short line 1")
 		assert.Contains(t, result, longLine[:50])
@@ -185,7 +193,7 @@ func TestLogView_WrappedLines(t *testing.T) {
 		// Total: 6 visual lines
 		// "Short line" should not be visible
 
-		result := model.logViewModel.render(model, 10)
+		result := stripANSI(model.logViewModel.render(model, 10))
 
 		// This will fail with current implementation
 		// because it thinks it can show all 3 logical lines in 6 visual lines
@@ -446,7 +454,7 @@ func TestLogView_Search(t *testing.T) {
 		}
 
 		// Verify search would highlight Error
-		result := model.logViewModel.render(model, 10)
+		result := stripANSI(model.logViewModel.render(model, 10))
 		assert.Contains(t, result, "Error")
 	})
 
@@ -592,7 +600,7 @@ func TestLogView_FilterMode(t *testing.T) {
 			Height: 10,
 		}
 
-		result := model.logViewModel.render(model, 10)
+		result := stripANSI(model.logViewModel.render(model, 10))
 
 		// Should only show ERROR lines
 		assert.Contains(t, result, "ERROR: Database connection failed")
@@ -746,7 +754,7 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 		result := model.logViewModel.render(model, 10)
 
 		// Should mark the current search result with >
-		lines := strings.Split(result, "\n")
+		lines := strings.Split(stripANSI(result), "\n")
 		foundMarker := false
 		for _, line := range lines {
 			if strings.HasPrefix(line, "> ") && strings.Contains(line, "Error here") {

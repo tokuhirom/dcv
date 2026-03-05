@@ -1,13 +1,13 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // KeyHandler represents a function that handles a key press
-type KeyHandler func(msg tea.KeyMsg) (tea.Model, tea.Cmd)
+type KeyHandler func(msg tea.KeyPressMsg) (tea.Model, tea.Cmd)
 
 // KeyConfig represents a key binding configuration
 type KeyConfig struct {

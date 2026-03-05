@@ -181,7 +181,7 @@ func TestView(t *testing.T) {
 				)
 			}
 
-			view := tt.model.View()
+			view := tt.model.View().Content
 			for _, expected := range tt.contains {
 				assert.Contains(t, view, expected)
 			}
@@ -379,7 +379,7 @@ func TestDockerContainerListView(t *testing.T) {
 		// Initialize the table rows
 		m.dockerContainerListViewModel.SetRows(m.dockerContainerListViewModel.buildRows(), m.Height)
 
-		view := m.View()
+		view := m.View().Content
 
 		// Check title
 		assert.Contains(t, view, "Docker Containers")
@@ -411,7 +411,7 @@ func TestDockerContainerListView(t *testing.T) {
 		}
 		m.initializeKeyHandlers()
 
-		view := m.View()
+		view := m.View().Content
 
 		// Check title includes (all)
 		assert.Contains(t, view, "Docker Containers (all)")
@@ -430,7 +430,7 @@ func TestDockerContainerListView(t *testing.T) {
 		}
 		m.initializeKeyHandlers()
 
-		view := m.View()
+		view := m.View().Content
 
 		// Check title includes (all)
 		assert.Contains(t, view, "Docker Compose: test-project (all)")
@@ -449,7 +449,7 @@ func TestDockerContainerListView(t *testing.T) {
 		}
 		m.initializeKeyHandlers()
 
-		view := m.View()
+		view := m.View().Content
 
 		// Check title includes (all) when no project name
 		assert.Contains(t, view, "Docker Compose (all)")
@@ -466,7 +466,7 @@ func TestDockerContainerListView(t *testing.T) {
 		}
 		m.initializeKeyHandlers()
 
-		view := m.View()
+		view := m.View().Content
 
 		assert.Contains(t, view, "No containers found")
 	})
@@ -497,7 +497,7 @@ func TestFileBrowserTableView(t *testing.T) {
 		// Build rows for table
 		m.fileBrowserViewModel.SetRows(m.fileBrowserViewModel.buildRows(), m.ViewHeight())
 
-		view := m.View()
+		view := m.View().Content
 
 		// Check title
 		assert.Contains(t, view, "File Browser: web-1 [/app]")
@@ -550,7 +550,7 @@ func TestFileBrowserTableView(t *testing.T) {
 		}
 		m.initializeKeyHandlers()
 
-		view := m.View()
+		view := m.View().Content
 
 		assert.Contains(t, view, "No files found or directory is empty")
 	})
