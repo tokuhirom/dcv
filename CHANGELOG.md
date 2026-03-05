@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.3.3](https://github.com/tokuhirom/dcv/compare/v0.3.2...v0.3.3) - 2026-03-05
+- Update Songmu/tagpr action to v1.17.1 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/352
+- Update actions/upload-artifact action to v7 - autoclosed by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/353
+- Update dependency lefthook to v2.1.2 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/354
+- Migrate TUI stack to Bubble Tea v2 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/355
+- Update goreleaser/goreleaser-action action to v7 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/348
+
 ## [v0.3.2](https://github.com/tokuhirom/dcv/compare/v0.3.1...v0.3.2) - 2026-02-21
 - fix(deps): update module github.com/charmbracelet/bubbletea to v1.3.7 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/314
 - fix(deps): update module github.com/charmbracelet/bubbletea to v1.3.10 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/316
