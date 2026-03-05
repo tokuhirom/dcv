@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/models"
@@ -356,12 +356,12 @@ func (m *FileBrowserActionViewModel) HandleBack(model *Model) tea.Cmd {
 }
 
 // HandleInput handles keyboard input in input mode
-func (m *FileBrowserActionViewModel) HandleInput(model *Model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *FileBrowserActionViewModel) HandleInput(model *Model, msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if !m.inputMode {
 		return model, nil
 	}
 
-	switch msg.Type {
+	switch msg.Code {
 	case tea.KeyEnter:
 		// Confirm input
 		return model, m.HandleSelect(model)
@@ -370,26 +370,26 @@ func (m *FileBrowserActionViewModel) HandleInput(model *Model, msg tea.KeyMsg) (
 		// Cancel input
 		return model, m.HandleBack(model)
 
-	case tea.KeyBackspace, tea.KeyCtrlH:
+	case tea.KeyBackspace:
 		if len(m.inputBuffer) > 0 && m.inputCursorPos > 0 {
 			m.inputBuffer = m.inputBuffer[:m.inputCursorPos-1] + m.inputBuffer[m.inputCursorPos:]
 			m.inputCursorPos--
 		}
 
-	case tea.KeyLeft, tea.KeyCtrlB:
+	case tea.KeyLeft:
 		if m.inputCursorPos > 0 {
 			m.inputCursorPos--
 		}
 
-	case tea.KeyRight, tea.KeyCtrlF:
+	case tea.KeyRight:
 		if m.inputCursorPos < len(m.inputBuffer) {
 			m.inputCursorPos++
 		}
 
-	case tea.KeyHome, tea.KeyCtrlA:
+	case tea.KeyHome:
 		m.inputCursorPos = 0
 
-	case tea.KeyEnd, tea.KeyCtrlE:
+	case tea.KeyEnd:
 		m.inputCursorPos = len(m.inputBuffer)
 
 	case tea.KeyDelete:
@@ -398,13 +398,30 @@ func (m *FileBrowserActionViewModel) HandleInput(model *Model, msg tea.KeyMsg) (
 		}
 
 	default:
-		switch msg.Type {
-		case tea.KeyRunes:
-			m.inputBuffer = m.inputBuffer[:m.inputCursorPos] + msg.String() + m.inputBuffer[m.inputCursorPos:]
-			m.inputCursorPos += len(msg.String())
-		case tea.KeySpace:
+		switch {
+		case isCtrlKey(msg, 'h'):
+			if len(m.inputBuffer) > 0 && m.inputCursorPos > 0 {
+				m.inputBuffer = m.inputBuffer[:m.inputCursorPos-1] + m.inputBuffer[m.inputCursorPos:]
+				m.inputCursorPos--
+			}
+		case isCtrlKey(msg, 'b'):
+			if m.inputCursorPos > 0 {
+				m.inputCursorPos--
+			}
+		case isCtrlKey(msg, 'f'):
+			if m.inputCursorPos < len(m.inputBuffer) {
+				m.inputCursorPos++
+			}
+		case isCtrlKey(msg, 'a'):
+			m.inputCursorPos = 0
+		case isCtrlKey(msg, 'e'):
+			m.inputCursorPos = len(m.inputBuffer)
+		case msg.Code == tea.KeySpace:
 			m.inputBuffer = m.inputBuffer[:m.inputCursorPos] + " " + m.inputBuffer[m.inputCursorPos:]
 			m.inputCursorPos++
+		case len(msg.Text) > 0:
+			m.inputBuffer = m.inputBuffer[:m.inputCursorPos] + msg.Text + m.inputBuffer[m.inputCursorPos:]
+			m.inputCursorPos += len(msg.Text)
 		}
 	}
 

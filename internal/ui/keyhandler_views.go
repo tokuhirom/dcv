@@ -1,30 +1,30 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // View switching commands
 
-func (m *Model) CmdPS(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdPS(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.dockerContainerListViewModel.Show(m)
 }
 
-func (m *Model) CmdImages(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdImages(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.imageListViewModel.Show(m)
 }
 
-func (m *Model) CmdNetworkLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdNetworkLs(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.networkListViewModel.Show(m)
 }
 
-func (m *Model) CmdVolumeLs(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdVolumeLs(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.volumeListViewModel.Show(m)
 }
 
-func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdLog(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		return m.logViewModel.StreamContainerLogs(m, container)
 	})
@@ -33,7 +33,7 @@ func (m *Model) CmdLog(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 // CmdShell executes a shell in the selected container
 // It defaults to /bin/sh, which is commonly available in containers.
 // If the container does not have /bin/sh, it will fail gracefully.
-func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdShell(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		// Default to /bin/sh as it's most commonly available
 		return func() tea.Msg {
@@ -48,7 +48,7 @@ func (m *Model) CmdShell(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	})
 }
 
-func (m *Model) CmdShowActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdShowActions(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		// Initialize the action view with the selected container
 		m.commandActionViewModel.Initialize(container)
@@ -57,7 +57,7 @@ func (m *Model) CmdShowActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	})
 }
 
-func (m *Model) CmdSelectAction(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSelectAction(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case CommandActionView:
 		return m, m.commandActionViewModel.HandleSelect(m)
@@ -66,7 +66,7 @@ func (m *Model) CmdSelectAction(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdShowComposeProjectActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdShowComposeProjectActions(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProjectListView:
 		if m.composeProjectListViewModel.Cursor < len(m.composeProjectListViewModel.projects) {
@@ -79,7 +79,7 @@ func (m *Model) CmdShowComposeProjectActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) 
 	return m, nil
 }
 
-func (m *Model) CmdSelectComposeProjectAction(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSelectComposeProjectAction(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProjectActionView:
 		return m, m.composeProjectActionViewModel.HandleSelect(m)
@@ -88,7 +88,7 @@ func (m *Model) CmdSelectComposeProjectAction(_ tea.KeyMsg) (tea.Model, tea.Cmd)
 	}
 }
 
-func (m *Model) CmdShowFileActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdShowFileActions(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case FileBrowserView:
 		if m.fileBrowserViewModel.Cursor < len(m.fileBrowserViewModel.containerFiles) {
@@ -105,7 +105,7 @@ func (m *Model) CmdShowFileActions(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) CmdSelectFileAction(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSelectFileAction(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case FileBrowserActionView:
 		return m, m.fileBrowserActionViewModel.HandleSelect(m)

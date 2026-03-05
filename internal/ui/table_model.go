@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/mattn/go-runewidth"
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
 var (
@@ -108,7 +108,7 @@ func (t *TableViewModel) RenderTable(model *Model, columns []table.Column, _ int
 			}
 
 			// Truncate and render
-			truncated := runewidth.Truncate(displayText, columns[j].Width, "…")
+			truncated := ansi.Truncate(displayText, columns[j].Width, "…")
 			s.WriteString(base.Width(columns[j].Width).Height(1).
 				Render(truncated))
 			// Add space between cells
@@ -234,9 +234,9 @@ func (t *TableViewModel) adjustColumnsWidth(columns *[]table.Column, width int) 
 	}
 	for i, column := range *columns {
 		if column.Width == -1 {
-			colWidth := runewidth.StringWidth(column.Title)
+			colWidth := ansi.StringWidth(column.Title)
 			for _, row := range t.Rows {
-				colWidth = max(runewidth.StringWidth(row[i]), colWidth)
+				colWidth = max(ansi.StringWidth(row[i]), colWidth)
 			}
 			if colWidth < autoAdjustedWidth {
 				(*columns)[i].Width = colWidth

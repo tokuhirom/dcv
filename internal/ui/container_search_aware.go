@@ -1,13 +1,13 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import tea "charm.land/bubbletea/v2"
 
 // ContainerSearchAware is an interface for views that support container search
 type ContainerSearchAware interface {
 	// StartSearch initializes search mode
 	StartSearch()
 	// HandleSearchInput handles search input in search mode
-	HandleSearchInput(model *Model, msg tea.KeyMsg) tea.Cmd
+	HandleSearchInput(model *Model, msg tea.KeyPressMsg) tea.Cmd
 	// HandleNextSearchResult moves to the next search result
 	HandleNextSearchResult()
 	// HandlePrevSearchResult moves to the previous search result

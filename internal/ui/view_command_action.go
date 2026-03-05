@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
@@ -41,7 +41,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "Show container logs",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			_, cmd := model.CmdLog(tea.KeyMsg{})
+			_, cmd := model.CmdLog(tea.KeyPressMsg{})
 			return cmd
 		},
 	})
@@ -52,7 +52,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "View container configuration",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			_, cmd := model.CmdInspect(tea.KeyMsg{})
+			_, cmd := model.CmdInspect(tea.KeyPressMsg{})
 			return cmd
 		},
 	})
@@ -63,7 +63,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "Browse container filesystem",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			_, cmd := model.CmdFileBrowse(tea.KeyMsg{})
+			_, cmd := model.CmdFileBrowse(tea.KeyPressMsg{})
 			return cmd
 		},
 	})
@@ -74,7 +74,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "Inject helper binary for file operations",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			_, cmd := model.CmdInjectHelper(tea.KeyMsg{})
+			_, cmd := model.CmdInjectHelper(tea.KeyPressMsg{})
 			return cmd
 		},
 	})
@@ -85,7 +85,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 		Description: "Execute /bin/sh in container",
 		Aggressive:  false,
 		Handler: func(model *Model, c *docker.Container) tea.Cmd {
-			_, cmd := model.CmdShell(tea.KeyMsg{})
+			_, cmd := model.CmdShell(tea.KeyPressMsg{})
 			return cmd
 		},
 	})
@@ -98,7 +98,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Stop the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				_, cmd := model.CmdStop(tea.KeyMsg{})
+				_, cmd := model.CmdStop(tea.KeyPressMsg{})
 				return cmd
 			},
 		})
@@ -109,7 +109,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Restart the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				_, cmd := model.CmdRestart(tea.KeyMsg{})
+				_, cmd := model.CmdRestart(tea.KeyPressMsg{})
 				return cmd
 			},
 		})
@@ -120,7 +120,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Force kill the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				_, cmd := model.CmdKill(tea.KeyMsg{})
+				_, cmd := model.CmdKill(tea.KeyPressMsg{})
 				return cmd
 			},
 		})
@@ -131,7 +131,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Pause the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				_, cmd := model.CmdPause(tea.KeyMsg{})
+				_, cmd := model.CmdPause(tea.KeyPressMsg{})
 				return cmd
 			},
 		})
@@ -142,7 +142,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Resume the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				_, cmd := model.CmdPause(tea.KeyMsg{})
+				_, cmd := model.CmdPause(tea.KeyPressMsg{})
 				return cmd
 			},
 		})
@@ -153,7 +153,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Start the container",
 			Aggressive:  false,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				_, cmd := model.CmdStart(tea.KeyMsg{})
+				_, cmd := model.CmdStart(tea.KeyPressMsg{})
 				return cmd
 			},
 		})
@@ -164,7 +164,7 @@ func (m *CommandActionViewModel) Initialize(container *docker.Container) {
 			Description: "Remove the container",
 			Aggressive:  true,
 			Handler: func(model *Model, c *docker.Container) tea.Cmd {
-				_, cmd := model.CmdDelete(tea.KeyMsg{})
+				_, cmd := model.CmdDelete(tea.KeyPressMsg{})
 				return cmd
 			},
 		})

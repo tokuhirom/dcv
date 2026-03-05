@@ -3,12 +3,12 @@ package ui
 import (
 	"log/slog"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // Navigation commands (up, down, go to start/end, back)
 
-func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdUp(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case NetworkListView:
 		return m, m.networkListViewModel.HandleUp(m)
@@ -57,7 +57,7 @@ func (m *Model) CmdUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdDown(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	slog.Info("CmdDown called",
 		slog.String("view", m.currentView.String()),
 		slog.Int("cursor", m.composeProcessListViewModel.Cursor))
@@ -110,7 +110,7 @@ func (m *Model) CmdDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdGoToEnd(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandleGoToEnd(m)
@@ -129,7 +129,7 @@ func (m *Model) CmdGoToEnd(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdGoToBeginning(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdGoToBeginning(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandleGoToBeginning()
@@ -148,7 +148,7 @@ func (m *Model) CmdGoToBeginning(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdPageUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdPageUp(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandlePageUp(m)
@@ -163,7 +163,7 @@ func (m *Model) CmdPageUp(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdPageDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdPageDown(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandlePageDown(m)
@@ -178,7 +178,7 @@ func (m *Model) CmdPageDown(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdBack(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdBack(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:
 		return m, m.logViewModel.HandleBack(m)

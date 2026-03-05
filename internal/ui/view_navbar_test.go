@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -21,7 +21,7 @@ func TestNavbarToggle(t *testing.T) {
 		assert.False(t, model.navbarHidden)
 
 		// View should contain navigation items
-		view := model.View()
+		view := model.View().Content
 		assert.Contains(t, view, "[1] Containers")
 		assert.Contains(t, view, "[2] Projects")
 		assert.Contains(t, view, "[H]ide navbar")
@@ -35,12 +35,12 @@ func TestNavbarToggle(t *testing.T) {
 		assert.False(t, model.navbarHidden)
 
 		// Toggle to hide
-		updatedModel, _ := model.CmdToggleNavbar(tea.KeyMsg{})
+		updatedModel, _ := model.CmdToggleNavbar(tea.KeyPressMsg{})
 		m := updatedModel.(*Model)
 		assert.True(t, m.navbarHidden)
 
 		// Toggle to show again
-		updatedModel, _ = m.CmdToggleNavbar(tea.KeyMsg{})
+		updatedModel, _ = m.CmdToggleNavbar(tea.KeyPressMsg{})
 		m = updatedModel.(*Model)
 		assert.False(t, m.navbarHidden)
 	})
@@ -55,7 +55,7 @@ func TestNavbarToggle(t *testing.T) {
 		model.navbarHidden = true
 
 		// View should not contain navigation items
-		view := model.View()
+		view := model.View().Content
 		assert.NotContains(t, view, "[1] Containers")
 		assert.NotContains(t, view, "[2] Projects")
 		assert.NotContains(t, view, "[H]ide navbar")
@@ -93,12 +93,12 @@ func TestNavbarToggle(t *testing.T) {
 		model.Height = 30
 
 		// Get view with navbar
-		viewWithNavbar := model.View()
+		viewWithNavbar := model.View().Content
 		_ = strings.Count(viewWithNavbar, "\n")
 
 		// Hide navbar
 		model.navbarHidden = true
-		viewWithoutNavbar := model.View()
+		viewWithoutNavbar := model.View().Content
 		_ = strings.Count(viewWithoutNavbar, "\n")
 
 		// Without navbar should have more space for content
@@ -118,7 +118,7 @@ func TestNavbarToggle(t *testing.T) {
 		assert.NotNil(t, handler)
 
 		// Execute the handler
-		updatedModel, _ := handler(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}})
+		updatedModel, _ := handler(newKeyPress(string('H')))
 		m := updatedModel.(*Model)
 		assert.True(t, m.navbarHidden)
 	})

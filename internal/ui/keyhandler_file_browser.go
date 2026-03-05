@@ -1,7 +1,7 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
@@ -10,16 +10,16 @@ import (
 
 // CmdFileBrowse is triggered when the user wants to browse files in a container
 // It loads the file browser view model for the specified container.
-func (m *Model) CmdFileBrowse(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdFileBrowse(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		return m.fileBrowserViewModel.LoadContainer(m, container)
 	})
 }
 
-func (m *Model) CmdOpenFileOrDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdOpenFileOrDirectory(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.fileBrowserViewModel.HandleOpenFileOrDirectory(m)
 }
 
-func (m *Model) CmdGoToParentDirectory(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdGoToParentDirectory(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.fileBrowserViewModel.HandleGoToParentDirectory(m)
 }

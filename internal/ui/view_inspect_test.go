@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -319,9 +319,8 @@ func TestInspectViewModel_LineNumberRendering(t *testing.T) {
 
 		result := vm.render(15)
 
-		// Should not contain corrupted ANSI sequences like [38;5;241m
-		assert.NotContains(t, result, "[38;5;241m")
-		assert.NotContains(t, result, "[241m")
+		// ANSI sequences should be emitted as proper escape sequences.
+		assert.Contains(t, result, "\x1b[38;5;241m")
 
 		// Should contain the search marker
 		assert.Contains(t, result, "▶")

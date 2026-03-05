@@ -3,42 +3,42 @@ package ui
 import (
 	"log/slog"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
 // Docker container management commands
 
-func (m *Model) CmdKill(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdKill(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		args := container.OperationArgs("kill")
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // kill is aggressive
 	})
 }
 
-func (m *Model) CmdStop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdStop(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		args := container.OperationArgs("stop")
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // stop is aggressive
 	})
 }
 
-func (m *Model) CmdStart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdStart(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		args := container.OperationArgs("start")
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // start is aggressive
 	})
 }
 
-func (m *Model) CmdRestart(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdRestart(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		args := container.OperationArgs("restart")
 		return m.commandExecutionViewModel.ExecuteCommand(m, true, args...) // start is aggressive
 	})
 }
 
-func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdPause(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		cmd := func() string {
 			if container.GetState() == "paused" {
@@ -52,7 +52,7 @@ func (m *Model) CmdPause(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	})
 }
 
-func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdDelete(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.isContainerAware() {
 		return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 			args := container.OperationArgs("rm", "--force")
@@ -72,7 +72,7 @@ func (m *Model) CmdDelete(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdToggleAll(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case ComposeProcessListView:
 		return m, m.composeProcessListViewModel.HandleToggleAll(m)
@@ -87,7 +87,7 @@ func (m *Model) CmdToggleAll(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdInspect(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.isContainerAware() {
 		return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 			return m.inspectViewModel.Inspect(m,
@@ -115,7 +115,7 @@ func (m *Model) CmdInspect(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) CmdTop(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdTop(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		return m.topViewModel.Load(m, container)
 	})

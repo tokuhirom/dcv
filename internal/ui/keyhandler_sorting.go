@@ -1,12 +1,12 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // Sorting commands for Top and Stats views
 
-func (m *Model) CmdSortByCPU(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSortByCPU(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case TopView:
 		m.topViewModel.HandleSortByCPU()
@@ -19,7 +19,7 @@ func (m *Model) CmdSortByCPU(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdSortByMem(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSortByMem(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case TopView:
 		m.topViewModel.HandleSortByMem()
@@ -32,7 +32,7 @@ func (m *Model) CmdSortByMem(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdSortByPID(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSortByPID(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case TopView:
 		m.topViewModel.HandleSortByPID()
@@ -42,7 +42,7 @@ func (m *Model) CmdSortByPID(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdSortByTime(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSortByTime(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case TopView:
 		m.topViewModel.HandleSortByTime()
@@ -52,7 +52,7 @@ func (m *Model) CmdSortByTime(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdSortByCommand(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdSortByCommand(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case TopView:
 		m.topViewModel.HandleSortByCommand()
@@ -65,7 +65,7 @@ func (m *Model) CmdSortByCommand(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdReverseSort(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdReverseSort(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case TopView:
 		m.topViewModel.HandleReverseSort()
@@ -78,7 +78,7 @@ func (m *Model) CmdReverseSort(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) CmdToggleAutoRefresh(_ tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *Model) CmdToggleAutoRefresh(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case TopView:
 		m.topViewModel.HandleToggleAutoRefresh()

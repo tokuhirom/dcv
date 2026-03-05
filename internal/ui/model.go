@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os/exec"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/docker/docker/client"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -241,7 +241,7 @@ func (m *Model) Init() tea.Cmd {
 		func() tea.Msg {
 			return RefreshMsg{}
 		},
-		tea.WindowSize(),
+		tea.RequestWindowSize,
 	)
 }
 

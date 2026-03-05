@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type CommandViewModel struct {
@@ -22,8 +22,8 @@ func (m *CommandViewModel) Start() {
 	m.commandCursorPos = 1
 }
 
-func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
+func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEsc:
 		// Exit command mode
 		m.commandMode = false
@@ -35,26 +35,26 @@ func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, 
 		// Execute command
 		return m.executeCommand(model)
 
-	case tea.KeyBackspace, tea.KeyCtrlH:
+	case tea.KeyBackspace:
 		if len(m.commandBuffer) > 1 && m.commandCursorPos > 1 {
 			m.commandBuffer = m.commandBuffer[:m.commandCursorPos-1] + m.commandBuffer[m.commandCursorPos:]
 			m.commandCursorPos--
 		}
 		return model, nil
 
-	case tea.KeyLeft, tea.KeyCtrlB:
+	case tea.KeyLeft:
 		if m.commandCursorPos > 1 {
 			m.commandCursorPos--
 		}
 		return model, nil
 
-	case tea.KeyRight, tea.KeyCtrlF:
+	case tea.KeyRight:
 		if m.commandCursorPos < len(m.commandBuffer) {
 			m.commandCursorPos++
 		}
 		return model, nil
 
-	case tea.KeyUp, tea.KeyCtrlP:
+	case tea.KeyUp:
 		// Navigate command history
 		if m.commandHistoryIdx > 0 {
 			m.commandHistoryIdx--
@@ -65,7 +65,7 @@ func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, 
 		}
 		return model, nil
 
-	case tea.KeyDown, tea.KeyCtrlN:
+	case tea.KeyDown:
 		// Navigate command history
 		if m.commandHistoryIdx < len(m.commandHistory)-1 {
 			m.commandHistoryIdx++
@@ -79,13 +79,44 @@ func (m *CommandViewModel) HandleKeys(model *Model, msg tea.KeyMsg) (tea.Model, 
 		return model, nil
 
 	default:
-		switch msg.Type {
-		case tea.KeyRunes:
-			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + msg.String() + m.commandBuffer[m.commandCursorPos:]
-			m.commandCursorPos += len(msg.String())
-		case tea.KeySpace:
+		switch {
+		case isCtrlKey(msg, 'h'):
+			if len(m.commandBuffer) > 1 && m.commandCursorPos > 1 {
+				m.commandBuffer = m.commandBuffer[:m.commandCursorPos-1] + m.commandBuffer[m.commandCursorPos:]
+				m.commandCursorPos--
+			}
+		case isCtrlKey(msg, 'b'):
+			if m.commandCursorPos > 1 {
+				m.commandCursorPos--
+			}
+		case isCtrlKey(msg, 'f'):
+			if m.commandCursorPos < len(m.commandBuffer) {
+				m.commandCursorPos++
+			}
+		case isCtrlKey(msg, 'p'):
+			if m.commandHistoryIdx > 0 {
+				m.commandHistoryIdx--
+				if m.commandHistoryIdx < len(m.commandHistory) {
+					m.commandBuffer = ":" + m.commandHistory[m.commandHistoryIdx]
+					m.commandCursorPos = len(m.commandBuffer)
+				}
+			}
+		case isCtrlKey(msg, 'n'):
+			if m.commandHistoryIdx < len(m.commandHistory)-1 {
+				m.commandHistoryIdx++
+				m.commandBuffer = ":" + m.commandHistory[m.commandHistoryIdx]
+				m.commandCursorPos = len(m.commandBuffer)
+			} else if m.commandHistoryIdx == len(m.commandHistory)-1 {
+				m.commandHistoryIdx++
+				m.commandBuffer = ":"
+				m.commandCursorPos = 1
+			}
+		case msg.Code == tea.KeySpace:
 			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + " " + m.commandBuffer[m.commandCursorPos:]
 			m.commandCursorPos++
+		case len(msg.Text) > 0:
+			m.commandBuffer = m.commandBuffer[:m.commandCursorPos] + msg.Text + m.commandBuffer[m.commandCursorPos:]
+			m.commandCursorPos += len(msg.Text)
 		}
 		return model, nil
 	}
@@ -143,7 +174,7 @@ func (m *CommandViewModel) executeKeyHandlerCommand(model *Model, cmdName string
 	}
 
 	// Execute the command
-	return cmd.Handler(tea.KeyMsg{})
+	return cmd.Handler(tea.KeyPressMsg{})
 }
 
 func (m *CommandViewModel) RenderCmdLine() string {

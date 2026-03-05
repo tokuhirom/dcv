@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -169,7 +169,7 @@ func TestHelpViewModel_BuildRows(t *testing.T) {
 	})
 
 	t.Run("includes command names when available", func(t *testing.T) {
-		handler := func(msg tea.KeyMsg) (tea.Model, tea.Cmd) { return nil, nil }
+		handler := func(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) { return nil, nil }
 
 		model := &Model{
 			composeProcessListViewHandlers: []KeyConfig{

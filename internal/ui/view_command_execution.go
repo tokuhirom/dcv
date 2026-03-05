@@ -8,9 +8,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type CommandExecutionViewModel struct {
@@ -36,7 +36,7 @@ func (m *CommandExecutionViewModel) render(model *Model) string {
 	}
 
 	// Create viewport
-	vp := viewport.New(model.width, model.Height-4)
+	vp := viewport.New(viewport.WithWidth(model.width), viewport.WithHeight(model.Height-4))
 
 	// Build content
 	var content strings.Builder
@@ -67,7 +67,7 @@ func (m *CommandExecutionViewModel) render(model *Model) string {
 	}
 
 	vp.SetContent(content.String())
-	vp.YOffset = m.scrollY
+	vp.SetYOffset(m.scrollY)
 
 	// Header
 	header := lipgloss.NewStyle().
