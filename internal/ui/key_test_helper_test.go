@@ -17,4 +17,3 @@ func newKeyPress(text string) tea.KeyPressMsg {
 func newSpecialKey(code rune) tea.KeyPressMsg {
 	return tea.KeyPressMsg{Code: code}
 }
-

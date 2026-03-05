@@ -11,8 +11,6 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
-	"github.com/muesli/termenv"
 	ansitoimg "github.com/pavelpatrin/go-ansi-to-image"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -36,7 +34,6 @@ func main() {
 	// Force color output for lipgloss
 	os.Setenv("TERM", "xterm-256color")
 	os.Setenv("COLORTERM", "truecolor")
-	lipgloss.SetColorProfile(termenv.TrueColor)
 
 	// Create output directory
 	outputDir := "docs/screenshots"
@@ -145,10 +142,6 @@ func main() {
 }
 
 func generateScreenshot(ss screenshot, outputDir string) error {
-	// Ensure colors are enabled for this function too
-	lipgloss.SetHasDarkBackground(false)
-	lipgloss.SetColorProfile(termenv.TrueColor)
-
 	// Create model with the appropriate view
 	model := ui.NewModel(ss.viewType)
 
@@ -185,7 +178,7 @@ func generateScreenshot(ss screenshot, outputDir string) error {
 	}
 
 	// Parse ANSI text
-	if err := converter.Parse(view); err != nil {
+	if err := converter.Parse(view.Content); err != nil {
 		return fmt.Errorf("failed to parse ANSI text: %w", err)
 	}
 
