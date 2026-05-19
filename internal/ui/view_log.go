@@ -13,24 +13,71 @@ import (
 	"github.com/tokuhirom/dcv/internal/docker"
 )
 
-// visualLineCount calculates how many visual lines a string occupies
-// when displayed in a terminal of the given width.
-func visualLineCount(line string, width int) int {
-	if width <= 0 {
-		return 1
-	}
-	lineWidth := runewidth.StringWidth(line)
-	if lineWidth == 0 {
-		return 1
-	}
-	return (lineWidth + width - 1) / width
+// logSearchMatch identifies a single search hit within a log line.
+type logSearchMatch struct {
+	lineIndex int
+	start     int // byte offset in line
+	end       int // byte offset in line (exclusive)
+}
+
+// wrappedSegment is one display row of a log line.
+type wrappedSegment struct {
+	text      string
+	startByte int
+	endByte   int
 }
 
 func (m *LogViewModel) lineVisualCount(line string, effectiveWidth int) int {
 	if !m.WrapText() {
 		return 1
 	}
-	return visualLineCount(line, effectiveWidth)
+	return len(wrapLineSegments(line, effectiveWidth))
+}
+
+// wrapLineSegments splits line into display-width rows for wrapped rendering.
+func wrapLineSegments(line string, width int) []wrappedSegment {
+	if width <= 0 || line == "" {
+		if line == "" {
+			return []wrappedSegment{{text: "", startByte: 0, endByte: 0}}
+		}
+		return []wrappedSegment{{text: line, startByte: 0, endByte: len(line)}}
+	}
+
+	var segments []wrappedSegment
+	startByte := 0
+	col := 0
+	var b strings.Builder
+
+	flush := func(endByte int) {
+		if endByte <= startByte && len(segments) > 0 {
+			return
+		}
+		segments = append(segments, wrappedSegment{
+			text:      b.String(),
+			startByte: startByte,
+			endByte:   endByte,
+		})
+		b.Reset()
+		startByte = endByte
+		col = 0
+	}
+
+	for i := 0; i < len(line); {
+		r, size := utf8.DecodeRuneInString(line[i:])
+		rw := runewidth.RuneWidth(r)
+		if col > 0 && col+rw > width {
+			flush(i)
+		}
+		b.WriteRune(r)
+		col += rw
+		i += size
+	}
+
+	flush(len(line))
+	if len(segments) == 0 {
+		return []wrappedSegment{{text: "", startByte: 0, endByte: 0}}
+	}
+	return segments
 }
 
 // sliceByDisplayWidth returns the portion of s starting at display column start,
@@ -66,11 +113,70 @@ func sliceByDisplayWidth(s string, start, maxWidth int) string {
 	return b.String()
 }
 
+// displayWidthToByteIndex returns the byte index at the given display column.
+func displayWidthToByteIndex(s string, targetCol int) int {
+	if targetCol <= 0 {
+		return 0
+	}
+	col := 0
+	for i := 0; i < len(s); {
+		r, size := utf8.DecodeRuneInString(s[i:])
+		rw := runewidth.RuneWidth(r)
+		if col >= targetCol {
+			return i
+		}
+		col += rw
+		i += size
+	}
+	return len(s)
+}
+
 func (m *LogViewModel) formatLogLine(line string, effectiveWidth int) string {
 	if m.WrapText() {
 		return lipgloss.NewStyle().Width(effectiveWidth).Render(line)
 	}
 	return sliceByDisplayWidth(line, m.logScrollX, effectiveWidth)
+}
+
+func (m *LogViewModel) logLineSegments(line string, effectiveWidth int) []wrappedSegment {
+	if m.WrapText() {
+		return wrapLineSegments(line, effectiveWidth)
+	}
+
+	startByte := displayWidthToByteIndex(line, m.logScrollX)
+	endByte := startByte
+	col := 0
+	for i := startByte; i < len(line) && col < effectiveWidth; {
+		r, size := utf8.DecodeRuneInString(line[i:])
+		rw := runewidth.RuneWidth(r)
+		if col+rw > effectiveWidth {
+			break
+		}
+		col += rw
+		endByte = i + size
+		i += size
+	}
+
+	return []wrappedSegment{{
+		text:      line[startByte:endByte],
+		startByte: startByte,
+		endByte:   endByte,
+	}}
+}
+
+func (m *LogViewModel) currentSearchMatch() (logSearchMatch, bool) {
+	if len(m.logSearchMatches) == 0 || m.currentSearchIdx >= len(m.logSearchMatches) {
+		return logSearchMatch{}, false
+	}
+	return m.logSearchMatches[m.currentSearchIdx], true
+}
+
+func (m *LogViewModel) isCurrentMatchOnSegment(lineIndex int, seg wrappedSegment) bool {
+	current, ok := m.currentSearchMatch()
+	if !ok || current.lineIndex != lineIndex {
+		return false
+	}
+	return current.start >= seg.startByte && current.start < seg.endByte
 }
 
 func (m *LogViewModel) calculateMaxScrollX(model *Model, logsToDisplay []string) int {
@@ -104,6 +210,10 @@ type LogViewModel struct {
 	logs       []string
 	logScrollY int
 	logScrollX int
+	// logScrollVisual is the number of wrapped display rows skipped from the top.
+	logScrollVisual int
+
+	logSearchMatches []logSearchMatch
 
 	container *docker.Container
 
@@ -117,6 +227,7 @@ func (m *LogViewModel) SwitchToLogView(model *Model, container *docker.Container
 	m.logs = []string{}
 	m.logScrollY = 0
 	m.logScrollX = 0
+	m.logScrollVisual = 0
 }
 
 func (m *LogViewModel) StreamContainerLogs(model *Model, container *docker.Container) tea.Cmd {
@@ -132,6 +243,119 @@ func (m *LogViewModel) HandleBack(model *Model) tea.Cmd {
 	return nil
 }
 
+func (m *LogViewModel) displayLogs() []string {
+	if m.filterMode && m.filterText != "" {
+		return m.filteredLogs
+	}
+	return m.logs
+}
+
+func (m *LogViewModel) totalVisualLines(logs []string, effectiveWidth int) int {
+	if !m.WrapText() {
+		return len(logs)
+	}
+	total := 0
+	for _, line := range logs {
+		total += len(wrapLineSegments(line, effectiveWidth))
+	}
+	return total
+}
+
+func (m *LogViewModel) visualLineOffsetForMatch(logs []string, match logSearchMatch, effectiveWidth int) int {
+	offset := 0
+	for i := 0; i < match.lineIndex && i < len(logs); i++ {
+		offset += len(wrapLineSegments(logs[i], effectiveWidth))
+	}
+	if match.lineIndex >= len(logs) {
+		return offset
+	}
+	for _, seg := range wrapLineSegments(logs[match.lineIndex], effectiveWidth) {
+		if match.start >= seg.startByte && match.start < seg.endByte {
+			break
+		}
+		offset++
+	}
+	return offset
+}
+
+func (m *LogViewModel) calculateMaxVisualScroll(model *Model) int {
+	logs := m.displayLogs()
+	if len(logs) == 0 {
+		return 0
+	}
+
+	effectiveWidth := model.width - 2
+	if effectiveWidth <= 0 {
+		effectiveWidth = 1
+	}
+
+	visibleHeight := model.PageSize() - 2
+	if visibleHeight < 1 {
+		visibleHeight = 1
+	}
+
+	total := m.totalVisualLines(logs, effectiveWidth)
+	maxScroll := total - visibleHeight
+	if maxScroll < 0 {
+		return 0
+	}
+	return maxScroll
+}
+
+func (m *LogViewModel) clampVisualScroll(model *Model) {
+	maxScroll := m.calculateMaxVisualScroll(model)
+	if m.logScrollVisual > maxScroll {
+		m.logScrollVisual = maxScroll
+	}
+	if m.logScrollVisual < 0 {
+		m.logScrollVisual = 0
+	}
+}
+
+func (m *LogViewModel) scrollToTop() {
+	m.logScrollY = 0
+	m.logScrollVisual = 0
+}
+
+func (m *LogViewModel) scrollToBottom(model *Model) {
+	if m.WrapText() {
+		m.logScrollVisual = m.calculateMaxVisualScroll(model)
+		return
+	}
+	maxScroll := m.calculateMaxScroll(model)
+	if maxScroll > 0 {
+		m.logScrollY = maxScroll
+	} else {
+		m.logScrollY = 0
+	}
+}
+
+func (m *LogViewModel) scrollBy(model *Model, delta int) {
+	if m.WrapText() {
+		m.logScrollVisual += delta
+		if model != nil {
+			m.clampVisualScroll(model)
+		} else if m.logScrollVisual < 0 {
+			m.logScrollVisual = 0
+		}
+		return
+	}
+
+	m.logScrollY += delta
+	if m.logScrollY < 0 {
+		m.logScrollY = 0
+	}
+	if model == nil {
+		return
+	}
+	maxScroll := m.calculateMaxScroll(model)
+	if m.logScrollY > maxScroll && maxScroll > 0 {
+		m.logScrollY = maxScroll
+	} else if maxScroll <= 0 {
+		m.logScrollY = 0
+	}
+}
+
 func (m *LogViewModel) render(model *Model, availableHeight int) string {
 	var s strings.Builder
 
@@ -140,156 +364,307 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 		return s.String()
 	}
 
-	// Determine which logs to display
-	logsToDisplay := m.logs
-	if m.filterMode && m.filterText != "" {
-		logsToDisplay = m.filteredLogs
-	}
-
-	// Calculate visible logs based on scroll position
+	logsToDisplay := m.displayLogs()
 	visibleHeight := availableHeight - 2
-
-	// Calculate which logs to display accounting for wrapped lines
-	startIdx := m.logScrollY
-
-	// Calculate how many visual lines we've used
-	visualLinesUsed := 0
-	endIdx := startIdx
-
-	// Each log line is prefixed with "  " or "> " (2 chars), reducing effective width
 	effectiveWidth := model.width - 2
-	for i := startIdx; i < len(logsToDisplay) && visualLinesUsed < visibleHeight; i++ {
-		// Calculate how many visual lines this log line will take using display width
-		visualLines := m.lineVisualCount(logsToDisplay[i], effectiveWidth)
-
-		// Always include at least the first line at the current scroll position,
-		// even if it exceeds the visible height (terminal will clip it).
-		// For subsequent lines, only include if they fit.
-		if i == startIdx || visualLinesUsed+visualLines <= visibleHeight {
-			endIdx = i + 1
-			visualLinesUsed += visualLines
-		} else {
-			break
-		}
+	if effectiveWidth <= 0 {
+		effectiveWidth = 1
 	}
 
-	// Define highlight style
-	highlightStyle := lipgloss.NewStyle().
-		Background(lipgloss.Color("226")).
-		Foreground(lipgloss.Color("235"))
-
-	// Display logs
 	if len(logsToDisplay) == 0 {
 		if m.filterMode && m.filterText != "" {
 			s.WriteString("No logs match the filter.\n")
 		} else {
 			s.WriteString("No logs available.\n")
 		}
-	} else {
-		for i := startIdx; i < endIdx; i++ {
-			if i < len(logsToDisplay) {
-				line := logsToDisplay[i]
-
-				// Highlight search matches if we have results and search text
-				if m.searchText != "" && !m.searchMode && !m.filterMode {
-					line = m.highlightLine(line, highlightStyle)
-				}
-
-				// Highlight filter matches in filter mode
-				if m.filterMode && m.filterText != "" {
-					line = m.highlightFilterMatch(line, highlightStyle)
-				}
-
-				// Mark current search result line (only in search mode)
-				if !m.filterMode && len(m.searchResults) > 0 && m.currentSearchIdx < len(m.searchResults) &&
-					i == m.searchResults[m.currentSearchIdx] {
-					// Add a marker in the margin
-					s.WriteString("> ")
-				} else {
-					s.WriteString("  ")
-				}
-
-				s.WriteString(m.formatLogLine(line, effectiveWidth) + ResetAll + "\n")
-			}
-		}
+		return s.String()
 	}
 
-	// Scroll indicator
-	if len(logsToDisplay) > visibleHeight || (!m.WrapText() && m.calculateMaxScrollX(model, logsToDisplay) > 0) {
-		scrollInfo := fmt.Sprintf(" [%d-%d/%d] ", startIdx+1, endIdx, len(logsToDisplay))
+	if m.WrapText() {
+		return m.renderWrapped(model, logsToDisplay, visibleHeight, effectiveWidth)
+	}
+
+	return m.renderNoWrap(model, logsToDisplay, visibleHeight, effectiveWidth)
+}
+
+func (m *LogViewModel) renderWrapped(model *Model, logsToDisplay []string, visibleHeight, effectiveWidth int) string {
+	var s strings.Builder
+
+	m.clampVisualScroll(model)
+	skip := m.logScrollVisual
+	rendered := 0
+	startIdx := -1
+	endIdx := 0
+
+	for i, line := range logsToDisplay {
 		if m.filterMode && m.filterText != "" {
-			scrollInfo += fmt.Sprintf(" (filtered from %d)", len(m.logs))
+			line = m.highlightFilterMatch(line, searchMatchStyle)
 		}
-		if !m.WrapText() {
-			maxScrollX := m.calculateMaxScrollX(model, logsToDisplay)
-			if maxScrollX > 0 {
-				scrollInfo += fmt.Sprintf(" col %d-%d/%d", m.logScrollX+1, m.logScrollX+effectiveWidth, maxScrollX+effectiveWidth)
+
+		for _, seg := range wrapLineSegments(line, effectiveWidth) {
+			if skip > 0 {
+				skip--
+				continue
 			}
+			if rendered >= visibleHeight {
+				goto done
+			}
+
+			if startIdx < 0 {
+				startIdx = i
+			}
+			endIdx = i + 1
+
+			displayLine := line[seg.startByte:seg.endByte]
+			if m.searchText != "" && !m.searchMode {
+				displayLine = m.highlightSegment(line, i, seg)
+			}
+
+			if m.isCurrentMatchOnSegment(i, seg) {
+				s.WriteString("> ")
+			} else {
+				s.WriteString("  ")
+			}
+			s.WriteString(displayLine + ResetAll + "\n")
+			rendered++
 		}
-		s.WriteString("\n" + helpStyle.Render(scrollInfo))
 	}
 
+done:
+	if startIdx < 0 {
+		startIdx = 0
+	}
+
+	m.appendScrollIndicator(&s, model, logsToDisplay, startIdx, endIdx, visibleHeight, effectiveWidth)
 	return s.String()
 }
 
-func (m *LogViewModel) highlightLine(line string, style lipgloss.Style) string {
-	if m.searchText == "" {
-		return line
+func (m *LogViewModel) renderNoWrap(model *Model, logsToDisplay []string, visibleHeight, effectiveWidth int) string {
+	var s strings.Builder
+
+	startIdx := m.logScrollY
+	visualLinesUsed := 0
+	endIdx := startIdx
+
+	for i := startIdx; i < len(logsToDisplay) && visualLinesUsed < visibleHeight; i++ {
+		if i == startIdx || visualLinesUsed+1 <= visibleHeight {
+			endIdx = i + 1
+			visualLinesUsed++
+		} else {
+			break
+		}
 	}
+
+	for i := startIdx; i < endIdx; i++ {
+		line := logsToDisplay[i]
+
+		if m.filterMode && m.filterText != "" {
+			line = m.highlightFilterMatch(line, searchMatchStyle)
+			s.WriteString("  ")
+			s.WriteString(m.formatLogLine(line, effectiveWidth) + ResetAll + "\n")
+			continue
+		}
+
+		for _, seg := range m.logLineSegments(line, effectiveWidth) {
+			displayLine := line[seg.startByte:seg.endByte]
+			if m.searchText != "" && !m.searchMode {
+				displayLine = m.highlightSegment(line, i, seg)
+			}
+
+			if m.isCurrentMatchOnSegment(i, seg) {
+				s.WriteString("> ")
+			} else {
+				s.WriteString("  ")
+			}
+			s.WriteString(displayLine + ResetAll + "\n")
+		}
+	}
+
+	m.appendScrollIndicator(&s, model, logsToDisplay, startIdx, endIdx, visibleHeight, effectiveWidth)
+	return s.String()
+}
+
+func (m *LogViewModel) appendScrollIndicator(
+	s *strings.Builder,
+	model *Model,
+	logsToDisplay []string,
+	startIdx, endIdx, visibleHeight, effectiveWidth int,
+) {
+	totalVisual := m.totalVisualLines(logsToDisplay, effectiveWidth)
+	needsIndicator := totalVisual > visibleHeight
+	if !m.WrapText() {
+		needsIndicator = needsIndicator || m.calculateMaxScrollX(model, logsToDisplay) > 0
+	}
+	if !needsIndicator {
+		return
+	}
+
+	scrollInfo := fmt.Sprintf(" [%d-%d/%d] ", startIdx+1, endIdx, len(logsToDisplay))
+	if m.filterMode && m.filterText != "" {
+		scrollInfo += fmt.Sprintf(" (filtered from %d)", len(m.logs))
+	}
+	if !m.WrapText() {
+		maxScrollX := m.calculateMaxScrollX(model, logsToDisplay)
+		if maxScrollX > 0 {
+			scrollInfo += fmt.Sprintf(" col %d-%d/%d", m.logScrollX+1, m.logScrollX+effectiveWidth, maxScrollX+effectiveWidth)
+		}
+	}
+	s.WriteString("\n" + helpStyle.Render(scrollInfo))
+}
+
+func (m *LogViewModel) findLogSearchMatches(logs []string) []logSearchMatch {
+	if m.searchText == "" {
+		return nil
+	}
+
+	var matches []logSearchMatch
 
 	if m.searchRegex {
 		pattern := m.searchText
 		if m.searchIgnoreCase {
 			pattern = "(?i)" + pattern
 		}
-		if re, err := regexp.Compile(pattern); err == nil {
-			// Find all matches
-			matches := re.FindAllStringIndex(line, -1)
-			if len(matches) == 0 {
-				return line
-			}
-
-			// Build the line with highlights
-			var result strings.Builder
-			lastEnd := 0
-			for _, match := range matches {
-				start, end := match[0], match[1]
-				result.WriteString(line[lastEnd:start])
-				result.WriteString(style.Render(line[start:end]))
-				lastEnd = end
-			}
-			result.WriteString(line[lastEnd:])
-			return result.String()
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil
 		}
-	} else {
-		// Simple string search
-		searchStr := m.searchText
-		lineToSearch := line
+		for lineIndex, line := range logs {
+			for _, match := range re.FindAllStringIndex(line, -1) {
+				matches = append(matches, logSearchMatch{
+					lineIndex: lineIndex,
+					start:     match[0],
+					end:       match[1],
+				})
+			}
+		}
+		return matches
+	}
 
+	searchStr := m.searchText
+	if m.searchIgnoreCase {
+		searchStr = strings.ToLower(searchStr)
+	}
+	searchLen := len(m.searchText)
+
+	for lineIndex, line := range logs {
+		lineToSearch := line
 		if m.searchIgnoreCase {
-			searchStr = strings.ToLower(searchStr)
 			lineToSearch = strings.ToLower(line)
 		}
 
-		// Find all occurrences
-		var result strings.Builder
-		lastEnd := 0
+		start := 0
 		for {
-			idx := strings.Index(lineToSearch[lastEnd:], searchStr)
+			idx := strings.Index(lineToSearch[start:], searchStr)
 			if idx == -1 {
 				break
 			}
-
-			realIdx := lastEnd + idx
-			result.WriteString(line[lastEnd:realIdx])
-			result.WriteString(style.Render(line[realIdx : realIdx+len(m.searchText)]))
-			lastEnd = realIdx + len(m.searchText)
+			matchStart := start + idx
+			matches = append(matches, logSearchMatch{
+				lineIndex: lineIndex,
+				start:     matchStart,
+				end:       matchStart + searchLen,
+			})
+			start = matchStart + searchLen
 		}
-		result.WriteString(line[lastEnd:])
-		return result.String()
 	}
 
-	return line
+	return matches
+}
+
+// PerformLogSearch finds every search occurrence and scrolls to the first hit.
+func (m *LogViewModel) PerformLogSearch(model *Model) {
+	logs := m.logs
+	if m.filterMode && m.filterText != "" {
+		logs = m.filteredLogs
+	}
+
+	m.logSearchMatches = m.findLogSearchMatches(logs)
+	m.searchResults = nil
+	m.currentSearchIdx = 0
+
+	if len(m.logSearchMatches) > 0 {
+		m.scrollToSearchMatch(model, m.logSearchMatches[0])
+	}
+}
+
+func (m *LogViewModel) scrollToSearchMatch(model *Model, match logSearchMatch) {
+	logs := m.displayLogs()
+	effectiveWidth := model.width - 2
+	if effectiveWidth <= 0 {
+		effectiveWidth = 1
+	}
+
+	if m.WrapText() {
+		offset := m.visualLineOffsetForMatch(logs, match, effectiveWidth)
+		visibleHeight := model.PageSize() - 2
+		if visibleHeight < 1 {
+			visibleHeight = 1
+		}
+		centered := offset - visibleHeight/2
+		if centered < 0 {
+			centered = 0
+		}
+		m.logScrollVisual = centered
+		m.clampVisualScroll(model)
+		return
+	}
+
+	m.logScrollY = match.lineIndex - model.Height/2 + 3
+	if m.logScrollY < 0 {
+		m.logScrollY = 0
+	}
+	maxScroll := m.calculateMaxScroll(model)
+	if m.logScrollY > maxScroll {
+		m.logScrollY = maxScroll
+	}
+}
+
+func (m *LogViewModel) highlightSegment(fullLine string, lineIndex int, seg wrappedSegment) string {
+	text := fullLine[seg.startByte:seg.endByte]
+	if m.searchText == "" {
+		return text
+	}
+
+	current, hasCurrent := m.currentSearchMatch()
+	matchRanges := m.matchRangesOnLine(fullLine, lineIndex)
+	if len(matchRanges) == 0 {
+		return text
+	}
+
+	var result strings.Builder
+	lastEnd := 0
+	for _, match := range matchRanges {
+		if match.end <= seg.startByte || match.start >= seg.endByte {
+			continue
+		}
+
+		relStart := max(match.start-seg.startByte, 0)
+		relEnd := min(match.end-seg.startByte, len(text))
+		if relStart > lastEnd {
+			result.WriteString(text[lastEnd:relStart])
+		}
+
+		style := searchMatchStyle
+		if hasCurrent && current.lineIndex == lineIndex && current.start == match.start {
+			style = searchCurrentMatchStyle
+		}
+		result.WriteString(style.Render(text[relStart:relEnd]))
+		lastEnd = relEnd
+	}
+	if lastEnd < len(text) {
+		result.WriteString(text[lastEnd:])
+	}
+	return result.String()
+}
+
+func (m *LogViewModel) matchRangesOnLine(line string, lineIndex int) []logSearchMatch {
+	var ranges []logSearchMatch
+	for _, match := range m.logSearchMatches {
+		if match.lineIndex == lineIndex {
+			ranges = append(ranges, match)
+		}
+	}
+	return ranges
 }
 
 func (m *LogViewModel) highlightFilterMatch(line string, style lipgloss.Style) string {
@@ -392,33 +767,26 @@ func (m *LogViewModel) calculateMaxScroll(model *Model) int {
 }
 
 func (m *LogViewModel) HandleUp() tea.Cmd {
-	if m.logScrollY > 0 {
+	if m.WrapText() {
+		m.scrollBy(nil, -1)
+	} else if m.logScrollY > 0 {
 		m.logScrollY--
 	}
 	return nil
 }
 
 func (m *LogViewModel) HandleDown(model *Model) tea.Cmd {
-	// Calculate max scroll accounting for wrapped lines
-	maxScroll := m.calculateMaxScroll(model)
-	if m.logScrollY < maxScroll && maxScroll > 0 {
-		m.logScrollY++
-	}
+	m.scrollBy(model, 1)
 	return nil
 }
 
 func (m *LogViewModel) HandleGoToEnd(model *Model) tea.Cmd {
-	maxScroll := m.calculateMaxScroll(model)
-	if maxScroll > 0 {
-		m.logScrollY = maxScroll
-	} else {
-		m.logScrollY = 0
-	}
+	m.scrollToBottom(model)
 	return nil
 }
 
 func (m *LogViewModel) HandleGoToBeginning() tea.Cmd {
-	m.logScrollY = 0
+	m.scrollToTop()
 	return nil
 }
 
@@ -427,6 +795,7 @@ func (m *LogViewModel) HandleSearch() tea.Cmd {
 	m.searchText = ""
 	m.searchCursorPos = 0
 	m.searchResults = nil
+	m.logSearchMatches = nil
 	m.currentSearchIdx = 0
 	return nil
 }
@@ -440,35 +809,23 @@ func (m *LogViewModel) HandleFilter() tea.Cmd {
 }
 
 func (m *LogViewModel) HandleNextSearchResult(model *Model) tea.Cmd {
-	if len(m.searchResults) > 0 {
-		m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.searchResults)
-		// Jump to the line
-		if m.currentSearchIdx < len(m.searchResults) {
-			targetLine := m.searchResults[m.currentSearchIdx]
-			m.logScrollY = targetLine - model.Height/2 + 3 // Center the result
-			if m.logScrollY < 0 {
-				m.logScrollY = 0
-			}
-		}
+	if len(m.logSearchMatches) == 0 {
+		return nil
 	}
+	m.currentSearchIdx = (m.currentSearchIdx + 1) % len(m.logSearchMatches)
+	m.scrollToSearchMatch(model, m.logSearchMatches[m.currentSearchIdx])
 	return nil
 }
 
 func (m *LogViewModel) HandlePrevSearchResult(model *Model) tea.Cmd {
-	if len(m.searchResults) > 0 {
-		m.currentSearchIdx--
-		if m.currentSearchIdx < 0 {
-			m.currentSearchIdx = len(m.searchResults) - 1
-		}
-		// Jump to the line
-		if m.currentSearchIdx < len(m.searchResults) {
-			targetLine := m.searchResults[m.currentSearchIdx]
-			m.logScrollY = targetLine - model.Height/2 + 3 // Center the result
-			if m.logScrollY < 0 {
-				m.logScrollY = 0
-			}
-		}
+	if len(m.logSearchMatches) == 0 {
+		return nil
 	}
+	m.currentSearchIdx--
+	if m.currentSearchIdx < 0 {
+		m.currentSearchIdx = len(m.logSearchMatches) - 1
+	}
+	m.scrollToSearchMatch(model, m.logSearchMatches[m.currentSearchIdx])
 	return nil
 }
 
@@ -488,7 +845,7 @@ func (m *LogViewModel) performFilter() {
 	}
 
 	// Reset scroll position when filter changes
-	m.logScrollY = 0
+	m.scrollToTop()
 }
 
 func (m *LogViewModel) LogLines(model *Model, lines []string) {
@@ -503,10 +860,7 @@ func (m *LogViewModel) LogLines(model *Model, lines []string) {
 		m.performFilter()
 	} else {
 		// Auto-scroll to bottom only when not filtering
-		maxScroll := m.calculateMaxScroll(model)
-		if maxScroll > 0 {
-			m.logScrollY = maxScroll
-		}
+		m.scrollToBottom(model)
 	}
 }
 
@@ -530,7 +884,7 @@ func (m *LogViewModel) Title() string {
 	if m.filterMode && m.filterText != "" {
 		filterCount := len(m.filteredLogs)
 		title += fmt.Sprintf(" - Filter: '%s' (%d/%d lines)", m.filterText, filterCount, len(m.logs))
-	} else if len(m.searchResults) > 0 {
+	} else if len(m.logSearchMatches) > 0 {
 		var statusParts []string
 		if m.searchIgnoreCase {
 			statusParts = append(statusParts, "i")
@@ -544,7 +898,7 @@ func (m *LogViewModel) Title() string {
 			statusStr = fmt.Sprintf(" [%s]", strings.Join(statusParts, ""))
 		}
 
-		title += fmt.Sprintf(" - Search: %d/%d%s", m.currentSearchIdx+1, len(m.searchResults), statusStr)
+		title += fmt.Sprintf(" - Search: %d/%d%s", m.currentSearchIdx+1, len(m.logSearchMatches), statusStr)
 	} else if m.searchText != "" && !m.searchMode {
 		title += " - No matches found"
 	}
@@ -558,21 +912,18 @@ func (m *LogViewModel) HandleCancel() tea.Cmd {
 }
 
 func (m *LogViewModel) HandlePageUp(model *Model) tea.Cmd {
-	// Use the actual visible line count (matching render's visibleHeight)
 	pageSize := model.PageSize() - 2
 	if pageSize < 1 {
 		pageSize = 1
 	}
-	m.logScrollY -= pageSize
-	if m.logScrollY < 0 {
-		m.logScrollY = 0
-	}
+	m.scrollBy(model, -pageSize)
 	return nil
 }
 
 func (m *LogViewModel) HandleToggleWrap() tea.Cmd {
 	m.ToggleWrapText()
 	m.logScrollX = 0
+	m.logScrollVisual = 0
 	return nil
 }
 
@@ -602,17 +953,10 @@ func (m *LogViewModel) HandleScrollRight(model *Model) tea.Cmd {
 }
 
 func (m *LogViewModel) HandlePageDown(model *Model) tea.Cmd {
-	// Use the actual visible line count (matching render's visibleHeight)
 	pageSize := model.PageSize() - 2
 	if pageSize < 1 {
 		pageSize = 1
 	}
-	maxScroll := m.calculateMaxScroll(model)
-	m.logScrollY += pageSize
-	if m.logScrollY > maxScroll && maxScroll > 0 {
-		m.logScrollY = maxScroll
-	} else if maxScroll <= 0 {
-		m.logScrollY = 0
-	}
+	m.scrollBy(model, pageSize)
 	return nil
 }

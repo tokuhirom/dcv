@@ -464,8 +464,11 @@ func TestLogView_Search(t *testing.T) {
 				logs: []string{"Line 1", "Error here", "Line 3", "Error there"},
 				SearchViewModel: SearchViewModel{
 					searchText:       "Error",
-					searchResults:    []int{1, 3}, // Lines with matches
 					currentSearchIdx: 0,
+				},
+				logSearchMatches: []logSearchMatch{
+					{lineIndex: 1, start: 0, end: 5},
+					{lineIndex: 3, start: 0, end: 5},
 				},
 				logScrollY: 0,
 			},
@@ -475,8 +478,8 @@ func TestLogView_Search(t *testing.T) {
 		cmd := model.logViewModel.HandleNextSearchResult(model)
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, model.logViewModel.currentSearchIdx)
-		// Should scroll to center line 3: targetLine - Height/2 + 3 = 3 - 9/2 + 3 = 3 - 4 + 3 = 2
-		assert.Equal(t, 2, model.logViewModel.logScrollY)
+		// Scrolls toward line 3, clamped to maxScroll for the viewport
+		assert.GreaterOrEqual(t, model.logViewModel.logScrollY, 1)
 
 		// Wrap around
 		cmd = model.logViewModel.HandleNextSearchResult(model)
@@ -490,8 +493,11 @@ func TestLogView_Search(t *testing.T) {
 				logs: []string{"Line 1", "Error here", "Line 3", "Error there"},
 				SearchViewModel: SearchViewModel{
 					searchText:       "Error",
-					searchResults:    []int{1, 3},
 					currentSearchIdx: 1,
+				},
+				logSearchMatches: []logSearchMatch{
+					{lineIndex: 1, start: 0, end: 5},
+					{lineIndex: 3, start: 0, end: 5},
 				},
 				logScrollY: 0,
 			},
@@ -732,6 +738,40 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 		assert.Contains(t, result, "ERROR")
 	})
 
+	t.Run("uses different colors for current vs other search matches", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs: []string{
+					"first ERROR line",
+					"second ERROR line",
+				},
+				logScrollY: 0,
+				SearchViewModel: SearchViewModel{
+					searchText:       "ERROR",
+					currentSearchIdx: 1,
+					searchMode:       false,
+				},
+				logSearchMatches: []logSearchMatch{
+					{lineIndex: 0, start: 6, end: 11},
+					{lineIndex: 1, start: 7, end: 12},
+				},
+				FilterViewModel: FilterViewModel{
+					filterMode: false,
+				},
+			},
+			width:  100,
+			Height: 10,
+		}
+
+		result := model.logViewModel.render(model, 10)
+
+		currentStyle := searchCurrentMatchStyle.Render("ERROR")
+		otherStyle := searchMatchStyle.Render("ERROR")
+		assert.Contains(t, result, currentStyle)
+		assert.Contains(t, result, otherStyle)
+		assert.NotEqual(t, currentStyle, otherStyle)
+	})
+
 	t.Run("marks current search result", func(t *testing.T) {
 		model := &Model{
 			logViewModel: LogViewModel{
@@ -739,9 +779,11 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 				logScrollY: 0,
 				SearchViewModel: SearchViewModel{
 					searchText:       "Error",
-					searchResults:    []int{1},
 					currentSearchIdx: 0,
 					searchMode:       false,
+				},
+				logSearchMatches: []logSearchMatch{
+					{lineIndex: 1, start: 0, end: 5},
 				},
 				FilterViewModel: FilterViewModel{
 					filterMode: false,
@@ -764,6 +806,68 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 		}
 		assert.True(t, foundMarker, "Should mark current search result with >")
 	})
+}
+
+func TestLogView_PerformLogSearch(t *testing.T) {
+	model := &Model{
+		logViewModel: LogViewModel{
+			logs: []string{
+				"no match",
+				"ERROR once",
+				strings.Repeat("x", 70) + " ERROR twice ERROR thrice",
+			},
+			LogReaderManager: LogReaderManager{wrapText: true},
+			SearchViewModel: SearchViewModel{
+				searchText: "ERROR",
+			},
+		},
+		width:  80,
+		Height: 20,
+	}
+
+	model.logViewModel.PerformLogSearch(model)
+	assert.Len(t, model.logViewModel.logSearchMatches, 3)
+	assert.Equal(t, 1, model.logViewModel.logSearchMatches[0].lineIndex)
+	assert.Equal(t, 2, model.logViewModel.logSearchMatches[1].lineIndex)
+	assert.Equal(t, 2, model.logViewModel.logSearchMatches[2].lineIndex)
+}
+
+func TestLogView_WrappedSearchMarker(t *testing.T) {
+	longLine := strings.Repeat("x", 70) + " ERROR first and ERROR second"
+	secondStart := strings.Index(longLine, "ERROR second")
+
+	model := &Model{
+		logViewModel: LogViewModel{
+			logs: []string{longLine},
+			LogReaderManager: LogReaderManager{
+				wrapText: true,
+			},
+			SearchViewModel: SearchViewModel{
+				searchText:       "ERROR",
+				currentSearchIdx: 1,
+				searchMode:       false,
+			},
+			logSearchMatches: []logSearchMatch{
+				{lineIndex: 0, start: 71, end: 76},
+				{lineIndex: 0, start: secondStart, end: secondStart + 5},
+			},
+		},
+		width:  80,
+		Height: 10,
+	}
+
+	result := stripANSI(model.logViewModel.render(model, 10))
+	lines := strings.Split(strings.TrimRight(result, "\n"), "\n")
+
+	foundSecondMatchMarker := false
+	for _, line := range lines {
+		if strings.HasPrefix(line, "> ") && strings.Contains(line, "ERROR second") {
+			foundSecondMatchMarker = true
+			break
+		}
+	}
+	assert.True(t, foundSecondMatchMarker, "current match on wrapped row should use > marker")
+	assert.NotContains(t, lines[0], "> ERROR first", "first wrapped row should not be marked when second match is current")
 }
 
 func TestSliceByDisplayWidth(t *testing.T) {

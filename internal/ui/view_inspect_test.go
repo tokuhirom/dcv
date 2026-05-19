@@ -268,10 +268,8 @@ func TestInspectViewModel_SearchHighlighting_YAMLFormat(t *testing.T) {
 
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
 		valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
-		highlightStyle := lipgloss.NewStyle().Background(lipgloss.Color("226"))
-
 		line := "name: container-name"
-		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, highlightStyle)
+		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, false)
 
 		// Should just apply YAML highlighting without search highlighting
 		assert.Contains(t, result, "name")
@@ -283,10 +281,8 @@ func TestInspectViewModel_SearchHighlighting_YAMLFormat(t *testing.T) {
 
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
 		valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
-		highlightStyle := lipgloss.NewStyle().Background(lipgloss.Color("226"))
-
 		line := "- my-list-item"
-		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, highlightStyle)
+		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, false)
 
 		assert.Contains(t, result, "my-list-item")
 		assert.Contains(t, result, "-") // List marker should be preserved
@@ -297,10 +293,8 @@ func TestInspectViewModel_SearchHighlighting_YAMLFormat(t *testing.T) {
 
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
 		valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
-		highlightStyle := lipgloss.NewStyle().Background(lipgloss.Color("226"))
-
 		line := "some regular content"
-		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, highlightStyle)
+		result := vm.renderLineWithHighlighting(line, keyStyle, valueStyle, false)
 
 		assert.Contains(t, result, "some regular content")
 	})

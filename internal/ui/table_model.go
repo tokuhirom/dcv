@@ -104,7 +104,7 @@ func (t *TableViewModel) RenderTable(model *Model, columns []table.Column, _ int
 			// Highlight search text if searching
 			displayText := cell
 			if t.IsSearchActive() && t.GetSearchText() != "" {
-				displayText = t.highlightSearchText(cell)
+				displayText = t.highlightSearchText(i, cell)
 			}
 
 			// Truncate and render
@@ -142,10 +142,15 @@ func clamp(v, low, high int) int {
 }
 
 // highlightSearchText highlights the search text in the given string
-func (t *TableViewModel) highlightSearchText(text string) string {
+func (t *TableViewModel) highlightSearchText(rowIndex int, text string) string {
 	searchText := t.GetSearchText()
 	if searchText == "" {
 		return text
+	}
+
+	matchStyle := searchMatchStyle
+	if t.IsCurrentSearchLine(rowIndex) {
+		matchStyle = searchCurrentMatchStyle
 	}
 
 	// Case-insensitive search by default
@@ -172,7 +177,7 @@ func (t *TableViewModel) highlightSearchText(text string) string {
 
 		// Append highlighted match
 		match := text[index : index+len(searchText)]
-		result.WriteString(searchStyle.Render(match))
+		result.WriteString(matchStyle.Render(match))
 
 		lastIndex = index + len(searchText)
 	}
