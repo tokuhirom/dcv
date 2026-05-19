@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -25,12 +26,84 @@ func visualLineCount(line string, width int) int {
 	return (lineWidth + width - 1) / width
 }
 
+func (m *LogViewModel) lineVisualCount(line string, effectiveWidth int) int {
+	if !m.WrapText() {
+		return 1
+	}
+	return visualLineCount(line, effectiveWidth)
+}
+
+// sliceByDisplayWidth returns the portion of s starting at display column start,
+// spanning at most maxWidth display columns.
+func sliceByDisplayWidth(s string, start, maxWidth int) string {
+	if maxWidth <= 0 {
+		return ""
+	}
+	if start < 0 {
+		start = 0
+	}
+
+	var b strings.Builder
+	pos := 0
+	outWidth := 0
+	for i := 0; i < len(s); {
+		r, size := utf8.DecodeRuneInString(s[i:])
+		rw := runewidth.RuneWidth(r)
+		lineEnd := pos + rw
+
+		if pos >= start && outWidth < maxWidth {
+			if outWidth+rw > maxWidth {
+				break
+			}
+			b.WriteRune(r)
+			outWidth += rw
+		}
+
+		pos = lineEnd
+		i += size
+	}
+
+	return b.String()
+}
+
+func (m *LogViewModel) formatLogLine(line string, effectiveWidth int) string {
+	if m.WrapText() {
+		return lipgloss.NewStyle().Width(effectiveWidth).Render(line)
+	}
+	return sliceByDisplayWidth(line, m.logScrollX, effectiveWidth)
+}
+
+func (m *LogViewModel) calculateMaxScrollX(model *Model, logsToDisplay []string) int {
+	if m.WrapText() || len(logsToDisplay) == 0 {
+		return 0
+	}
+
+	effectiveWidth := model.width - 2
+	if effectiveWidth <= 0 {
+		return 0
+	}
+
+	maxScrollX := 0
+	for _, line := range logsToDisplay {
+		lineWidth := runewidth.StringWidth(line)
+		if lineWidth > effectiveWidth {
+			overflow := lineWidth - effectiveWidth
+			if overflow > maxScrollX {
+				maxScrollX = overflow
+			}
+		}
+	}
+
+	return maxScrollX
+}
+
 type LogViewModel struct {
 	SearchViewModel
 	FilterViewModel
 
 	logs       []string
 	logScrollY int
+	logScrollX int
 
 	container *docker.Container
 
@@ -43,6 +116,7 @@ func (m *LogViewModel) SwitchToLogView(model *Model, container *docker.Container
 	m.container = container
 	m.logs = []string{}
 	m.logScrollY = 0
+	m.logScrollX = 0
 }
 
 func (m *LogViewModel) StreamContainerLogs(model *Model, container *docker.Container) tea.Cmd {
@@ -86,7 +160,7 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 	effectiveWidth := model.width - 2
 	for i := startIdx; i < len(logsToDisplay) && visualLinesUsed < visibleHeight; i++ {
 		// Calculate how many visual lines this log line will take using display width
-		visualLines := visualLineCount(logsToDisplay[i], effectiveWidth)
+		visualLines := m.lineVisualCount(logsToDisplay[i], effectiveWidth)
 
 		// Always include at least the first line at the current scroll position,
 		// even if it exceeds the visible height (terminal will clip it).
@@ -135,16 +209,22 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 					s.WriteString("  ")
 				}
 
-				s.WriteString(line + ResetAll + "\n")
+				s.WriteString(m.formatLogLine(line, effectiveWidth) + ResetAll + "\n")
 			}
 		}
 	}
 
 	// Scroll indicator
-	if len(logsToDisplay) > visibleHeight {
+	if len(logsToDisplay) > visibleHeight || (!m.WrapText() && m.calculateMaxScrollX(model, logsToDisplay) > 0) {
 		scrollInfo := fmt.Sprintf(" [%d-%d/%d] ", startIdx+1, endIdx, len(logsToDisplay))
 		if m.filterMode && m.filterText != "" {
 			scrollInfo += fmt.Sprintf(" (filtered from %d)", len(m.logs))
+		}
+		if !m.WrapText() {
+			maxScrollX := m.calculateMaxScrollX(model, logsToDisplay)
+			if maxScrollX > 0 {
+				scrollInfo += fmt.Sprintf(" col %d-%d/%d", m.logScrollX+1, m.logScrollX+effectiveWidth, maxScrollX+effectiveWidth)
+			}
 		}
 		s.WriteString("\n" + helpStyle.Render(scrollInfo))
 	}
@@ -274,7 +354,7 @@ func (m *LogViewModel) calculateMaxScroll(model *Model) int {
 	maxScroll := 0
 
 	for i := len(logsToDisplay) - 1; i >= 0; i-- {
-		lineVisualLines := visualLineCount(logsToDisplay[i], effectiveWidth)
+		lineVisualLines := m.lineVisualCount(logsToDisplay[i], effectiveWidth)
 		visualLinesFromEnd += lineVisualLines
 		if visualLinesFromEnd > visibleHeight {
 			maxScroll = i + 1
@@ -299,7 +379,7 @@ func (m *LogViewModel) calculateMaxScroll(model *Model) int {
 	// first line shown.
 	visualLinesUsed := 0
 	for i := maxScroll; i < len(logsToDisplay); i++ {
-		lineVisualLines := visualLineCount(logsToDisplay[i], effectiveWidth)
+		lineVisualLines := m.lineVisualCount(logsToDisplay[i], effectiveWidth)
 		if i == maxScroll || visualLinesUsed+lineVisualLines <= visibleHeight {
 			visualLinesUsed += lineVisualLines
 		} else {
@@ -440,6 +520,12 @@ func (m *LogViewModel) FilterDeleteLastChar() {
 func (m *LogViewModel) Title() string {
 	title := fmt.Sprintf("Logs: %s", m.container.Title())
 
+	if m.WrapText() {
+		title += " [wrap]"
+	} else {
+		title += " [nowrap]"
+	}
+
 	// Add search or filter status to title
 	if m.filterMode && m.filterText != "" {
 		filterCount := len(m.filteredLogs)
@@ -480,6 +566,37 @@ func (m *LogViewModel) HandlePageUp(model *Model) tea.Cmd {
 	m.logScrollY -= pageSize
 	if m.logScrollY < 0 {
 		m.logScrollY = 0
+	}
+	return nil
+}
+
+func (m *LogViewModel) HandleToggleWrap() tea.Cmd {
+	m.ToggleWrapText()
+	m.logScrollX = 0
+	return nil
+}
+
+func (m *LogViewModel) HandleScrollLeft() tea.Cmd {
+	if m.WrapText() || m.logScrollX <= 0 {
+		return nil
+	}
+	m.logScrollX--
+	return nil
+}
+
+func (m *LogViewModel) HandleScrollRight(model *Model) tea.Cmd {
+	if m.WrapText() {
+		return nil
+	}
+
+	logsToDisplay := m.logs
+	if m.filterMode && m.filterText != "" {
+		logsToDisplay = m.filteredLogs
+	}
+
+	maxScrollX := m.calculateMaxScrollX(model, logsToDisplay)
+	if m.logScrollX < maxScrollX {
+		m.logScrollX++
 	}
 	return nil
 }

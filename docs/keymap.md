@@ -80,10 +80,13 @@ View container logs
 |-----|-------------|----------|
 | `up, k` | scroll up | :up |
 | `down, j` | scroll down | :down |
+| `left, h` | scroll left (nowrap) | :scroll-left |
+| `right, l` | scroll right (nowrap) | :scroll-right |
 | `pgup` | page up | :page-up |
 | `pgdown,  ` | page down | :page-down |
 | `G` | go to end | :go-to-end |
 | `g` | go to start | :go-to-start |
+| `w` | toggle line wrap | :toggle-log-wrap |
 | `/` | search | :search |
 | `n` | next match | :next-search-result |
 | `N` | prev match | :prev-search-result |

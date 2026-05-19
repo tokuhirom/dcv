@@ -766,6 +766,90 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 	})
 }
 
+func TestSliceByDisplayWidth(t *testing.T) {
+	line := strings.Repeat("a", 10) + strings.Repeat("b", 100)
+
+	assert.Equal(t, strings.Repeat("a", 10), sliceByDisplayWidth(line, 0, 10))
+	assert.Equal(t, strings.Repeat("b", 10), sliceByDisplayWidth(line, 10, 10))
+}
+
+func TestLogView_WrapAndHorizontalScroll(t *testing.T) {
+	longLine := strings.Repeat("a", 10) + strings.Repeat("b", 100)
+	wrapLine := strings.Repeat("A", 120)
+
+	t.Run("nowrap shows a horizontal slice of long lines", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs:       []string{longLine},
+				logScrollY: 0,
+				LogReaderManager: LogReaderManager{
+					wrapText: false,
+				},
+			},
+			width:  80,
+			Height: 10,
+		}
+
+		result := stripANSI(model.logViewModel.render(model, 10))
+		contentLine := strings.Split(result, "\n")[0]
+		assert.True(t, strings.HasPrefix(contentLine, "  "+strings.Repeat("a", 10)))
+	})
+
+	t.Run("horizontal scroll reveals later columns", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs: []string{longLine},
+				LogReaderManager: LogReaderManager{
+					wrapText: false,
+				},
+				logScrollX: 10,
+			},
+			width:  80,
+			Height: 10,
+		}
+
+		result := stripANSI(model.logViewModel.render(model, 10))
+		contentLine := strings.Split(result, "\n")[0]
+		assert.True(t, strings.HasPrefix(contentLine, "  "+strings.Repeat("b", 10)))
+		assert.NotContains(t, contentLine, "a")
+	})
+
+	t.Run("toggle wrap resets horizontal scroll", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs: []string{longLine},
+				LogReaderManager: LogReaderManager{
+					wrapText: false,
+				},
+				logScrollX: 10,
+			},
+			width:  80,
+			Height: 10,
+		}
+
+		model.logViewModel.HandleToggleWrap()
+		assert.True(t, model.logViewModel.WrapText())
+		assert.Equal(t, 0, model.logViewModel.logScrollX)
+	})
+
+	t.Run("wrap mode uses lipgloss wrapping", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs: []string{wrapLine},
+				LogReaderManager: LogReaderManager{
+					wrapText: true,
+				},
+			},
+			width:  80,
+			Height: 10,
+		}
+
+		result := stripANSI(model.logViewModel.render(model, 10))
+		lines := strings.Split(strings.TrimRight(result, "\n"), "\n")
+		assert.Greater(t, len(lines), 1, "wrapped long line should span multiple rows")
+	})
+}
+
 func TestLogView_Integration(t *testing.T) {
 	t.Run("complete log view workflow", func(t *testing.T) {
 		// Start with process list view
