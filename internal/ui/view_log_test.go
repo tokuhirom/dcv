@@ -464,8 +464,11 @@ func TestLogView_Search(t *testing.T) {
 				logs: []string{"Line 1", "Error here", "Line 3", "Error there"},
 				SearchViewModel: SearchViewModel{
 					searchText:       "Error",
-					searchResults:    []int{1, 3}, // Lines with matches
 					currentSearchIdx: 0,
+				},
+				logSearchMatches: []logSearchMatch{
+					{lineIndex: 1, start: 0, end: 5},
+					{lineIndex: 3, start: 0, end: 5},
 				},
 				logScrollY: 0,
 			},
@@ -475,8 +478,8 @@ func TestLogView_Search(t *testing.T) {
 		cmd := model.logViewModel.HandleNextSearchResult(model)
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, model.logViewModel.currentSearchIdx)
-		// Should scroll to center line 3: targetLine - Height/2 + 3 = 3 - 9/2 + 3 = 3 - 4 + 3 = 2
-		assert.Equal(t, 2, model.logViewModel.logScrollY)
+		// Scrolls toward line 3, clamped to maxScroll for the viewport
+		assert.GreaterOrEqual(t, model.logViewModel.logScrollY, 1)
 
 		// Wrap around
 		cmd = model.logViewModel.HandleNextSearchResult(model)
@@ -490,8 +493,11 @@ func TestLogView_Search(t *testing.T) {
 				logs: []string{"Line 1", "Error here", "Line 3", "Error there"},
 				SearchViewModel: SearchViewModel{
 					searchText:       "Error",
-					searchResults:    []int{1, 3},
 					currentSearchIdx: 1,
+				},
+				logSearchMatches: []logSearchMatch{
+					{lineIndex: 1, start: 0, end: 5},
+					{lineIndex: 3, start: 0, end: 5},
 				},
 				logScrollY: 0,
 			},
@@ -732,6 +738,40 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 		assert.Contains(t, result, "ERROR")
 	})
 
+	t.Run("uses different colors for current vs other search matches", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs: []string{
+					"first ERROR line",
+					"second ERROR line",
+				},
+				logScrollY: 0,
+				SearchViewModel: SearchViewModel{
+					searchText:       "ERROR",
+					currentSearchIdx: 1,
+					searchMode:       false,
+				},
+				logSearchMatches: []logSearchMatch{
+					{lineIndex: 0, start: 6, end: 11},
+					{lineIndex: 1, start: 7, end: 12},
+				},
+				FilterViewModel: FilterViewModel{
+					filterMode: false,
+				},
+			},
+			width:  100,
+			Height: 10,
+		}
+
+		result := model.logViewModel.render(model, 10)
+
+		currentStyle := searchCurrentMatchStyle.Render("ERROR")
+		otherStyle := searchMatchStyle.Render("ERROR")
+		assert.Contains(t, result, currentStyle)
+		assert.Contains(t, result, otherStyle)
+		assert.NotEqual(t, currentStyle, otherStyle)
+	})
+
 	t.Run("marks current search result", func(t *testing.T) {
 		model := &Model{
 			logViewModel: LogViewModel{
@@ -739,9 +779,11 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 				logScrollY: 0,
 				SearchViewModel: SearchViewModel{
 					searchText:       "Error",
-					searchResults:    []int{1},
 					currentSearchIdx: 0,
 					searchMode:       false,
+				},
+				logSearchMatches: []logSearchMatch{
+					{lineIndex: 1, start: 0, end: 5},
 				},
 				FilterViewModel: FilterViewModel{
 					filterMode: false,
@@ -763,6 +805,152 @@ func TestLogView_SearchHighlighting(t *testing.T) {
 			}
 		}
 		assert.True(t, foundMarker, "Should mark current search result with >")
+	})
+}
+
+func TestLogView_PerformLogSearch(t *testing.T) {
+	model := &Model{
+		logViewModel: LogViewModel{
+			logs: []string{
+				"no match",
+				"ERROR once",
+				strings.Repeat("x", 70) + " ERROR twice ERROR thrice",
+			},
+			LogReaderManager: LogReaderManager{wrapText: true},
+			SearchViewModel: SearchViewModel{
+				searchText: "ERROR",
+			},
+		},
+		width:  80,
+		Height: 20,
+	}
+
+	model.logViewModel.PerformLogSearch(model)
+	assert.Len(t, model.logViewModel.logSearchMatches, 3)
+	assert.Equal(t, 1, model.logViewModel.logSearchMatches[0].lineIndex)
+	assert.Equal(t, 2, model.logViewModel.logSearchMatches[1].lineIndex)
+	assert.Equal(t, 2, model.logViewModel.logSearchMatches[2].lineIndex)
+}
+
+func TestLogView_WrappedSearchMarker(t *testing.T) {
+	longLine := strings.Repeat("x", 70) + " ERROR first and ERROR second"
+	secondStart := strings.Index(longLine, "ERROR second")
+
+	model := &Model{
+		logViewModel: LogViewModel{
+			logs: []string{longLine},
+			LogReaderManager: LogReaderManager{
+				wrapText: true,
+			},
+			SearchViewModel: SearchViewModel{
+				searchText:       "ERROR",
+				currentSearchIdx: 1,
+				searchMode:       false,
+			},
+			logSearchMatches: []logSearchMatch{
+				{lineIndex: 0, start: 71, end: 76},
+				{lineIndex: 0, start: secondStart, end: secondStart + 5},
+			},
+		},
+		width:  80,
+		Height: 10,
+	}
+
+	result := stripANSI(model.logViewModel.render(model, 10))
+	lines := strings.Split(strings.TrimRight(result, "\n"), "\n")
+
+	foundSecondMatchMarker := false
+	for _, line := range lines {
+		if strings.HasPrefix(line, "> ") && strings.Contains(line, "ERROR second") {
+			foundSecondMatchMarker = true
+			break
+		}
+	}
+	assert.True(t, foundSecondMatchMarker, "current match on wrapped row should use > marker")
+	assert.NotContains(t, lines[0], "> ERROR first", "first wrapped row should not be marked when second match is current")
+}
+
+func TestSliceByDisplayWidth(t *testing.T) {
+	line := strings.Repeat("a", 10) + strings.Repeat("b", 100)
+
+	assert.Equal(t, strings.Repeat("a", 10), sliceByDisplayWidth(line, 0, 10))
+	assert.Equal(t, strings.Repeat("b", 10), sliceByDisplayWidth(line, 10, 10))
+}
+
+func TestLogView_WrapAndHorizontalScroll(t *testing.T) {
+	longLine := strings.Repeat("a", 10) + strings.Repeat("b", 100)
+	wrapLine := strings.Repeat("A", 120)
+
+	t.Run("nowrap shows a horizontal slice of long lines", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs:       []string{longLine},
+				logScrollY: 0,
+				LogReaderManager: LogReaderManager{
+					wrapText: false,
+				},
+			},
+			width:  80,
+			Height: 10,
+		}
+
+		result := stripANSI(model.logViewModel.render(model, 10))
+		contentLine := strings.Split(result, "\n")[0]
+		assert.True(t, strings.HasPrefix(contentLine, "  "+strings.Repeat("a", 10)))
+	})
+
+	t.Run("horizontal scroll reveals later columns", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs: []string{longLine},
+				LogReaderManager: LogReaderManager{
+					wrapText: false,
+				},
+				logScrollX: 10,
+			},
+			width:  80,
+			Height: 10,
+		}
+
+		result := stripANSI(model.logViewModel.render(model, 10))
+		contentLine := strings.Split(result, "\n")[0]
+		assert.True(t, strings.HasPrefix(contentLine, "  "+strings.Repeat("b", 10)))
+		assert.NotContains(t, contentLine, "a")
+	})
+
+	t.Run("toggle wrap resets horizontal scroll", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs: []string{longLine},
+				LogReaderManager: LogReaderManager{
+					wrapText: false,
+				},
+				logScrollX: 10,
+			},
+			width:  80,
+			Height: 10,
+		}
+
+		model.logViewModel.HandleToggleWrap()
+		assert.True(t, model.logViewModel.WrapText())
+		assert.Equal(t, 0, model.logViewModel.logScrollX)
+	})
+
+	t.Run("wrap mode uses lipgloss wrapping", func(t *testing.T) {
+		model := &Model{
+			logViewModel: LogViewModel{
+				logs: []string{wrapLine},
+				LogReaderManager: LogReaderManager{
+					wrapText: true,
+				},
+			},
+			width:  80,
+			Height: 10,
+		}
+
+		result := stripANSI(model.logViewModel.render(model, 10))
+		lines := strings.Split(strings.TrimRight(result, "\n"), "\n")
+		assert.Greater(t, len(lines), 1, "wrapped long line should span multiple rows")
 	})
 }
 

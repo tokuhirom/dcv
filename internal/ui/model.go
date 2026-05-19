@@ -206,6 +206,7 @@ func NewModel(initialView ViewType) *Model {
 		dockerSDKClient: dockerSDKClient,
 		loading:         true,
 	}
+	m.logViewModel.wrapText = true
 
 	// Initialize FileOperations if SDK client is available
 	if dockerSDKClient != nil {

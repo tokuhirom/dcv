@@ -178,6 +178,27 @@ func (m *Model) CmdPageDown(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
+func (m *Model) CmdScrollLeft(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if m.currentView == LogView {
+		return m, m.logViewModel.HandleScrollLeft()
+	}
+	return m, nil
+}
+
+func (m *Model) CmdScrollRight(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if m.currentView == LogView {
+		return m, m.logViewModel.HandleScrollRight(m)
+	}
+	return m, nil
+}
+
+func (m *Model) CmdToggleLogWrap(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if m.currentView == LogView {
+		return m, m.logViewModel.HandleToggleWrap()
+	}
+	return m, nil
+}
+
 func (m *Model) CmdBack(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
 	case LogView:

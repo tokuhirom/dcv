@@ -264,7 +264,7 @@ func (m *Model) handleSearchMode(msg tea.KeyPressMsg, searchViewModel *SearchVie
 	performSearch := func() {
 		switch m.currentView {
 		case LogView:
-			m.logViewModel.PerformSearch(m, m.logViewModel.logs, func(scrollY int) { m.logViewModel.logScrollY = scrollY })
+			m.logViewModel.PerformLogSearch(m)
 		case InspectView:
 			m.inspectViewModel.PerformSearch(m, strings.Split(m.inspectViewModel.inspectContent, "\n"), func(scrollY int) { m.inspectViewModel.inspectScrollY = scrollY })
 		default:
@@ -275,6 +275,9 @@ func (m *Model) handleSearchMode(msg tea.KeyPressMsg, searchViewModel *SearchVie
 	// TODO: support CtrlD/Del
 	switch msg.Code {
 	case tea.KeyEsc:
+		if m.currentView == LogView {
+			m.logViewModel.logSearchMatches = nil
+		}
 		searchViewModel.InputEscape()
 		return m, nil
 
@@ -341,7 +344,7 @@ func (m *Model) handleFilterMode(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// Check if ESC was pressed to clear filter
 	if msg.Code == tea.KeyEsc {
 		m.logViewModel.ClearFilter()
-		m.logViewModel.logScrollY = 0 // Reset scroll position when clearing filter
+		m.logViewModel.scrollToTop() // Reset scroll position when clearing filter
 		return m, nil
 	}
 
