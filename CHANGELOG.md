@@ -1,5 +1,28 @@
 # Changelog
 
+## [v0.3.3](https://github.com/tokuhirom/dcv/compare/v0.3.2...v0.3.3) - 2026-05-25
+- Update Songmu/tagpr action to v1.17.1 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/352
+- Update actions/upload-artifact action to v7 - autoclosed by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/353
+- Update dependency lefthook to v2.1.2 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/354
+- Migrate TUI stack to Bubble Tea v2 by @tokuhirom in https://github.com/tokuhirom/dcv/pull/355
+- Update goreleaser/goreleaser-action action to v7 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/348
+- feat: add text-wrap, horizontal scrolling and fix search by @S-Mann in https://github.com/tokuhirom/dcv/pull/370
+- Bump go.opentelemetry.io/otel from 1.37.0 to 1.41.0 by @dependabot[bot] in https://github.com/tokuhirom/dcv/pull/369
+- Update dependency lefthook to v2.1.8 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/360
+- Update dependency golangci/golangci-lint to v2.12.2 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/359
+- Update actions/create-github-app-token action to v3 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/364
+- Update codecov/codecov-action action to v6 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/365
+- Update module charm.land/bubbles/v2 to v2.1.0 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/366
+- Bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp from 1.37.0 to 1.43.0 by @dependabot[bot] in https://github.com/tokuhirom/dcv/pull/368
+- Update module github.com/charmbracelet/x/ansi to v0.11.7 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/371
+- Update module github.com/mattn/go-runewidth to v0.0.23 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/361
+- Update module charm.land/bubbletea/v2 to v2.0.6 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/357
+- Update Songmu/tagpr action to v1.19.0 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/372
+- Update dependency golangci-lint to v2.12.2 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/358
+- Update module charm.land/lipgloss/v2 to v2.0.3 - autoclosed by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/362
+- Bump golang.org/x/image from 0.18.0 to 0.38.0 by @dependabot[bot] in https://github.com/tokuhirom/dcv/pull/367
+- fix: log view filter+scroll ANSI corruption and review follow-ups by @tokuhirom in https://github.com/tokuhirom/dcv/pull/373
+
 ## [v0.3.2](https://github.com/tokuhirom/dcv/compare/v0.3.1...v0.3.2) - 2026-02-21
 - fix(deps): update module github.com/charmbracelet/bubbletea to v1.3.7 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/314
 - fix(deps): update module github.com/charmbracelet/bubbletea to v1.3.10 by @renovate[bot] in https://github.com/tokuhirom/dcv/pull/316
