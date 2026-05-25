@@ -478,8 +478,8 @@ func TestLogView_Search(t *testing.T) {
 		cmd := model.logViewModel.HandleNextSearchResult(model)
 		assert.Nil(t, cmd)
 		assert.Equal(t, 1, model.logViewModel.currentSearchIdx)
-		// Scrolls toward line 3, clamped to maxScroll for the viewport
-		assert.GreaterOrEqual(t, model.logViewModel.logScrollY, 1)
+		// targetLine - Height/2 + 3 = 3 - 4 + 3 = 2, clamped to maxScroll=1.
+		assert.Equal(t, 1, model.logViewModel.logScrollY)
 
 		// Wrap around
 		cmd = model.logViewModel.HandleNextSearchResult(model)
@@ -870,13 +870,6 @@ func TestLogView_WrappedSearchMarker(t *testing.T) {
 	assert.NotContains(t, lines[0], "> ERROR first", "first wrapped row should not be marked when second match is current")
 }
 
-func TestSliceByDisplayWidth(t *testing.T) {
-	line := strings.Repeat("a", 10) + strings.Repeat("b", 100)
-
-	assert.Equal(t, strings.Repeat("a", 10), sliceByDisplayWidth(line, 0, 10))
-	assert.Equal(t, strings.Repeat("b", 10), sliceByDisplayWidth(line, 10, 10))
-}
-
 func TestLogView_WrapAndHorizontalScroll(t *testing.T) {
 	longLine := strings.Repeat("a", 10) + strings.Repeat("b", 100)
 	wrapLine := strings.Repeat("A", 120)
@@ -952,6 +945,49 @@ func TestLogView_WrapAndHorizontalScroll(t *testing.T) {
 		lines := strings.Split(strings.TrimRight(result, "\n"), "\n")
 		assert.Greater(t, len(lines), 1, "wrapped long line should span multiple rows")
 	})
+}
+
+// TestLogView_FilterHorizontalScroll guards against the previous bug where the
+// nowrap path would highlight first and then slice — the slice would cut
+// through ANSI escape sequences, leaving stray characters in the output.
+func TestLogView_FilterHorizontalScroll(t *testing.T) {
+	// "MATCH" starts at byte offset 50; with scrollX=40 and width=82
+	// (effectiveWidth=80) the visible slice spans bytes 40..120 — both the
+	// pre-match and the match itself land inside the window.
+	line := strings.Repeat("a", 50) + "MATCH" + strings.Repeat("b", 100)
+
+	model := &Model{
+		logViewModel: LogViewModel{
+			logs:       []string{line},
+			logScrollX: 40,
+			LogReaderManager: LogReaderManager{
+				wrapText: false,
+			},
+			FilterViewModel: FilterViewModel{
+				filterMode:   true,
+				filterText:   "MATCH",
+				filteredLogs: []string{line},
+			},
+		},
+		width:  82,
+		Height: 10,
+	}
+
+	rendered := model.logViewModel.render(model, 10)
+	plain := stripANSI(rendered)
+	content := strings.Split(plain, "\n")[0]
+
+	// Sanity: the slice begins at column 40 (still in the leading 'a' block)
+	// and includes "MATCH" followed by the trailing 'b' block.
+	assert.True(t, strings.HasPrefix(content, "  "+strings.Repeat("a", 10)+"MATCH"),
+		"visible slice should start at scrollX and include the match, got %q", content)
+	assert.Contains(t, content, "MATCH")
+
+	// The filter highlight wraps "MATCH" with ANSI escapes. With the fix,
+	// those escapes appear intact around the match within the slice.
+	highlighted := searchMatchStyle.Render("MATCH")
+	assert.Contains(t, rendered, highlighted,
+		"filter highlight must survive horizontal slicing")
 }
 
 func TestLogView_Integration(t *testing.T) {

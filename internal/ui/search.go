@@ -7,6 +7,10 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+// SearchViewModel holds search state shared by views that match per line.
+// LogViewModel stores per-occurrence positions in logSearchMatches instead and
+// leaves searchResults nil, so HasSearchResults / IsCurrentSearchLine here are
+// not meaningful for the log view — use the log-specific helpers.
 type SearchViewModel struct {
 	searchMode       bool
 	searchText       string
