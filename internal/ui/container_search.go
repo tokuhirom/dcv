@@ -74,6 +74,13 @@ func (m *ContainerSearchViewModel) IsSearchActive() bool {
 }
 
 // HasSearchResults returns true if there are search results
+// IsCurrentSearchLine reports whether rowIndex is the active search result.
+func (m *ContainerSearchViewModel) IsCurrentSearchLine(rowIndex int) bool {
+	return len(m.searchResults) > 0 &&
+		m.currentSearchIdx < len(m.searchResults) &&
+		m.searchResults[m.currentSearchIdx] == rowIndex
+}
+
 func (m *ContainerSearchViewModel) HasSearchResults() bool {
 	return len(m.searchResults) > 0
 }

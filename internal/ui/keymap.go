@@ -70,10 +70,13 @@ func (m *Model) initializeKeyHandlers() {
 	m.logViewHandlers = []KeyConfig{
 		{[]string{"up", "k"}, "scroll up", m.CmdUp},
 		{[]string{"down", "j"}, "scroll down", m.CmdDown},
+		{[]string{"left", "h"}, "scroll left", m.CmdScrollLeft},
+		{[]string{"right", "l"}, "scroll right", m.CmdScrollRight},
 		{[]string{"pgup"}, "page up", m.CmdPageUp},
 		{[]string{"pgdown", " "}, "page down", m.CmdPageDown},
 		{[]string{"G"}, "go to end", m.CmdGoToEnd},
 		{[]string{"g"}, "go to beginning", m.CmdGoToBeginning},
+		{[]string{"w"}, "toggle wrap", m.CmdToggleLogWrap},
 		{[]string{"/"}, "search", m.CmdSearch},
 		{[]string{"n"}, "next match", m.CmdNextSearchResult},
 		{[]string{"N"}, "prev match", m.CmdPrevSearchResult},

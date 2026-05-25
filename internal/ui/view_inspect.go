@@ -76,11 +76,6 @@ func (m *InspectViewModel) render(availableHeight int) string {
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
 	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
 
-	// Define highlight style for search matches
-	highlightStyle := lipgloss.NewStyle().
-		Background(lipgloss.Color("226")).
-		Foreground(lipgloss.Color("235"))
-
 	if len(lines) == 0 {
 		content.WriteString("No inspect data available\n")
 	} else if startIdx < len(lines) {
@@ -98,7 +93,7 @@ func (m *InspectViewModel) render(availableHeight int) string {
 			}
 
 			// Apply both YAML syntax highlighting and search highlighting
-			highlightedLine := m.renderLineWithHighlighting(line, keyStyle, valueStyle, highlightStyle)
+			highlightedLine := m.renderLineWithHighlighting(line, keyStyle, valueStyle, m.IsCurrentSearchLine(i))
 
 			content.WriteString(lineNum + highlightedLine + "\n")
 		}
@@ -124,14 +119,14 @@ func (m *InspectViewModel) render(availableHeight int) string {
 }
 
 // renderLineWithHighlighting applies both YAML syntax highlighting and search highlighting
-func (m *InspectViewModel) renderLineWithHighlighting(line string, keyStyle, valueStyle, highlightStyle lipgloss.Style) string {
+func (m *InspectViewModel) renderLineWithHighlighting(line string, keyStyle, valueStyle lipgloss.Style, isCurrentLine bool) string {
 	// If no search is active, just apply YAML highlighting
 	if m.searchText == "" || m.searchMode {
 		return m.applyYAMLHighlighting(line, keyStyle, valueStyle)
 	}
 
 	// Apply search highlighting with preserved YAML styling
-	return m.applySearchWithYAMLHighlighting(line, keyStyle, valueStyle, highlightStyle)
+	return m.applySearchWithYAMLHighlighting(line, keyStyle, valueStyle, isCurrentLine)
 }
 
 // applyYAMLHighlighting applies YAML syntax highlighting to a line
@@ -158,7 +153,11 @@ func (m *InspectViewModel) applyYAMLHighlighting(line string, keyStyle, valueSty
 }
 
 // applySearchWithYAMLHighlighting applies search highlighting while preserving YAML syntax colors
-func (m *InspectViewModel) applySearchWithYAMLHighlighting(line string, keyStyle, valueStyle, highlightStyle lipgloss.Style) string {
+func (m *InspectViewModel) applySearchWithYAMLHighlighting(line string, keyStyle, valueStyle lipgloss.Style, isCurrentLine bool) string {
+	highlightStyle := searchMatchStyle
+	if isCurrentLine {
+		highlightStyle = searchCurrentMatchStyle
+	}
 	trimmed := strings.TrimSpace(line)
 
 	// Find search matches first

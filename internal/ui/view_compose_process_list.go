@@ -113,8 +113,11 @@ func (m *ComposeProcessListViewModel) buildRows() []table.Row {
 		if m.IsSearchActive() && m.GetSearchText() != "" {
 			for _, idx := range m.searchResults {
 				if idx == i {
-					// Apply search highlight style to service name
-					service = searchStyle.Render(service)
+					if m.IsCurrentSearchLine(i) {
+						service = searchCurrentMatchStyle.Render(service)
+					} else {
+						service = searchMatchStyle.Render(service)
+					}
 					break
 				}
 			}

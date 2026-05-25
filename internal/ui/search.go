@@ -41,6 +41,13 @@ func (m *SearchViewModel) RenderSearchCmdLine() string {
 	return "/" + before + cursorStyle.Render(cursor) + after
 }
 
+// IsCurrentSearchLine reports whether lineIndex is the active search result.
+func (m *SearchViewModel) IsCurrentSearchLine(lineIndex int) bool {
+	return len(m.searchResults) > 0 &&
+		m.currentSearchIdx < len(m.searchResults) &&
+		m.searchResults[m.currentSearchIdx] == lineIndex
+}
+
 func (m *SearchViewModel) ClearSearch() {
 	m.searchMode = true
 	m.searchText = ""

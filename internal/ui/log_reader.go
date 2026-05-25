@@ -137,6 +137,20 @@ type LogReaderManager struct {
 	logReaderMu     sync.Mutex
 	lastLogIndex    int
 	activeLogReader *logReader
+
+	// wrapText controls whether long log lines wrap to the terminal width.
+	// When false, lines stay on one row and horizontal scroll is used instead.
+	wrapText bool
+}
+
+// WrapText reports whether long log lines are wrapped to the terminal width.
+func (lrm *LogReaderManager) WrapText() bool {
+	return lrm.wrapText
+}
+
+// ToggleWrapText toggles line wrapping for the log view.
+func (lrm *LogReaderManager) ToggleWrapText() {
+	lrm.wrapText = !lrm.wrapText
 }
 
 // streamLogsReal creates a command that starts log streaming

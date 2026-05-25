@@ -140,8 +140,11 @@ func (m *DockerContainerListViewModel) buildRows() []table.Row {
 		if m.IsSearchActive() && m.GetSearchText() != "" {
 			for _, idx := range m.searchResults {
 				if idx == i {
-					// Apply search highlight style to name
-					name = searchStyle.Render(name)
+					if m.IsCurrentSearchLine(i) {
+						name = searchCurrentMatchStyle.Render(name)
+					} else {
+						name = searchMatchStyle.Render(name)
+					}
 					break
 				}
 			}
