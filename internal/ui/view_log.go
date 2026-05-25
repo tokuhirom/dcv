@@ -7,7 +7,6 @@ import (
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/tokuhirom/dcv/internal/docker"
@@ -80,39 +79,6 @@ func wrapLineSegments(line string, width int) []wrappedSegment {
 	return segments
 }
 
-// sliceByDisplayWidth returns the portion of s starting at display column start,
-// spanning at most maxWidth display columns.
-func sliceByDisplayWidth(s string, start, maxWidth int) string {
-	if maxWidth <= 0 {
-		return ""
-	}
-	if start < 0 {
-		start = 0
-	}
-
-	var b strings.Builder
-	pos := 0
-	outWidth := 0
-	for i := 0; i < len(s); {
-		r, size := utf8.DecodeRuneInString(s[i:])
-		rw := runewidth.RuneWidth(r)
-		lineEnd := pos + rw
-
-		if pos >= start && outWidth < maxWidth {
-			if outWidth+rw > maxWidth {
-				break
-			}
-			b.WriteRune(r)
-			outWidth += rw
-		}
-
-		pos = lineEnd
-		i += size
-	}
-
-	return b.String()
-}
-
 // displayWidthToByteIndex returns the byte index at the given display column.
 func displayWidthToByteIndex(s string, targetCol int) int {
 	if targetCol <= 0 {
@@ -129,13 +95,6 @@ func displayWidthToByteIndex(s string, targetCol int) int {
 		i += size
 	}
 	return len(s)
-}
-
-func (m *LogViewModel) formatLogLine(line string, effectiveWidth int) string {
-	if m.WrapText() {
-		return lipgloss.NewStyle().Width(effectiveWidth).Render(line)
-	}
-	return sliceByDisplayWidth(line, m.logScrollX, effectiveWidth)
 }
 
 func (m *LogViewModel) logLineSegments(line string, effectiveWidth int) []wrappedSegment {
@@ -397,10 +356,6 @@ func (m *LogViewModel) renderWrapped(model *Model, logsToDisplay []string, visib
 	endIdx := 0
 
 	for i, line := range logsToDisplay {
-		if m.filterMode && m.filterText != "" {
-			line = m.highlightFilterMatch(line, searchMatchStyle)
-		}
-
 		for _, seg := range wrapLineSegments(line, effectiveWidth) {
 			if skip > 0 {
 				skip--
@@ -415,10 +370,7 @@ func (m *LogViewModel) renderWrapped(model *Model, logsToDisplay []string, visib
 			}
 			endIdx = i + 1
 
-			displayLine := line[seg.startByte:seg.endByte]
-			if m.searchText != "" && !m.searchMode {
-				displayLine = m.highlightSegment(line, i, seg)
-			}
+			displayLine := m.renderSegment(line, i, seg)
 
 			if m.isCurrentMatchOnSegment(i, seg) {
 				s.WriteString("> ")
@@ -457,19 +409,8 @@ func (m *LogViewModel) renderNoWrap(model *Model, logsToDisplay []string, visibl
 
 	for i := startIdx; i < endIdx; i++ {
 		line := logsToDisplay[i]
-
-		if m.filterMode && m.filterText != "" {
-			line = m.highlightFilterMatch(line, searchMatchStyle)
-			s.WriteString("  ")
-			s.WriteString(m.formatLogLine(line, effectiveWidth) + ResetAll + "\n")
-			continue
-		}
-
 		for _, seg := range m.logLineSegments(line, effectiveWidth) {
-			displayLine := line[seg.startByte:seg.endByte]
-			if m.searchText != "" && !m.searchMode {
-				displayLine = m.highlightSegment(line, i, seg)
-			}
+			displayLine := m.renderSegment(line, i, seg)
 
 			if m.isCurrentMatchOnSegment(i, seg) {
 				s.WriteString("> ")
@@ -619,6 +560,19 @@ func (m *LogViewModel) scrollToSearchMatch(model *Model, match logSearchMatch) {
 	}
 }
 
+// renderSegment returns the display text for a single segment, applying
+// filter or search highlighting where appropriate. Operating on raw bytes
+// here avoids slicing through ANSI escapes added by highlighting helpers.
+func (m *LogViewModel) renderSegment(fullLine string, lineIndex int, seg wrappedSegment) string {
+	if m.filterMode && m.filterText != "" {
+		return m.highlightFilterSegment(fullLine, seg)
+	}
+	if m.searchText != "" && !m.searchMode {
+		return m.highlightSegment(fullLine, lineIndex, seg)
+	}
+	return fullLine[seg.startByte:seg.endByte]
+}
+
 func (m *LogViewModel) highlightSegment(fullLine string, lineIndex int, seg wrappedSegment) string {
 	text := fullLine[seg.startByte:seg.endByte]
 	if m.searchText == "" {
@@ -667,40 +621,47 @@ func (m *LogViewModel) matchRangesOnLine(line string, lineIndex int) []logSearch
 	return ranges
 }
 
-func (m *LogViewModel) highlightFilterMatch(line string, style lipgloss.Style) string {
+// highlightFilterSegment highlights filter matches within a single display
+// segment. Matches are computed against fullLine (raw, ANSI-free) and rendered
+// only for the portion that overlaps seg, so callers can slice safely without
+// risk of cutting an ANSI escape in half.
+func (m *LogViewModel) highlightFilterSegment(fullLine string, seg wrappedSegment) string {
+	text := fullLine[seg.startByte:seg.endByte]
 	if m.filterText == "" {
-		return line
+		return text
 	}
 
-	// Simple case-insensitive string search for filter
 	searchStr := strings.ToLower(m.filterText)
-	lineToSearch := strings.ToLower(line)
-
-	// Find all occurrences
-	var result strings.Builder
-	lastEnd := 0
+	lineToSearch := strings.ToLower(fullLine)
 	searchLen := len(searchStr)
 
-	for lastEnd < len(line) {
-		idx := strings.Index(lineToSearch[lastEnd:], searchStr)
+	var result strings.Builder
+	lastEnd := 0
+	scan := 0
+	for scan < len(fullLine) {
+		idx := strings.Index(lineToSearch[scan:], searchStr)
 		if idx == -1 {
-			// No more matches, append the rest
-			result.WriteString(line[lastEnd:])
 			break
 		}
-
-		// Found a match
-		matchStart := lastEnd + idx
+		matchStart := scan + idx
 		matchEnd := matchStart + searchLen
+		scan = matchEnd
 
-		// Append text before the match
-		result.WriteString(line[lastEnd:matchStart])
-		// Append highlighted match
-		result.WriteString(style.Render(line[matchStart:matchEnd]))
-		// Move past this match
-		lastEnd = matchEnd
+		if matchEnd <= seg.startByte || matchStart >= seg.endByte {
+			continue
+		}
+
+		relStart := max(matchStart-seg.startByte, 0)
+		relEnd := min(matchEnd-seg.startByte, len(text))
+		if relStart > lastEnd {
+			result.WriteString(text[lastEnd:relStart])
+		}
+		result.WriteString(searchMatchStyle.Render(text[relStart:relEnd]))
+		lastEnd = relEnd
 	}
-
+	if lastEnd < len(text) {
+		result.WriteString(text[lastEnd:])
+	}
 	return result.String()
 }
 
