@@ -23,6 +23,6 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
 
-      - uses: Songmu/tagpr@555e72cee68c09d43dc2337dc9ba890955b630da # v1.19.0
+      - uses: Songmu/tagpr@0c4eb5a3b0862693702acea436a7c68bd586530d # v1.21.2
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
