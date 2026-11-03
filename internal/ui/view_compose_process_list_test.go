@@ -456,6 +456,8 @@ func TestComposeProcessListView_ServiceOperations(t *testing.T) {
 		assert.True(t, m.composeProcessListViewModel.showAll)
 
 		// Toggle back
+		m.containerRefreshInFlight = false
+		m.loading = false
 		_, cmd = m.CmdToggleAll(tea.KeyPressMsg{})
 		assert.NotNil(t, cmd)
 		assert.False(t, m.composeProcessListViewModel.showAll)

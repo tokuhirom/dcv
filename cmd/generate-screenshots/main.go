@@ -530,7 +530,7 @@ func setupLogView(m *ui.Model) {
 2024-01-10 10:25:45 [INFO] Cache hit ratio: 87.3%
 2024-01-10 10:26:00 [INFO] Active connections: 42
 2024-01-10 10:26:15 [DEBUG] Memory usage: 256MB / 512MB
-2024-01-10 10:26:30 [INFO] GET /api/dashboard 200 89ms`
+2024-01-10T10:26:30Z {"level":"info","path":"/api/dashboard","status":200,"duration_ms":89,"cached":true}`
 	vm.SetLogContent(logContent)
 }
 

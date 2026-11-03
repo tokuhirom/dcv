@@ -40,11 +40,17 @@ func (m *ComposeProcessListViewModel) Init(_ *Model) {
 func (m *ComposeProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case composeProcessesLoadedMsg:
-		model.loading = false
+		if model.currentView == ComposeProcessListView {
+			model.loading = false
+		}
 		if msg.err != nil {
-			model.err = msg.err
+			if model.currentView == ComposeProcessListView {
+				model.err = msg.err
+			}
 		} else {
-			model.err = nil
+			if model.currentView == ComposeProcessListView {
+				model.err = nil
+			}
 			m.Loaded(model, msg.processes)
 		}
 		return model, nil
@@ -61,7 +67,23 @@ func (m *ComposeProcessListViewModel) Load(model *Model, project models.ComposeP
 }
 
 func (m *ComposeProcessListViewModel) DoLoad(model *Model) tea.Cmd {
+	if model.containerRefreshInFlight {
+		return nil
+	}
+	model.containerRefreshInFlight = true
 	model.loading = true
+	return m.doLoad(model)
+}
+
+func (m *ComposeProcessListViewModel) DoLoadSilent(model *Model) tea.Cmd {
+	if model.containerRefreshInFlight {
+		return nil
+	}
+	model.containerRefreshInFlight = true
+	return m.doLoad(model)
+}
+
+func (m *ComposeProcessListViewModel) doLoad(model *Model) tea.Cmd {
 	return func() tea.Msg {
 		slog.Info("Loading composeContainers",
 			slog.Bool("showAll", m.showAll))
@@ -210,6 +232,20 @@ func (m *ComposeProcessListViewModel) HandleBack(model *Model) tea.Cmd {
 }
 
 func (m *ComposeProcessListViewModel) Loaded(model *Model, processes []models.ComposeContainer) {
+	selectedID := ""
+	if m.Cursor >= 0 && m.Cursor < len(m.composeContainers) {
+		selectedID = m.composeContainers[m.Cursor].ID
+	}
 	m.composeContainers = processes
 	m.SetRows(m.buildRows(), model.ViewHeight())
+	m.performSearch()
+	if !m.IsSearchActive() && selectedID != "" {
+		for i, container := range m.composeContainers {
+			if container.ID == selectedID {
+				m.Cursor = i
+				m.SetRows(m.Rows, model.ViewHeight())
+				break
+			}
+		}
+	}
 }

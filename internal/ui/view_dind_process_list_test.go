@@ -183,6 +183,7 @@ func TestDindProcessListViewModel_ToggleAll(t *testing.T) {
 
 		// Reset loading for next test
 		model.loading = false
+		model.containerRefreshInFlight = false
 
 		// Toggle again
 		cmd = vm.HandleToggleAll(model)
@@ -211,6 +212,7 @@ func TestDindProcessListViewModel_ToggleAll(t *testing.T) {
 
 		// Reset loading for next test
 		model.loading = false
+		model.containerRefreshInFlight = false
 
 		// Toggle again
 		_, cmd = model.CmdToggleAll(tea.KeyPressMsg{})

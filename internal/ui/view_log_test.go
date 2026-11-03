@@ -127,6 +127,150 @@ func TestLogView_Rendering(t *testing.T) {
 	}
 }
 
+func TestFormatJSONLogLine(t *testing.T) {
+	line := "2024-01-02T03:04:05.123456789Z {\"large\":9007199254740993,\"ok\":true}"
+	got := formatJSONLogLine(line)
+
+	assert.Contains(t, got, "2024-01-02T03:04:05.123456789Z ")
+	assert.Contains(t, got, "\n  \"large\": 9007199254740993,")
+	assert.Equal(t, "not json", formatJSONLogLine("not json"))
+}
+
+func TestLogJSONFormattingAndFiltering(t *testing.T) {
+	model := &Model{
+		width:  80,
+		Height: 12,
+		logViewModel: LogViewModel{
+			prettyJSON: true,
+			logs:       []string{`{"level":"error","message":"failed"}`, "plain log"},
+			FilterViewModel: FilterViewModel{
+				filterActive: true,
+				filterText:   "message",
+				filteredLogs: []string{`{"level":"error","message":"failed"}`},
+			},
+		},
+	}
+
+	displayed := model.logViewModel.displayLogs()
+	assert.Len(t, displayed, 1)
+	assert.Contains(t, displayed[0], "\n  \"message\": \"failed\"")
+	assert.Contains(t, stripANSI(model.logViewModel.render(model, 12)), `"message": "failed"`)
+}
+
+func jsonTokenColor(t *testing.T, rendered, token string) string {
+	t.Helper()
+	pattern := `\x1b\[([0-9;]+)m` + regexp.QuoteMeta(token) + `\x1b\[[0-9;]*m`
+	match := regexp.MustCompile(pattern).FindStringSubmatch(rendered)
+	if !assert.Len(t, match, 2, "expected colored token %q", token) {
+		return ""
+	}
+	return match[1]
+}
+
+func TestLogJSONSyntaxColors(t *testing.T) {
+	line := `2026-11-03T13:00:00Z {"message":"hello \"world\"","count":1.2e+3,"active":true,"empty":null,"nested":{"flags":[false,-7]}}`
+	for _, pretty := range []bool{false, true} {
+		t.Run(fmt.Sprintf("pretty=%t", pretty), func(t *testing.T) {
+			model := &Model{
+				currentView: LogView,
+				width:       160,
+				Height:      40,
+				logViewModel: LogViewModel{
+					logs:             []string{line, `plain {"not":"json"}`, `{"broken":`},
+					prettyJSON:       pretty,
+					LogReaderManager: LogReaderManager{wrapText: true},
+				},
+			}
+			rendered := model.logViewModel.render(model, 40)
+			keyColor := jsonTokenColor(t, rendered, `"message"`)
+			stringColor := jsonTokenColor(t, rendered, `"hello \"world\""`)
+			numberColor := jsonTokenColor(t, rendered, "1.2e+3")
+			literalColor := jsonTokenColor(t, rendered, "true")
+			assert.NotEqual(t, keyColor, stringColor)
+			assert.NotEqual(t, stringColor, numberColor)
+			assert.NotEqual(t, numberColor, literalColor)
+			assert.Equal(t, literalColor, jsonTokenColor(t, rendered, "null"))
+			assert.Equal(t, literalColor, jsonTokenColor(t, rendered, "false"))
+			assert.Equal(t, keyColor, jsonTokenColor(t, rendered, `"flags"`))
+			assert.Contains(t, stripANSI(rendered), "2026-11-03T13:00:00Z ")
+			if !pretty {
+				assert.Contains(t, stripANSI(rendered), line)
+			}
+			assert.Contains(t, rendered, `  plain {"not":"json"}`+ResetAll)
+			assert.Contains(t, rendered, `  {"broken":`+ResetAll)
+		})
+	}
+}
+
+func TestLogJSONColorsWithSearchAndFilter(t *testing.T) {
+	line := `{"level":"error","count":42}`
+	for _, filter := range []bool{false, true} {
+		t.Run(fmt.Sprintf("filter=%t", filter), func(t *testing.T) {
+			model := &Model{
+				currentView: LogView,
+				width:       80,
+				Height:      20,
+				logViewModel: LogViewModel{
+					logs: []string{line},
+				},
+			}
+			highlight := searchCurrentMatchStyle
+			if filter {
+				model.logViewModel.filterActive = true
+				model.logViewModel.filterText = "error"
+				model.logViewModel.filteredLogs = []string{line}
+				highlight = searchMatchStyle
+			} else {
+				model.logViewModel.searchText = "error"
+				model.logViewModel.PerformLogSearch(model)
+			}
+			rendered := model.logViewModel.render(model, 20)
+			assert.Contains(t, rendered, highlight.Render("error"))
+			jsonTokenColor(t, rendered, `"count"`)
+			assert.Contains(t, stripANSI(rendered), line)
+		})
+	}
+}
+
+func TestLogJSONColorsAfterHorizontalScroll(t *testing.T) {
+	line := `{"message":"0123456789abcdef"}`
+	scroll := strings.Index(line, "456789ab")
+	model := &Model{
+		currentView: LogView,
+		width:       10,
+		Height:      10,
+		logViewModel: LogViewModel{
+			logs:       []string{line},
+			logScrollX: scroll,
+		},
+	}
+	rendered := model.logViewModel.render(model, 10)
+	jsonTokenColor(t, rendered, "456789ab")
+	assert.Contains(t, stripANSI(rendered), "  456789ab")
+}
+
+func TestLogJSONColorsAcrossWrappedRows(t *testing.T) {
+	line := `{"message":"0123456789世界🌍"}`
+	model := &Model{
+		currentView: LogView,
+		width:       10,
+		Height:      20,
+		logViewModel: LogViewModel{
+			logs:             []string{line},
+			LogReaderManager: LogReaderManager{wrapText: true},
+		},
+	}
+	rendered := model.logViewModel.render(model, 20)
+	jsonTokenColor(t, rendered, "456789世")
+	rows := strings.Split(strings.TrimSuffix(stripANSI(rendered), "\n"), "\n")
+	var content strings.Builder
+	for _, row := range rows {
+		assert.True(t, strings.HasPrefix(row, "  "))
+		content.WriteString(strings.TrimPrefix(row, "  "))
+	}
+	assert.Equal(t, line, content.String())
+}
+
 func TestLogView_WrappedLines(t *testing.T) {
 	t.Run("long lines wrap and affect scroll calculations", func(t *testing.T) {
 		// Create a long line that wraps to about 3 visual lines at width 80

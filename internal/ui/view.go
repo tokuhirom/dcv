@@ -155,7 +155,7 @@ func (m *Model) viewNavigationHeader() string {
 	navItems = append(navItems, createNavItem("6", "Stats", StatsView))
 
 	// Add toggle hint
-	toggleHint := helpStyle.Render("[H]ide navbar")
+	toggleHint := helpStyle.Render("←/→ tabs  [H]ide navbar")
 	navItems = append(navItems, toggleHint)
 
 	// Join items with separator
@@ -223,20 +223,22 @@ func (m *Model) getActiveNavigationView() ViewType {
 func (m *Model) viewTitle() string {
 	switch m.currentView {
 	case ComposeProcessListView:
+		title := "Docker Compose"
 		if m.composeProcessListViewModel.projectName != "" {
 			if m.composeProcessListViewModel.showAll {
-				return fmt.Sprintf("Docker Compose: %s (all)", m.composeProcessListViewModel.projectName)
+				title = fmt.Sprintf("Docker Compose: %s (all)", m.composeProcessListViewModel.projectName)
+			} else {
+				title = fmt.Sprintf("Docker Compose: %s", m.composeProcessListViewModel.projectName)
 			}
-			return fmt.Sprintf("Docker Compose: %s", m.composeProcessListViewModel.projectName)
 		}
-		if m.composeProcessListViewModel.showAll {
-			return "Docker Compose (all)"
+		if m.composeProcessListViewModel.projectName == "" && m.composeProcessListViewModel.showAll {
+			title += " (all)"
 		}
-		return "Docker Compose"
+		return m.containerAutoRefreshTitle(title)
 	case LogView:
 		return m.logViewModel.Title()
 	case DindProcessListView:
-		return m.dindProcessListViewModel.Title()
+		return m.containerAutoRefreshTitle(m.dindProcessListViewModel.Title())
 	case TopView:
 		return m.topViewModel.Title()
 	case StatsView:
@@ -245,9 +247,9 @@ func (m *Model) viewTitle() string {
 		return "Docker Compose Projects"
 	case DockerContainerListView:
 		if m.dockerContainerListViewModel.showAll {
-			return "Docker Containers (all)"
+			return m.containerAutoRefreshTitle("Docker Containers (all)")
 		}
-		return "Docker Containers"
+		return m.containerAutoRefreshTitle("Docker Containers")
 	case ImageListView:
 		return m.imageListViewModel.Title()
 	case NetworkListView:
@@ -275,6 +277,14 @@ func (m *Model) viewTitle() string {
 	default:
 		return "Unknown View"
 	}
+}
+
+func (m *Model) containerAutoRefreshTitle(title string) string {
+	state := "ON"
+	if !m.containerAutoRefresh {
+		state = "OFF"
+	}
+	return fmt.Sprintf("%s [auto-refresh %s]", title, state)
 }
 
 func (m *Model) viewBody(availableHeight int) string {
@@ -369,6 +379,7 @@ func (m *Model) viewFooter() string {
 		switch m.currentView {
 		case ComposeProcessListView, DockerContainerListView, DindProcessListView:
 			helpText += " | Press x for actions"
+			helpText += " | Press A to toggle auto-refresh"
 		case FileBrowserView:
 			helpText += " | Press x for file actions"
 		}

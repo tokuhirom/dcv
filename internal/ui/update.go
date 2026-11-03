@@ -95,6 +95,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case RefreshMsg:
+		if m.containerRefreshInFlight && isContainerRefreshView(m.currentView) {
+			return m, nil
+		}
 		// Handle refresh based on current view
 		m.loading = true
 		m.err = nil
@@ -166,7 +169,47 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				)
 			}
 		}
+
 		return m, nil
+
+	case containerAutoRefreshTickMsg:
+		cmds := []tea.Cmd{m.startContainerAutoRefresh()}
+		if m.containerAutoRefresh && !m.containerRefreshInFlight && !m.loading {
+			var cmd tea.Cmd
+			switch m.currentView {
+			case ComposeProcessListView:
+				cmd = m.composeProcessListViewModel.DoLoadSilent(m)
+			case DindProcessListView:
+				cmd = m.dindProcessListViewModel.DoLoadSilent(m)
+			case DockerContainerListView:
+				cmd = m.dockerContainerListViewModel.DoLoadSilent(m)
+			}
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+		}
+		return m, tea.Batch(cmds...)
+
+	case dockerContainersLoadedMsg:
+		m.containerRefreshInFlight = false
+		if isContainerRefreshView(m.currentView) {
+			m.loading = false
+		}
+		return m.dockerContainerListViewModel.Update(m, msg)
+
+	case composeProcessesLoadedMsg:
+		m.containerRefreshInFlight = false
+		if isContainerRefreshView(m.currentView) {
+			m.loading = false
+		}
+		return m.composeProcessListViewModel.Update(m, msg)
+
+	case dindContainersLoadedMsg:
+		m.containerRefreshInFlight = false
+		if isContainerRefreshView(m.currentView) {
+			m.loading = false
+		}
+		return m.dindProcessListViewModel.Update(m, msg)
 
 	default:
 		// if UpdateAware
@@ -179,6 +222,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
+}
+
+func isContainerRefreshView(view ViewType) bool {
+	switch view {
+	case ComposeProcessListView, DindProcessListView, DockerContainerListView:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m *Model) startContainerAutoRefresh() tea.Cmd {
+	return tea.Tick(2*time.Second, func(time.Time) tea.Msg {
+		return containerAutoRefreshTickMsg{}
+	})
 }
 
 func (m *Model) handleKeyPress(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
@@ -230,6 +288,16 @@ func (m *Model) handleKeyPress(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// Handle filter mode
 	if m.currentView == LogView && m.logViewModel.filterMode {
 		return m.handleFilterMode(msg)
+	}
+
+	if msg.Code == tea.KeyLeft || msg.Code == tea.KeyRight {
+		if isNavigationTabView(m.currentView) {
+			direction := -1
+			if msg.Code == tea.KeyRight {
+				direction = 1
+			}
+			return m.navigateNavigationTab(direction)
+		}
 	}
 
 	handler, ok := m.globalKeymap[msg.String()]
@@ -344,13 +412,15 @@ func (m *Model) handleFilterMode(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// Check if ESC was pressed to clear filter
 	if msg.Code == tea.KeyEsc {
 		m.logViewModel.ClearFilter()
-		m.logViewModel.scrollToTop() // Reset scroll position when clearing filter
+		m.logViewModel.scrollToTop()
+		m.logViewModel.PerformLogSearch(m)
 		return m, nil
 	}
 
 	perform := m.logViewModel.HandleKey(msg)
 	if perform {
 		m.logViewModel.performFilter()
+		m.logViewModel.PerformLogSearch(m)
 	}
 	return m, nil
 }

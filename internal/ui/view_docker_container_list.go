@@ -37,11 +37,17 @@ func (m *DockerContainerListViewModel) Init(_ *Model) {
 func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case dockerContainersLoadedMsg:
-		model.loading = false
+		if model.currentView == DockerContainerListView {
+			model.loading = false
+		}
 		if msg.err != nil {
-			model.err = msg.err
+			if model.currentView == DockerContainerListView {
+				model.err = msg.err
+			}
 		} else {
-			model.err = nil
+			if model.currentView == DockerContainerListView {
+				model.err = nil
+			}
 			m.Loaded(model, msg.containers)
 		}
 		return model, nil
@@ -52,8 +58,22 @@ func (m *DockerContainerListViewModel) Update(model *Model, msg tea.Msg) (tea.Mo
 }
 
 func (m *DockerContainerListViewModel) Loaded(model *Model, containers []models.DockerContainer) {
+	selectedID := ""
+	if m.Cursor >= 0 && m.Cursor < len(m.dockerContainers) {
+		selectedID = m.dockerContainers[m.Cursor].ID
+	}
 	m.dockerContainers = containers
 	m.SetRows(m.buildRows(), model.ViewHeight())
+	m.performSearch()
+	if !m.IsSearchActive() && selectedID != "" {
+		for i, container := range m.dockerContainers {
+			if container.ID == selectedID {
+				m.Cursor = i
+				m.SetRows(m.Rows, model.ViewHeight())
+				break
+			}
+		}
+	}
 }
 
 type ColumnMap struct {
@@ -204,7 +224,23 @@ func (m *DockerContainerListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 }
 
 func (m *DockerContainerListViewModel) DoLoad(model *Model) tea.Cmd {
+	if model.containerRefreshInFlight {
+		return nil
+	}
+	model.containerRefreshInFlight = true
 	model.loading = true
+	return m.doLoad(model)
+}
+
+func (m *DockerContainerListViewModel) DoLoadSilent(model *Model) tea.Cmd {
+	if model.containerRefreshInFlight {
+		return nil
+	}
+	model.containerRefreshInFlight = true
+	return m.doLoad(model)
+}
+
+func (m *DockerContainerListViewModel) doLoad(model *Model) tea.Cmd {
 	return func() tea.Msg {
 		containers, err := model.dockerClient.ListContainers(m.showAll)
 		return dockerContainersLoadedMsg{

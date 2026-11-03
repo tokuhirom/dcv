@@ -195,6 +195,93 @@ func TestHandleKeyPress(t *testing.T) {
 	}
 }
 
+func TestNavigationTabArrows(t *testing.T) {
+	model := Model{currentView: DockerContainerListView}
+	model.initializeKeyHandlers()
+
+	newModel, cmd := model.handleKeyPress(newSpecialKey(tea.KeyRight))
+	m := newModel.(*Model)
+	assert.Equal(t, ComposeProjectListView, m.currentView)
+	assert.NotNil(t, cmd)
+
+	newModel, cmd = m.handleKeyPress(newSpecialKey(tea.KeyLeft))
+	m = newModel.(*Model)
+	assert.Equal(t, DockerContainerListView, m.currentView)
+	assert.NotNil(t, cmd)
+
+	model = Model{
+		currentView: LogView,
+		logViewModel: LogViewModel{
+			SearchViewModel: SearchViewModel{searchMode: true, searchText: "abc"},
+		},
+	}
+	model.initializeKeyHandlers()
+	newModel, _ = model.handleKeyPress(newSpecialKey(tea.KeyRight))
+	m = newModel.(*Model)
+	assert.Equal(t, LogView, m.currentView)
+	assert.Equal(t, 1, m.logViewModel.searchCursorPos)
+
+	model = Model{
+		currentView: LogView,
+		width:       10,
+		logViewModel: LogViewModel{
+			logs:             []string{"a very long log line"},
+			LogReaderManager: LogReaderManager{wrapText: false},
+		},
+	}
+	model.initializeKeyHandlers()
+	newModel, _ = model.handleKeyPress(newSpecialKey(tea.KeyRight))
+	m = newModel.(*Model)
+	assert.Equal(t, LogView, m.currentView)
+	assert.Equal(t, 1, m.logViewModel.logScrollX)
+}
+
+func TestContainerAutoRefreshLifecycle(t *testing.T) {
+	model := Model{
+		currentView:          DockerContainerListView,
+		containerAutoRefresh: true,
+	}
+
+	newModel, cmd := model.Update(containerAutoRefreshTickMsg{})
+	m := newModel.(*Model)
+	assert.NotNil(t, cmd)
+	assert.True(t, m.containerRefreshInFlight)
+
+	newModel, _ = m.Update(containerAutoRefreshTickMsg{})
+	m = newModel.(*Model)
+	assert.True(t, m.containerRefreshInFlight)
+
+	previous := []models.DockerContainer{{ID: "keep", Names: "keep"}}
+	m.dockerContainerListViewModel.dockerContainers = previous
+	newModel, _ = m.Update(dockerContainersLoadedMsg{
+		err: errors.New("docker unavailable"),
+	})
+	m = newModel.(*Model)
+	assert.False(t, m.containerRefreshInFlight)
+	assert.Equal(t, previous, m.dockerContainerListViewModel.dockerContainers)
+	assert.ErrorContains(t, m.err, "docker unavailable")
+}
+
+func TestContainerRefreshPreservesSelection(t *testing.T) {
+	model := Model{
+		currentView: DockerContainerListView,
+		Height:      30,
+		dockerContainerListViewModel: DockerContainerListViewModel{
+			dockerContainers: []models.DockerContainer{
+				{ID: "first", Names: "first"},
+				{ID: "selected", Names: "selected"},
+			},
+			TableViewModel: TableViewModel{Cursor: 1},
+		},
+	}
+	model.dockerContainerListViewModel.Loaded(&model, []models.DockerContainer{
+		{ID: "selected", Names: "selected"},
+		{ID: "first", Names: "first"},
+	})
+
+	assert.Equal(t, 0, model.dockerContainerListViewModel.Cursor)
+}
+
 func TestHandleSearchMode(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -280,6 +367,34 @@ func TestHandleSearchMode(t *testing.T) {
 			assert.Equal(t, tt.wantSearchText, m.logViewModel.searchText)
 		})
 	}
+}
+
+func TestLogFilterRemainsAppliedToLiveLogs(t *testing.T) {
+	model := Model{
+		currentView: LogView,
+		width:       100,
+		Height:      12,
+		logViewModel: LogViewModel{
+			logs: []string{"error one", "info only"},
+		},
+	}
+	model.logViewModel.HandleFilter()
+	model.logViewModel.filterText = "error"
+	model.logViewModel.filterCursorPos = len("error")
+	model.initializeKeyHandlers()
+	model.handleFilterMode(newSpecialKey(tea.KeyEnter))
+
+	assert.False(t, model.logViewModel.filterMode)
+	assert.True(t, model.logViewModel.filterActive)
+	assert.Equal(t, []string{"error one"}, model.logViewModel.displayLogs())
+
+	model.logViewModel.searchText = "two"
+	model.logViewModel.PerformLogSearch(&model)
+	assert.Empty(t, model.logViewModel.logSearchMatches)
+
+	model.logViewModel.LogLines(&model, []string{"error two", "info two"})
+	assert.Equal(t, []string{"error one", "error two"}, model.logViewModel.displayLogs())
+	assert.Equal(t, []logSearchMatch{{lineIndex: 1, start: 6, end: 9}}, model.logViewModel.logSearchMatches)
 }
 
 func TestHandleDindListKeys(t *testing.T) {

@@ -32,6 +32,11 @@ func (m *Model) CmdRefresh(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
+func (m *Model) CmdToggleContainerAutoRefresh(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	m.containerAutoRefresh = !m.containerAutoRefresh
+	return m, nil
+}
+
 // CmdCancel handles cancel/escape key for views that support it
 func (m *Model) CmdCancel(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.currentView {
