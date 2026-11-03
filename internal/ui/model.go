@@ -131,7 +131,9 @@ type Model struct {
 	spinnerFrame int
 
 	// Navigation bar visibility
-	navbarHidden bool
+	navbarHidden             bool
+	containerAutoRefresh     bool
+	containerRefreshInFlight bool
 
 	globalKeymap   map[string]KeyHandler
 	globalHandlers []KeyConfig
@@ -201,10 +203,11 @@ func NewModel(initialView ViewType) *Model {
 		slog.String("initial_view", initialView.String()))
 
 	m := &Model{
-		currentView:     initialView,
-		dockerClient:    dockerClient,
-		dockerSDKClient: dockerSDKClient,
-		loading:         true,
+		currentView:          initialView,
+		dockerClient:         dockerClient,
+		dockerSDKClient:      dockerSDKClient,
+		loading:              true,
+		containerAutoRefresh: true,
 	}
 	m.logViewModel.wrapText = true
 
@@ -242,6 +245,7 @@ func (m *Model) Init() tea.Cmd {
 		func() tea.Msg {
 			return RefreshMsg{}
 		},
+		m.startContainerAutoRefresh(),
 		tea.RequestWindowSize,
 	)
 }
@@ -455,6 +459,8 @@ type launchShellMsg struct {
 
 // autoRefreshTickMsg is sent periodically to refresh views
 type autoRefreshTickMsg struct{}
+
+type containerAutoRefreshTickMsg struct{}
 
 type commandExecOutputMsg struct {
 	line string

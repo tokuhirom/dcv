@@ -55,7 +55,7 @@ For keyboard shortcuts, see [docs/keymap.md](docs/keymap.md#docker-compose-proce
 
 ### Log View
 
-Displays container logs. Initially shows the last 1000 lines, then streams new logs in real-time.
+Displays container logs. Initially shows the last 1000 lines, then streams new logs in real-time. JSON records are syntax-highlighted automatically; press `J` to toggle pretty printing.
 
 ![Log View](docs/screenshots/log-view.png)
 

@@ -112,6 +112,7 @@ func generateKeymapDocumentation() string {
 	sb.WriteString("- Press `?` in any view to see context-specific help\n")
 	sb.WriteString("- Press `ESC` or `q` to go back to the previous view\n")
 	sb.WriteString("- Press `H` to toggle the navigation bar visibility\n")
+	sb.WriteString("- Press `left` or `right` on a tab view to switch tabs\n")
 	sb.WriteString("- In process list views, press `x` to see available actions for a container\n")
 	sb.WriteString("\n")
 

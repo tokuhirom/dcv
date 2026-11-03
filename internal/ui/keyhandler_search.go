@@ -78,3 +78,15 @@ func (m *Model) CmdFilter(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 }
+
+func (m *Model) CmdClearFilter(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	m.logViewModel.ClearFilter()
+	m.logViewModel.scrollToTop()
+	m.logViewModel.PerformLogSearch(m)
+	return m, nil
+}
+
+func (m *Model) CmdToggleJsonFormatting(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	m.logViewModel.ToggleJSONFormatting(m)
+	return m, nil
+}

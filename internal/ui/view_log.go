@@ -1,15 +1,28 @@
 package ui
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"regexp"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/tokuhirom/dcv/internal/docker"
+)
+
+var (
+	jsonKeyStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true)
+	jsonStringStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("76"))
+	jsonNumberStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	jsonLiteralStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("141"))
 )
 
 // logSearchMatch identifies a single search hit within a log line.
@@ -26,9 +39,15 @@ type wrappedSegment struct {
 	endByte   int
 }
 
+type jsonColorRange struct {
+	start int
+	end   int
+	style lipgloss.Style
+}
+
 func (m *LogViewModel) lineVisualCount(line string, effectiveWidth int) int {
 	if !m.WrapText() {
-		return 1
+		return max(strings.Count(line, "\n")+1, 1)
 	}
 	return len(wrapLineSegments(line, effectiveWidth))
 }
@@ -63,6 +82,18 @@ func wrapLineSegments(line string, width int) []wrappedSegment {
 
 	for i := 0; i < len(line); {
 		r, size := utf8.DecodeRuneInString(line[i:])
+		if r == '\n' {
+			segments = append(segments, wrappedSegment{
+				text:      b.String(),
+				startByte: startByte,
+				endByte:   i,
+			})
+			b.Reset()
+			startByte = i + size
+			col = 0
+			i += size
+			continue
+		}
 		rw := runewidth.RuneWidth(r)
 		if col > 0 && col+rw > width {
 			flush(i)
@@ -98,6 +129,36 @@ func displayWidthToByteIndex(s string, targetCol int) int {
 }
 
 func (m *LogViewModel) logLineSegments(line string, effectiveWidth int) []wrappedSegment {
+	if strings.Contains(line, "\n") && !m.WrapText() {
+		var segments []wrappedSegment
+		offset := 0
+		for _, part := range strings.SplitAfter(line, "\n") {
+			text := strings.TrimSuffix(part, "\n")
+			start := displayWidthToByteIndex(text, m.logScrollX)
+			end := start
+			col := 0
+			for i := start; i < len(text) && col < effectiveWidth; {
+				r, size := utf8.DecodeRuneInString(text[i:])
+				rw := runewidth.RuneWidth(r)
+				if col+rw > effectiveWidth {
+					break
+				}
+				col += rw
+				end = i + size
+				i += size
+			}
+			segments = append(segments, wrappedSegment{
+				text:      text[start:end],
+				startByte: offset + start,
+				endByte:   offset + end,
+			})
+			offset += len(part)
+		}
+		return segments
+	}
+	if strings.Contains(line, "\n") {
+		return wrapLineSegments(line, effectiveWidth)
+	}
 	if m.WrapText() {
 		return wrapLineSegments(line, effectiveWidth)
 	}
@@ -150,11 +211,13 @@ func (m *LogViewModel) calculateMaxScrollX(model *Model, logsToDisplay []string)
 
 	maxScrollX := 0
 	for _, line := range logsToDisplay {
-		lineWidth := runewidth.StringWidth(line)
-		if lineWidth > effectiveWidth {
-			overflow := lineWidth - effectiveWidth
-			if overflow > maxScrollX {
-				maxScrollX = overflow
+		for _, part := range strings.Split(line, "\n") {
+			lineWidth := runewidth.StringWidth(part)
+			if lineWidth > effectiveWidth {
+				overflow := lineWidth - effectiveWidth
+				if overflow > maxScrollX {
+					maxScrollX = overflow
+				}
 			}
 		}
 	}
@@ -174,7 +237,8 @@ type LogViewModel struct {
 
 	logSearchMatches []logSearchMatch
 
-	container *docker.Container
+	container  *docker.Container
+	prettyJSON bool
 
 	LogReaderManager
 }
@@ -203,10 +267,113 @@ func (m *LogViewModel) HandleBack(model *Model) tea.Cmd {
 }
 
 func (m *LogViewModel) displayLogs() []string {
+	logs := m.logs
 	if m.filterMode && m.filterText != "" {
-		return m.filteredLogs
+		logs = m.filteredLogs
+	} else if m.filterActive {
+		logs = m.filteredLogs
 	}
-	return m.logs
+
+	if !m.prettyJSON {
+		return logs
+	}
+
+	displayLogs := make([]string, len(logs))
+	for i, line := range logs {
+		displayLogs[i] = formatJSONLogLine(line)
+	}
+	return displayLogs
+}
+
+func splitJSONLogPrefix(line string) (string, string) {
+	if token, rest, ok := strings.Cut(line, " "); ok {
+		if _, err := time.Parse(time.RFC3339Nano, token); err == nil {
+			return token + " ", rest
+		}
+	}
+	return "", line
+}
+
+func formatJSONLogLine(line string) string {
+	prefix, payload := splitJSONLogPrefix(line)
+	var pretty bytes.Buffer
+	if err := json.Indent(&pretty, []byte(payload), "", "  "); err != nil {
+		return line
+	}
+	return prefix + pretty.String()
+}
+
+func jsonLogColorRanges(line string) []jsonColorRange {
+	prefix, payload := splitJSONLogPrefix(line)
+	if !json.Valid([]byte(payload)) {
+		return nil
+	}
+
+	decoder := json.NewDecoder(strings.NewReader(payload))
+	decoder.UseNumber()
+	var ranges []jsonColorRange
+	for {
+		start := int(decoder.InputOffset())
+		token, err := decoder.Token()
+		if err != nil {
+			if err != io.EOF {
+				slog.Error("Failed to color JSON log record", "error", err)
+				return nil
+			}
+			return ranges
+		}
+		end := int(decoder.InputOffset())
+		for start < end && strings.IndexByte(" \t\r\n,:", payload[start]) >= 0 {
+			start++
+		}
+
+		var style lipgloss.Style
+		switch token.(type) {
+		case string:
+			style = jsonStringStyle
+			next := end
+			for next < len(payload) && strings.IndexByte(" \t\r\n", payload[next]) >= 0 {
+				next++
+			}
+			if next < len(payload) && payload[next] == ':' {
+				style = jsonKeyStyle
+			}
+		case json.Number:
+			style = jsonNumberStyle
+		case bool, nil:
+			style = jsonLiteralStyle
+		default:
+			continue
+		}
+		ranges = append(ranges, jsonColorRange{
+			start: len(prefix) + start,
+			end:   len(prefix) + end,
+			style: style,
+		})
+	}
+}
+
+func renderJSONRange(line string, start, end int, ranges []jsonColorRange) string {
+	if len(ranges) == 0 {
+		return line[start:end]
+	}
+	var result strings.Builder
+	pos := start
+	for _, colorRange := range ranges {
+		if colorRange.end <= pos {
+			continue
+		}
+		if colorRange.start >= end {
+			break
+		}
+		coloredStart := max(pos, colorRange.start)
+		coloredEnd := min(end, colorRange.end)
+		result.WriteString(line[pos:coloredStart])
+		result.WriteString(colorRange.style.Render(line[coloredStart:coloredEnd]))
+		pos = coloredEnd
+	}
+	result.WriteString(line[pos:end])
+	return result.String()
 }
 
 func (m *LogViewModel) totalVisualLines(logs []string, effectiveWidth int) int {
@@ -331,7 +498,7 @@ func (m *LogViewModel) render(model *Model, availableHeight int) string {
 	}
 
 	if len(logsToDisplay) == 0 {
-		if m.filterMode && m.filterText != "" {
+		if (m.filterMode || m.filterActive) && m.filterText != "" {
 			s.WriteString("No logs match the filter.\n")
 		} else {
 			s.WriteString("No logs available.\n")
@@ -356,6 +523,8 @@ func (m *LogViewModel) renderWrapped(model *Model, logsToDisplay []string, visib
 	endIdx := 0
 
 	for i, line := range logsToDisplay {
+		var colorRanges []jsonColorRange
+		colorsReady := false
 		for _, seg := range wrapLineSegments(line, effectiveWidth) {
 			if skip > 0 {
 				skip--
@@ -370,7 +539,11 @@ func (m *LogViewModel) renderWrapped(model *Model, logsToDisplay []string, visib
 			}
 			endIdx = i + 1
 
-			displayLine := m.renderSegment(line, i, seg)
+			if !colorsReady {
+				colorRanges = jsonLogColorRanges(line)
+				colorsReady = true
+			}
+			displayLine := m.renderSegment(line, i, seg, colorRanges)
 
 			if m.isCurrentMatchOnSegment(i, seg) {
 				s.WriteString("> ")
@@ -395,22 +568,17 @@ func (m *LogViewModel) renderNoWrap(model *Model, logsToDisplay []string, visibl
 	var s strings.Builder
 
 	startIdx := m.logScrollY
-	visualLinesUsed := 0
 	endIdx := startIdx
 
-	for i := startIdx; i < len(logsToDisplay) && visualLinesUsed < visibleHeight; i++ {
-		if i == startIdx || visualLinesUsed+1 <= visibleHeight {
-			endIdx = i + 1
-			visualLinesUsed++
-		} else {
-			break
-		}
-	}
-
-	for i := startIdx; i < endIdx; i++ {
+	rendered := 0
+	for i := startIdx; i < len(logsToDisplay) && rendered < visibleHeight; i++ {
 		line := logsToDisplay[i]
+		colorRanges := jsonLogColorRanges(line)
 		for _, seg := range m.logLineSegments(line, effectiveWidth) {
-			displayLine := m.renderSegment(line, i, seg)
+			if rendered >= visibleHeight {
+				break
+			}
+			displayLine := m.renderSegment(line, i, seg, colorRanges)
 
 			if m.isCurrentMatchOnSegment(i, seg) {
 				s.WriteString("> ")
@@ -418,6 +586,8 @@ func (m *LogViewModel) renderNoWrap(model *Model, logsToDisplay []string, visibl
 				s.WriteString("  ")
 			}
 			s.WriteString(displayLine + ResetAll + "\n")
+			rendered++
+			endIdx = i + 1
 		}
 	}
 
@@ -441,7 +611,7 @@ func (m *LogViewModel) appendScrollIndicator(
 	}
 
 	scrollInfo := fmt.Sprintf(" [%d-%d/%d] ", startIdx+1, endIdx, len(logsToDisplay))
-	if m.filterMode && m.filterText != "" {
+	if (m.filterMode || m.filterActive) && m.filterText != "" {
 		scrollInfo += fmt.Sprintf(" (filtered from %d)", len(m.logs))
 	}
 	if !m.WrapText() {
@@ -514,12 +684,7 @@ func (m *LogViewModel) findLogSearchMatches(logs []string) []logSearchMatch {
 
 // PerformLogSearch finds every search occurrence and scrolls to the first hit.
 func (m *LogViewModel) PerformLogSearch(model *Model) {
-	logs := m.logs
-	if m.filterMode && m.filterText != "" {
-		logs = m.filteredLogs
-	}
-
-	m.logSearchMatches = m.findLogSearchMatches(logs)
+	m.logSearchMatches = m.findLogSearchMatches(m.displayLogs())
 	m.searchResults = nil
 	m.currentSearchIdx = 0
 
@@ -563,26 +728,26 @@ func (m *LogViewModel) scrollToSearchMatch(model *Model, match logSearchMatch) {
 // renderSegment returns the display text for a single segment, applying
 // filter or search highlighting where appropriate. Operating on raw bytes
 // here avoids slicing through ANSI escapes added by highlighting helpers.
-func (m *LogViewModel) renderSegment(fullLine string, lineIndex int, seg wrappedSegment) string {
-	if m.filterMode && m.filterText != "" {
-		return m.highlightFilterSegment(fullLine, seg)
+func (m *LogViewModel) renderSegment(fullLine string, lineIndex int, seg wrappedSegment, colorRanges []jsonColorRange) string {
+	if (m.filterMode || m.filterActive) && m.filterText != "" {
+		return m.highlightFilterSegment(fullLine, seg, colorRanges)
 	}
 	if m.searchText != "" && !m.searchMode {
-		return m.highlightSegment(fullLine, lineIndex, seg)
+		return m.highlightSegment(fullLine, lineIndex, seg, colorRanges)
 	}
-	return fullLine[seg.startByte:seg.endByte]
+	return renderJSONRange(fullLine, seg.startByte, seg.endByte, colorRanges)
 }
 
-func (m *LogViewModel) highlightSegment(fullLine string, lineIndex int, seg wrappedSegment) string {
+func (m *LogViewModel) highlightSegment(fullLine string, lineIndex int, seg wrappedSegment, colorRanges []jsonColorRange) string {
 	text := fullLine[seg.startByte:seg.endByte]
 	if m.searchText == "" {
-		return text
+		return renderJSONRange(fullLine, seg.startByte, seg.endByte, colorRanges)
 	}
 
 	current, hasCurrent := m.currentSearchMatch()
 	matchRanges := m.matchRangesOnLine(fullLine, lineIndex)
 	if len(matchRanges) == 0 {
-		return text
+		return renderJSONRange(fullLine, seg.startByte, seg.endByte, colorRanges)
 	}
 
 	var result strings.Builder
@@ -595,7 +760,7 @@ func (m *LogViewModel) highlightSegment(fullLine string, lineIndex int, seg wrap
 		relStart := max(match.start-seg.startByte, 0)
 		relEnd := min(match.end-seg.startByte, len(text))
 		if relStart > lastEnd {
-			result.WriteString(text[lastEnd:relStart])
+			result.WriteString(renderJSONRange(fullLine, seg.startByte+lastEnd, seg.startByte+relStart, colorRanges))
 		}
 
 		style := searchMatchStyle
@@ -606,7 +771,7 @@ func (m *LogViewModel) highlightSegment(fullLine string, lineIndex int, seg wrap
 		lastEnd = relEnd
 	}
 	if lastEnd < len(text) {
-		result.WriteString(text[lastEnd:])
+		result.WriteString(renderJSONRange(fullLine, seg.startByte+lastEnd, seg.endByte, colorRanges))
 	}
 	return result.String()
 }
@@ -625,10 +790,10 @@ func (m *LogViewModel) matchRangesOnLine(line string, lineIndex int) []logSearch
 // segment. Matches are computed against fullLine (raw, ANSI-free) and rendered
 // only for the portion that overlaps seg, so callers can slice safely without
 // risk of cutting an ANSI escape in half.
-func (m *LogViewModel) highlightFilterSegment(fullLine string, seg wrappedSegment) string {
+func (m *LogViewModel) highlightFilterSegment(fullLine string, seg wrappedSegment, colorRanges []jsonColorRange) string {
 	text := fullLine[seg.startByte:seg.endByte]
 	if m.filterText == "" {
-		return text
+		return renderJSONRange(fullLine, seg.startByte, seg.endByte, colorRanges)
 	}
 
 	searchStr := strings.ToLower(m.filterText)
@@ -654,23 +819,20 @@ func (m *LogViewModel) highlightFilterSegment(fullLine string, seg wrappedSegmen
 		relStart := max(matchStart-seg.startByte, 0)
 		relEnd := min(matchEnd-seg.startByte, len(text))
 		if relStart > lastEnd {
-			result.WriteString(text[lastEnd:relStart])
+			result.WriteString(renderJSONRange(fullLine, seg.startByte+lastEnd, seg.startByte+relStart, colorRanges))
 		}
 		result.WriteString(searchMatchStyle.Render(text[relStart:relEnd]))
 		lastEnd = relEnd
 	}
 	if lastEnd < len(text) {
-		result.WriteString(text[lastEnd:])
+		result.WriteString(renderJSONRange(fullLine, seg.startByte+lastEnd, seg.endByte, colorRanges))
 	}
 	return result.String()
 }
 
 // calculateMaxScroll calculates the maximum scroll position accounting for wrapped lines
 func (m *LogViewModel) calculateMaxScroll(model *Model) int {
-	logsToDisplay := m.logs
-	if m.filterMode && m.filterText != "" {
-		logsToDisplay = m.filteredLogs
-	}
+	logsToDisplay := m.displayLogs()
 
 	if len(logsToDisplay) == 0 {
 		return 0
@@ -763,9 +925,7 @@ func (m *LogViewModel) HandleSearch() tea.Cmd {
 
 func (m *LogViewModel) HandleFilter() tea.Cmd {
 	m.filterMode = true
-	m.filterText = ""
-	m.filterCursorPos = 0
-	m.filteredLogs = nil
+	m.filterCursorPos = len(m.filterText)
 	return nil
 }
 
@@ -804,8 +964,6 @@ func (m *LogViewModel) performFilter() {
 			m.filteredLogs = append(m.filteredLogs, line)
 		}
 	}
-
-	// Reset scroll position when filter changes
 	m.scrollToTop()
 }
 
@@ -816,12 +974,27 @@ func (m *LogViewModel) LogLines(model *Model, lines []string) {
 		m.logs = m.logs[len(m.logs)-10000:]
 	}
 
-	// If we're in filter mode, update filtered logs
-	if m.filterMode && m.filterText != "" {
+	// Keep the active filter and search results in sync with the live stream.
+	if (m.filterMode || m.filterActive) && m.filterText != "" {
+		scrollY, scrollVisual := m.logScrollY, m.logScrollVisual
 		m.performFilter()
+		m.logScrollY, m.logScrollVisual = scrollY, scrollVisual
+		if m.WrapText() {
+			m.clampVisualScroll(model)
+		} else {
+			m.logScrollY = min(m.logScrollY, m.calculateMaxScroll(model))
+		}
 	} else {
 		// Auto-scroll to bottom only when not filtering
 		m.scrollToBottom(model)
+	}
+	if m.searchText != "" && !m.searchMode {
+		m.logSearchMatches = m.findLogSearchMatches(m.displayLogs())
+		if m.currentSearchIdx >= len(m.logSearchMatches) {
+			m.currentSearchIdx = max(0, len(m.logSearchMatches)-1)
+		}
+	} else {
+		m.logSearchMatches = nil
 	}
 }
 
@@ -840,9 +1013,12 @@ func (m *LogViewModel) Title() string {
 	} else {
 		title += " [nowrap]"
 	}
+	if m.prettyJSON {
+		title += " [JSON]"
+	}
 
 	// Add search or filter status to title
-	if m.filterMode && m.filterText != "" {
+	if (m.filterMode || m.filterActive) && m.filterText != "" {
 		filterCount := len(m.filteredLogs)
 		title += fmt.Sprintf(" - Filter: '%s' (%d/%d lines)", m.filterText, filterCount, len(m.logs))
 	} else if len(m.logSearchMatches) > 0 {
@@ -865,6 +1041,17 @@ func (m *LogViewModel) Title() string {
 	}
 
 	return title
+}
+
+func (m *LogViewModel) ToggleJSONFormatting(model *Model) {
+	m.prettyJSON = !m.prettyJSON
+	if m.searchText != "" && !m.searchMode {
+		m.logSearchMatches = m.findLogSearchMatches(m.displayLogs())
+		if m.currentSearchIdx >= len(m.logSearchMatches) {
+			m.currentSearchIdx = max(0, len(m.logSearchMatches)-1)
+		}
+		m.clampVisualScroll(model)
+	}
 }
 
 func (m *LogViewModel) HandleCancel() tea.Cmd {
@@ -901,12 +1088,7 @@ func (m *LogViewModel) HandleScrollRight(model *Model) tea.Cmd {
 		return nil
 	}
 
-	logsToDisplay := m.logs
-	if m.filterMode && m.filterText != "" {
-		logsToDisplay = m.filteredLogs
-	}
-
-	maxScrollX := m.calculateMaxScrollX(model, logsToDisplay)
+	maxScrollX := m.calculateMaxScrollX(model, m.displayLogs())
 	if m.logScrollX < maxScrollX {
 		m.logScrollX++
 	}

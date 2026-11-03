@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -11,6 +13,36 @@ import (
 	"github.com/tokuhirom/dcv/internal/docker"
 	"github.com/tokuhirom/dcv/internal/testutil"
 )
+
+func TestLogView_JSONColors_Integration(t *testing.T) {
+	testutil.SkipIfNoDocker(t)
+
+	containerName := fmt.Sprintf("dcv-test-json-colors-%d", os.Getpid())
+	out, err := exec.Command("docker", "create", "--name", containerName, "alpine:latest",
+		"sh", "-c", `printf '%s\n' '{"level":"error","count":42}'`).CombinedOutput()
+	require.NoError(t, err, "failed to create container: %s", out)
+	containerID := strings.TrimSpace(string(out))
+	t.Cleanup(func() {
+		out, err := exec.Command("docker", "rm", "-f", containerID).CombinedOutput()
+		assert.NoError(t, err, "failed to remove test container: %s", out)
+	})
+
+	out, err = exec.Command("docker", "start", "-a", containerID).CombinedOutput()
+	require.NoError(t, err, "failed to start container: %s", out)
+	out, err = exec.Command("docker", "logs", "--timestamps", containerID).CombinedOutput()
+	require.NoError(t, err, "failed to retrieve container logs: %s", out)
+	line := strings.TrimSpace(string(out))
+
+	model := &Model{currentView: LogView, width: 100, Height: 20}
+	container := docker.NewContainer(containerID, containerName, "exited", "exited")
+	model.logViewModel.SwitchToLogView(model, container)
+	model.logViewModel.LogLines(model, []string{line})
+	rendered := model.logViewModel.render(model, 20)
+	jsonTokenColor(t, rendered, `"level"`)
+	jsonTokenColor(t, rendered, `"error"`)
+	jsonTokenColor(t, rendered, "42")
+	assert.Contains(t, stripANSI(rendered), line)
+}
 
 func TestLogView_LongLines_Integration(t *testing.T) {
 	testutil.SkipIfNoDocker(t)

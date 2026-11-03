@@ -8,6 +8,7 @@ import (
 type FilterViewModel struct {
 	// Filter state
 	filterMode      bool
+	filterActive    bool
 	filterText      string
 	filterCursorPos int
 	filteredLogs    []string // Logs that match the filter
@@ -57,7 +58,7 @@ func (m *FilterViewModel) RenderFilterCmdLine() string {
 		Background(lipgloss.Color("226")).
 		Foreground(lipgloss.Color("235"))
 
-	return "Filter: " + before + cursorStyle.Render(cursor) + after + " (ESC to clear)"
+	return "Filter: " + before + cursorStyle.Render(cursor) + after + " (ENTER apply, ESC clear)"
 }
 
 func (m *FilterViewModel) HandleKey(msg tea.KeyPressMsg) bool {
@@ -66,9 +67,10 @@ func (m *FilterViewModel) HandleKey(msg tea.KeyPressMsg) bool {
 		m.ClearFilter()
 	case tea.KeyEnter:
 		m.filterMode = false
+		m.filterActive = m.filterText != ""
 		return true
 	case tea.KeyBackspace:
-		m.FilterDeleteLastChar()
+		return m.FilterDeleteLastChar()
 	case tea.KeyLeft:
 		m.FilterCursorLeft()
 	case tea.KeyRight:
@@ -76,7 +78,7 @@ func (m *FilterViewModel) HandleKey(msg tea.KeyPressMsg) bool {
 	default:
 		switch {
 		case isCtrlKey(msg, 'h'):
-			m.FilterDeleteLastChar()
+			return m.FilterDeleteLastChar()
 		case isCtrlKey(msg, 'f'):
 			m.FilterCursorLeft()
 		case isCtrlKey(msg, 'b'):
@@ -92,6 +94,7 @@ func (m *FilterViewModel) HandleKey(msg tea.KeyPressMsg) bool {
 
 func (m *FilterViewModel) ClearFilter() {
 	m.filterMode = false
+	m.filterActive = false
 	m.filterText = ""
 	m.filteredLogs = nil
 	m.filterCursorPos = 0

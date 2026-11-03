@@ -39,11 +39,17 @@ func (m *DindProcessListViewModel) Init(_ *Model) {
 func (m *DindProcessListViewModel) Update(model *Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case dindContainersLoadedMsg:
-		model.loading = false
+		if model.currentView == DindProcessListView {
+			model.loading = false
+		}
 		if msg.err != nil {
-			model.err = msg.err
+			if model.currentView == DindProcessListView {
+				model.err = msg.err
+			}
 		} else {
-			model.err = nil
+			if model.currentView == DindProcessListView {
+				model.err = nil
+			}
 			m.Loaded(model, msg.containers)
 		}
 		return model, nil
@@ -165,7 +171,23 @@ func (m *DindProcessListViewModel) Load(model *Model, hostContainer *docker.Cont
 
 // DoLoad reloads the dind container list
 func (m *DindProcessListViewModel) DoLoad(model *Model) tea.Cmd {
+	if model.containerRefreshInFlight {
+		return nil
+	}
+	model.containerRefreshInFlight = true
 	model.loading = true
+	return m.doLoad(model)
+}
+
+func (m *DindProcessListViewModel) DoLoadSilent(model *Model) tea.Cmd {
+	if model.containerRefreshInFlight {
+		return nil
+	}
+	model.containerRefreshInFlight = true
+	return m.doLoad(model)
+}
+
+func (m *DindProcessListViewModel) doLoad(model *Model) tea.Cmd {
 	return func() tea.Msg {
 		containers, err := model.dockerClient.ListDindContainers(m.hostContainer.GetContainerID(), m.showAll)
 		return dindContainersLoadedMsg{
@@ -189,8 +211,22 @@ func (m *DindProcessListViewModel) HandleToggleAll(model *Model) tea.Cmd {
 
 // Loaded updates the dind container list after loading
 func (m *DindProcessListViewModel) Loaded(model *Model, containers []models.DockerContainer) {
+	selectedID := ""
+	if m.Cursor >= 0 && m.Cursor < len(m.dindContainers) {
+		selectedID = m.dindContainers[m.Cursor].ID
+	}
 	m.dindContainers = containers
 	m.SetRows(m.buildRows(), model.ViewHeight())
+	m.performSearch()
+	if !m.IsSearchActive() && selectedID != "" {
+		for i, container := range m.dindContainers {
+			if container.ID == selectedID {
+				m.Cursor = i
+				m.SetRows(m.Rows, model.ViewHeight())
+				break
+			}
+		}
+	}
 }
 
 func (m *DindProcessListViewModel) GetContainer(model *Model) *docker.Container {

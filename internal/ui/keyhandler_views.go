@@ -24,6 +24,53 @@ func (m *Model) CmdVolumeLs(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.volumeListViewModel.Show(m)
 }
 
+func isNavigationTabView(view ViewType) bool {
+	switch view {
+	case DockerContainerListView, ComposeProjectListView, ImageListView,
+		NetworkListView, VolumeListView, StatsView,
+		ComposeProcessListView, DindProcessListView:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m *Model) navigateNavigationTab(direction int) (tea.Model, tea.Cmd) {
+	tabs := []ViewType{
+		DockerContainerListView,
+		ComposeProjectListView,
+		ImageListView,
+		NetworkListView,
+		VolumeListView,
+		StatsView,
+	}
+	active := m.getActiveNavigationView()
+	current := 0
+	for i, tab := range tabs {
+		if tab == active {
+			current = i
+			break
+		}
+	}
+	next := (current + direction + len(tabs)) % len(tabs)
+	switch tabs[next] {
+	case DockerContainerListView:
+		return m, m.dockerContainerListViewModel.Show(m)
+	case ComposeProjectListView:
+		return m, m.composeProjectListViewModel.Show(m)
+	case ImageListView:
+		return m, m.imageListViewModel.Show(m)
+	case NetworkListView:
+		return m, m.networkListViewModel.Show(m)
+	case VolumeListView:
+		return m, m.volumeListViewModel.Show(m)
+	case StatsView:
+		return m, m.statsViewModel.Show(m)
+	default:
+		return m, nil
+	}
+}
+
 func (m *Model) CmdLog(_ tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, m.useContainerAware(func(container *docker.Container) tea.Cmd {
 		return m.logViewModel.StreamContainerLogs(m, container)
